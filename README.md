@@ -15,6 +15,8 @@ This repository now provides a simple PHP implementation for managing accounts a
    php php_backend/public/index.php
    ```
 
+Any errors during upload or other operations are stored in a `logs` table.
+
 To import transactions from an OFX file, use the upload script:
 ```bash
 curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/upload_ofx.php

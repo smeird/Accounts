@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../models/Account.php';
 require_once __DIR__ . '/../models/Transaction.php';
+require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../Database.php';
 
 try {
@@ -61,8 +62,11 @@ foreach ($matches[1] as $block) {
 }
 
     echo "Inserted $inserted transactions for account $accountName.";
+    Log::write("Inserted $inserted transactions for account $accountName");
 } catch (Exception $e) {
     http_response_code(500);
-    echo 'Error: ' . $e->getMessage();
+    $msg = 'Error: ' . $e->getMessage();
+    Log::write($msg, 'ERROR');
+    echo $msg;
 }
 ?>
