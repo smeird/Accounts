@@ -1,17 +1,16 @@
 # Accounts
 
-## Development Setup
+This repository now provides a simple PHP implementation for managing accounts and transactions.
 
-1. Create a Python virtual environment and install dependencies:
+## PHP Development Setup
+
+1. Ensure PHP and MySQL are installed.
+2. Configure database credentials using the environment variables `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASS`.
+3. Create the database tables:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r backend/requirements.txt
+   php php_backend/create_tables.php
    ```
-2. Configure MySQL settings in `backend/finance_manager/settings.py`.
-3. Run migrations and start the development server:
+4. Run the example script which inserts a sample account:
    ```bash
-   cd backend
-   ./manage.py migrate
-   ./manage.py runserver
+   php php_backend/public/index.php
    ```
