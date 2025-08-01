@@ -8,13 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <nav class="sidebar">
-            <h2>Menu</h2>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="monthly_statement.html">View Monthly Statement</a></li>
-            </ul>
-        </nav>
+        <nav class="sidebar" id="menu"></nav>
         <main class="content">
             <h1>Monthly Statement</h1>
             <form id="statement-form">
@@ -49,6 +43,7 @@
             </table>
         </main>
     </div>
+    <script src="js/menu.js"></script>
 <script>
 const form = document.getElementById('statement-form');
 form.addEventListener('submit', function(e) {

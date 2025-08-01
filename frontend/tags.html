@@ -8,12 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <nav class="sidebar">
-            <h2>Menu</h2>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-            </ul>
-        </nav>
+        <nav class="sidebar" id="menu"></nav>
         <main class="content">
             <h1>Manage Tags</h1>
             <form id="tag-form">
@@ -25,6 +20,7 @@
             <ul id="tag-list"></ul>
         </main>
     </div>
+    <script src="js/menu.js"></script>
 <script>
 async function loadTags(){
     const res = await fetch('../php_backend/public/tags.php');
