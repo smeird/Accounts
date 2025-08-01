@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Logs</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>Application Logs</h1>
+            <table id="logs-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Level</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </main>
+    </div>
+
+    <script src="js/menu.js"></script>
+    <script>
+    fetch('../php_backend/public/logs.php')
+        .then(resp => resp.json())
+        .then(data => {
+            const tbody = document.querySelector('#logs-table tbody');
+            tbody.innerHTML = '';
+            data.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${log.created_at}</td><td>${log.level}</td><td>${log.message}</td>`;
+                tbody.appendChild(tr);
+            });
+        });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
