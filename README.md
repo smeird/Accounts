@@ -15,10 +15,12 @@ This repository now provides a simple PHP implementation for managing accounts a
    php php_backend/public/index.php
    ```
 
+To import transactions from an OFX file, use the upload script:
+```bash
+curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/upload_ofx.php
+```
+
 ## Frontend
 
 A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
 
-## Tag Management
-
-Use the "Manage Tags" link in the frontend to add tags and optional keywords. When a transaction is created without a tag, the system automatically checks the description for any tag keyword and applies the matching tag.
