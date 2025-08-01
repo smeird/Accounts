@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Transactions</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>Search Transactions</h1>
+            <form id="search-form">
+                <label>Field:
+                    <select id="field">
+                        <option value="description">Description</option>
+                        <option value="date">Date</option>
+                        <option value="amount">Amount</option>
+                        <option value="account_id">Account ID</option>
+                        <option value="category_id">Category ID</option>
+                        <option value="tag_id">Tag ID</option>
+                        <option value="group_id">Group ID</option>
+                        <option value="ofx_id">OFX ID</option>
+                    </select>
+                </label>
+                <input type="text" id="term" placeholder="Search value">
+                <button type="submit">Search</button>
+            </form>
+            <table id="results">
+                <thead>
+                    <tr><th>Date</th><th>Description</th><th>Amount</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <p id="total"></p>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script>
+    document.getElementById('search-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        const field = document.getElementById('field').value;
+        const term = document.getElementById('term').value;
+        const params = new URLSearchParams({field: field, value: term});
+        fetch('../php_backend/public/search_transactions.php?' + params.toString())
+            .then(resp => resp.json())
+            .then(data => {
+                const tbody = document.querySelector('#results tbody');
+                tbody.innerHTML = '';
+                if (data.results && data.results.length) {
+                    data.results.forEach(tx => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${tx.date}</td><td>${tx.description}</td><td>${tx.amount}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3">No transactions found.</td></tr>';
+                }
+                document.getElementById('total').textContent = 'Total: ' + data.total;
+            });
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

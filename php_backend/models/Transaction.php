@@ -62,5 +62,30 @@ class Transaction {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Search transactions by a specific field.
+     * Supports partial matches for text fields and exact matches for numeric fields.
+     */
+    public static function search(string $field, string $value): array {
+        $allowed = ['id','account_id','date','amount','description','category_id','tag_id','group_id','ofx_id'];
+        if (!in_array($field, $allowed, true)) {
+            throw new Exception('Invalid search field');
+        }
+
+        $db = Database::getConnection();
+
+        // numeric fields use exact match
+        $numeric = ['id','account_id','category_id','tag_id','group_id','amount'];
+        if (in_array($field, $numeric, true)) {
+            $stmt = $db->prepare("SELECT * FROM `transactions` WHERE `$field` = :val");
+            $stmt->execute(['val' => $value]);
+        } else {
+            $stmt = $db->prepare("SELECT * FROM `transactions` WHERE `$field` LIKE :val");
+            $stmt->execute(['val' => '%' . $value . '%']);
+        }
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
