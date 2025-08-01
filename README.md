@@ -22,5 +22,16 @@ curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/uploa
 
 ## Frontend
 
+
+A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
+
+## Reports
+
+The frontend also includes a simple reporting page available at `frontend/report.html`.
+It allows running a report to list all transactions filtered by category, tag or group.
+The page sends requests to `php_backend/public/report.php` which returns matching
+transactions as JSON.
+
 A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements. The monthly statement page (`frontend/monthly_statement.html`) allows selecting a month and year to list transactions for that period.
+
 

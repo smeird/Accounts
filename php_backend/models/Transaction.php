@@ -22,10 +22,31 @@ class Transaction {
         return (int)$db->lastInsertId();
     }
 
+
+    public static function getByCategory(int $categoryId): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT date, amount, description FROM transactions WHERE category_id = :category');
+        $stmt->execute(['category' => $categoryId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function getByTag(int $tagId): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT date, amount, description FROM transactions WHERE tag_id = :tag');
+        $stmt->execute(['tag' => $tagId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function getByGroup(int $groupId): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT date, amount, description FROM transactions WHERE group_id = :grp');
+        $stmt->execute(['grp' => $groupId]);
+
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
         $stmt = $db->prepare('SELECT * FROM transactions WHERE MONTH(date) = :month AND YEAR(date) = :year ORDER BY date');
         $stmt->execute(['month' => $month, 'year' => $year]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
