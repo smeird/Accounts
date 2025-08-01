@@ -17,6 +17,17 @@
             </form>
         </main>
     </div>
-    <script src="js/menu.js"></script>
+
+    <script src="js/overlay.js"></script>
+    <script>
+const uploadForm = document.querySelector("form");
+uploadForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = new FormData(uploadForm);
+    const resp = await fetch(uploadForm.action, {method: "POST", body: data});
+    const text = await resp.text();
+    showMessage(text);
+});
+    </script>
 </body>
 </html>
