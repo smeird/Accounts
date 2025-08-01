@@ -19,6 +19,8 @@ To import transactions from an OFX file, use the upload script:
 ```bash
 curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/upload_ofx.php
 ```
+You can try this using the included sample file `sample_data/test.ofx` which
+contains two transactions for a checking account.
 
 ## Frontend
 
