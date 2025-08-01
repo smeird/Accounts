@@ -8,6 +8,7 @@ class Log {
         $stmt->execute(['level' => $level, 'message' => $message]);
     }
 
+
     public static function all(int $limit = 100): array {
         $db = Database::getConnection();
         $sql = 'SELECT level, message, created_at FROM logs ORDER BY created_at DESC';
