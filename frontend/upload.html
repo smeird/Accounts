@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Manager</title>
+    <title>Upload OFX</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -11,13 +11,15 @@
         <nav class="sidebar">
             <h2>Menu</h2>
             <ul>
-                <li><a href="upload.html" id="upload-ofx">Upload OFX File</a></li>
-                <li><a href="#" id="view-statement">View Monthly Statement</a></li>
+                <li><a href="index.html">Home</a></li>
             </ul>
         </nav>
         <main class="content">
-            <h1>Welcome to Finance Manager</h1>
-            <p>Select an option from the menu to get started.</p>
+            <h1>Upload OFX File</h1>
+            <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data">
+                <input type="file" name="ofx_file" accept=".ofx" required>
+                <button type="submit">Upload</button>
+            </form>
         </main>
     </div>
 </body>
