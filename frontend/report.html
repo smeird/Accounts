@@ -8,12 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <nav class="sidebar">
-            <h2>Menu</h2>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-            </ul>
-        </nav>
+        <nav class="sidebar" id="menu"></nav>
         <main class="content">
             <h1>Transaction Reports</h1>
             <form id="report-form">
@@ -30,6 +25,7 @@
             </table>
         </main>
     </div>
+    <script src="js/menu.js"></script>
     <script>
     document.getElementById('report-form').addEventListener('submit', function(e) {
         e.preventDefault();
