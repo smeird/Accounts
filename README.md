@@ -14,3 +14,7 @@ This repository now provides a simple PHP implementation for managing accounts a
    ```bash
    php php_backend/public/index.php
    ```
+
+## Frontend
+
+A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
