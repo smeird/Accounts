@@ -8,6 +8,17 @@ class Transaction {
             $tag = Tag::findMatch($description);
         }
         $db = Database::getConnection();
+
+        // avoid duplicate inserts when an OFX id already exists
+        if ($ofx_id !== null) {
+            $check = $db->prepare('SELECT id FROM transactions WHERE ofx_id = :oid LIMIT 1');
+            $check->execute(['oid' => $ofx_id]);
+            $existing = $check->fetch(PDO::FETCH_ASSOC);
+            if ($existing) {
+                return (int)$existing['id'];
+            }
+        }
+
         $stmt = $db->prepare('INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id, group_id, ofx_id) VALUES (:account, :date, :amount, :description, :category, :tag, :group, :ofx_id)');
         $stmt->execute([
             'account' => $account,
