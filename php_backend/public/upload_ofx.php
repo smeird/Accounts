@@ -3,18 +3,19 @@ require_once __DIR__ . '/../models/Account.php';
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../Database.php';
 
-if (!isset($_FILES['ofx_file']) || $_FILES['ofx_file']['error'] !== UPLOAD_ERR_OK) {
-    http_response_code(400);
-    echo "No file uploaded.";
-    exit;
-}
+try {
+    if (!isset($_FILES['ofx_file']) || $_FILES['ofx_file']['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(400);
+        echo "No file uploaded.";
+        exit;
+    }
 
-$ofxData = file_get_contents($_FILES['ofx_file']['tmp_name']);
-if ($ofxData === false) {
-    http_response_code(400);
-    echo "Unable to read uploaded file.";
-    exit;
-}
+    $ofxData = file_get_contents($_FILES['ofx_file']['tmp_name']);
+    if ($ofxData === false) {
+        http_response_code(400);
+        echo "Unable to read uploaded file.";
+        exit;
+    }
 
 // try to get account name from <ACCTID> tag, fallback to 'Default'
 $accountName = 'Default';
@@ -59,5 +60,9 @@ foreach ($matches[1] as $block) {
     $inserted++;
 }
 
-echo "Inserted $inserted transactions for account $accountName.";
+    echo "Inserted $inserted transactions for account $accountName.";
+} catch (Exception $e) {
+    http_response_code(500);
+    echo 'Error: ' . $e->getMessage();
+}
 ?>
