@@ -50,9 +50,11 @@ document.getElementById('tag-form').addEventListener('submit', async (e)=>{
     document.getElementById('tag-name').value='';
     document.getElementById('tag-keyword').value='';
     loadTags();
+    showMessage("Tag created");
 });
 
 loadTags();
 </script>
+    <script src="js/overlay.js"></script>
 </body>
 </html>
