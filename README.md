@@ -18,3 +18,10 @@ This repository now provides a simple PHP implementation for managing accounts a
 ## Frontend
 
 A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
+
+## Reports
+
+The frontend also includes a simple reporting page available at `frontend/report.html`.
+It allows running a report to list all transactions filtered by category, tag or group.
+The page sends requests to `php_backend/public/report.php` which returns matching
+transactions as JSON.

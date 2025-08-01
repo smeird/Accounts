@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Reports</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            <h1>Transaction Reports</h1>
+            <form id="report-form">
+                <label>Category ID: <input type="number" id="category"></label>
+                <label>Tag ID: <input type="number" id="tag"></label>
+                <label>Group ID: <input type="number" id="group"></label>
+                <button type="submit">Run Report</button>
+            </form>
+            <table id="results">
+                <thead>
+                    <tr><th>Date</th><th>Amount</th><th>Description</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </main>
+    </div>
+    <script>
+    document.getElementById('report-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const category = document.getElementById('category').value;
+        const tag = document.getElementById('tag').value;
+        const group = document.getElementById('group').value;
+        const params = new URLSearchParams();
+        if (category) params.append('category', category);
+        if (tag) params.append('tag', tag);
+        if (group) params.append('group', group);
+        fetch('../php_backend/public/report.php?' + params.toString())
+            .then(resp => resp.json())
+            .then(data => {
+                const tbody = document.querySelector('#results tbody');
+                tbody.innerHTML = '';
+                if (Array.isArray(data) && data.length) {
+                    data.forEach(tx => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${tx.date}</td><td>${tx.amount}</td><td>${tx.description}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3">No transactions found.</td></tr>';
+                }
+            });
+    });
+    </script>
+</body>
+</html>
