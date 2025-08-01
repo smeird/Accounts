@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Tags</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            <h1>Manage Tags</h1>
+            <form id="tag-form">
+                <label>Tag Name<br><input type="text" id="tag-name"></label><br>
+                <label>Keyword (for auto tagging)<br><input type="text" id="tag-keyword"></label><br>
+                <button type="submit">Create Tag</button>
+            </form>
+            <h2>Existing Tags</h2>
+            <ul id="tag-list"></ul>
+        </main>
+    </div>
+<script>
+async function loadTags(){
+    const res = await fetch('../php_backend/public/tags.php');
+    const tags = await res.json();
+    const list = document.getElementById('tag-list');
+    list.innerHTML = '';
+    tags.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = `${t.name} (${t.keyword||''})`;
+        list.appendChild(li);
+    });
+}
+
+document.getElementById('tag-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('tag-name').value;
+    const keyword = document.getElementById('tag-keyword').value;
+    await fetch('../php_backend/public/tags.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name, keyword})
+    });
+    document.getElementById('tag-name').value='';
+    document.getElementById('tag-keyword').value='';
+    loadTags();
+});
+
+loadTags();
+</script>
+</body>
+</html>
