@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload OFX</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            <h1>Upload OFX File</h1>
+            <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data">
+                <input type="file" name="ofx_file" accept=".ofx" required>
+                <button type="submit">Upload</button>
+            </form>
+        </main>
+    </div>
+</body>
+</html>
