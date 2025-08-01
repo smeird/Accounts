@@ -48,6 +48,13 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (tag_id) REFERENCES tags(id),
     FOREIGN KEY (group_id) REFERENCES transaction_groups(id)
 );
+
+CREATE TABLE IF NOT EXISTS logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    level VARCHAR(10) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 SQL;
 
 $db->exec($sql);
