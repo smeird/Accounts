@@ -59,5 +59,11 @@ SQL;
 
 $db->exec($sql);
 
+// Ensure keyword column exists if the tags table pre-dates it
+$result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'keyword'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tags` ADD COLUMN `keyword` VARCHAR(100) DEFAULT NULL");
+}
+
 echo "Database tables created.\n";
 ?>

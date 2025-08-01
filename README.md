@@ -10,6 +10,7 @@ This repository now provides a simple PHP implementation for managing accounts a
    ```bash
    php php_backend/create_tables.php
    ```
+   Re-running this script after upgrading will also add any new columns.
 4. Run the example script which inserts a sample account:
    ```bash
    php php_backend/public/index.php
