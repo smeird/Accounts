@@ -13,9 +13,16 @@
         window.__overlay = createOverlay();
     });
 
+
+    let hideTimer;
+
     window.showMessage = function(msg){
         const overlay = window.__overlay || document.getElementById('overlay') || createOverlay();
         overlay.querySelector('.overlay-content').textContent = msg;
         overlay.classList.add('show');
+
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => overlay.classList.remove('show'), 2000);
+
     };
 })();
