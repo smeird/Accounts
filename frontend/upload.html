@@ -26,9 +26,13 @@ const uploadForm = document.querySelector("form");
 uploadForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = new FormData(uploadForm);
-    const resp = await fetch(uploadForm.action, {method: "POST", body: data});
-    const text = await resp.text();
-    showMessage(text);
+    try {
+        const resp = await fetch(uploadForm.action, {method: "POST", body: data});
+        const text = await resp.text();
+        showMessage(text);
+    } catch (err) {
+        showMessage("Upload failed");
+    }
 });
     </script>
 </body>
