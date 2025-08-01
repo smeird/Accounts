@@ -16,7 +16,16 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
+    name VARCHAR(100) NOT NULL,
+    keyword VARCHAR(100) DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS category_tags (
+    category_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    PRIMARY KEY (category_id, tag_id),
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (tag_id) REFERENCES tags(id)
 );
 
 CREATE TABLE IF NOT EXISTS transaction_groups (
