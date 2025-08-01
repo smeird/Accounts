@@ -23,3 +23,9 @@ curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/uploa
 ## Frontend
 
 A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
+
+### Category Administration
+
+The navigation now includes a *Manage Categories* link which opens `frontend/categories.html`.
+From this page you can create new categories, rename them and associate tags with a category.
+The forms submit to `php_backend/public/categories.php` which performs the requested action.
