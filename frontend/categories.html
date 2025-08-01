@@ -44,5 +44,24 @@
             </section>
         </main>
     </div>
+    <script src="js/overlay.js"></script>
+    <script>
+    document.querySelectorAll("form").forEach(f => {
+        f.addEventListener("submit", async e => {
+            e.preventDefault();
+            const data = new FormData(f);
+            const resp = await fetch(f.action, {method: f.method, body: data});
+            const text = await resp.text();
+            try {
+                const j = JSON.parse(text);
+                if (j.error) showMessage("Error: " + j.error);
+                else if (j.id) showMessage("Created ID " + j.id);
+                else showMessage("Success");
+            } catch {
+                showMessage(text);
+            }
+        });
+    });
+    </script>
 </body>
 </html>
