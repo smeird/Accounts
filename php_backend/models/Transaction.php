@@ -41,6 +41,8 @@ class Transaction {
         $db = Database::getConnection();
         $stmt = $db->prepare('SELECT date, amount, description FROM transactions WHERE group_id = :grp');
         $stmt->execute(['grp' => $groupId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
