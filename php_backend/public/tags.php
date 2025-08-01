@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/Tag.php';
+require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -12,10 +13,23 @@ if ($method === 'POST') {
         echo json_encode(['error' => 'Name required']);
         exit;
     }
-    $id = Tag::create($name, $keyword);
-    echo json_encode(['id' => $id]);
+    try {
+        $id = Tag::create($name, $keyword);
+        Log::write("Created tag $name");
+        echo json_encode(['id' => $id]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode(['error' => 'Server error']);
+    }
 } elseif ($method === 'GET') {
-    echo json_encode(Tag::all());
+    try {
+        echo json_encode(Tag::all());
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode([]);
+    }
 } else {
     http_response_code(405);
 }
