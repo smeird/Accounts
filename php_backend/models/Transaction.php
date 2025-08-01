@@ -21,5 +21,12 @@ class Transaction {
         ]);
         return (int)$db->lastInsertId();
     }
+
+    public static function getByMonth(int $month, int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT * FROM transactions WHERE MONTH(date) = :month AND YEAR(date) = :year ORDER BY date');
+        $stmt->execute(['month' => $month, 'year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

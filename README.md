@@ -22,5 +22,5 @@ curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/uploa
 
 ## Frontend
 
-A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
+A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements. The monthly statement page (`frontend/monthly_statement.html`) allows selecting a month and year to list transactions for that period.
 
