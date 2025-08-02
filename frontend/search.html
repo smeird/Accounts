@@ -34,8 +34,12 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/data.js"></script>
-    <script src="https://code.highcharts.com/modules/datagrid.js"></script>
+<script src="https://code.highcharts.com/modules/datagrid.js"></script>
     <script>
+    function formatCurrency(value) {
+        return '£' + parseFloat(value).toFixed(2);
+    }
+
     document.getElementById('search-form').addEventListener('submit', function(e){
         e.preventDefault();
         const field = document.getElementById('field').value;
@@ -52,7 +56,7 @@
                         columns: {
                             date: data.results.map(tx => tx.date),
                             description: data.results.map(tx => tx.description),
-                            amount: data.results.map(tx => tx.amount)
+                            amount: data.results.map(tx => formatCurrency(tx.amount))
                         }
                     });
                     Highcharts.DataGrid(gridContainer, {
@@ -63,10 +67,16 @@
                             amount: { title: 'Amount' }
                         }
                     });
+                    document.querySelectorAll('#results-grid table tr').forEach(row => {
+                        const cell = row.children[2];
+                        if (cell) cell.classList.add('currency');
+                    });
                 } else {
                     gridEl.innerHTML = 'No transactions found.';
                 }
-                document.getElementById('total').textContent = 'Total: ' + data.total;
+                const totalEl = document.getElementById('total');
+                totalEl.textContent = 'Total: ' + formatCurrency(data.total);
+                totalEl.classList.add('currency');
             });
     });
     </script>

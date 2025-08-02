@@ -29,6 +29,7 @@
 
             const summary = document.getElementById('spend-summary');
             const list = document.createElement('ul');
+            list.classList.add('currency');
             chartData.forEach((val, idx) => {
                 const li = document.createElement('li');
                 li.textContent = months[idx] + ': £' + val.toFixed(2);

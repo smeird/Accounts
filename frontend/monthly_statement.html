@@ -29,6 +29,10 @@
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
 
+function formatCurrency(value) {
+    return '£' + parseFloat(value).toFixed(2);
+}
+
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
     .then(data => {
@@ -79,7 +83,7 @@ form.addEventListener('submit', function(e) {
                 columns: {
                     date: data.map(tx => tx.date),
                     description: data.map(tx => tx.description),
-                    amount: data.map(tx => tx.amount)
+                    amount: data.map(tx => formatCurrency(tx.amount))
                 }
             });
             Highcharts.DataGrid('#transactions-grid', {
@@ -89,6 +93,10 @@ form.addEventListener('submit', function(e) {
                     description: { title: 'Description' },
                     amount: { title: 'Amount' }
                 }
+            });
+            document.querySelectorAll('#transactions-grid table tr').forEach(row => {
+                const cell = row.children[2];
+                if (cell) cell.classList.add('currency');
             });
         });
 });
