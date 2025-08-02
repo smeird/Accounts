@@ -11,53 +11,53 @@
         <nav class="sidebar" id="menu"></nav>
         <main class="content">
             <h1>Manage Categories</h1>
-            <section>
-                <h2>Add Category</h2>
-                <form action="../php_backend/public/categories.php" method="post">
-                    <input type="hidden" name="action" value="create">
-                    <input type="text" name="name" placeholder="Category name">
-                    <button type="submit">Add</button>
-                </form>
-            </section>
-            <section>
-                <h2>Update Category</h2>
-                <form action="../php_backend/public/categories.php" method="post">
-                    <input type="hidden" name="action" value="update">
-                    <input type="number" name="id" placeholder="Category ID">
-                    <input type="text" name="name" placeholder="New name">
-                    <button type="submit">Update</button>
-                </form>
-            </section>
-            <section>
-                <h2>Assign Tag to Category</h2>
-                <form action="../php_backend/public/categories.php" method="post">
-                    <input type="hidden" name="action" value="add_tag">
-                    <input type="number" name="category_id" placeholder="Category ID">
-                    <input type="number" name="tag_id" placeholder="Tag ID">
-                    <button type="submit">Assign</button>
-                </form>
-            </section>
-            <section>
-                <h2>Existing Categories</h2>
-                <ul id="category-list"></ul>
-            </section>
+            <form id="category-form">
+                <label>Category Name<br><input type="text" id="category-name"></label><br>
+                <button type="submit">Create Category</button>
+            </form>
+            <h2>Existing Categories</h2>
+            <ul id="category-list"></ul>
         </main>
     </div>
-
     <script src="js/menu.js"></script>
-    <script src="js/overlay.js"></script>
     <script>
-    async function loadCategories() {
-        const resp = await fetch('../php_backend/public/categories.php');
-        const cats = await resp.json();
-        const list = document.getElementById('category-list');
-        list.innerHTML = '';
-        cats.forEach(c => {
-            const li = document.createElement('li');
-            const tags = c.tags.map(t => t.name).join(', ');
-            li.textContent = `${c.name}${tags ? ': ' + tags : ''}`;
-            list.appendChild(li);
+async function loadCategories(){
+    const res = await fetch('../php_backend/public/categories.php');
+    const cats = await res.json();
+    const list = document.getElementById('category-list');
+    list.innerHTML = '';
+    cats.forEach(c => {
+        const li = document.createElement('li');
+        const span = document.createElement('span');
+        const tags = c.tags.map(t => t.name).join(', ');
+        span.textContent = `${c.name}${tags ? ': ' + tags : ''}`;
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', async () => {
+            const name = prompt('Category Name', c.name);
+            if (name === null) return;
+            await fetch('../php_backend/public/categories.php', {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({id: c.id, name})
+            });
+            loadCategories();
+            showMessage('Category updated');
         });
+
+        const tagBtn = document.createElement('button');
+        tagBtn.textContent = 'Assign Tag';
+        tagBtn.addEventListener('click', async () => {
+            const tagId = prompt('Tag ID');
+            if (tagId === null) return;
+            await fetch('../php_backend/public/categories.php', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({action:'add_tag', category_id: c.id, tag_id: tagId})
+            });
+            loadCategories();
+            showMessage('Tag assigned');
+
     }
 
     document.querySelectorAll("form").forEach(f => {
@@ -90,11 +90,30 @@
             } catch {
                 showMessage(text);
             }
+
         });
+        li.appendChild(span);
+        li.appendChild(editBtn);
+        li.appendChild(tagBtn);
+        list.appendChild(li);
     });
+}
 
+document.getElementById('category-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('category-name').value;
+    await fetch('../php_backend/public/categories.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name})
+    });
+    document.getElementById('category-name').value='';
     loadCategories();
-    </script>
+    showMessage('Category created');
+});
 
+loadCategories();
+    </script>
+    <script src="js/overlay.js"></script>
 </body>
 </html>

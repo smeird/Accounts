@@ -5,6 +5,20 @@ require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+
+if ($method === 'GET') {
+    try {
+        echo json_encode(TransactionGroup::all());
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Group error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode([]);
+    }
+    exit;
+}
+
+
 $data = json_decode(file_get_contents('php://input'), true) ?? [];
 
 try {
