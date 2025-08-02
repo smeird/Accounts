@@ -64,6 +64,38 @@ class Transaction {
     }
 
     /**
+     * Retrieve the total amount spent in each month of a given year.
+     * Amounts are returned as positive numbers representing outflows.
+     * Months with no spending will have a total of 0.
+     */
+    public static function getMonthlySpending(int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT MONTH(`date`) AS `month`, SUM(CASE WHEN `amount` < 0 THEN -`amount` ELSE 0 END) AS `spent`
+            FROM `transactions`
+            WHERE YEAR(`date`) = :year
+            GROUP BY MONTH(`date`)
+            ORDER BY MONTH(`date`)');
+        $stmt->execute(['year' => $year]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Ensure all months are present in the result
+        $result = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $result[$m] = 0.0;
+        }
+        foreach ($rows as $row) {
+            $month = (int)$row['month'];
+            $result[$month] = isset($row['spent']) ? (float)$row['spent'] : 0.0;
+        }
+
+        $output = [];
+        foreach ($result as $month => $spent) {
+            $output[] = ['month' => $month, 'spent' => $spent];
+        }
+        return $output;
+    }
+
+    /**
      * Search transactions by a specific field.
      * Supports partial matches for text fields and exact matches for numeric fields.
      */

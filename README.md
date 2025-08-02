@@ -50,6 +50,8 @@ Then open `http://localhost:8000/frontend/index.html` in your browser.
 
 A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
 
+The dashboard page (`frontend/dashboard.html`) shows current-year monthly spending totals with a simple chart.
+
 The monthly statement page (`frontend/monthly_statement.html`) allows selecting a month and year to list transactions for that period.
 
 ## Reports
