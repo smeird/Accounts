@@ -14,5 +14,36 @@ class Category {
         $stmt = $db->prepare('UPDATE categories SET name = :name WHERE id = :id');
         $stmt->execute(['id' => $id, 'name' => $name]);
     }
+
+    public static function allWithTags(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT c.id AS category_id, c.name AS category_name, '
+             . 't.id AS tag_id, t.name AS tag_name '
+             . 'FROM categories c '
+             . 'LEFT JOIN category_tags ct ON c.id = ct.category_id '
+             . 'LEFT JOIN tags t ON t.id = ct.tag_id '
+             . 'ORDER BY c.id';
+        $stmt = $db->query($sql);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $categories = [];
+        foreach ($rows as $row) {
+            $id = (int)$row['category_id'];
+            if (!isset($categories[$id])) {
+                $categories[$id] = [
+                    'id' => $id,
+                    'name' => $row['category_name'],
+                    'tags' => []
+                ];
+            }
+            if ($row['tag_id'] !== null) {
+                $categories[$id]['tags'][] = [
+                    'id' => (int)$row['tag_id'],
+                    'name' => $row['tag_name']
+                ];
+            }
+        }
+        return array_values($categories);
+    }
 }
 ?>

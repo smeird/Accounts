@@ -37,12 +37,29 @@
                     <button type="submit">Assign</button>
                 </form>
             </section>
+            <section>
+                <h2>Existing Categories</h2>
+                <ul id="category-list"></ul>
+            </section>
         </main>
     </div>
 
     <script src="js/menu.js"></script>
     <script src="js/overlay.js"></script>
     <script>
+    async function loadCategories() {
+        const resp = await fetch('../php_backend/public/categories.php');
+        const cats = await resp.json();
+        const list = document.getElementById('category-list');
+        list.innerHTML = '';
+        cats.forEach(c => {
+            const li = document.createElement('li');
+            const tags = c.tags.map(t => t.name).join(', ');
+            li.textContent = `${c.name}${tags ? ': ' + tags : ''}`;
+            list.appendChild(li);
+        });
+    }
+
     document.querySelectorAll("form").forEach(f => {
         f.addEventListener("submit", async e => {
             e.preventDefault();
@@ -51,14 +68,20 @@
             const text = await resp.text();
             try {
                 const j = JSON.parse(text);
-                if (j.error) showMessage("Error: " + j.error);
-                else if (j.id) showMessage("Created ID " + j.id);
-                else showMessage("Success");
+                if (j.error) {
+                    showMessage("Error: " + j.error);
+                } else {
+                    if (j.id) showMessage("Created ID " + j.id);
+                    else showMessage("Success");
+                    loadCategories();
+                }
             } catch {
                 showMessage(text);
             }
         });
     });
+
+    loadCategories();
     </script>
 
 </body>

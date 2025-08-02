@@ -4,6 +4,19 @@ require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'GET') {
+    try {
+        echo json_encode(Category::allWithTags());
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Category error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode([]);
+    }
+    return;
+}
+
 $action = $_POST['action'] ?? null;
 
 try {
