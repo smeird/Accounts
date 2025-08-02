@@ -21,7 +21,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script>
-async function loadCategories(){
+async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
     const cats = await res.json();
     const list = document.getElementById('category-list');
@@ -38,59 +38,24 @@ async function loadCategories(){
             if (name === null) return;
             await fetch('../php_backend/public/categories.php', {
                 method: 'PUT',
-                headers: {'Content-Type':'application/json'},
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: c.id, name})
             });
             loadCategories();
             showMessage('Category updated');
         });
-
         const tagBtn = document.createElement('button');
         tagBtn.textContent = 'Assign Tag';
         tagBtn.addEventListener('click', async () => {
             const tagId = prompt('Tag ID');
             if (tagId === null) return;
             await fetch('../php_backend/public/categories.php', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({action:'add_tag', category_id: c.id, tag_id: tagId})
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'add_tag', category_id: c.id, tag_id: tagId})
             });
             loadCategories();
             showMessage('Tag assigned');
-
-    }
-
-    document.querySelectorAll("form").forEach(f => {
-        f.addEventListener("submit", async e => {
-            e.preventDefault();
-            const formData = new FormData(f);
-            const data = Object.fromEntries(formData.entries());
-            let method = f.method.toUpperCase();
-            if (data.action === 'update') {
-                method = 'PUT';
-                delete data.action;
-            } else if (data.action === 'create') {
-                delete data.action;
-            }
-            const resp = await fetch(f.action, {
-                method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            const text = await resp.text();
-            try {
-                const j = JSON.parse(text);
-                if (j.error) {
-                    showMessage("Error: " + j.error);
-                } else {
-                    if (j.id) showMessage("Created ID " + j.id);
-                    else showMessage("Success");
-                    loadCategories();
-                }
-            } catch {
-                showMessage(text);
-            }
-
         });
         li.appendChild(span);
         li.appendChild(editBtn);
@@ -103,11 +68,11 @@ document.getElementById('category-form').addEventListener('submit', async e => {
     e.preventDefault();
     const name = document.getElementById('category-name').value;
     await fetch('../php_backend/public/categories.php', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({name})
     });
-    document.getElementById('category-name').value='';
+    document.getElementById('category-name').value = '';
     loadCategories();
     showMessage('Category created');
 });
