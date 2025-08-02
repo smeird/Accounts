@@ -63,6 +63,12 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function getAvailableMonths(): array {
+        $db = Database::getConnection();
+        $stmt = $db->query('SELECT DISTINCT YEAR(`date`) AS year, MONTH(`date`) AS month FROM `transactions` ORDER BY YEAR(`date`) DESC, MONTH(`date`) DESC');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
      * Search transactions by a specific field.
      * Supports partial matches for text fields and exact matches for numeric fields.

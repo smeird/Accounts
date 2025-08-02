@@ -12,23 +12,10 @@
         <main class="content">
             <h1>Monthly Statement</h1>
             <form id="statement-form">
-                <label for="month">Month:</label>
-                <select id="month" name="month">
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
                 <label for="year">Year:</label>
-                <input type="number" id="year" name="year" min="2000" value="2024">
+                <select id="year" name="year"></select>
+                <label for="month">Month:</label>
+                <select id="month" name="month"></select>
                 <button type="submit">View</button>
             </form>
             <div id="transactions-grid"></div>
@@ -39,11 +26,52 @@
     <script src="https://code.highcharts.com/modules/data.js"></script>
     <script src="https://code.highcharts.com/modules/datagrid.js"></script>
 <script>
+const monthSelect = document.getElementById('month');
+const yearSelect = document.getElementById('year');
+
+fetch('../php_backend/public/transaction_months.php')
+    .then(resp => resp.json())
+    .then(data => {
+        const monthsByYear = {};
+        data.forEach(row => {
+            const y = row.year;
+            const m = row.month;
+            if (!monthsByYear[y]) {
+                monthsByYear[y] = [];
+            }
+            monthsByYear[y].push(m);
+        });
+
+        const years = Object.keys(monthsByYear).sort((a, b) => b - a);
+        years.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            yearSelect.appendChild(opt);
+            monthsByYear[y].sort((a, b) => b - a);
+        });
+
+        function populateMonths() {
+            const year = yearSelect.value;
+            monthSelect.innerHTML = '';
+            (monthsByYear[year] || []).forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                const d = new Date(year, m - 1);
+                opt.textContent = d.toLocaleString('default', { month: 'long' });
+                monthSelect.appendChild(opt);
+            });
+        }
+
+        yearSelect.addEventListener('change', populateMonths);
+        populateMonths();
+    });
+
 const form = document.getElementById('statement-form');
 form.addEventListener('submit', function(e) {
     e.preventDefault();
-    const month = document.getElementById('month').value;
-    const year = document.getElementById('year').value;
+    const month = monthSelect.value;
+    const year = yearSelect.value;
     fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year)
         .then(resp => resp.json())
         .then(data => {
