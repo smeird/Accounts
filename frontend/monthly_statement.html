@@ -87,7 +87,9 @@ form.addEventListener('submit', function(e) {
                     amount: data.map(tx => formatCurrency(tx.amount))
                 }
             });
+
             new Highcharts.DataGrid(document.getElementById('transactions-grid'), {
+
                 dataTable,
                 columns: {
                     date: { title: 'Date' },

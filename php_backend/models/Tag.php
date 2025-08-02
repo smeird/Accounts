@@ -46,5 +46,25 @@ class Tag {
         }
         return null;
     }
+
+    /**
+     * Apply tag keywords to untagged transactions for a given account.
+     * Returns the number of transactions updated.
+     */
+    public static function applyToAccountTransactions(int $accountId): int {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT `id`, `description` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL');
+        $stmt->execute(['acc' => $accountId]);
+        $updated = 0;
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $tx) {
+            $tagId = self::findMatch($tx['description']);
+            if ($tagId !== null) {
+                $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
+                $upd->execute(['tag' => $tagId, 'id' => $tx['id']]);
+                $updated++;
+            }
+        }
+        return $updated;
+    }
 }
 ?>
