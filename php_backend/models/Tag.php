@@ -21,6 +21,21 @@ class Tag {
         return $stmt->execute(['name' => $name, 'keyword' => $keyword, 'id' => $id]);
     }
 
+    public static function delete(int $id): bool {
+        $db = Database::getConnection();
+        // remove any relationships to categories
+        $stmt = $db->prepare('DELETE FROM `category_tags` WHERE `tag_id` = :id');
+        $stmt->execute(['id' => $id]);
+
+        // clear references from transactions
+        $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = NULL WHERE `tag_id` = :id');
+        $stmt->execute(['id' => $id]);
+
+        // delete the tag itself
+        $stmt = $db->prepare('DELETE FROM `tags` WHERE `id` = :id');
+        return $stmt->execute(['id' => $id]);
+    }
+
     public static function findMatch(string $text): ?int {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');

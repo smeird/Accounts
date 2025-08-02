@@ -24,6 +24,7 @@ class Log {
     }
 
     public static function registerHandlers(): void {
+
         error_reporting(E_ALL);
 
         set_error_handler(function ($severity, $message, $file, $line): bool {
@@ -35,13 +36,18 @@ class Log {
             self::write($e->getMessage(), 'ERROR');
         });
 
+
         register_shutdown_function(function (): void {
             $error = error_get_last();
             if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
                 self::write("{$error['message']} in {$error['file']} on line {$error['line']}", 'ERROR');
             }
         });
+
     }
 }
 
 Log::registerHandlers();
+
+?>
+

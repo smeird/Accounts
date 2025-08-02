@@ -46,8 +46,21 @@ async function loadTags(){
             loadTags();
             showMessage('Tag updated');
         });
+        const del = document.createElement('button');
+        del.textContent = 'Delete';
+        del.addEventListener('click', async () => {
+            if (!confirm('Delete this tag?')) return;
+            await fetch('../php_backend/public/tags.php', {
+                method: 'DELETE',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({id: t.id})
+            });
+            loadTags();
+            showMessage('Tag deleted');
+        });
         li.appendChild(span);
         li.appendChild(btn);
+        li.appendChild(del);
         list.appendChild(li);
     });
 }
