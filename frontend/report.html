@@ -17,17 +17,14 @@
                 <label>Group ID: <input type="number" id="group"></label>
                 <button type="submit">Run Report</button>
             </form>
-            <table id="results">
-                <thead>
-                    <tr><th>Date</th><th>Amount</th><th>Description</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div id="results-grid"></div>
             <div id="chart" style="height:400px;margin-top:20px;"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/data.js"></script>
+    <script src="https://code.highcharts.com/modules/datagrid.js"></script>
     <script>
     document.getElementById('report-form').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -41,15 +38,25 @@
         fetch('../php_backend/public/report.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
-                const tbody = document.querySelector('#results tbody');
+                const gridContainer = '#results-grid';
                 const chartContainer = document.getElementById('chart');
-                tbody.innerHTML = '';
+                document.querySelector(gridContainer).innerHTML = '';
                 chartContainer.innerHTML = '';
                 if (Array.isArray(data) && data.length) {
-                    data.forEach(tx => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td>${tx.date}</td><td>${tx.amount}</td><td>${tx.description}</td>`;
-                        tbody.appendChild(tr);
+                    const dataTable = new Highcharts.DataTable({
+                        columns: {
+                            date: data.map(tx => tx.date),
+                            amount: data.map(tx => tx.amount),
+                            description: data.map(tx => tx.description)
+                        }
+                    });
+                    Highcharts.DataGrid(gridContainer, {
+                        dataTable,
+                        columns: {
+                            date: { title: 'Date' },
+                            amount: { title: 'Amount' },
+                            description: { title: 'Description' }
+                        }
                     });
                     const categories = data.map(tx => tx.date);
                     const amounts = data.map(tx => parseFloat(tx.amount));
@@ -61,7 +68,7 @@
                         series: [{ name: 'Amount', data: amounts }]
                     });
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3">No transactions found.</td></tr>';
+                    document.querySelector(gridContainer).innerHTML = 'No transactions found.';
                 }
             });
     });

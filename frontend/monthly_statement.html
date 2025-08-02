@@ -31,19 +31,13 @@
                 <input type="number" id="year" name="year" min="2000" value="2024">
                 <button type="submit">View</button>
             </form>
-            <table id="transactions-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div id="transactions-grid"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/data.js"></script>
+    <script src="https://code.highcharts.com/modules/datagrid.js"></script>
 <script>
 const form = document.getElementById('statement-form');
 form.addEventListener('submit', function(e) {
@@ -53,12 +47,20 @@ form.addEventListener('submit', function(e) {
     fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year)
         .then(resp => resp.json())
         .then(data => {
-            const tbody = document.querySelector('#transactions-table tbody');
-            tbody.innerHTML = '';
-            data.forEach(tx => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${tx.date}</td><td>${tx.description}</td><td>${tx.amount}</td>`;
-                tbody.appendChild(tr);
+            const dataTable = new Highcharts.DataTable({
+                columns: {
+                    date: data.map(tx => tx.date),
+                    description: data.map(tx => tx.description),
+                    amount: data.map(tx => tx.amount)
+                }
+            });
+            Highcharts.DataGrid('#transactions-grid', {
+                dataTable,
+                columns: {
+                    date: { title: 'Date' },
+                    description: { title: 'Description' },
+                    amount: { title: 'Amount' }
+                }
             });
         });
 });

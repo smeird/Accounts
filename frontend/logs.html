@@ -11,30 +11,32 @@
         <nav class="sidebar" id="menu"></nav>
         <main class="content">
             <h1>Application Logs</h1>
-            <table id="logs-table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Level</th>
-                        <th>Message</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div id="logs-grid"></div>
         </main>
     </div>
 
     <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/data.js"></script>
+    <script src="https://code.highcharts.com/modules/datagrid.js"></script>
     <script>
     fetch('../php_backend/public/logs.php')
         .then(resp => resp.json())
         .then(data => {
-            const tbody = document.querySelector('#logs-table tbody');
-            tbody.innerHTML = '';
-            data.forEach(log => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${log.created_at}</td><td>${log.level}</td><td>${log.message}</td>`;
-                tbody.appendChild(tr);
+            const dataTable = new Highcharts.DataTable({
+                columns: {
+                    time: data.map(log => log.created_at),
+                    level: data.map(log => log.level),
+                    message: data.map(log => log.message)
+                }
+            });
+            Highcharts.DataGrid('#logs-grid', {
+                dataTable,
+                columns: {
+                    time: { title: 'Time' },
+                    level: { title: 'Level' },
+                    message: { title: 'Message' }
+                }
             });
         });
     </script>
