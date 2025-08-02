@@ -37,8 +37,18 @@
     document.querySelectorAll("form").forEach(f => {
         f.addEventListener("submit", async e => {
             e.preventDefault();
-            const data = new FormData(f);
-            const resp = await fetch(f.action, {method: f.method.toUpperCase(), body: data});
+            const formData = new FormData(f);
+            const data = Object.fromEntries(formData.entries());
+            let method = f.method.toUpperCase();
+            if (data.action === 'update') {
+                method = 'PUT';
+            }
+            delete data.action;
+            const resp = await fetch(f.action, {
+                method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
             const text = await resp.text();
             try {
                 const j = JSON.parse(text);
