@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 
 header('Content-Type: application/json');
