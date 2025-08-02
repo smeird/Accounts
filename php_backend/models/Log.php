@@ -13,14 +13,23 @@ class Log {
         $db = Database::getConnection();
         $sql = 'SELECT level, message, created_at FROM logs ORDER BY created_at DESC';
         if ($limit !== null) {
-            $sql .= ' LIMIT :limit';
+            $sql .= ' LIMIT ' . (int)$limit;
         }
-        $stmt = $db->prepare($sql);
-        if ($limit !== null) {
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        }
-        $stmt->execute();
+        $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public static function registerHandlers(): void {
+        set_error_handler(function ($severity, $message, $file, $line): bool {
+            self::write("$message in $file on line $line", 'ERROR');
+            return false;
+        });
+
+        set_exception_handler(function (Throwable $e): void {
+            self::write($e->getMessage(), 'ERROR');
+        });
+    }
 }
+
+Log::registerHandlers();
 ?>
