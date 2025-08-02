@@ -59,7 +59,9 @@
                             amount: data.results.map(tx => formatCurrency(tx.amount))
                         }
                     });
-                    Highcharts.DataGrid(gridEl, {
+
+                    new Highcharts.DataGrid(gridEl, {
+
                         dataTable,
                         columns: {
                             date: { title: 'Date' },

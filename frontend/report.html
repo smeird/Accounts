@@ -55,7 +55,9 @@
                             description: data.map(tx => tx.description)
                         }
                     });
-                    Highcharts.DataGrid(gridEl, {
+
+                    new Highcharts.DataGrid(gridEl, {
+
                         dataTable,
                         columns: {
                             date: { title: 'Date' },
