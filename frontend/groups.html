@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Groups</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>Manage Groups</h1>
+            <section>
+                <h2>Add Group</h2>
+                <form action="../php_backend/public/groups.php" method="post">
+                    <input type="hidden" name="action" value="create">
+                    <input type="text" name="name" placeholder="Group name">
+                    <button type="submit">Add</button>
+                </form>
+            </section>
+            <section>
+                <h2>Update Group</h2>
+                <form action="../php_backend/public/groups.php" method="post">
+                    <input type="hidden" name="action" value="update">
+                    <input type="number" name="id" placeholder="Group ID">
+                    <input type="text" name="name" placeholder="New name">
+                    <button type="submit">Update</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/menu.js"></script>
+    <script src="js/overlay.js"></script>
+    <script>
+    document.querySelectorAll("form").forEach(f => {
+        f.addEventListener("submit", async e => {
+            e.preventDefault();
+            const data = new FormData(f);
+            const resp = await fetch(f.action, {method: f.method.toUpperCase(), body: data});
+            const text = await resp.text();
+            try {
+                const j = JSON.parse(text);
+                if (j.error) showMessage("Error: " + j.error);
+                else if (j.id) showMessage("Created ID " + j.id);
+                else showMessage("Success");
+            } catch {
+                showMessage(text);
+            }
+        });
+    });
+    </script>
+
+</body>
+</html>
