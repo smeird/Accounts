@@ -21,8 +21,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script>
-
-async function loadGroups(){
+async function loadGroups() {
     const res = await fetch('../php_backend/public/groups.php');
     const groups = await res.json();
     const list = document.getElementById('group-list');
@@ -38,37 +37,11 @@ async function loadGroups(){
             if (name === null) return;
             await fetch('../php_backend/public/groups.php', {
                 method: 'PUT',
-                headers: {'Content-Type':'application/json'},
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: g.id, name})
             });
             loadGroups();
             showMessage('Group updated');
-
-    document.querySelectorAll("form").forEach(f => {
-        f.addEventListener("submit", async e => {
-            e.preventDefault();
-            const formData = new FormData(f);
-            const data = Object.fromEntries(formData.entries());
-            let method = f.method.toUpperCase();
-            if (data.action === 'update') {
-                method = 'PUT';
-            }
-            delete data.action;
-            const resp = await fetch(f.action, {
-                method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            const text = await resp.text();
-            try {
-                const j = JSON.parse(text);
-                if (j.error) showMessage("Error: " + j.error);
-                else if (j.id) showMessage("Created ID " + j.id);
-                else showMessage("Success");
-            } catch {
-                showMessage(text);
-            }
-
         });
         li.appendChild(span);
         li.appendChild(btn);
@@ -80,11 +53,11 @@ document.getElementById('group-form').addEventListener('submit', async e => {
     e.preventDefault();
     const name = document.getElementById('group-name').value;
     await fetch('../php_backend/public/groups.php', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({name})
     });
-    document.getElementById('group-name').value='';
+    document.getElementById('group-name').value = '';
     loadGroups();
     showMessage('Group created');
 });
