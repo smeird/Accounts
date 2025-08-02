@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+
 if ($method === 'GET') {
     try {
         echo json_encode(TransactionGroup::all());
@@ -16,6 +17,7 @@ if ($method === 'GET') {
     }
     exit;
 }
+
 
 $data = json_decode(file_get_contents('php://input'), true) ?? [];
 

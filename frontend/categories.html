@@ -44,6 +44,7 @@ async function loadCategories(){
             loadCategories();
             showMessage('Category updated');
         });
+
         const tagBtn = document.createElement('button');
         tagBtn.textContent = 'Assign Tag';
         tagBtn.addEventListener('click', async () => {
@@ -56,6 +57,40 @@ async function loadCategories(){
             });
             loadCategories();
             showMessage('Tag assigned');
+
+    }
+
+    document.querySelectorAll("form").forEach(f => {
+        f.addEventListener("submit", async e => {
+            e.preventDefault();
+            const formData = new FormData(f);
+            const data = Object.fromEntries(formData.entries());
+            let method = f.method.toUpperCase();
+            if (data.action === 'update') {
+                method = 'PUT';
+                delete data.action;
+            } else if (data.action === 'create') {
+                delete data.action;
+            }
+            const resp = await fetch(f.action, {
+                method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const text = await resp.text();
+            try {
+                const j = JSON.parse(text);
+                if (j.error) {
+                    showMessage("Error: " + j.error);
+                } else {
+                    if (j.id) showMessage("Created ID " + j.id);
+                    else showMessage("Success");
+                    loadCategories();
+                }
+            } catch {
+                showMessage(text);
+            }
+
         });
         li.appendChild(span);
         li.appendChild(editBtn);

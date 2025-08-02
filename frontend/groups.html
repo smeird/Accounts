@@ -21,6 +21,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script>
+
 async function loadGroups(){
     const res = await fetch('../php_backend/public/groups.php');
     const groups = await res.json();
@@ -42,6 +43,32 @@ async function loadGroups(){
             });
             loadGroups();
             showMessage('Group updated');
+
+    document.querySelectorAll("form").forEach(f => {
+        f.addEventListener("submit", async e => {
+            e.preventDefault();
+            const formData = new FormData(f);
+            const data = Object.fromEntries(formData.entries());
+            let method = f.method.toUpperCase();
+            if (data.action === 'update') {
+                method = 'PUT';
+            }
+            delete data.action;
+            const resp = await fetch(f.action, {
+                method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const text = await resp.text();
+            try {
+                const j = JSON.parse(text);
+                if (j.error) showMessage("Error: " + j.error);
+                else if (j.id) showMessage("Created ID " + j.id);
+                else showMessage("Success");
+            } catch {
+                showMessage(text);
+            }
+
         });
         li.appendChild(span);
         li.appendChild(btn);
