@@ -15,6 +15,12 @@ class Tag {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function update(int $id, string $name, ?string $keyword = null): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword WHERE `id` = :id');
+        return $stmt->execute(['name' => $name, 'keyword' => $keyword, 'id' => $id]);
+    }
+
     public static function findMatch(string $text): ?int {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');

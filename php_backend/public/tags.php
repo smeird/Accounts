@@ -30,6 +30,25 @@ if ($method === 'POST') {
         Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
         echo json_encode([]);
     }
+} elseif ($method === 'PUT') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $id = $data['id'] ?? null;
+    $name = $data['name'] ?? null;
+    $keyword = $data['keyword'] ?? null;
+    if (!$id || !$name) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID and name required']);
+        exit;
+    }
+    try {
+        Tag::update((int)$id, $name, $keyword);
+        Log::write("Updated tag $id");
+        echo json_encode(['status' => 'ok']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode(['error' => 'Server error']);
+    }
 } else {
     http_response_code(405);
 }
