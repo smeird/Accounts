@@ -31,7 +31,9 @@
                     message: data.map(log => log.message)
                 }
             });
+
             new DataGrid.DataGrid(document.getElementById('logs-grid'), {
+
                 dataTable,
                 columns: {
                     time: { title: 'Time' },
