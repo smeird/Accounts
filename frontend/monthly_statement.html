@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monthly Statement</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://code.highcharts.com/css/datagrid.css">
 </head>
 <body>
     <div class="container">
@@ -86,7 +87,7 @@ form.addEventListener('submit', function(e) {
                     amount: data.map(tx => formatCurrency(tx.amount))
                 }
             });
-            Highcharts.DataGrid('#transactions-grid', {
+            Highcharts.DataGrid('transactions-grid', {
                 dataTable,
                 columns: {
                     date: { title: 'Date' },

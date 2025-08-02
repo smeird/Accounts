@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Transactions</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://code.highcharts.com/css/datagrid.css">
 </head>
 <body>
     <div class="container">
@@ -48,8 +49,7 @@
         fetch('../php_backend/public/search_transactions.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
-                const gridContainer = '#results-grid';
-                const gridEl = document.querySelector(gridContainer);
+                const gridEl = document.getElementById('results-grid');
                 gridEl.innerHTML = '';
                 if (data.results && data.results.length) {
                     const dataTable = new Highcharts.DataTable({
@@ -59,7 +59,7 @@
                             amount: data.results.map(tx => formatCurrency(tx.amount))
                         }
                     });
-                    Highcharts.DataGrid(gridContainer, {
+                    Highcharts.DataGrid(gridEl, {
                         dataTable,
                         columns: {
                             date: { title: 'Date' },
