@@ -3,6 +3,7 @@ require_once __DIR__ . '/../models/Account.php';
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Tag.php';
+require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../Database.php';
 
 try {
@@ -63,9 +64,10 @@ foreach ($matches[1] as $block) {
 }
 
 $tagged = Tag::applyToAccountTransactions($accountId);
+$categorised = CategoryTag::applyToAccountTransactions($accountId);
 
-    echo "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions.";
-    Log::write("Inserted $inserted transactions for account $accountName; tagged $tagged transactions");
+    echo "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
+    Log::write("Inserted $inserted transactions for account $accountName; tagged $tagged transactions; categorised $categorised transactions");
 } catch (Exception $e) {
     http_response_code(500);
     $msg = 'Error: ' . $e->getMessage();
