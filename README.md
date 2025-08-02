@@ -2,6 +2,10 @@
 
 This repository now provides a simple PHP implementation for managing accounts and transactions.
 
+## Specifications
+
+- Highcharts should be used for rendering both graphs and tables.
+
 ## PHP Development Setup
 
 1. Ensure PHP and MySQL are installed.
