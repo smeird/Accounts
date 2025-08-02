@@ -35,7 +35,7 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/data.js"></script>
-<script src="https://code.highcharts.com/modules/datagrid.js"></script>
+    <script src="https://code.highcharts.com/modules/data-grid.js"></script>
     <script>
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
@@ -52,7 +52,7 @@
                 const gridEl = document.getElementById('results-grid');
                 gridEl.innerHTML = '';
                 if (data.results && data.results.length) {
-                    const dataTable = new Highcharts.DataTable({
+                    const dataTable = new DataGrid.DataTable({
                         columns: {
                             date: data.results.map(tx => tx.date),
                             description: data.results.map(tx => tx.description),
@@ -60,7 +60,7 @@
                         }
                     });
 
-                    new Highcharts.DataGrid(gridEl, {
+                    new DataGrid.DataGrid(gridEl, {
 
                         dataTable,
                         columns: {

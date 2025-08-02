@@ -19,12 +19,12 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/data.js"></script>
-    <script src="https://code.highcharts.com/modules/datagrid.js"></script>
+    <script src="https://code.highcharts.com/modules/data-grid.js"></script>
     <script>
     fetch('../php_backend/public/logs.php')
         .then(resp => resp.json())
         .then(data => {
-            const dataTable = new Highcharts.DataTable({
+            const dataTable = new DataGrid.DataTable({
                 columns: {
                     time: data.map(log => log.created_at),
                     level: data.map(log => log.level),
@@ -32,7 +32,7 @@
                 }
             });
 
-            new Highcharts.DataGrid(document.getElementById('logs-grid'), {
+            new DataGrid.DataGrid(document.getElementById('logs-grid'), {
 
                 dataTable,
                 columns: {
