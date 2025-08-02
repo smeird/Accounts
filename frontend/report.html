@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Reports</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://code.highcharts.com/css/datagrid.css">
 </head>
 <body>
     <div class="container">
@@ -42,9 +43,9 @@
         fetch('../php_backend/public/report.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
-                const gridContainer = '#results-grid';
+                const gridEl = document.getElementById('results-grid');
                 const chartContainer = document.getElementById('chart');
-                document.querySelector(gridContainer).innerHTML = '';
+                gridEl.innerHTML = '';
                 chartContainer.innerHTML = '';
                 if (Array.isArray(data) && data.length) {
                     const dataTable = new Highcharts.DataTable({
@@ -54,7 +55,7 @@
                             description: data.map(tx => tx.description)
                         }
                     });
-                    Highcharts.DataGrid(gridContainer, {
+                    new Highcharts.DataGrid(gridEl, {
                         dataTable,
                         columns: {
                             date: { title: 'Date' },
@@ -76,7 +77,7 @@
                         series: [{ name: 'Amount', data: amounts }]
                     });
                 } else {
-                    document.querySelector(gridContainer).innerHTML = 'No transactions found.';
+                    gridEl.innerHTML = 'No transactions found.';
                 }
             });
     });
