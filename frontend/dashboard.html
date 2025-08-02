@@ -31,7 +31,7 @@
             const list = document.createElement('ul');
             chartData.forEach((val, idx) => {
                 const li = document.createElement('li');
-                li.textContent = months[idx] + ': $' + val.toFixed(2);
+                li.textContent = months[idx] + ': £' + val.toFixed(2);
                 list.appendChild(li);
             });
             summary.appendChild(list);
