@@ -27,16 +27,14 @@
                 <input type="text" id="term" placeholder="Search value">
                 <button type="submit">Search</button>
             </form>
-            <table id="results">
-                <thead>
-                    <tr><th>Date</th><th>Description</th><th>Amount</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div id="results-grid"></div>
             <p id="total"></p>
         </main>
     </div>
     <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/data.js"></script>
+    <script src="https://code.highcharts.com/modules/datagrid.js"></script>
     <script>
     document.getElementById('search-form').addEventListener('submit', function(e){
         e.preventDefault();
@@ -46,16 +44,27 @@
         fetch('../php_backend/public/search_transactions.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
-                const tbody = document.querySelector('#results tbody');
-                tbody.innerHTML = '';
+                const gridContainer = '#results-grid';
+                const gridEl = document.querySelector(gridContainer);
+                gridEl.innerHTML = '';
                 if (data.results && data.results.length) {
-                    data.results.forEach(tx => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td>${tx.date}</td><td>${tx.description}</td><td>${tx.amount}</td>`;
-                        tbody.appendChild(tr);
+                    const dataTable = new Highcharts.DataTable({
+                        columns: {
+                            date: data.results.map(tx => tx.date),
+                            description: data.results.map(tx => tx.description),
+                            amount: data.results.map(tx => tx.amount)
+                        }
+                    });
+                    Highcharts.DataGrid(gridContainer, {
+                        dataTable,
+                        columns: {
+                            date: { title: 'Date' },
+                            description: { title: 'Description' },
+                            amount: { title: 'Amount' }
+                        }
                     });
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3">No transactions found.</td></tr>';
+                    gridEl.innerHTML = 'No transactions found.';
                 }
                 document.getElementById('total').textContent = 'Total: ' + data.total;
             });
