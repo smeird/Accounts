@@ -29,7 +29,25 @@ async function loadTags(){
     list.innerHTML = '';
     tags.forEach(t => {
         const li = document.createElement('li');
-        li.textContent = `${t.name} (${t.keyword||''})`;
+        const span = document.createElement('span');
+        span.textContent = `${t.name} (${t.keyword||''})`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Edit';
+        btn.addEventListener('click', async () => {
+            const name = prompt('Tag Name', t.name);
+            if (name === null) return;
+            const keyword = prompt('Keyword (for auto tagging)', t.keyword || '');
+            if (keyword === null) return;
+            await fetch('../php_backend/public/tags.php', {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({id: t.id, name, keyword})
+            });
+            loadTags();
+            showMessage('Tag updated');
+        });
+        li.appendChild(span);
+        li.appendChild(btn);
         list.appendChild(li);
     });
 }
