@@ -49,6 +49,23 @@ if ($method === 'POST') {
         Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
         echo json_encode(['error' => 'Server error']);
     }
+} elseif ($method === 'DELETE') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $id = $data['id'] ?? null;
+    if (!$id) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID required']);
+        exit;
+    }
+    try {
+        Tag::delete((int)$id);
+        Log::write("Deleted tag $id");
+        echo json_encode(['status' => 'ok']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode(['error' => 'Server error']);
+    }
 } else {
     http_response_code(405);
 }
