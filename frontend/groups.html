@@ -11,46 +11,59 @@
         <nav class="sidebar" id="menu"></nav>
         <main class="content">
             <h1>Manage Groups</h1>
-            <section>
-                <h2>Add Group</h2>
-                <form action="../php_backend/public/groups.php" method="post">
-                    <input type="hidden" name="action" value="create">
-                    <input type="text" name="name" placeholder="Group name">
-                    <button type="submit">Add</button>
-                </form>
-            </section>
-            <section>
-                <h2>Update Group</h2>
-                <form action="../php_backend/public/groups.php" method="post">
-                    <input type="hidden" name="action" value="update">
-                    <input type="number" name="id" placeholder="Group ID">
-                    <input type="text" name="name" placeholder="New name">
-                    <button type="submit">Update</button>
-                </form>
-            </section>
+            <form id="group-form">
+                <label>Group Name<br><input type="text" id="group-name"></label><br>
+                <button type="submit">Create Group</button>
+            </form>
+            <h2>Existing Groups</h2>
+            <ul id="group-list"></ul>
         </main>
     </div>
-
     <script src="js/menu.js"></script>
-    <script src="js/overlay.js"></script>
     <script>
-    document.querySelectorAll("form").forEach(f => {
-        f.addEventListener("submit", async e => {
-            e.preventDefault();
-            const data = new FormData(f);
-            const resp = await fetch(f.action, {method: f.method.toUpperCase(), body: data});
-            const text = await resp.text();
-            try {
-                const j = JSON.parse(text);
-                if (j.error) showMessage("Error: " + j.error);
-                else if (j.id) showMessage("Created ID " + j.id);
-                else showMessage("Success");
-            } catch {
-                showMessage(text);
-            }
+async function loadGroups(){
+    const res = await fetch('../php_backend/public/groups.php');
+    const groups = await res.json();
+    const list = document.getElementById('group-list');
+    list.innerHTML = '';
+    groups.forEach(g => {
+        const li = document.createElement('li');
+        const span = document.createElement('span');
+        span.textContent = g.name;
+        const btn = document.createElement('button');
+        btn.textContent = 'Edit';
+        btn.addEventListener('click', async () => {
+            const name = prompt('Group Name', g.name);
+            if (name === null) return;
+            await fetch('../php_backend/public/groups.php', {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({id: g.id, name})
+            });
+            loadGroups();
+            showMessage('Group updated');
         });
+        li.appendChild(span);
+        li.appendChild(btn);
+        list.appendChild(li);
     });
-    </script>
+}
 
+document.getElementById('group-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('group-name').value;
+    await fetch('../php_backend/public/groups.php', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name})
+    });
+    document.getElementById('group-name').value='';
+    loadGroups();
+    showMessage('Group created');
+});
+
+loadGroups();
+    </script>
+    <script src="js/overlay.js"></script>
 </body>
 </html>

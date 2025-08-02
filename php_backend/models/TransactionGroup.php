@@ -14,5 +14,11 @@ class TransactionGroup {
         $stmt = $db->prepare('UPDATE transaction_groups SET name = :name WHERE id = :id');
         $stmt->execute(['id' => $id, 'name' => $name]);
     }
+
+    public static function all(): array {
+        $db = Database::getConnection();
+        $stmt = $db->query('SELECT id, name FROM transaction_groups ORDER BY id');
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
