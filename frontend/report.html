@@ -77,8 +77,11 @@
                         layout: 'fitColumns',
                         columns: [
                             { title: 'Date', field: 'date' },
-                            { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
-                            { title: 'Description', field: 'description' }
+                            { title: 'Description', field: 'description' },
+                            { title: 'Category', field: 'category_name' },
+                            { title: 'Tag', field: 'tag_name' },
+                            { title: 'Group', field: 'group_name' },
+                            { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
                         ]
                     });
                     const categories = data.map(tx => tx.date);

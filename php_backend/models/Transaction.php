@@ -38,28 +38,57 @@ class Transaction {
 
     public static function getByCategory(int $categoryId): array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `date`, `amount`, `description` FROM `transactions` WHERE `category_id` = :category');
+        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE t.`category_id` = :category';
+        $stmt = $db->prepare($sql);
         $stmt->execute(['category' => $categoryId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function getByTag(int $tagId): array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `date`, `amount`, `description` FROM `transactions` WHERE `tag_id` = :tag');
+        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE t.`tag_id` = :tag';
+        $stmt = $db->prepare($sql);
         $stmt->execute(['tag' => $tagId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function getByGroup(int $groupId): array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `date`, `amount`, `description` FROM `transactions` WHERE `group_id` = :grp');
+        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE t.`group_id` = :grp';
+        $stmt = $db->prepare($sql);
         $stmt->execute(['grp' => $groupId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT * FROM `transactions` WHERE MONTH(`date`) = :month AND YEAR(`date`) = :year ORDER BY `date`');
+        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
+             . 'ORDER BY t.`date`';
+        $stmt = $db->prepare($sql);
         $stmt->execute(['month' => $month, 'year' => $year]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -115,13 +144,24 @@ class Transaction {
 
         $db = Database::getConnection();
 
+        $qualified = 't.`' . $field . '`';
+        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE ' . $qualified;
+
         // numeric fields use exact match
         $numeric = ['id','account_id','category_id','tag_id','group_id','amount'];
         if (in_array($field, $numeric, true)) {
-            $stmt = $db->prepare("SELECT * FROM `transactions` WHERE `$field` = :val");
+            $sql .= ' = :val';
+            $stmt = $db->prepare($sql);
             $stmt->execute(['val' => $value]);
         } else {
-            $stmt = $db->prepare("SELECT * FROM `transactions` WHERE `$field` LIKE :val");
+            $sql .= ' LIKE :val';
+            $stmt = $db->prepare($sql);
             $stmt->execute(['val' => '%' . $value . '%']);
         }
 
