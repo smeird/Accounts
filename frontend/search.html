@@ -17,6 +17,7 @@
                 <label>Field:
                     <select id="field">
                         <option value="description">Description</option>
+                        <option value="memo">Memo</option>
                         <option value="date">Date</option>
                         <option value="amount">Amount</option>
                         <option value="account_id">Account ID</option>
@@ -57,6 +58,7 @@
                         columns: [
                             { title: 'Date', field: 'date' },
                             { title: 'Description', field: 'description' },
+                            { title: 'Memo', field: 'memo' },
                             { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
                         ]
                     });

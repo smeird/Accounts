@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     date DATE NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     description VARCHAR(255) NOT NULL,
+    memo VARCHAR(255) DEFAULT NULL,
     category_id INT DEFAULT NULL,
     tag_id INT DEFAULT NULL,
     group_id INT DEFAULT NULL,
