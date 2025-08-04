@@ -53,6 +53,8 @@ A simple static frontend can be opened directly from `frontend/index.html`. It p
 
 The yearly dashboard page (`frontend/yearly_dashboard.html`) lets you select a year and view total spending by tag, category, and group with tables and bar charts.
 
+The monthly dashboard page (`frontend/monthly_dashboard.html`) shows totals by tag, category, and group for a selected month along with overall income, outgoings, and delta.
+
 The monthly statement page (`frontend/monthly_statement.html`) allows selecting a month and year to list transactions for that period.
 
 ## Reports

@@ -76,3 +76,11 @@ th {
 .currency {
     text-align: right;
 }
+
+.positive {
+    color: green;
+}
+
+.negative {
+    color: red;
+}
