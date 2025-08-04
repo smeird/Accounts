@@ -102,13 +102,16 @@ form.addEventListener('submit', function(e) {
                 if (cell.getField() === 'tag_id') {
                     const val = cell.getValue();
                     const data = cell.getRow().getData();
+
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
+
                     if (val === '__new') {
                         const name = prompt('Enter new tag name:');
                         if (!name) {
                             cell.setValue(data.tag_id, true);
                             return;
                         }
+
                         payload.tag_name = name;
                     } else {
                         payload.tag_id = val;
@@ -131,6 +134,7 @@ form.addEventListener('submit', function(e) {
                         alert('Failed to save tag');
                         cell.setValue(data.tag_id, true);
                     });
+
                 }
             }
         });
