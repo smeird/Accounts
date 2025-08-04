@@ -133,8 +133,67 @@ class Transaction {
     }
 
     /**
-     * Search transactions across all supported fields.
-     * Text fields use partial matches while numeric fields use exact matches.
+
+     * Retrieve total spending by tag for a given year.
+     * Returns tag name and total spent as positive numbers ordered by total descending.
+     */
+    public static function getTagTotalsByYear(int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT tg.`name` AS `name`,
+                    SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t
+             JOIN `tags` tg ON t.`tag_id` = tg.`id`
+             WHERE YEAR(t.`date`) = :year
+             GROUP BY tg.`id`, tg.`name`
+             ORDER BY `total` DESC'
+        );
+        $stmt->execute(['year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieve total spending by category for a given year.
+     * Returns category name and total spent as positive numbers ordered by total descending.
+     */
+    public static function getCategoryTotalsByYear(int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT c.`name` AS `name`,
+                    SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t
+             JOIN `categories` c ON t.`category_id` = c.`id`
+             WHERE YEAR(t.`date`) = :year
+             GROUP BY c.`id`, c.`name`
+             ORDER BY `total` DESC'
+        );
+        $stmt->execute(['year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieve total spending by group for a given year.
+     * Returns group name and total spent as positive numbers ordered by total descending.
+     */
+    public static function getGroupTotalsByYear(int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT g.`name` AS `name`,
+                    SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t
+             JOIN `transaction_groups` g ON t.`group_id` = g.`id`
+             WHERE YEAR(t.`date`) = :year
+             GROUP BY g.`id`, g.`name`
+             ORDER BY `total` DESC'
+        );
+        $stmt->execute(['year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Search transactions by a specific field.
+     * Supports partial matches for text fields and exact matches for numeric fields.
+
      */
     public static function search(string $value): array {
         $db = Database::getConnection();
