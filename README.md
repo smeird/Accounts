@@ -4,7 +4,7 @@ This repository now provides a simple PHP implementation for managing accounts a
 
 ## Specifications
 
-- Highcharts should be used for rendering both graphs and tables.
+- Highcharts is used for graphs, while Tabulator renders interactive tables.
 - Display all monetary values using the pound symbol (£) instead of the dollar sign ($).
 
 ## PHP Development Setup

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monthly Statement</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://code.highcharts.com/css/datagrid.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body>
     <div class="container">
@@ -24,16 +24,10 @@
         </main>
     </div>
     <script src="js/menu.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/data.js"></script>
-    <script src="https://code.highcharts.com/modules/data-grid.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
-
-function formatCurrency(value) {
-    return '£' + parseFloat(value).toFixed(2);
-}
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -81,26 +75,14 @@ form.addEventListener('submit', function(e) {
     fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year)
         .then(resp => resp.json())
         .then(data => {
-            const dataTable = new DataGrid.DataTable({
-                columns: {
-                    date: data.map(tx => tx.date),
-                    description: data.map(tx => tx.description),
-                    amount: data.map(tx => formatCurrency(tx.amount))
-                }
-            });
-
-            new DataGrid.DataGrid(document.getElementById('transactions-grid'), {
-
-                dataTable,
-                columns: {
-                    date: { title: 'Date' },
-                    description: { title: 'Description' },
-                    amount: { title: 'Amount' }
-                }
-            });
-            document.querySelectorAll('#transactions-grid table tr').forEach(row => {
-                const cell = row.children[2];
-                if (cell) cell.classList.add('currency');
+            new Tabulator('#transactions-grid', {
+                data: data,
+                layout: 'fitColumns',
+                columns: [
+                    { title: 'Date', field: 'date' },
+                    { title: 'Description', field: 'description' },
+                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+                ]
             });
         });
 });

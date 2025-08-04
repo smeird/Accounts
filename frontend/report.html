@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Reports</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://code.highcharts.com/css/datagrid.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body>
     <div class="container">
@@ -25,12 +25,8 @@
     </div>
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/data.js"></script>
-    <script src="https://code.highcharts.com/modules/data-grid.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script>
-    function formatCurrency(value) {
-        return '£' + parseFloat(value).toFixed(2);
-    }
 
     async function loadOptions() {
         const [catRes, tagRes] = await Promise.all([
@@ -76,26 +72,14 @@
                 gridEl.innerHTML = '';
                 chartContainer.innerHTML = '';
                 if (Array.isArray(data) && data.length) {
-                    const dataTable = new DataGrid.DataTable({
-                        columns: {
-                            date: data.map(tx => tx.date),
-                            amount: data.map(tx => formatCurrency(tx.amount)),
-                            description: data.map(tx => tx.description)
-                        }
-                    });
-
-                    new DataGrid.DataGrid(gridEl, {
-
-                        dataTable,
-                        columns: {
-                            date: { title: 'Date' },
-                            amount: { title: 'Amount' },
-                            description: { title: 'Description' }
-                        }
-                    });
-                    document.querySelectorAll('#results-grid table tr').forEach(row => {
-                        const cell = row.children[1];
-                        if (cell) cell.classList.add('currency');
+                    new Tabulator(gridEl, {
+                        data: data,
+                        layout: 'fitColumns',
+                        columns: [
+                            { title: 'Date', field: 'date' },
+                            { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                            { title: 'Description', field: 'description' }
+                        ]
                     });
                     const categories = data.map(tx => tx.date);
                     const amounts = data.map(tx => parseFloat(tx.amount));

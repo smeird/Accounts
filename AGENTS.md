@@ -8,7 +8,7 @@
 
 ## Code Style
 - No formal coding standard is enforced; keep code clear and consistent with existing files.
-- Use Highcharts for graphs and tables.
+- Use Highcharts for graphs and Tabulator for tables.
 - Display monetary values with the pound symbol (£).
 
 ## Testing

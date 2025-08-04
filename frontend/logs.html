@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application Logs</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://code.highcharts.com/css/datagrid.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body>
     <div class="container">
@@ -18,29 +18,19 @@
     </div>
 
     <script src="js/menu.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/data.js"></script>
-    <script src="https://code.highcharts.com/modules/data-grid.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script>
     fetch('../php_backend/public/logs.php')
         .then(resp => resp.json())
         .then(data => {
-            const dataTable = new DataGrid.DataTable({
-                columns: {
-                    time: data.map(log => log.created_at),
-                    level: data.map(log => log.level),
-                    message: data.map(log => log.message)
-                }
-            });
-
-            new DataGrid.DataGrid(document.getElementById('logs-grid'), {
-
-                dataTable,
-                columns: {
-                    time: { title: 'Time' },
-                    level: { title: 'Level' },
-                    message: { title: 'Message' }
-                }
+            new Tabulator('#logs-grid', {
+                data: data,
+                layout: 'fitColumns',
+                columns: [
+                    { title: 'Time', field: 'created_at' },
+                    { title: 'Level', field: 'level' },
+                    { title: 'Message', field: 'message' }
+                ]
             });
         });
     </script>
