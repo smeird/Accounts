@@ -102,24 +102,39 @@ form.addEventListener('submit', function(e) {
                 if (cell.getField() === 'tag_id') {
                     const val = cell.getValue();
                     const data = cell.getRow().getData();
+
+                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
+
                     if (val === '__new') {
                         const name = prompt('Enter new tag name:');
                         if (!name) {
                             cell.setValue(data.tag_id, true);
                             return;
                         }
-                        fetch('../php_backend/public/update_transaction_tag.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ transaction_id: data.id, account_id: data.account_id, tag_name: name })
-                        }).then(() => form.dispatchEvent(new Event('submit')));
+
+                        payload.tag_name = name;
                     } else {
-                        fetch('../php_backend/public/update_transaction_tag.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ transaction_id: data.id, account_id: data.account_id, tag_id: val })
-                        }).then(() => form.dispatchEvent(new Event('submit')));
+                        payload.tag_id = val;
                     }
+                    fetch('../php_backend/public/update_transaction_tag.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(resp => resp.json())
+                    .then(res => {
+                        if (res && res.status === 'ok') {
+                            form.dispatchEvent(new Event('submit'));
+                        } else {
+                            alert('Failed to save tag');
+                            cell.setValue(data.tag_id, true);
+                        }
+                    })
+                    .catch(() => {
+                        alert('Failed to save tag');
+                        cell.setValue(data.tag_id, true);
+                    });
+
                 }
             }
         });

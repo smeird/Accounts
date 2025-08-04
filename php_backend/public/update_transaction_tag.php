@@ -18,7 +18,10 @@ $accountId = $data['account_id'] ?? null;
 $tagId = $data['tag_id'] ?? null;
 $tagName = $data['tag_name'] ?? null;
 
-if (!$transactionId || !$accountId || (!$tagId && !$tagName)) {
+$description = $data['description'] ?? null;
+
+if (!$transactionId || !$accountId || (!$tagId && !$tagName) || !$description) {
+
     http_response_code(400);
     echo json_encode(['error' => 'Invalid parameters']);
     exit;
@@ -26,8 +29,12 @@ if (!$transactionId || !$accountId || (!$tagId && !$tagName)) {
 
 try {
     if (!$tagId && $tagName) {
-        $tagId = Tag::create($tagName, $tagName);
+
+        $tagId = Tag::create($tagName, $description);
         Log::write("Created tag $tagName");
+    } else {
+        Tag::setKeywordIfMissing((int)$tagId, $description);
+
     }
 
     Transaction::setTag((int)$transactionId, (int)$tagId);
