@@ -1,4 +1,5 @@
 <?php
+// Model for grouping transactions under named collections.
 require_once __DIR__ . '/../Database.php';
 
 class TransactionGroup {

@@ -1,4 +1,5 @@
 <?php
+// Model for account records stored in the database.
 require_once __DIR__ . '/../Database.php';
 
 class Account {

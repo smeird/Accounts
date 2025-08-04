@@ -1,4 +1,5 @@
 <?php
+// API endpoint returning recent application log entries.
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');

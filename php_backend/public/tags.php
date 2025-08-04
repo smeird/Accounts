@@ -1,4 +1,5 @@
 <?php
+// API endpoint for creating, listing, updating, and deleting tags.
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');

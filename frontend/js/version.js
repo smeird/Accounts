@@ -1,3 +1,4 @@
+// Fetches and displays the current application version.
 document.addEventListener('DOMContentLoaded', () => {
   const target = document.getElementById('version');
   if (!target) return;

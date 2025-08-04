@@ -1,4 +1,5 @@
 <?php
+// Model representing financial transactions and related queries.
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/Tag.php';
 

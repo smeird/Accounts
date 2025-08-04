@@ -1,4 +1,5 @@
 <?php
+// Provides a shared PDO connection to the application's MySQL database.
 class Database {
     private static $instance = null;
 

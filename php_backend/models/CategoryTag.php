@@ -1,4 +1,5 @@
 <?php
+// Links categories and tags and applies categories based on tag matches.
 require_once __DIR__ . '/../Database.php';
 
 class CategoryTag {

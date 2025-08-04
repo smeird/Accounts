@@ -1,4 +1,5 @@
 <?php
+// API endpoint returning transactions for a selected month and year.
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 
