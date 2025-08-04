@@ -133,37 +133,41 @@ class Transaction {
     }
 
     /**
-     * Search transactions by a specific field.
-     * Supports partial matches for text fields and exact matches for numeric fields.
+     * Search transactions across all supported fields.
+     * Text fields use partial matches while numeric fields use exact matches.
      */
-    public static function search(string $field, string $value): array {
-        $allowed = ['id','account_id','date','amount','description','memo','category_id','tag_id','group_id','ofx_id'];
-        if (!in_array($field, $allowed, true)) {
-            throw new Exception('Invalid search field');
-        }
-
+    public static function search(string $value): array {
         $db = Database::getConnection();
 
-        $qualified = 't.`' . $field . '`';
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE ' . $qualified;
+             . 'WHERE (t.`description` LIKE :val '
+             . 'OR t.`memo` LIKE :val '
+             . 'OR t.`date` LIKE :val '
+             . 'OR t.`ofx_id` LIKE :val '
+             . 'OR c.`name` LIKE :val '
+             . 'OR tg.`name` LIKE :val '
+             . 'OR g.`name` LIKE :val';
 
-        // numeric fields use exact match
-        $numeric = ['id','account_id','category_id','tag_id','group_id','amount'];
-        if (in_array($field, $numeric, true)) {
-            $sql .= ' = :val';
-            $stmt = $db->prepare($sql);
-            $stmt->execute(['val' => $value]);
-        } else {
-            $sql .= ' LIKE :val';
-            $stmt = $db->prepare($sql);
-            $stmt->execute(['val' => '%' . $value . '%']);
+        $params = ['val' => '%' . $value . '%'];
+
+        if (is_numeric($value)) {
+            $sql .= ' OR t.`id` = :num'
+                  . ' OR t.`account_id` = :num'
+                  . ' OR t.`category_id` = :num'
+                  . ' OR t.`tag_id` = :num'
+                  . ' OR t.`group_id` = :num'
+                  . ' OR t.`amount` = :num';
+            $params['num'] = $value;
         }
+
+        $sql .= ')';
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

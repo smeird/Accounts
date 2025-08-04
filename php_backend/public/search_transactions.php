@@ -1,21 +1,20 @@
 <?php
-// API endpoint to search transactions by a specified field and value.
+// API endpoint to search transactions across all fields.
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 
 header('Content-Type: application/json');
 
-$field = $_GET['field'] ?? '';
 $value = $_GET['value'] ?? '';
 
-if ($field === '' || $value === '') {
+if ($value === '') {
     http_response_code(400);
-    echo json_encode(['error' => 'Field and value are required']);
+    echo json_encode(['error' => 'Search value is required']);
     exit;
 }
 
 try {
-    $results = Transaction::search($field, $value);
+    $results = Transaction::search($value);
     $total = 0.0;
     foreach ($results as $row) {
         $total += (float)$row['amount'];

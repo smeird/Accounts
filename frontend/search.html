@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Interface for searching transactions by field and value -->
+<!-- Interface for searching transactions across all fields -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,28 +14,17 @@
         <main class="content">
             <h1>Search Transactions</h1>
             <form id="search-form">
-                <label>Field:
-                    <select id="field">
-                        <option value="description">Description</option>
-                        <option value="memo">Memo</option>
-                        <option value="date">Date</option>
-                        <option value="amount">Amount</option>
-                        <option value="account_id">Account ID</option>
-                        <option value="category_id">Category ID</option>
-                        <option value="tag_id">Tag ID</option>
-                        <option value="group_id">Group ID</option>
-                        <option value="ofx_id">OFX ID</option>
-                    </select>
-                </label>
                 <input type="text" id="term" placeholder="Search value">
                 <button type="submit">Search</button>
             </form>
             <div id="results-grid"></div>
             <p id="total"></p>
+            <div id="monthly-chart" style="height:400px"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
@@ -43,9 +32,8 @@
 
     document.getElementById('search-form').addEventListener('submit', function(e){
         e.preventDefault();
-        const field = document.getElementById('field').value;
         const term = document.getElementById('term').value;
-        const params = new URLSearchParams({field: field, value: term});
+        const params = new URLSearchParams({value: term});
         fetch('../php_backend/public/search_transactions.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
@@ -71,6 +59,34 @@
                 const totalEl = document.getElementById('total');
                 totalEl.textContent = 'Total: ' + formatCurrency(data.total);
                 totalEl.classList.add('currency');
+
+                const chartEl = document.getElementById('monthly-chart');
+                if (data.results && data.results.length) {
+                    const monthly = {};
+                    data.results.forEach(row => {
+                        const date = row.date.substring(0, 7); // YYYY-MM
+                        const amount = parseFloat(row.amount);
+                        if (amount < 0) {
+                            monthly[date] = (monthly[date] || 0) + (-amount);
+                        }
+                    });
+                    const months = Object.keys(monthly).sort();
+                    const categories = months.map(m => {
+                        const [y, mth] = m.split('-');
+                        const d = new Date(y, mth - 1);
+                        return d.toLocaleString('default', { month: 'short', year: 'numeric' });
+                    });
+                    const series = months.map(m => parseFloat(monthly[m].toFixed(2)));
+                    Highcharts.chart('monthly-chart', {
+                        title: { text: 'Monthly Spend' },
+                        xAxis: { categories: categories },
+                        yAxis: { title: { text: 'Amount (£)' } },
+                        series: [{ name: 'Spend', data: series }],
+                        tooltip: { valuePrefix: '£', valueDecimals: 2 }
+                    });
+                } else {
+                    chartEl.innerHTML = '';
+                }
             });
     });
     </script>
