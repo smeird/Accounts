@@ -78,6 +78,52 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function filter(?int $category = null, ?int $tag = null, ?int $group = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
+        if ($category === null && $tag === null && $group === null && $text === null && $start === null && $end === null) {
+            return [];
+        }
+
+        $db = Database::getConnection();
+        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE 1=1';
+
+        $params = [];
+        if ($category !== null) {
+            $sql .= ' AND t.`category_id` = :category';
+            $params['category'] = $category;
+        }
+        if ($tag !== null) {
+            $sql .= ' AND t.`tag_id` = :tag';
+            $params['tag'] = $tag;
+        }
+        if ($group !== null) {
+            $sql .= ' AND t.`group_id` = :grp';
+            $params['grp'] = $group;
+        }
+        if ($text !== null && $text !== '') {
+            $sql .= ' AND (t.`description` LIKE :txt OR t.`memo` LIKE :txt)';
+            $params['txt'] = '%' . $text . '%';
+        }
+        if ($start !== null && $start !== '') {
+            $sql .= ' AND t.`date` >= :start';
+            $params['start'] = $start;
+        }
+        if ($end !== null && $end !== '') {
+            $sql .= ' AND t.`date` <= :end';
+            $params['end'] = $end;
+        }
+
+        $sql .= ' ORDER BY t.`date`';
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
