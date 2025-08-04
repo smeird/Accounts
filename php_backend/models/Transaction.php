@@ -81,6 +81,7 @@ class Transaction {
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+             . 't.`category_id`, t.`tag_id`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
@@ -92,6 +93,15 @@ class Transaction {
         $stmt->execute(['month' => $month, 'year' => $year]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Update the tag of a specific transaction.
+     */
+    public static function setTag(int $transactionId, int $tagId): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
+        return $stmt->execute(['tag' => $tagId, 'id' => $transactionId]);
     }
 
     public static function getAvailableMonths(): array {
