@@ -1,4 +1,5 @@
 <?php
+// Resets and creates all database tables used by the application.
 require_once __DIR__ . '/Database.php';
 
 $db = Database::getConnection();

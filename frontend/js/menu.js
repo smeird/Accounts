@@ -1,3 +1,4 @@
+// Dynamically loads the shared navigation menu into pages.
 document.addEventListener('DOMContentLoaded', () => {
   const menu = document.getElementById('menu');
   if (menu) {

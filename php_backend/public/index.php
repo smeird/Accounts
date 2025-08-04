@@ -1,4 +1,5 @@
 <?php
+// Simple script to insert a sample account for testing.
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Account.php';
 

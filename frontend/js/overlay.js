@@ -1,3 +1,4 @@
+// Provides a simple overlay for displaying temporary messages.
 (function(){
     function createOverlay(){
         const overlay = document.createElement('div');

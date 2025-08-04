@@ -1,4 +1,5 @@
 <?php
+// API endpoint for creating, listing and updating transaction groups.
 require_once __DIR__ . '/../models/TransactionGroup.php';
 require_once __DIR__ . '/../models/Log.php';
 

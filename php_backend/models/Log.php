@@ -1,4 +1,5 @@
 <?php
+// Lightweight logger storing application messages in the database.
 require_once __DIR__ . '/../Database.php';
 
 class Log {

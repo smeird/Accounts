@@ -1,4 +1,5 @@
 <?php
+// API endpoint to search transactions by a specified field and value.
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 

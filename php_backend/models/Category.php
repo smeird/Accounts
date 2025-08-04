@@ -1,4 +1,5 @@
 <?php
+// Model handling category records and related tag mappings.
 require_once __DIR__ . '/../Database.php';
 
 class Category {

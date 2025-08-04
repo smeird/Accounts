@@ -1,4 +1,5 @@
 <?php
+// API endpoint for managing categories and their tag assignments.
 require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Log.php';

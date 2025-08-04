@@ -1,4 +1,5 @@
 <?php
+// API endpoint listing months that contain transaction data.
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 
