@@ -43,16 +43,28 @@
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
-    function buildTable(id, data){
+    function buildTable(id, data, days){
         const el = document.getElementById(id);
         el.innerHTML = '';
+
+        const dayCols = Array.from({length: days}, (_, i) => ({
+            title: String(i + 1),
+            field: String(i + 1),
+            formatter: 'money',
+            formatterParams: { symbol: '£', precision: 2 },
+            hozAlign: 'right'
+        }));
+
+        const columns = [
+            { title: 'Name', field: 'name' },
+            ...dayCols,
+            { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+        ];
+
         new Tabulator(el, {
             data: data,
             layout: 'fitColumns',
-            columns: [
-                { title: 'Name', field: 'name' },
-                { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-            ]
+            columns: columns
         });
     }
 
@@ -78,11 +90,13 @@
                 deltaEl.textContent = '£' + parseFloat(totals.delta).toFixed(2);
                 deltaEl.className = totals.delta >= 0 ? 'positive' : 'negative';
 
-                buildTable('tags-table', data.tags);
+                const days = new Date(year, month, 0).getDate();
+
+                buildTable('tags-table', data.tags, days);
                 buildChart('tags-chart', 'Tag Totals', data.tags);
-                buildTable('categories-table', data.categories);
+                buildTable('categories-table', data.categories, days);
                 buildChart('categories-chart', 'Category Totals', data.categories);
-                buildTable('groups-table', data.groups);
+                buildTable('groups-table', data.groups, days);
                 buildChart('groups-chart', 'Group Totals', data.groups);
             });
     }
