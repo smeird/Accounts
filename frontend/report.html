@@ -13,8 +13,8 @@
         <main class="content">
             <h1>Transaction Reports</h1>
             <form id="report-form">
-                <label>Category ID: <input type="number" id="category"></label>
-                <label>Tag ID: <input type="number" id="tag"></label>
+                <label>Category: <select id="category"></select></label>
+                <label>Tag: <select id="tag"></select></label>
                 <label>Group ID: <input type="number" id="group"></label>
                 <button type="submit">Run Report</button>
             </form>
@@ -30,6 +30,33 @@
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
     }
+
+    async function loadOptions() {
+        const [catRes, tagRes] = await Promise.all([
+            fetch('../php_backend/public/categories.php'),
+            fetch('../php_backend/public/tags.php')
+        ]);
+        const categories = await catRes.json();
+        const tags = await tagRes.json();
+        const catSelect = document.getElementById('category');
+        const tagSelect = document.getElementById('tag');
+        catSelect.innerHTML = '<option value="">All</option>';
+        categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            catSelect.appendChild(opt);
+        });
+        tagSelect.innerHTML = '<option value="">All</option>';
+        tags.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            tagSelect.appendChild(opt);
+        });
+    }
+
+    loadOptions();
 
     document.getElementById('report-form').addEventListener('submit', function(e) {
         e.preventDefault();

@@ -47,7 +47,10 @@ async function loadCategories() {
         const tagBtn = document.createElement('button');
         tagBtn.textContent = 'Assign Tag';
         tagBtn.addEventListener('click', async () => {
-            const tagId = prompt('Tag ID');
+            const resTags = await fetch('../php_backend/public/tags.php');
+            const allTags = await resTags.json();
+            const tagOptions = allTags.map(t => `${t.id}: ${t.name}`).join('\n');
+            const tagId = prompt('Select Tag:\n' + tagOptions);
             if (tagId === null) return;
             await fetch('../php_backend/public/categories.php', {
                 method: 'POST',
