@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!-- Dashboard showing yearly spending summaries -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yearly Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>Yearly Dashboard</h1>
+            <label for="year-select">Year:
+                <select id="year-select"></select>
+            </label>
+
+            <h2>Tag Totals</h2>
+            <div id="tags-table"></div>
+            <div id="tags-chart" style="height:400px"></div>
+
+            <h2>Category Totals</h2>
+            <div id="categories-table"></div>
+            <div id="categories-chart" style="height:400px"></div>
+
+            <h2>Group Totals</h2>
+            <div id="groups-table"></div>
+            <div id="groups-chart" style="height:400px"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script>
+    function buildTable(id, data){
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        new Tabulator(el, {
+            data: data,
+            layout: 'fitColumns',
+            columns: [
+                { title: 'Name', field: 'name' },
+                { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+            ]
+        });
+    }
+
+    function buildChart(id, title, data){
+        Highcharts.chart(id, {
+            chart: { type: 'column' },
+            title: { text: title },
+            xAxis: { categories: data.map(d => d.name) },
+            yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+            series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)) }]
+        });
+    }
+
+    function loadYear(year){
+        fetch('../php_backend/public/yearly_dashboard.php?year=' + year)
+            .then(resp => resp.json())
+            .then(data => {
+                buildTable('tags-table', data.tags);
+                buildChart('tags-chart', 'Tag Totals ' + year, data.tags);
+                buildTable('categories-table', data.categories);
+                buildChart('categories-chart', 'Category Totals ' + year, data.categories);
+                buildTable('groups-table', data.groups);
+                buildChart('groups-chart', 'Group Totals ' + year, data.groups);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('../php_backend/public/transaction_months.php')
+            .then(resp => resp.json())
+            .then(months => {
+                const years = Array.from(new Set(months.map(m => m.year))).sort((a,b) => b - a);
+                const select = document.getElementById('year-select');
+                years.forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    select.appendChild(opt);
+                });
+                const initial = select.value || years[0];
+                select.value = initial;
+                loadYear(initial);
+            });
+
+        document.getElementById('year-select').addEventListener('change', e => loadYear(e.target.value));
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
