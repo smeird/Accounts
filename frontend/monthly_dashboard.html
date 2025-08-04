@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- Dashboard showing monthly spending summaries -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>Monthly Dashboard</h1>
+            <label for="year-select">Year:
+                <select id="year-select"></select>
+            </label>
+            <label for="month-select">Month:
+                <select id="month-select"></select>
+            </label>
+
+            <div id="totals">
+                <p>Income: <span id="income-total">£0.00</span></p>
+                <p>Outgoings: <span id="outgoings-total">£0.00</span></p>
+                <p>Delta: <span id="delta-total">£0.00</span></p>
+            </div>
+
+            <h2>Tag Totals</h2>
+            <div id="tags-table"></div>
+            <div id="tags-chart" style="height:400px"></div>
+
+            <h2>Category Totals</h2>
+            <div id="categories-table"></div>
+            <div id="categories-chart" style="height:400px"></div>
+
+            <h2>Group Totals</h2>
+            <div id="groups-table"></div>
+            <div id="groups-chart" style="height:400px"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script>
+    function buildTable(id, data){
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        new Tabulator(el, {
+            data: data,
+            layout: 'fitColumns',
+            columns: [
+                { title: 'Name', field: 'name' },
+                { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+            ]
+        });
+    }
+
+    function buildChart(id, title, data){
+        Highcharts.chart(id, {
+            chart: { type: 'column' },
+            title: { text: title },
+            xAxis: { categories: data.map(d => d.name) },
+            yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+            series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)) }]
+        });
+    }
+
+    function loadMonth(year, month){
+        fetch('../php_backend/public/monthly_dashboard.php?year=' + year + '&month=' + month)
+            .then(resp => resp.json())
+            .then(data => {
+                const totals = data.totals;
+                document.getElementById('income-total').textContent = '£' + parseFloat(totals.income).toFixed(2);
+                document.getElementById('outgoings-total').textContent = '£' + parseFloat(totals.outgoings).toFixed(2);
+                const deltaEl = document.getElementById('delta-total');
+                deltaEl.textContent = '£' + parseFloat(totals.delta).toFixed(2);
+                deltaEl.className = totals.delta >= 0 ? 'positive' : 'negative';
+
+                buildTable('tags-table', data.tags);
+                buildChart('tags-chart', 'Tag Totals', data.tags);
+                buildTable('categories-table', data.categories);
+                buildChart('categories-chart', 'Category Totals', data.categories);
+                buildTable('groups-table', data.groups);
+                buildChart('groups-chart', 'Group Totals', data.groups);
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('../php_backend/public/transaction_months.php')
+            .then(resp => resp.json())
+            .then(months => {
+                const monthsByYear = {};
+                months.forEach(m => {
+                    if (!monthsByYear[m.year]) { monthsByYear[m.year] = []; }
+                    monthsByYear[m.year].push(m.month);
+                });
+
+                const yearSelect = document.getElementById('year-select');
+                Object.keys(monthsByYear).sort((a,b) => b - a).forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    yearSelect.appendChild(opt);
+                    monthsByYear[y].sort((a,b) => b - a);
+                });
+
+                const monthSelect = document.getElementById('month-select');
+                function populateMonths(){
+                    const y = yearSelect.value;
+                    monthSelect.innerHTML = '';
+                    (monthsByYear[y] || []).forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        const d = new Date(y, m - 1);
+                        opt.textContent = d.toLocaleString('default', { month: 'long' });
+                        monthSelect.appendChild(opt);
+                    });
+                }
+
+                yearSelect.addEventListener('change', () => {
+                    populateMonths();
+                    loadMonth(yearSelect.value, monthSelect.value);
+                });
+                populateMonths();
+                loadMonth(yearSelect.value, monthSelect.value);
+                monthSelect.addEventListener('change', () => loadMonth(yearSelect.value, monthSelect.value));
+            });
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
+

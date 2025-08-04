@@ -133,6 +133,84 @@ class Transaction {
     }
 
     /**
+     * Retrieve income and outgoings totals for a given month.
+     * Returns income and outgoings as positive numbers with delta calculated.
+     */
+    public static function getMonthlyTotals(int $month, int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT
+                SUM(CASE WHEN t.`amount` > 0 THEN t.`amount` ELSE 0 END) AS income,
+                SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS outgoings
+             FROM `transactions` t
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year'
+        );
+        $stmt->execute(['month' => $month, 'year' => $year]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $income = isset($row['income']) ? (float)$row['income'] : 0.0;
+        $outgoings = isset($row['outgoings']) ? (float)$row['outgoings'] : 0.0;
+        $delta = $income - $outgoings;
+        return ['income' => $income, 'outgoings' => $outgoings, 'delta' => $delta];
+    }
+
+    /**
+     * Retrieve total spending by tag for a given month.
+     * Returns tag name and total spent as positive numbers ordered by total descending.
+     */
+    public static function getTagTotalsByMonth(int $month, int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT tg.`name` AS `name`,
+                    SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t
+             JOIN `tags` tg ON t.`tag_id` = tg.`id`
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year
+             GROUP BY tg.`id`, tg.`name`
+             ORDER BY `total` DESC'
+        );
+        $stmt->execute(['month' => $month, 'year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieve total spending by category for a given month.
+     * Returns category name and total spent as positive numbers ordered by total descending.
+     */
+    public static function getCategoryTotalsByMonth(int $month, int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT c.`name` AS `name`,
+                    SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t
+             JOIN `categories` c ON t.`category_id` = c.`id`
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year
+             GROUP BY c.`id`, c.`name`
+             ORDER BY `total` DESC'
+        );
+        $stmt->execute(['month' => $month, 'year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieve total spending by group for a given month.
+     * Returns group name and total spent as positive numbers ordered by total descending.
+     */
+    public static function getGroupTotalsByMonth(int $month, int $year): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT g.`name` AS `name`,
+                    SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t
+             JOIN `transaction_groups` g ON t.`group_id` = g.`id`
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year
+             GROUP BY g.`id`, g.`name`
+             ORDER BY `total` DESC'
+        );
+        $stmt->execute(['month' => $month, 'year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
 
      * Retrieve total spending by tag for a given year.
      * Returns tag name and total spent as positive numbers ordered by total descending.
