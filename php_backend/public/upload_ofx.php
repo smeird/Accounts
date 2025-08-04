@@ -51,16 +51,21 @@ foreach ($matches[1] as $block) {
     }
     $amount = (float)trim($am[1]);
     $desc = '';
+    $memo = '';
     if (preg_match('/<NAME>([^\r\n<]+)/i', $block, $dm)) {
         $desc = trim($dm[1]);
-    } elseif (preg_match('/<MEMO>([^\r\n<]+)/i', $block, $dm)) {
-        $desc = trim($dm[1]);
+    }
+    if (preg_match('/<MEMO>([^\r\n<]+)/i', $block, $mm)) {
+        $memo = trim($mm[1]);
+        if ($desc === '') {
+            $desc = $memo;
+        }
     }
     $ofxId = null;
     if (preg_match('/<FITID>([^\r\n<]+)/i', $block, $om)) {
         $ofxId = trim($om[1]);
     }
-    Transaction::create($accountId, $date, $amount, $desc, null, null, null, $ofxId);
+    Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $ofxId);
     $inserted++;
 }
 

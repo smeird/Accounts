@@ -4,7 +4,7 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/Tag.php';
 
 class Transaction {
-    public static function create(int $account, string $date, float $amount, string $description, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null): int {
+    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null): int {
         if ($tag === null) {
             $tag = Tag::findMatch($description);
         }
@@ -20,12 +20,13 @@ class Transaction {
             }
         }
 
-        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `category_id`, `tag_id`, `group_id`, `ofx_id`) VALUES (:account, :date, :amount, :description, :category, :tag, :group, :ofx_id)');
+        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id)');
         $stmt->execute([
             'account' => $account,
             'date' => $date,
             'amount' => $amount,
             'description' => $description,
+            'memo' => $memo,
             'category' => $category,
             'tag' => $tag,
             'group' => $group,
@@ -107,7 +108,7 @@ class Transaction {
      * Supports partial matches for text fields and exact matches for numeric fields.
      */
     public static function search(string $field, string $value): array {
-        $allowed = ['id','account_id','date','amount','description','category_id','tag_id','group_id','ofx_id'];
+        $allowed = ['id','account_id','date','amount','description','memo','category_id','tag_id','group_id','ofx_id'];
         if (!in_array($field, $allowed, true)) {
             throw new Exception('Invalid search field');
         }
