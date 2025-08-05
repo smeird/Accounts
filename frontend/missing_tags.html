@@ -35,6 +35,7 @@
                     { title: 'Description', field: 'description' },
                     { title: 'Memo', field: 'memo' },
                     { title: 'Count', field: 'count', hozAlign: 'right', sorter: 'number' },
+                    { title: 'Amount', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
                     { title: 'Action', formatter: () => '<button class="bg-blue-600 text-white px-2 py-1 rounded">Auto Tag</button>', width: 120, align: 'center', cellClick: async (e, cell) => {
                         const desc = cell.getRow().getData().description;
                         const name = prompt('Tag Name', desc);
