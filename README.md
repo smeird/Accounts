@@ -11,6 +11,10 @@ A basic login page is available at the project root (`index.php`). Users are sto
 
 - Highcharts is used for graphs, while Tabulator renders interactive tables.
 - Display all monetary values using the pound symbol (£) instead of the dollar sign ($).
+- Tailwind CSS provides the styling and Font Awesome supplies icons. Sections are wrapped in card components.
+- Tabulator tables apply Tailwind utility classes for a consistent look.
+- Form inputs may include a `data-help` attribute to show popover guidance.
+- Transactions identified as transfers are flagged and ignored in totals.
 
 ## PHP Development Setup
 
@@ -54,13 +58,17 @@ Then open `http://localhost:8000/frontend/index.html` in your browser.
 ## Frontend
 
 
-A simple static frontend can be opened directly from `frontend/index.html`. It provides a navigation menu to upload OFX files or view monthly statements.
+A Tailwind-styled frontend can be opened directly from `frontend/index.html`. It provides a navigation menu with Font Awesome icons to upload OFX files, view statements, run reports, or explore graphs.
 
 The yearly dashboard page (`frontend/yearly_dashboard.html`) lets you select a year and view total spending by tag, category, and group with tables and bar charts.
 
 The monthly dashboard page (`frontend/monthly_dashboard.html`) shows totals by tag, category, and group for a selected month along with overall income, outgoings, and delta.
 
+The graphs page (`frontend/graphs.html`) displays additional Highcharts visualisations and includes a year selector.
+
 The monthly statement page (`frontend/monthly_statement.html`) allows selecting a month and year to list transactions for that period.
+
+Many form inputs include popover help that appears when fields with a `data-help` attribute are focused or hovered.
 
 ## Reports
 
