@@ -39,9 +39,15 @@ try {
             case 'add_tag':
                 $categoryId = (int)($data['category_id'] ?? 0);
                 $tagId = (int)($data['tag_id'] ?? 0);
-                CategoryTag::add($categoryId, $tagId);
-                Log::write("Added tag $tagId to category $categoryId");
-                echo json_encode(['status' => 'ok']);
+                try {
+                    CategoryTag::add($categoryId, $tagId);
+                    Log::write("Added tag $tagId to category $categoryId");
+                    echo json_encode(['status' => 'ok']);
+                } catch (Exception $e) {
+                    http_response_code(400);
+                    Log::write('Add tag error: ' . $e->getMessage(), 'ERROR');
+                    echo json_encode(['error' => $e->getMessage()]);
+                }
                 break;
             case 'remove_tag':
                 $categoryId = (int)($data['category_id'] ?? 0);

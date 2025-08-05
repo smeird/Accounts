@@ -16,6 +16,19 @@ class Tag {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Retrieve tags that are not assigned to any category.
+     */
+    public static function unassigned(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT t.id, t.name, t.keyword '
+             . 'FROM tags t '
+             . 'LEFT JOIN category_tags ct ON t.id = ct.tag_id '
+             . 'WHERE ct.tag_id IS NULL';
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function update(int $id, string $name, ?string $keyword = null): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword WHERE `id` = :id');

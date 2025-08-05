@@ -5,7 +5,12 @@ require_once __DIR__ . '/../Database.php';
 class CategoryTag {
     public static function add(int $categoryId, int $tagId): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT IGNORE INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
+        $check = $db->prepare('SELECT 1 FROM category_tags WHERE tag_id = :tag_id');
+        $check->execute(['tag_id' => $tagId]);
+        if ($check->fetch()) {
+            throw new Exception('Tag is already assigned to a category');
+        }
+        $stmt = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
         $stmt->execute(['category_id' => $categoryId, 'tag_id' => $tagId]);
     }
 
