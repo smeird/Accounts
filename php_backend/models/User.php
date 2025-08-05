@@ -19,6 +19,7 @@ class User {
         return $row ?: null;
     }
 
+
     public static function verify(string $username, string $password, ?string &$reason = null): ?int {
         $user = self::findByUsername($username);
         if (!$user) {
@@ -29,6 +30,7 @@ class User {
             return (int)$user['id'];
         }
         $reason = 'password mismatch';
+
         return null;
     }
 

@@ -2,6 +2,7 @@
 // Simple login page for user authentication.
 session_start();
 require_once __DIR__ . '/php_backend/models/User.php';
+
 require_once __DIR__ . '/php_backend/models/Log.php';
 
 $error = '';
@@ -10,13 +11,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $reason = '';
     $userId = User::verify($username, $password, $reason);
+
     if ($userId !== null) {
         $_SESSION['user_id'] = $userId;
         header('Location: frontend/index.html');
         exit;
     } else {
         $error = 'Invalid credentials';
+
         Log::write("Login failed for '$username': $reason", 'ERROR');
+
     }
 }
 ?>

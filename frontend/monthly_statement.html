@@ -166,7 +166,8 @@ form.addEventListener('submit', function(e) {
                         });
                     } else if (field === 'group_id') {
                         function updateGroup(id) {
-                            payload.group_id = id;
+                            // ensure numeric ids are sent to the backend
+                            payload.group_id = id === '' ? '' : parseInt(id, 10);
                             fetch('../php_backend/public/update_transaction.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
