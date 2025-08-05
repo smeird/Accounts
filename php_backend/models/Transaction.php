@@ -531,12 +531,12 @@ class Transaction {
     }
 
     /**
-     * Return descriptions of untagged transactions with occurrence counts.
+     * Return descriptions of untagged transactions with occurrence counts and totals.
      * Results are ordered by most common description first.
      */
     public static function getUntaggedCounts(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT `description`, `memo`, COUNT(*) AS `count` '
+        $sql = 'SELECT `description`, `memo`, COUNT(*) AS `count`, SUM(`amount`) AS `total` '
              . 'FROM `transactions` WHERE `tag_id` IS NULL '
              . 'GROUP BY `description`, `memo` ORDER BY `count` DESC';
         $stmt = $db->query($sql);
