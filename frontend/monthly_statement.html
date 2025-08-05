@@ -119,6 +119,8 @@ form.addEventListener('submit', function(e) {
                 const field = cell.getField();
                 if (field === 'group_id') {
                     const val = cell.getValue();
+                    const oldVal = cell.getOldValue();
+                    if (val === oldVal) return;
                     const data = cell.getRow().getData();
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
 
@@ -132,12 +134,12 @@ form.addEventListener('submit', function(e) {
                     .then(res => {
                         if (!(res && res.status === 'ok')) {
                             alert('Failed to save group');
-                            cell.setValue(data.group_id, true);
+                            cell.setValue(oldVal, true);
                         }
                     })
                     .catch(() => {
                         alert('Failed to save group');
-                        cell.setValue(data.group_id, true);
+                        cell.setValue(oldVal, true);
                     });
                 }
             }
