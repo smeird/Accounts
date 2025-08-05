@@ -45,7 +45,10 @@
                 <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category"></select></label>
                 <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Assign a tag"></select></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                <div class="flex space-x-2">
+                    <button type="button" id="auto-tag-btn" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-tag mr-2"></i>Auto Tag</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                </div>
             `;
             container.appendChild(form);
 
@@ -90,6 +93,45 @@
                 opt.textContent = g.name;
                 if (g.id == tx.group_id) opt.selected = true;
                 groupSel.appendChild(opt);
+            });
+
+            const autoBtn = form.querySelector('#auto-tag-btn');
+            autoBtn.addEventListener('click', async () => {
+                const name = prompt('Tag Name', tx.description);
+                if (!name) return;
+                try {
+                    const res = await fetch('../php_backend/public/tags.php', {
+                        method: 'POST',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({name: name, keyword: tx.description})
+                    });
+                    const info = await res.json();
+                    if (info && info.id) {
+                        const opt = document.createElement('option');
+                        opt.value = info.id;
+                        opt.textContent = name;
+                        tagSel.insertBefore(opt, newOpt);
+                        tagSel.value = info.id;
+                        const payload = {
+                            transaction_id: tx.id,
+                            account_id: tx.account_id,
+                            description: tx.description,
+                            tag_id: info.id
+                        };
+                        if (catSel.value !== '') payload.category_id = catSel.value;
+                        if (groupSel.value !== '') payload.group_id = groupSel.value;
+                        await fetch('../php_backend/public/update_transaction.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        showMessage('Auto tag created');
+                    } else {
+                        alert('Failed to create tag');
+                    }
+                } catch (err) {
+                    alert('Failed to create tag');
+                }
             });
 
             form.addEventListener('submit', function(ev){
