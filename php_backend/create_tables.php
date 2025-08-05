@@ -8,6 +8,7 @@ $db = Database::getConnection();
 $db->exec("SET FOREIGN_KEY_CHECKS=0");
 $dropSql = <<<SQL
 DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
@@ -19,6 +20,12 @@ $db->exec($dropSql);
 $db->exec("SET FOREIGN_KEY_CHECKS=1");
 
 $createSql = <<<SQL
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS accounts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL

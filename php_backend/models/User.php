@@ -1,0 +1,37 @@
+<?php
+// Model for application users with password authentication.
+require_once __DIR__ . '/../Database.php';
+
+class User {
+    public static function create(string $username, string $password): int {
+        $db = Database::getConnection();
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $db->prepare('INSERT INTO `users` (`username`, `password`) VALUES (:username, :password)');
+        $stmt->execute(['username' => $username, 'password' => $hash]);
+        return (int)$db->lastInsertId();
+    }
+
+    public static function findByUsername(string $username): ?array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT `id`, `username`, `password` FROM `users` WHERE `username` = :username');
+        $stmt->execute(['username' => $username]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public static function verify(string $username, string $password): ?int {
+        $user = self::findByUsername($username);
+        if ($user && password_verify($password, $user['password'])) {
+            return (int)$user['id'];
+        }
+        return null;
+    }
+
+    public static function updatePassword(int $id, string $password): bool {
+        $db = Database::getConnection();
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $db->prepare('UPDATE `users` SET `password` = :password WHERE `id` = :id');
+        return $stmt->execute(['password' => $hash, 'id' => $id]);
+    }
+}
+?>

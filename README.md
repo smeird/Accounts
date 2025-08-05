@@ -2,6 +2,11 @@
 
 This repository now provides a simple PHP implementation for managing accounts and transactions.
 
+## Authentication
+
+A basic login page is available at the project root (`index.php`). Users are stored in a `users` table. After logging in, visit `users.php` to add new users or change your password.
+
+
 ## Specifications
 
 - Highcharts is used for graphs, while Tabulator renders interactive tables.
