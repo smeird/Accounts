@@ -45,7 +45,10 @@
             <div id="categories-chart" class="mt-4" style="height:400px"></div>
 
             <h2 class="text-xl font-semibold mt-6 mb-2">Category & Tag Breakdown</h2>
-            <div id="category-tag-donut" class="mt-2" style="height:400px"></div>
+            <div id="category-tag-donuts" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="category-tag-income" style="height:400px"></div>
+                <div id="category-tag-outgoings" style="height:400px"></div>
+            </div>
 
             <h2 class="text-xl font-semibold mt-6 mb-2">Group Totals</h2>
             <div id="groups-table" class="mt-2"></div>
@@ -104,44 +107,55 @@
         });
     }
 
-    function buildDonutChart(id, categories, tags){
+    function buildDonutCharts(incomeId, outgoingsId, categories, tags){
 
         const colors = Highcharts.getOptions().colors;
-        const categoryData = [];
-        const tagData = [];
 
-        categories.forEach((c, i) => {
-            const color = colors[i % colors.length];
-            categoryData.push({ name: c.name, y: parseFloat(c.total), color });
-
-            tags.filter(t => t.category === c.name).forEach(t => {
-                tagData.push({
-                    name: t.name,
-                    y: parseFloat(t.total),
-                    color: Highcharts.color(color).brighten(0.1).get()
-                });
-            });
-        });
-
-
-        Highcharts.chart(id, {
-            chart: { type: 'pie' },
-            title: { text: 'Categories and Tags' },
-            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-            plotOptions: {
-                pie: {
-                    dataLabels: {
-                        formatter: function(){ return this.point.name + ': £' + Highcharts.numberFormat(this.y, 2); }
-                    }
+        function createData(isIncome){
+            const categoryData = [];
+            const tagData = [];
+            let colorIndex = 0;
+            categories.forEach(c => {
+                const total = parseFloat(c.total);
+                if ((isIncome && total > 0) || (!isIncome && total < 0)) {
+                    const color = colors[colorIndex % colors.length];
+                    colorIndex++;
+                    categoryData.push({ name: c.name, y: Math.abs(total), color });
+                    tags.filter(t => t.category === c.name && ((isIncome && parseFloat(t.total) > 0) || (!isIncome && parseFloat(t.total) < 0))).forEach(t => {
+                        tagData.push({
+                            name: t.name,
+                            y: Math.abs(parseFloat(t.total)),
+                            color: Highcharts.color(color).brighten(0.1).get()
+                        });
+                    });
                 }
-            },
-            series: [
+            });
+            return { categoryData, tagData };
+        }
 
-                { name: 'Categories', data: categoryData, size: '60%', dataLabels: { distance: -30 } },
-                { name: 'Tags', data: tagData, size: '80%', innerSize: '60%' }
+        function render(id, title, data){
+            Highcharts.chart(id, {
+                chart: { type: 'pie' },
+                title: { text: title },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                plotOptions: {
+                    pie: {
+                        dataLabels: {
+                            formatter: function(){ return this.point.name + ': £' + Highcharts.numberFormat(this.y, 2); }
+                        }
+                    }
+                },
+                series: [
+                    { name: 'Categories', data: data.categoryData, size: '60%', dataLabels: { distance: -30 } },
+                    { name: 'Tags', data: data.tagData, size: '80%', innerSize: '60%' }
+                ]
+            });
+        }
 
-            ]
-        });
+        const incomeData = createData(true);
+        const outData = createData(false);
+        render(incomeId, 'Income Categories and Tags', incomeData);
+        render(outgoingsId, 'Outgoings Categories and Tags', outData);
     }
 
     function loadMonth(year, month){
@@ -161,7 +175,7 @@
                 buildChart('tags-chart', 'Tag Totals', data.tags);
                 buildTable('categories-table', data.categories, days);
                 buildChart('categories-chart', 'Category Totals', data.categories);
-                buildDonutChart('category-tag-donut', data.categories, data.tags);
+                buildDonutCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
                 buildTable('groups-table', data.groups, days);
                 buildChart('groups-chart', 'Group Totals', data.groups);
             });
