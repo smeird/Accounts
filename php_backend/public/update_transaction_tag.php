@@ -29,12 +29,10 @@ if (!$transactionId || !$accountId || (!$tagId && !$tagName) || !$description) {
 
 try {
     if (!$tagId && $tagName) {
-
         $tagId = Tag::create($tagName, $description);
         Log::write("Created tag $tagName");
     } else {
-        Tag::setKeywordIfMissing((int)$tagId, $description);
-
+        Tag::setKeyword((int)$tagId, $description);
     }
 
     Transaction::setTag((int)$transactionId, (int)$tagId);
