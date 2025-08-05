@@ -16,6 +16,7 @@
             <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                 <input type="file" name="ofx_files[]" accept=".ofx" multiple required class="block w-full" data-help="Select one or more OFX files to upload">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                <div id="progress-container" class="space-y-2"></div>
             </form>
         </main>
     </div>
@@ -23,19 +24,6 @@
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-    <script>
-const uploadForm = document.querySelector("form");
-uploadForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const data = new FormData(uploadForm);
-    try {
-        const resp = await fetch(uploadForm.action, {method: "POST", body: data});
-        const text = await resp.text();
-        showMessage(text);
-    } catch (err) {
-        showMessage("Upload failed");
-    }
-});
-    </script>
+    <script src="js/upload.js"></script>
 </body>
 </html>
