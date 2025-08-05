@@ -11,6 +11,9 @@
         <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
         <main class="flex-1 p-6 space-y-8">
             <h1 class="text-2xl font-semibold">Graphs</h1>
+            <label for="year-select" class="block">Year:
+                <select id="year-select" class="border p-2 rounded w-full"></select>
+            </label>
             <div id="line-chart" style="height:400px"></div>
             <div id="column-chart" style="height:400px"></div>
             <div id="area-chart" style="height:400px"></div>
@@ -23,8 +26,7 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const year = new Date().getFullYear();
+    function loadYear(year){
         Promise.all([
             fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
             fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json())
@@ -107,6 +109,26 @@
                 series: [{ name: 'Spending', data: totals.map((v, i) => ({ x: i, y: v })) }]
             });
         }).catch(err => console.error('Graph data load failed', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('../php_backend/public/transaction_months.php')
+            .then(resp => resp.json())
+            .then(months => {
+                const years = Array.from(new Set(months.map(m => m.year))).sort((a,b) => b - a);
+                const select = document.getElementById('year-select');
+                years.forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    select.appendChild(opt);
+                });
+                const initial = select.value || years[0];
+                select.value = initial;
+                loadYear(initial);
+            });
+
+        document.getElementById('year-select').addEventListener('change', e => loadYear(e.target.value));
     });
     </script>
     <script src="js/overlay.js"></script>
