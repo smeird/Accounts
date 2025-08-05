@@ -270,20 +270,20 @@ class Transaction {
     }
 
     /**
-     * Retrieve total spending by tag for a given month.
-     * Returns tag name and total spent as positive numbers ordered by total descending.
+     * Retrieve total amounts by tag for a given month.
+     * Returns tag name with totals including both positive and negative values ordered by total descending.
      */
     public static function getTagTotalsByMonth(int $month, int $year): array {
         $db = Database::getConnection();
 
         $dayCases = [];
         for ($d = 1; $d <= 31; $d++) {
-            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$d`";
+            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
         $sql = 'SELECT c.`name` AS `category`, tg.`name` AS `name`, '
              . implode(', ', $dayCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              JOIN `tags` tg ON t.`tag_id` = tg.`id`
              JOIN `categories` c ON t.`category_id` = c.`id`
@@ -297,20 +297,20 @@ class Transaction {
     }
 
     /**
-     * Retrieve total spending by category for a given month.
-     * Returns category name and total spent as positive numbers ordered by total descending.
+     * Retrieve total amounts by category for a given month.
+     * Returns category name with positive and negative totals ordered by total descending.
      */
     public static function getCategoryTotalsByMonth(int $month, int $year): array {
         $db = Database::getConnection();
 
         $dayCases = [];
         for ($d = 1; $d <= 31; $d++) {
-            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$d`";
+            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
         $sql = 'SELECT c.`name` AS `name`, '
              . implode(', ', $dayCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              JOIN `categories` c ON t.`category_id` = c.`id`
              WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
@@ -323,20 +323,20 @@ class Transaction {
     }
 
     /**
-     * Retrieve total spending by group for a given month.
-     * Returns group name and total spent as positive numbers ordered by total descending.
+     * Retrieve total amounts by group for a given month.
+     * Returns group name with positive and negative totals ordered by total descending.
      */
     public static function getGroupTotalsByMonth(int $month, int $year): array {
         $db = Database::getConnection();
 
         $dayCases = [];
         for ($d = 1; $d <= 31; $d++) {
-            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$d`";
+            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
         $sql = 'SELECT g.`name` AS `name`, '
              . implode(', ', $dayCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              JOIN `transaction_groups` g ON t.`group_id` = g.`id`
              WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
@@ -350,20 +350,20 @@ class Transaction {
 
     /**
 
-     * Retrieve total spending by tag for a given year.
-     * Returns tag name and total spent as positive numbers ordered by total descending.
+     * Retrieve total amounts by tag for a given year.
+     * Returns tag name with totals including both positive and negative values ordered by total descending.
      */
     public static function getTagTotalsByYear(int $year): array {
         $db = Database::getConnection();
 
         $monthCases = [];
         for ($m = 1; $m <= 12; $m++) {
-            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$m`";
+            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
         $sql = 'SELECT c.`name` AS `category`, tg.`name` AS `name`, '
              . implode(', ', $monthCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              JOIN `tags` tg ON t.`tag_id` = tg.`id`
              JOIN `categories` c ON t.`category_id` = c.`id`
@@ -377,20 +377,20 @@ class Transaction {
     }
 
     /**
-     * Retrieve total spending by category for a given year.
-     * Returns category name and total spent as positive numbers ordered by total descending.
+     * Retrieve total amounts by category for a given year.
+     * Returns category name with positive and negative totals ordered by total descending.
      */
     public static function getCategoryTotalsByYear(int $year): array {
         $db = Database::getConnection();
 
         $monthCases = [];
         for ($m = 1; $m <= 12; $m++) {
-            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$m`";
+            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
         $sql = 'SELECT c.`name` AS `name`, '
              . implode(', ', $monthCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              JOIN `categories` c ON t.`category_id` = c.`id`
              WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
@@ -403,20 +403,20 @@ class Transaction {
     }
 
     /**
-     * Retrieve total spending by group for a given year.
-     * Returns group name and total spent as positive numbers ordered by total descending.
+     * Retrieve total amounts by group for a given year.
+     * Returns group name with positive and negative totals ordered by total descending.
      */
     public static function getGroupTotalsByYear(int $year): array {
         $db = Database::getConnection();
 
         $monthCases = [];
         for ($m = 1; $m <= 12; $m++) {
-            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$m`";
+            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
         $sql = 'SELECT g.`name` AS `name`, '
              . implode(', ', $monthCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              JOIN `transaction_groups` g ON t.`group_id` = g.`id`
              WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
@@ -434,11 +434,11 @@ class Transaction {
         $yearCases = [];
         foreach ($years as $y) {
             $y = (int)$y;
-            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$y`";
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
         $sql = 'SELECT c.`name` AS `category`, tg.`name` AS `name`, '
              . implode(', ', $yearCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' JOIN `tags` tg ON t.`tag_id` = tg.`id`'
              . ' JOIN `categories` c ON t.`category_id` = c.`id`'
@@ -455,11 +455,11 @@ class Transaction {
         $yearCases = [];
         foreach ($years as $y) {
             $y = (int)$y;
-            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$y`";
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
         $sql = 'SELECT c.`name` AS `name`, '
              . implode(', ', $yearCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' JOIN `categories` c ON t.`category_id` = c.`id`'
              . ' WHERE t.`transfer_id` IS NULL'
@@ -475,11 +475,11 @@ class Transaction {
         $yearCases = [];
         foreach ($years as $y) {
             $y = (int)$y;
-            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$y`";
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
         $sql = 'SELECT g.`name` AS `name`, '
              . implode(', ', $yearCases)
-             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
              . ' WHERE t.`transfer_id` IS NULL'
