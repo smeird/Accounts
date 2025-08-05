@@ -66,6 +66,7 @@ The monthly statement page (`frontend/monthly_statement.html`) allows selecting 
 
 The frontend also includes a simple reporting page available at `frontend/report.html`.
 It allows running a report to list all transactions filtered by category, tag or group.
+Reports can be saved in the browser for reuse and removed when no longer needed.
 The page sends requests to `php_backend/public/report.php` which returns matching
 transactions as JSON.
 
