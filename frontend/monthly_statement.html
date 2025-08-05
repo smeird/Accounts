@@ -163,7 +163,9 @@ form.addEventListener('submit', function(e) {
                     })
                     .then(resp => resp.json())
                     .then(res => {
-                        if (!(res && res.status === 'ok')) {
+                        if (res && res.status === 'ok') {
+                            showMessage('Group saved');
+                        } else {
                             alert('Failed to save group');
                             cell.setValue(oldVal, true);
                         }
