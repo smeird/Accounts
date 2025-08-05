@@ -1,5 +1,5 @@
 <?php
-// API endpoint for creating, listing and updating transaction groups.
+// API endpoint for creating, listing, updating, and deleting transaction groups.
 require_once __DIR__ . '/../models/TransactionGroup.php';
 require_once __DIR__ . '/../models/Log.php';
 
@@ -43,6 +43,16 @@ try {
         }
         TransactionGroup::update($id, $name);
         Log::write("Updated group $id");
+        echo json_encode(['status' => 'ok']);
+    } elseif ($method === 'DELETE') {
+        $id = (int)($data['id'] ?? 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID required']);
+            return;
+        }
+        TransactionGroup::delete($id);
+        Log::write("Deleted group $id");
         echo json_encode(['status' => 'ok']);
     } else {
         http_response_code(405);
