@@ -45,8 +45,22 @@ async function loadGroups() {
             loadGroups();
             showMessage('Group updated');
         });
+        const del = document.createElement('button');
+        del.textContent = 'Delete';
+        del.className = 'ml-2 bg-red-600 text-white px-2 py-1 rounded';
+        del.addEventListener('click', async () => {
+            if (!confirm('Delete this group?')) return;
+            await fetch('../php_backend/public/groups.php', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: g.id})
+            });
+            loadGroups();
+            showMessage('Group deleted');
+        });
         li.appendChild(span);
         li.appendChild(btn);
+        li.appendChild(del);
         list.appendChild(li);
     });
 }
