@@ -16,25 +16,45 @@
                 <button id="tagging-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Run Tagging</button>
                 <button id="categories-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Apply Categories</button>
             </div>
+            <div id="progress-container" class="w-full bg-gray-200 h-2 mt-4 rounded hidden">
+                <div id="progress-bar" class="h-full bg-blue-600 w-0"></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script>
     async function run(action){
-        const res = await fetch('../php_backend/public/run_processes.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action})
-        });
-        const data = await res.json();
-        if(data.error){
-            showMessage('Error: ' + data.error);
-            return;
-        }
-        if(action === 'tagging'){
-            showMessage(`Tagged ${data.tagged} transactions`);
-        } else if(action === 'categories') {
-            showMessage(`Categorised ${data.categorised} transactions`);
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        progressContainer.classList.remove('hidden');
+        let width = 0;
+        const interval = setInterval(() => {
+            width = (width + 10) % 100;
+            progressBar.style.width = width + '%';
+        }, 200);
+        try {
+            const res = await fetch('../php_backend/public/run_processes.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action})
+            });
+            const data = await res.json();
+            if(data.error){
+                showMessage('Error: ' + data.error);
+                return;
+            }
+            if(action === 'tagging'){
+                showMessage(`Tagged ${data.tagged} transactions`);
+            } else if(action === 'categories') {
+                showMessage(`Categorised ${data.categorised} transactions`);
+            }
+        } finally {
+            clearInterval(interval);
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                progressContainer.classList.add('hidden');
+                progressBar.style.width = '0%';
+            }, 200);
         }
     }
     document.getElementById('tagging-btn').addEventListener('click', ()=>run('tagging'));
