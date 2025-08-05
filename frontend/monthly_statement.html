@@ -37,8 +37,6 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
-let tagOptions = [];
-let tagLookup = {};
 let groupOptions = [];
 let groupLookup = {};
 
@@ -87,26 +85,15 @@ form.addEventListener('submit', function(e) {
     const year = yearSelect.value;
     Promise.all([
         fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year).then(r => r.json()),
-        fetch('../php_backend/public/tags.php').then(r => r.json()),
         fetch('../php_backend/public/groups.php').then(r => r.json())
-    ]).then(([data, tags, groups]) => {
+    ]).then(([data, groups]) => {
 
-        tagOptions = [];
-        tagLookup = {};
         groupOptions = [{ value: '', label: '-- None --' }];
         groupLookup = { '': '' };
-        tags.forEach(t => {
-            tagOptions.push({ value: t.id, label: t.name });
-            tagLookup[t.id] = t.name;
-        });
-        tagOptions.push({ value: '__new', label: 'Add New Tag...' });
-
         groups.forEach(g => {
             groupOptions.push({ value: g.id, label: g.name });
             groupLookup[g.id] = g.name;
         });
-        groupOptions.push({ value: '__new', label: 'Add New Group...' });
-
         tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitColumns',
@@ -117,15 +104,6 @@ form.addEventListener('submit', function(e) {
                     return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                 } },
                 { title: 'Category', field: 'category_name' },
-                {
-                    title: 'Tag',
-                    field: 'tag_id',
-                    editor: 'list',
-                    editorParams: { values: tagOptions },
-                    formatter: function(cell) {
-                        return tagLookup[cell.getValue()] || '';
-                    }
-                },
                 {
                     title: 'Group',
                     field: 'group_id',
@@ -139,92 +117,28 @@ form.addEventListener('submit', function(e) {
             ],
             cellEdited: function(cell) {
                 const field = cell.getField();
-                if (field === 'tag_id' || field === 'group_id') {
+                if (field === 'group_id') {
                     const val = cell.getValue();
                     const data = cell.getRow().getData();
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
 
-                    if (field === 'tag_id') {
-                        if (val === '__new') {
-                            const name = prompt('Enter new tag name:');
-                            if (!name) {
-                                cell.setValue(data.tag_id, true);
-                                return;
-                            }
-                            payload.tag_name = name;
-                        } else {
-                            payload.tag_id = val;
+                    payload.group_id = val === '' ? '' : parseInt(val, 10);
+                    fetch('../php_backend/public/update_transaction.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(resp => resp.json())
+                    .then(res => {
+                        if (!(res && res.status === 'ok')) {
+                            alert('Failed to save group');
+                            cell.setValue(data.group_id, true);
                         }
-                        fetch('../php_backend/public/update_transaction.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        })
-                        .then(resp => resp.json())
-                        .then(res => {
-                            if (res && res.status === 'ok') {
-                                form.dispatchEvent(new Event('submit'));
-                            } else {
-                                alert('Failed to save tag');
-                                cell.setValue(data.tag_id, true);
-                            }
-                        })
-                        .catch(() => {
-                            alert('Failed to save tag');
-                            cell.setValue(data.tag_id, true);
-                        });
-                    } else if (field === 'group_id') {
-                        function updateGroup(id) {
-                            // ensure numeric ids are sent to the backend
-                            payload.group_id = id === '' ? '' : parseInt(id, 10);
-                            fetch('../php_backend/public/update_transaction.php', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            })
-                            .then(resp => resp.json())
-                            .then(res => {
-                                if (res && res.status === 'ok') {
-                                    form.dispatchEvent(new Event('submit'));
-                                } else {
-                                    alert('Failed to save group');
-                                    cell.setValue(data.group_id, true);
-                                }
-                            })
-                            .catch(() => {
-                                alert('Failed to save group');
-                                cell.setValue(data.group_id, true);
-                            });
-                        }
-
-                        if (val === '__new') {
-                            const name = prompt('Enter new group name:');
-                            if (!name) {
-                                cell.setValue(data.group_id, true);
-                                return;
-                            }
-                            fetch('../php_backend/public/groups.php', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ name })
-                            })
-                            .then(resp => resp.json())
-                            .then(res => {
-                                if (res && res.id) {
-                                    updateGroup(res.id);
-                                } else {
-                                    alert('Failed to save group');
-                                    cell.setValue(data.group_id, true);
-                                }
-                            })
-                            .catch(() => {
-                                alert('Failed to save group');
-                                cell.setValue(data.group_id, true);
-                            });
-                        } else {
-                            updateGroup(val);
-                        }
-                    }
+                    })
+                    .catch(() => {
+                        alert('Failed to save group');
+                        cell.setValue(data.group_id, true);
+                    });
                 }
             }
         });
