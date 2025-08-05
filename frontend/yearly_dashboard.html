@@ -37,13 +37,25 @@
     function buildTable(id, data){
         const el = document.getElementById(id);
         el.innerHTML = '';
+
+        const monthCols = Array.from({length: 12}, (_, i) => ({
+            title: new Date(0, i).toLocaleString('default', { month: 'short' }),
+            field: String(i + 1),
+            formatter: 'money',
+            formatterParams: { symbol: '£', precision: 2 },
+            hozAlign: 'right'
+        }));
+
+        const columns = [
+            { title: 'Name', field: 'name' },
+            ...monthCols,
+            { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+        ];
+
         new Tabulator(el, {
             data: data,
             layout: 'fitColumns',
-            columns: [
-                { title: 'Name', field: 'name' },
-                { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-            ]
+            columns: columns
         });
     }
 

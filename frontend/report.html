@@ -16,9 +16,16 @@
             <form id="report-form">
                 <label>Category: <select id="category"></select></label>
                 <label>Tag: <select id="tag"></select></label>
-                <label>Group ID: <input type="number" id="group"></label>
+                <label>Group: <select id="group"></select></label>
+                <label>Text: <input type="text" id="text"></label>
+                <label>Start Date: <input type="date" id="start"></label>
+                <label>End Date: <input type="date" id="end"></label>
                 <button type="submit">Run Report</button>
+                <button type="button" id="save-report">Save Report</button>
             </form>
+            <div>
+                <label>Saved Reports: <select id="saved-reports"></select></label>
+            </div>
             <div id="results-grid"></div>
             <div id="chart" style="height:400px;margin-top:20px;"></div>
         </main>
@@ -29,14 +36,17 @@
     <script>
 
     async function loadOptions() {
-        const [catRes, tagRes] = await Promise.all([
+        const [catRes, tagRes, grpRes] = await Promise.all([
             fetch('../php_backend/public/categories.php'),
-            fetch('../php_backend/public/tags.php')
+            fetch('../php_backend/public/tags.php'),
+            fetch('../php_backend/public/groups.php')
         ]);
         const categories = await catRes.json();
         const tags = await tagRes.json();
+        const groups = await grpRes.json();
         const catSelect = document.getElementById('category');
         const tagSelect = document.getElementById('tag');
+        const groupSelect = document.getElementById('group');
         catSelect.innerHTML = '<option value="">All</option>';
         categories.forEach(c => {
             const opt = document.createElement('option');
@@ -51,19 +61,41 @@
             opt.textContent = t.name;
             tagSelect.appendChild(opt);
         });
+        groupSelect.innerHTML = '<option value="">All</option>';
+        groups.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.name;
+            groupSelect.appendChild(opt);
+        });
     }
 
-    loadOptions();
+    function loadSavedReports() {
+        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
+        const select = document.getElementById('saved-reports');
+        select.innerHTML = '<option value="">Select</option>';
+        saved.forEach((r, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = r.name;
+            select.appendChild(opt);
+        });
+    }
 
-    document.getElementById('report-form').addEventListener('submit', function(e) {
-        e.preventDefault();
+    function runReport() {
         const category = document.getElementById('category').value;
         const tag = document.getElementById('tag').value;
         const group = document.getElementById('group').value;
+        const text = document.getElementById('text').value;
+        const start = document.getElementById('start').value;
+        const end = document.getElementById('end').value;
         const params = new URLSearchParams();
         if (category) params.append('category', category);
         if (tag) params.append('tag', tag);
         if (group) params.append('group', group);
+        if (text) params.append('text', text);
+        if (start) params.append('start', start);
+        if (end) params.append('end', end);
         fetch('../php_backend/public/report.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
@@ -97,7 +129,47 @@
                     gridEl.innerHTML = 'No transactions found.';
                 }
             });
+    }
+
+    document.getElementById('report-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        runReport();
     });
+
+    document.getElementById('save-report').addEventListener('click', function() {
+        const name = prompt('Report name');
+        if (!name) return;
+        const report = {
+            name,
+            category: document.getElementById('category').value,
+            tag: document.getElementById('tag').value,
+            group: document.getElementById('group').value,
+            text: document.getElementById('text').value,
+            start: document.getElementById('start').value,
+            end: document.getElementById('end').value
+        };
+        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
+        saved.push(report);
+        localStorage.setItem('reports', JSON.stringify(saved));
+        loadSavedReports();
+    });
+
+    document.getElementById('saved-reports').addEventListener('change', function() {
+        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
+        const idx = this.value;
+        if (idx === '') return;
+        const r = saved[idx];
+        document.getElementById('category').value = r.category || '';
+        document.getElementById('tag').value = r.tag || '';
+        document.getElementById('group').value = r.group || '';
+        document.getElementById('text').value = r.text || '';
+        document.getElementById('start').value = r.start || '';
+        document.getElementById('end').value = r.end || '';
+        runReport();
+    });
+
+    loadOptions();
+    loadSavedReports();
     </script>
     <script src="js/overlay.js"></script>
 </body>
