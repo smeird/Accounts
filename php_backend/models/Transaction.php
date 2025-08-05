@@ -281,15 +281,15 @@ class Transaction {
             $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
-        $sql = 'SELECT c.`name` AS `category`, tg.`name` AS `name`, '
+        $sql = 'SELECT CASE WHEN t.`tag_id` IS NULL THEN \'Not Categorised\' ELSE c.`name` END AS `category`, COALESCE(tg.`name`, \'Not Tagged\') AS `name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
-             JOIN `tags` tg ON t.`tag_id` = tg.`id`
-             JOIN `categories` c ON t.`category_id` = c.`id`
+             LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id`
+             LEFT JOIN `categories` c ON t.`category_id` = c.`id`
              WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
-             GROUP BY c.`id`, c.`name`, tg.`id`, tg.`name`
-             ORDER BY c.`name`, `total` DESC';
+             GROUP BY `category`, `name`
+             ORDER BY `category`, `total` DESC';
 
         $stmt = $db->prepare($sql);
         $stmt->execute(['month' => $month, 'year' => $year]);
@@ -308,13 +308,13 @@ class Transaction {
             $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
-        $sql = 'SELECT c.`name` AS `name`, '
+        $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
-             JOIN `categories` c ON t.`category_id` = c.`id`
+             LEFT JOIN `categories` c ON t.`category_id` = c.`id`
              WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
-             GROUP BY c.`id`, c.`name`
+             GROUP BY `name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
@@ -334,13 +334,13 @@ class Transaction {
             $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
-        $sql = 'SELECT g.`name` AS `name`, '
+        $sql = 'SELECT COALESCE(g.`name`, \'Not Grouped\') AS `name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
-             JOIN `transaction_groups` g ON t.`group_id` = g.`id`
+             LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`
              WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
-             GROUP BY g.`id`, g.`name`
+             GROUP BY `name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
@@ -361,15 +361,15 @@ class Transaction {
             $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
-        $sql = 'SELECT c.`name` AS `category`, tg.`name` AS `name`, '
+        $sql = 'SELECT CASE WHEN t.`tag_id` IS NULL THEN \'Not Categorised\' ELSE c.`name` END AS `category`, COALESCE(tg.`name`, \'Not Tagged\') AS `name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
-             JOIN `tags` tg ON t.`tag_id` = tg.`id`
-             JOIN `categories` c ON t.`category_id` = c.`id`
+             LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id`
+             LEFT JOIN `categories` c ON t.`category_id` = c.`id`
              WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
-             GROUP BY c.`id`, c.`name`, tg.`id`, tg.`name`
-             ORDER BY c.`name`, `total` DESC';
+             GROUP BY `category`, `name`
+             ORDER BY `category`, `total` DESC';
 
         $stmt = $db->prepare($sql);
         $stmt->execute(['year' => $year]);
@@ -388,14 +388,14 @@ class Transaction {
             $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
-        $sql = 'SELECT c.`name` AS `name`, '
+        $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
-             JOIN `categories` c ON t.`category_id` = c.`id`
+             LEFT JOIN `categories` c ON t.`category_id` = c.`id`
              WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
-             GROUP BY c.`id`, c.`name`
-             ORDER BY `total` DESC';
+             GROUP BY `name`
+            ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
         $stmt->execute(['year' => $year]);
@@ -414,13 +414,13 @@ class Transaction {
             $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
-        $sql = 'SELECT g.`name` AS `name`, '
+        $sql = 'SELECT COALESCE(g.`name`, \'Not Grouped\') AS `name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
-             JOIN `transaction_groups` g ON t.`group_id` = g.`id`
+             LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`
              WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
-             GROUP BY g.`id`, g.`name`
+             GROUP BY `name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
@@ -436,15 +436,15 @@ class Transaction {
             $y = (int)$y;
             $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
-        $sql = 'SELECT c.`name` AS `category`, tg.`name` AS `name`, '
+        $sql = 'SELECT CASE WHEN t.`tag_id` IS NULL THEN \'Not Categorised\' ELSE c.`name` END AS `category`, COALESCE(tg.`name`, \'Not Tagged\') AS `name`, '
              . implode(', ', $yearCases)
-             . ', SUM(t.`amount`) AS `total`
-             FROM `transactions` t'
-             . ' JOIN `tags` tg ON t.`tag_id` = tg.`id`'
-             . ' JOIN `categories` c ON t.`category_id` = c.`id`'
+               . ', SUM(t.`amount`) AS `total`'
+               . ' FROM `transactions` t'
+             . ' LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id`'
+             . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
              . ' WHERE t.`transfer_id` IS NULL'
-             . ' GROUP BY c.`id`, c.`name`, tg.`id`, tg.`name`'
-             . ' ORDER BY c.`name`, `total` DESC';
+             . ' GROUP BY `category`, `name`'
+             . ' ORDER BY `category`, `total` DESC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -457,13 +457,13 @@ class Transaction {
             $y = (int)$y;
             $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
-        $sql = 'SELECT c.`name` AS `name`, '
+        $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
-             . ' JOIN `categories` c ON t.`category_id` = c.`id`'
+             . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
              . ' WHERE t.`transfer_id` IS NULL'
-             . ' GROUP BY c.`id`, c.`name`'
+             . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -477,13 +477,13 @@ class Transaction {
             $y = (int)$y;
             $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
-        $sql = 'SELECT g.`name` AS `name`, '
+        $sql = 'SELECT COALESCE(g.`name`, \'Not Grouped\') AS `name`, '
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
-             . ' JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
+             . ' LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
              . ' WHERE t.`transfer_id` IS NULL'
-             . ' GROUP BY g.`id`, g.`name`'
+             . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
