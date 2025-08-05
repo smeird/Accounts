@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Groups</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -17,53 +18,65 @@
                 <label class="block">Group Name<br><input type="text" id="group-name" class="border p-2 rounded w-full" data-help="Name for the group"></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Group</button>
             </form>
-            <h2 class="text-xl font-semibold mt-6 mb-2">Existing Groups</h2>
-            <ul id="group-list" class="space-y-2"></ul>
+            <div class="mt-6 bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Existing Groups</h2>
+                <div id="group-table"></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script>
+let groupTable;
 async function loadGroups() {
     const res = await fetch('../php_backend/public/groups.php');
     const groups = await res.json();
-    const list = document.getElementById('group-list');
-    list.innerHTML = '';
-    groups.forEach(g => {
-        const li = document.createElement('li');
-        const span = document.createElement('span');
-        span.textContent = g.name;
-        const btn = document.createElement('button');
-        btn.textContent = 'Edit';
-        btn.className = 'ml-2 bg-blue-600 text-white px-2 py-1 rounded';
-        btn.addEventListener('click', async () => {
-            const name = prompt('Group Name', g.name);
-            if (name === null) return;
-            await fetch('../php_backend/public/groups.php', {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: g.id, name})
-            });
-            loadGroups();
-            showMessage('Group updated');
-        });
-        const del = document.createElement('button');
-        del.textContent = 'Delete';
-        del.className = 'ml-2 bg-red-600 text-white px-2 py-1 rounded';
-        del.addEventListener('click', async () => {
-            if (!confirm('Delete this group?')) return;
-            await fetch('../php_backend/public/groups.php', {
-                method: 'DELETE',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: g.id})
-            });
-            loadGroups();
-            showMessage('Group deleted');
-        });
-        li.appendChild(span);
-        li.appendChild(btn);
-        li.appendChild(del);
-        list.appendChild(li);
+    if (groupTable) {
+        groupTable.setData(groups);
+        return;
+    }
+    groupTable = tailwindTabulator('#group-table', {
+        data: groups,
+        layout: 'fitColumns',
+        columns: [
+            { title: 'Name', field: 'name' },
+            { title: 'Actions', formatter: function(cell){
+                const g = cell.getRow().getData();
+                const container = document.createElement('div');
+                const edit = document.createElement('button');
+                edit.textContent = 'Edit';
+                edit.className = 'bg-blue-600 text-white px-2 py-1 rounded mr-2';
+                edit.addEventListener('click', async () => {
+                    const name = prompt('Group Name', g.name);
+                    if (name === null) return;
+                    await fetch('../php_backend/public/groups.php', {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: g.id, name})
+                    });
+                    loadGroups();
+                    showMessage('Group updated');
+                });
+                const del = document.createElement('button');
+                del.textContent = 'Delete';
+                del.className = 'bg-red-600 text-white px-2 py-1 rounded';
+                del.addEventListener('click', async () => {
+                    if (!confirm('Delete this group?')) return;
+                    await fetch('../php_backend/public/groups.php', {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: g.id})
+                    });
+                    loadGroups();
+                    showMessage('Group deleted');
+                });
+                container.appendChild(edit);
+                container.appendChild(del);
+                return container;
+            }}
+        ]
     });
 }
 

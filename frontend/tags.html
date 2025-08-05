@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Tags</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -18,55 +19,68 @@
                 <label class="block">Keyword (for auto tagging)<br><input type="text" id="tag-keyword" class="border p-2 rounded w-full" data-help="Keyword used to auto-tag transactions"></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Tag</button>
             </form>
-            <h2 class="text-xl font-semibold mt-6 mb-2">Existing Tags</h2>
-            <ul id="tag-list" class="space-y-2"></ul>
+            <div class="mt-6 bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Existing Tags</h2>
+                <div id="tag-table"></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
-<script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script>
+let tagTable;
 async function loadTags(){
     const res = await fetch('../php_backend/public/tags.php');
     const tags = await res.json();
-    const list = document.getElementById('tag-list');
-    list.innerHTML = '';
-    tags.forEach(t => {
-        const li = document.createElement('li');
-        const span = document.createElement('span');
-        span.textContent = `${t.name} (${t.keyword||''})`;
-        const btn = document.createElement('button');
-        btn.textContent = 'Edit';
-        btn.className = 'ml-2 bg-blue-600 text-white px-2 py-1 rounded';
-        btn.addEventListener('click', async () => {
-            const name = prompt('Tag Name', t.name);
-            if (name === null) return;
-            const keyword = prompt('Keyword (for auto tagging)', t.keyword || '');
-            if (keyword === null) return;
-            await fetch('../php_backend/public/tags.php', {
-                method: 'PUT',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({id: t.id, name, keyword})
-            });
-            loadTags();
-            showMessage('Tag updated');
-        });
-        const del = document.createElement('button');
-        del.textContent = 'Delete';
-        del.className = 'ml-2 bg-red-600 text-white px-2 py-1 rounded';
-        del.addEventListener('click', async () => {
-            if (!confirm('Delete this tag?')) return;
-            await fetch('../php_backend/public/tags.php', {
-                method: 'DELETE',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({id: t.id})
-            });
-            loadTags();
-            showMessage('Tag deleted');
-        });
-        li.appendChild(span);
-        li.appendChild(btn);
-        li.appendChild(del);
-        list.appendChild(li);
+    if(tagTable){
+        tagTable.setData(tags);
+        return;
+    }
+    tagTable = tailwindTabulator('#tag-table', {
+        data: tags,
+        layout: 'fitColumns',
+        columns: [
+            { title: 'Name', field: 'name' },
+            { title: 'Keyword', field: 'keyword' },
+            { title: 'Actions', formatter: function(cell){
+                const t = cell.getRow().getData();
+                const container = document.createElement('div');
+                const edit = document.createElement('button');
+                edit.textContent = 'Edit';
+                edit.className = 'bg-blue-600 text-white px-2 py-1 rounded mr-2';
+                edit.addEventListener('click', async () => {
+                    const name = prompt('Tag Name', t.name);
+                    if (name === null) return;
+                    const keyword = prompt('Keyword (for auto tagging)', t.keyword || '');
+                    if (keyword === null) return;
+                    await fetch('../php_backend/public/tags.php', {
+                        method: 'PUT',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({id: t.id, name, keyword})
+                    });
+                    loadTags();
+                    showMessage('Tag updated');
+                });
+                const del = document.createElement('button');
+                del.textContent = 'Delete';
+                del.className = 'bg-red-600 text-white px-2 py-1 rounded';
+                del.addEventListener('click', async () => {
+                    if (!confirm('Delete this tag?')) return;
+                    await fetch('../php_backend/public/tags.php', {
+                        method: 'DELETE',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({id: t.id})
+                    });
+                    loadTags();
+                    showMessage('Tag deleted');
+                });
+                container.appendChild(edit);
+                container.appendChild(del);
+                return container;
+            }}
+        ]
     });
 }
 
@@ -86,7 +100,7 @@ document.getElementById('tag-form').addEventListener('submit', async (e)=>{
 });
 
 loadTags();
-</script>
+    </script>
     <script src="js/overlay.js"></script>
 </body>
 </html>
