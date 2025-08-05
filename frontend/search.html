@@ -25,6 +25,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
     function formatCurrency(value) {
@@ -41,7 +42,7 @@
                 const gridEl = document.getElementById('results-grid');
                 gridEl.innerHTML = '';
                 if (data.results && data.results.length) {
-                    new Tabulator(gridEl, {
+                    tailwindTabulator(gridEl, {
                         data: data.results,
                         layout: 'fitColumns',
                         columns: [

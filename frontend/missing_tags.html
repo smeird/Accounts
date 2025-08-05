@@ -18,6 +18,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script>
     let table;
     async function loadUntagged(){
@@ -26,7 +27,7 @@
         if (table) {
             table.setData(data);
         } else {
-            table = new Tabulator('#untagged-table', {
+            table = tailwindTabulator('#untagged-table', {
                 data: data,
                 layout: 'fitColumns',
                 initialSort: [{column:'count', dir:'desc'}],
