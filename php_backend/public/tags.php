@@ -28,7 +28,11 @@ if ($method === 'POST') {
     }
 } elseif ($method === 'GET') {
     try {
-        echo json_encode(Tag::all());
+        if (isset($_GET['unassigned'])) {
+            echo json_encode(Tag::unassigned());
+        } else {
+            echo json_encode(Tag::all());
+        }
     } catch (Exception $e) {
         http_response_code(500);
         Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
