@@ -93,6 +93,25 @@
     }
 
     function buildDonutChart(id, categories, tags){
+
+        const colors = Highcharts.getOptions().colors;
+        const categoryData = [];
+        const tagData = [];
+
+        categories.forEach((c, i) => {
+            const color = colors[i % colors.length];
+            categoryData.push({ name: c.name, y: parseFloat(c.total), color });
+
+            tags.filter(t => t.category === c.name).forEach(t => {
+                tagData.push({
+                    name: t.name,
+                    y: parseFloat(t.total),
+                    color: Highcharts.color(color).brighten(0.1).get()
+                });
+            });
+        });
+
+
         Highcharts.chart(id, {
             chart: { type: 'pie' },
             title: { text: 'Categories and Tags' },
@@ -105,17 +124,10 @@
                 }
             },
             series: [
-                {
-                    name: 'Categories',
-                    data: categories.map(c => ({ name: c.name, y: parseFloat(c.total) })),
-                    size: '60%'
-                },
-                {
-                    name: 'Tags',
-                    data: tags.map(t => ({ name: t.name, y: parseFloat(t.total) })),
-                    size: '80%',
-                    innerSize: '60%'
-                }
+
+                { name: 'Categories', data: categoryData, size: '60%', dataLabels: { distance: -30 } },
+                { name: 'Tags', data: tagData, size: '80%', innerSize: '60%' }
+
             ]
         });
     }
