@@ -63,13 +63,17 @@
                     gridEl.innerHTML = 'No transactions found.';
                 }
                 const totalEl = document.getElementById('total');
-                totalEl.textContent = 'Total: ' + formatCurrency(data.total);
+                const total = (data.results || []).reduce((sum, row) => {
+                    return row.transfer_id === null ? sum + parseFloat(row.amount) : sum;
+                }, 0);
+                totalEl.textContent = 'Total: ' + formatCurrency(total);
                 totalEl.classList.add('text-right');
 
                 const chartEl = document.getElementById('monthly-chart');
                 if (data.results && data.results.length) {
                     const monthly = {};
                     data.results.forEach(row => {
+                        if (row.transfer_id !== null) return;
                         const date = row.date.substring(0, 7); // YYYY-MM
                         const amount = parseFloat(row.amount);
                         if (amount < 0) {

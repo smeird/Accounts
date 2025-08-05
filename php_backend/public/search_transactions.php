@@ -17,7 +17,9 @@ try {
     $results = Transaction::search($value);
     $total = 0.0;
     foreach ($results as $row) {
-        $total += (float)$row['amount'];
+        if ($row['transfer_id'] === null) {
+            $total += (float)$row['amount'];
+        }
     }
     echo json_encode(['results' => $results, 'total' => $total]);
 } catch (Exception $e) {
