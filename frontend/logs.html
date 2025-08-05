@@ -19,11 +19,12 @@
 
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script>
     fetch('../php_backend/public/logs.php')
         .then(resp => resp.json())
         .then(data => {
-            new Tabulator('#logs-grid', {
+            tailwindTabulator('#logs-grid', {
                 data: data,
                 layout: 'fitColumns',
                 columns: [

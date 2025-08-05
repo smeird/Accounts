@@ -27,6 +27,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
@@ -100,7 +101,7 @@ form.addEventListener('submit', function(e) {
         });
         groupOptions.push({ value: '__new', label: 'Add New Group...' });
 
-        new Tabulator('#transactions-grid', {
+        tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitColumns',
             columns: [

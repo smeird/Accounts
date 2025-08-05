@@ -36,6 +36,7 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script>
 
     async function loadOptions() {
@@ -108,7 +109,7 @@
                 gridEl.innerHTML = '';
                 chartContainer.innerHTML = '';
                 if (Array.isArray(data) && data.length) {
-                    new Tabulator(gridEl, {
+                    tailwindTabulator(gridEl, {
                         data: data,
                         layout: 'fitColumns',
                         columns: [
