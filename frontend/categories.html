@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Categories</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -17,62 +18,75 @@
                 <label class="block">Category Name<br><input type="text" id="category-name" class="border p-2 rounded w-full" data-help="Name for the category"></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Category</button>
             </form>
-            <h2 class="text-xl font-semibold mt-6 mb-2">Existing Categories</h2>
-            <ul id="category-list" class="space-y-2"></ul>
+            <div class="mt-6 bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Existing Categories</h2>
+                <div id="category-table"></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script>
+let categoryTable;
 async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
     const cats = await res.json();
-    const list = document.getElementById('category-list');
-    list.innerHTML = '';
-    cats.forEach(c => {
-        const li = document.createElement('li');
-        const span = document.createElement('span');
-        const tags = c.tags.map(t => t.name).join(', ');
-        span.textContent = `${c.name}${tags ? ': ' + tags : ''}`;
-        const editBtn = document.createElement('button');
-        editBtn.textContent = 'Edit';
-        editBtn.className = 'ml-2 bg-blue-600 text-white px-2 py-1 rounded';
-        editBtn.addEventListener('click', async () => {
-            const name = prompt('Category Name', c.name);
-            if (name === null) return;
-            await fetch('../php_backend/public/categories.php', {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: c.id, name})
-            });
-            loadCategories();
-            showMessage('Category updated');
-        });
-        const tagBtn = document.createElement('button');
-        tagBtn.textContent = 'Assign Tag';
-        tagBtn.className = 'ml-2 bg-gray-600 text-white px-2 py-1 rounded';
-        tagBtn.addEventListener('click', async () => {
-            const resTags = await fetch('../php_backend/public/tags.php?unassigned=1');
-            const allTags = await resTags.json();
-            if (allTags.length === 0) {
-                showMessage('No unassigned tags available');
-                return;
-            }
-            const tagOptions = allTags.map(t => `${t.id}: ${t.name}`).join('\n');
-            const tagId = prompt('Select Tag:\n' + tagOptions);
-            if (tagId === null) return;
-            await fetch('../php_backend/public/categories.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: 'add_tag', category_id: c.id, tag_id: tagId})
-            });
-            loadCategories();
-            showMessage('Tag assigned');
-        });
-        li.appendChild(span);
-        li.appendChild(editBtn);
-        li.appendChild(tagBtn);
-        list.appendChild(li);
+    const data = cats.map(c => ({id: c.id, name: c.name, tags: c.tags.map(t => t.name).join(', ')}));
+    if (categoryTable) {
+        categoryTable.setData(data);
+        return;
+    }
+    categoryTable = tailwindTabulator('#category-table', {
+        data: data,
+        layout: 'fitColumns',
+        columns: [
+            { title: 'Name', field: 'name' },
+            { title: 'Tags', field: 'tags' },
+            { title: 'Actions', formatter: function(cell){
+                const c = cell.getRow().getData();
+                const container = document.createElement('div');
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'bg-blue-600 text-white px-2 py-1 rounded mr-2';
+                editBtn.addEventListener('click', async () => {
+                    const name = prompt('Category Name', c.name);
+                    if (name === null) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: c.id, name})
+                    });
+                    loadCategories();
+                    showMessage('Category updated');
+                });
+                const tagBtn = document.createElement('button');
+                tagBtn.textContent = 'Assign Tag';
+                tagBtn.className = 'bg-gray-600 text-white px-2 py-1 rounded';
+                tagBtn.addEventListener('click', async () => {
+                    const resTags = await fetch('../php_backend/public/tags.php?unassigned=1');
+                    const allTags = await resTags.json();
+                    if (allTags.length === 0) {
+                        showMessage('No unassigned tags available');
+                        return;
+                    }
+                    const tagOptions = allTags.map(t => `${t.id}: ${t.name}`).join('\n');
+                    const tagId = prompt('Select Tag:\n' + tagOptions);
+                    if (tagId === null) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({action: 'add_tag', category_id: c.id, tag_id: tagId})
+                    });
+                    loadCategories();
+                    showMessage('Tag assigned');
+                });
+                container.appendChild(editBtn);
+                container.appendChild(tagBtn);
+                return container;
+            }}
+        ]
     });
 }
 
