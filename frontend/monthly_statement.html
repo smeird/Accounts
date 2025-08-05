@@ -91,7 +91,9 @@ form.addEventListener('submit', function(e) {
                 {
                     title: 'Tag',
                     field: 'tag_id',
-                    editor: 'select',
+
+                    editor: 'list',
+
                     editorParams: { values: tagValues },
                     formatter: function(cell) { return tagValues[cell.getValue()] || ''; }
                 },
