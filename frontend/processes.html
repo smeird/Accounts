@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- Page for manually running tagging and categorisation processes -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Processes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Run Processes</h1>
+            <div class="space-x-4">
+                <button id="tagging-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Run Tagging</button>
+                <button id="categories-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Apply Categories</button>
+            </div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script>
+    async function run(action){
+        const res = await fetch('../php_backend/public/run_processes.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action})
+        });
+        const data = await res.json();
+        if(data.error){
+            showMessage('Error: ' + data.error);
+            return;
+        }
+        if(action === 'tagging'){
+            showMessage(`Tagged ${data.tagged} transactions`);
+        } else if(action === 'categories') {
+            showMessage(`Categorised ${data.categorised} transactions`);
+        }
+    }
+    document.getElementById('tagging-btn').addEventListener('click', ()=>run('tagging'));
+    document.getElementById('categories-btn').addEventListener('click', ()=>run('categories'));
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
