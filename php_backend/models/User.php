@@ -19,11 +19,18 @@ class User {
         return $row ?: null;
     }
 
-    public static function verify(string $username, string $password): ?int {
+
+    public static function verify(string $username, string $password, ?string &$reason = null): ?int {
         $user = self::findByUsername($username);
-        if ($user && password_verify($password, $user['password'])) {
+        if (!$user) {
+            $reason = 'user not found';
+            return null;
+        }
+        if (password_verify($password, $user['password'])) {
             return (int)$user['id'];
         }
+        $reason = 'password mismatch';
+
         return null;
     }
 
