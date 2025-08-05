@@ -43,6 +43,14 @@
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    function totalFormatter(cell){
+        const value = cell.getValue();
+        const el = cell.getElement();
+        el.classList.toggle('negative', value < 0);
+        el.classList.toggle('positive', value > 0);
+        return '£' + parseFloat(value).toFixed(2);
+    }
+
     function buildTable(id, data, days){
         const el = document.getElementById(id);
         el.innerHTML = '';
@@ -52,13 +60,15 @@
             field: String(i + 1),
             formatter: 'money',
             formatterParams: { symbol: '£', precision: 2 },
-            hozAlign: 'right'
+            hozAlign: 'right',
+            bottomCalc: 'sum',
+            bottomCalcFormatter: totalFormatter
         }));
 
         const columns = [
-            { title: 'Name', field: 'name' },
+            { title: 'Name', field: 'name', bottomCalc: () => 'Total' },
             ...dayCols,
-            { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+            { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];
 
         new Tabulator(el, {
