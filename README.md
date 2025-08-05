@@ -32,9 +32,9 @@ You can view these entries by opening `frontend/logs.html` which calls the
 `php_backend/public/logs.php` endpoint.
 
 
-To import transactions from an OFX file, use the upload script:
+To import transactions from one or more OFX files, use the upload script:
 ```bash
-curl -F ofx_file=@yourfile.ofx http://localhost/path/to/php_backend/public/upload_ofx.php
+curl -F "ofx_files[]=@first.ofx" -F "ofx_files[]=@second.ofx" http://localhost/path/to/php_backend/public/upload_ofx.php
 ```
 You can try this using the included sample file `sample_data/test.ofx` which
 contains two transactions for a checking account.
