@@ -5,22 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monthly Statement</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
-<body>
-    <div class="container">
-        <nav class="sidebar" id="menu"></nav>
-        <main class="content">
-            <h1>Monthly Statement</h1>
-            <form id="statement-form">
-                <label for="year">Year:</label>
-                <select id="year" name="year"></select>
-                <label for="month">Month:</label>
-                <select id="month" name="month"></select>
-                <button type="submit">View</button>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Monthly Statement</h1>
+            <form id="statement-form" class="space-y-4">
+                <label for="year" class="block">Year:
+                    <select id="year" name="year" class="border p-2 rounded w-full"></select>
+                </label>
+                <label for="month" class="block">Month:
+                    <select id="month" name="month" class="border p-2 rounded w-full"></select>
+                </label>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
             </form>
-            <div id="transactions-grid"></div>
+            <div id="transactions-grid" class="mt-4"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>

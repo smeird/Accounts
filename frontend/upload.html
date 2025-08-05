@@ -5,16 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload OFX</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <nav class="sidebar" id="menu"></nav>
-        <main class="content">
-            <h1>Upload OFX File</h1>
-            <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data">
-                <input type="file" name="ofx_file" accept=".ofx" required>
-                <button type="submit">Upload</button>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Upload OFX File</h1>
+            <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <input type="file" name="ofx_file" accept=".ofx" required class="block w-full">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
             </form>
         </main>
     </div>
