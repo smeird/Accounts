@@ -6,15 +6,16 @@ require_once __DIR__ . '/../models/Transaction.php';
 header('Content-Type: application/json');
 
 $value = $_GET['value'] ?? '';
+$amount = isset($_GET['amount']) ? $_GET['amount'] : null;
 
-if ($value === '') {
+if ($value === '' && $amount === null) {
     http_response_code(400);
-    echo json_encode(['error' => 'Search value is required']);
+    echo json_encode(['error' => 'Search value or amount is required']);
     exit;
 }
 
 try {
-    $results = Transaction::search($value);
+    $results = Transaction::search($value, $amount !== null ? (float)$amount : null);
     $total = 0.0;
     foreach ($results as $row) {
         if ($row['transfer_id'] === null) {
