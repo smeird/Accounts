@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- Dashboard showing account summaries -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Account Dashboard</h1>
+            <p class="mb-4">Overview of account balances and activity.</p>
+            <div class="bg-white p-6 rounded shadow">
+                <div id="accounts-table"></div>
+                <div id="accounts-chart" class="mt-4" style="height:400px"></div>
+            </div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script>
+    function balanceFormatter(cell){
+        const value = cell.getValue();
+        const el = cell.getElement();
+        el.classList.toggle('text-red-600', value < 0);
+        el.classList.toggle('text-green-600', value > 0);
+        return '£' + parseFloat(value).toFixed(2);
+    }
+
+    fetch('../php_backend/public/account_dashboard.php')
+        .then(resp => resp.json())
+        .then(data => {
+            tailwindTabulator(document.getElementById('accounts-table'), {
+                data,
+                layout: 'fitColumns',
+                columns: [
+                    { title: 'Name', field: 'name' },
+                    { title: 'Transactions', field: 'transactions', hozAlign: 'right' },
+                    { title: 'Balance', field: 'balance', hozAlign: 'right', formatter: balanceFormatter },
+                    { title: 'Last Transaction', field: 'last_transaction' }
+                ]
+            });
+
+            Highcharts.chart('accounts-chart', {
+                chart: { type: 'column' },
+                title: { text: 'Account Balances' },
+                xAxis: { categories: data.map(a => a.name) },
+                yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: 'Balance', data: data.map(a => parseFloat(a.balance)) }]
+            });
+        });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
