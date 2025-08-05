@@ -31,10 +31,6 @@ const yearSelect = document.getElementById('year');
 let tagOptions = [];
 let tagLookup = {};
 
-let tagOptions = [];
-let tagLookup = {};
-
-
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
     .then(data => {
