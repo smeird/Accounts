@@ -15,7 +15,7 @@
             <h1 class="text-2xl font-semibold mb-4">Search Transactions</h1>
             <p class="mb-4">Find specific transactions using keywords and view the results below.</p>
             <form id="search-form" class="space-y-4">
-                <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full">
+                <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
             </form>
             <div id="results-grid" class="mt-4"></div>
@@ -24,6 +24,7 @@
         </main>
     </div>
     <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>

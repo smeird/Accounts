@@ -15,19 +15,19 @@
             <h1 class="text-2xl font-semibold mb-4">Transaction Reports</h1>
             <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria.</p>
             <form id="report-form" class="space-y-4">
-                <label class="block">Category: <select id="category" class="border p-2 rounded w-full"></select></label>
-                <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full"></select></label>
-                <label class="block">Group: <select id="group" class="border p-2 rounded w-full"></select></label>
-                <label class="block">Text: <input type="text" id="text" class="border p-2 rounded w-full"></label>
-                <label class="block">Start Date: <input type="date" id="start" class="border p-2 rounded w-full"></label>
-                <label class="block">End Date: <input type="date" id="end" class="border p-2 rounded w-full"></label>
+                <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
+                <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
+                <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
+                <label class="block">Text: <input type="text" id="text" class="border p-2 rounded w-full" data-help="Filter by description text"></label>
+                <label class="block">Start Date: <input type="date" id="start" class="border p-2 rounded w-full" data-help="Start date for report"></label>
+                <label class="block">End Date: <input type="date" id="end" class="border p-2 rounded w-full" data-help="End date for report"></label>
                 <div class="space-x-2">
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Run Report</button>
                     <button type="button" id="save-report" class="bg-gray-600 text-white px-4 py-2 rounded">Save Report</button>
                 </div>
             </form>
             <div class="mt-4 flex items-center space-x-2">
-                <label class="block flex-1">Saved Reports: <select id="saved-reports" class="border p-2 rounded w-full"></select></label>
+                <label class="block flex-1">Saved Reports: <select id="saved-reports" class="border p-2 rounded w-full" data-help="Load a saved report"></select></label>
                 <button type="button" id="delete-report" class="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
             </div>
             <div id="results-grid" class="mt-4"></div>
@@ -35,6 +35,7 @@
         </main>
     </div>
     <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
