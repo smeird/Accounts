@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Dashboard showing yearly spending summaries -->
+<!-- Dashboard showing totals across all years -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yearly Dashboard</title>
+    <title>All Years Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
@@ -12,10 +12,7 @@
     <div class="container">
         <nav class="sidebar" id="menu"></nav>
         <main class="content">
-            <h1>Yearly Dashboard</h1>
-            <label for="year-select">Year:
-                <select id="year-select"></select>
-            </label>
+            <h1>All Years Dashboard</h1>
 
             <h2>Tag Totals</h2>
             <div id="tags-table"></div>
@@ -34,13 +31,13 @@
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
-    function buildTable(id, data){
+    function buildTable(id, data, years){
         const el = document.getElementById(id);
         el.innerHTML = '';
 
-        const monthCols = Array.from({length: 12}, (_, i) => ({
-            title: new Date(0, i).toLocaleString('default', { month: 'short' }),
-            field: String(i + 1),
+        const yearCols = years.map(y => ({
+            title: y,
+            field: String(y),
             formatter: 'money',
             formatterParams: { symbol: '£', precision: 2 },
             hozAlign: 'right'
@@ -48,7 +45,7 @@
 
         const columns = [
             { title: 'Name', field: 'name' },
-            ...monthCols,
+            ...yearCols,
             { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
         ];
 
@@ -70,37 +67,17 @@
         });
     }
 
-    function loadYear(year){
-        fetch('../php_backend/public/yearly_dashboard.php?year=' + year)
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('../php_backend/public/all_years_dashboard.php')
             .then(resp => resp.json())
             .then(data => {
-                buildTable('tags-table', data.tags);
-                buildChart('tags-chart', 'Tag Totals ' + year, data.tags);
-                buildTable('categories-table', data.categories);
-                buildChart('categories-chart', 'Category Totals ' + year, data.categories);
-                buildTable('groups-table', data.groups);
-                buildChart('groups-chart', 'Group Totals ' + year, data.groups);
+                buildTable('tags-table', data.tags, data.years);
+                buildChart('tags-chart', 'Tag Totals', data.tags);
+                buildTable('categories-table', data.categories, data.years);
+                buildChart('categories-chart', 'Category Totals', data.categories);
+                buildTable('groups-table', data.groups, data.years);
+                buildChart('groups-chart', 'Group Totals', data.groups);
             });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('../php_backend/public/transaction_months.php')
-            .then(resp => resp.json())
-            .then(months => {
-                const years = Array.from(new Set(months.map(m => m.year))).sort((a,b) => b - a);
-                const select = document.getElementById('year-select');
-                years.forEach(y => {
-                    const opt = document.createElement('option');
-                    opt.value = y;
-                    opt.textContent = y;
-                    select.appendChild(opt);
-                });
-                const initial = select.value || years[0];
-                select.value = initial;
-                loadYear(initial);
-            });
-
-        document.getElementById('year-select').addEventListener('change', e => loadYear(e.target.value));
     });
     </script>
     <script src="js/overlay.js"></script>

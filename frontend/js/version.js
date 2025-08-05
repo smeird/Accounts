@@ -5,9 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
   fetch('../php_backend/public/version.php')
     .then((response) => response.json())
     .then((data) => {
-      if (data.version) {
-        target.textContent = `Version: ${data.version}`;
-      }
+      const version = data.version || 'unknown';
+      target.textContent = `Version: ${version}`;
     })
     .catch(() => {
       target.textContent = 'Version: unknown';
