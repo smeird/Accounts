@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
         <img src="frontend/logo.svg" alt="Finance Manager Logo" class="w-32 mx-auto mb-4">
         <h1 class="text-2xl font-semibold mb-4 text-center">Login</h1>
+        <p class="mb-4 text-center">Use your account credentials to sign in and access the finance manager.</p>
         <?php if ($error): ?>
             <p class="mb-4 text-red-500 text-center"><?= htmlspecialchars($error) ?></p>
         <?php endif; ?>

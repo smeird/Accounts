@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
         <img src="frontend/logo.svg" alt="Finance Manager Logo" class="w-32 mx-auto mb-4">
         <h1 class="text-2xl font-semibold mb-4">User Management</h1>
+        <p class="mb-4">Add new users or update your password from this page.</p>
         <p class="mb-4"><a href="logout.php" class="text-blue-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-blue-600 hover:underline">Home</a></p>
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
