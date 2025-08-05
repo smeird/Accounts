@@ -536,9 +536,9 @@ class Transaction {
      */
     public static function getUntaggedCounts(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT `description`, COUNT(*) AS `count` '
+        $sql = 'SELECT `description`, `memo`, COUNT(*) AS `count` '
              . 'FROM `transactions` WHERE `tag_id` IS NULL '
-             . 'GROUP BY `description` ORDER BY `count` DESC';
+             . 'GROUP BY `description`, `memo` ORDER BY `count` DESC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
