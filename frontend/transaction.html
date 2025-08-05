@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Details</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <nav class="sidebar" id="menu"></nav>
-        <main class="content">
-            <h1>Transaction Details</h1>
-            <div id="transaction-details"></div>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Transaction Details</h1>
+            <div id="transaction-details" class="mt-4"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -34,15 +34,16 @@
             }
 
             const form = document.createElement('form');
+            form.className = 'space-y-4';
             form.innerHTML = `
                 <p><strong>Date:</strong> ${tx.date}</p>
                 <p><strong>Description:</strong> ${tx.description}</p>
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
-                <label>Category: <select id="category"></select></label><br>
-                <label>Tag: <select id="tag"></select></label><br>
-                <label>Group: <select id="group"></select></label><br>
-                <button type="submit">Save</button>
+                <label class="block">Category: <select id="category" class="border p-2 rounded w-full"></select></label>
+                <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full"></select></label>
+                <label class="block">Group: <select id="group" class="border p-2 rounded w-full"></select></label>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
             `;
             container.appendChild(form);
 

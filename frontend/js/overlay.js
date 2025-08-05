@@ -3,9 +3,9 @@
     function createOverlay(){
         const overlay = document.createElement('div');
         overlay.id = 'overlay';
-        overlay.className = 'overlay';
-        overlay.innerHTML = '<div class="overlay-content"></div>';
-        overlay.addEventListener('click', () => overlay.classList.remove('show'));
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden';
+        overlay.innerHTML = '<div class="bg-white p-4 rounded shadow"></div>';
+        overlay.addEventListener('click', () => overlay.classList.add('hidden'));
         document.body.appendChild(overlay);
         return overlay;
     }
@@ -19,11 +19,11 @@
 
     window.showMessage = function(msg){
         const overlay = window.__overlay || document.getElementById('overlay') || createOverlay();
-        overlay.querySelector('.overlay-content').textContent = msg;
-        overlay.classList.add('show');
+        overlay.querySelector('div').textContent = msg;
+        overlay.classList.remove('hidden');
 
         clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => overlay.classList.remove('show'), 2000);
+        hideTimer = setTimeout(() => overlay.classList.add('hidden'), 2000);
 
     };
 })();

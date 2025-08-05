@@ -5,32 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yearly Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
-<body>
-    <div class="container">
-        <nav class="sidebar" id="menu"></nav>
-        <main class="content">
-            <h1>Yearly Dashboard</h1>
-            <label for="year-select">Year:
-                <select id="year-select"></select>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Yearly Dashboard</h1>
+            <label for="year-select" class="block">Year:
+                <select id="year-select" class="border p-2 rounded w-full"></select>
             </label>
 
-            <h2>Tag Totals</h2>
-            <div id="tags-table"></div>
-            <div id="tags-chart" style="height:400px"></div>
+            <h2 class="text-xl font-semibold mt-6 mb-2">Tag Totals</h2>
+            <div id="tags-table" class="mt-2"></div>
+            <div id="tags-chart" class="mt-4" style="height:400px"></div>
 
-            <h2>Category Totals</h2>
-            <div id="categories-table"></div>
-            <div id="categories-chart" style="height:400px"></div>
+            <h2 class="text-xl font-semibold mt-6 mb-2">Category Totals</h2>
+            <div id="categories-table" class="mt-2"></div>
+            <div id="categories-chart" class="mt-4" style="height:400px"></div>
 
-            <h2>Category & Tag Breakdown</h2>
-            <div id="category-tag-donut" style="height:400px"></div>
+            <h2 class="text-xl font-semibold mt-6 mb-2">Category & Tag Breakdown</h2>
+            <div id="category-tag-donut" class="mt-2" style="height:400px"></div>
 
-            <h2>Group Totals</h2>
-            <div id="groups-table"></div>
-            <div id="groups-chart" style="height:400px"></div>
+            <h2 class="text-xl font-semibold mt-6 mb-2">Group Totals</h2>
+            <div id="groups-table" class="mt-2"></div>
+            <div id="groups-chart" class="mt-4" style="height:400px"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -40,8 +40,8 @@
     function totalFormatter(cell){
         const value = cell.getValue();
         const el = cell.getElement();
-        el.classList.toggle('negative', value < 0);
-        el.classList.toggle('positive', value > 0);
+        el.classList.toggle('text-red-600', value < 0);
+        el.classList.toggle('text-green-600', value > 0);
         return '£' + parseFloat(value).toFixed(2);
     }
 
