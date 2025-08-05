@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!-- Dashboard showing totals across all years -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Years Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>All Years Dashboard</h1>
+
+            <h2>Tag Totals</h2>
+            <div id="tags-table"></div>
+            <div id="tags-chart" style="height:400px"></div>
+
+            <h2>Category Totals</h2>
+            <div id="categories-table"></div>
+            <div id="categories-chart" style="height:400px"></div>
+
+            <h2>Group Totals</h2>
+            <div id="groups-table"></div>
+            <div id="groups-chart" style="height:400px"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script>
+    function buildTable(id, data, years){
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+
+        const yearCols = years.map(y => ({
+            title: y,
+            field: String(y),
+            formatter: 'money',
+            formatterParams: { symbol: '£', precision: 2 },
+            hozAlign: 'right'
+        }));
+
+        const columns = [
+            { title: 'Name', field: 'name' },
+            ...yearCols,
+            { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+        ];
+
+        new Tabulator(el, {
+            data: data,
+            layout: 'fitColumns',
+            columns: columns
+        });
+    }
+
+    function buildChart(id, title, data){
+        Highcharts.chart(id, {
+            chart: { type: 'column' },
+            title: { text: title },
+            xAxis: { categories: data.map(d => d.name) },
+            yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+            series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)) }]
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('../php_backend/public/all_years_dashboard.php')
+            .then(resp => resp.json())
+            .then(data => {
+                buildTable('tags-table', data.tags, data.years);
+                buildChart('tags-chart', 'Tag Totals', data.tags);
+                buildTable('categories-table', data.categories, data.years);
+                buildChart('categories-chart', 'Category Totals', data.categories);
+                buildTable('groups-table', data.groups, data.years);
+                buildChart('groups-chart', 'Group Totals', data.groups);
+            });
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

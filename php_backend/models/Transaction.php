@@ -156,6 +156,12 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public static function getAvailableYears(): array {
+        $db = Database::getConnection();
+        $stmt = $db->query('SELECT DISTINCT YEAR(`date`) AS year FROM `transactions` ORDER BY YEAR(`date`)');
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
     /**
      * Retrieve the total amount spent in each month of a given year.
      * Amounts are returned as positive numbers representing outflows.
@@ -363,6 +369,63 @@ class Transaction {
 
         $stmt = $db->prepare($sql);
         $stmt->execute(['year' => $year]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function getTagTotalsByYears(array $years): array {
+        if (empty($years)) { return []; }
+        $db = Database::getConnection();
+        $yearCases = [];
+        foreach ($years as $y) {
+            $y = (int)$y;
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$y`";
+        }
+        $sql = 'SELECT tg.`name` AS `name`, '
+             . implode(', ', $yearCases)
+             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t'
+             . ' JOIN `tags` tg ON t.`tag_id` = tg.`id`'
+             . ' GROUP BY tg.`id`, tg.`name`'
+             . ' ORDER BY `total` DESC';
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function getCategoryTotalsByYears(array $years): array {
+        if (empty($years)) { return []; }
+        $db = Database::getConnection();
+        $yearCases = [];
+        foreach ($years as $y) {
+            $y = (int)$y;
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$y`";
+        }
+        $sql = 'SELECT c.`name` AS `name`, '
+             . implode(', ', $yearCases)
+             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t'
+             . ' JOIN `categories` c ON t.`category_id` = c.`id`'
+             . ' GROUP BY c.`id`, c.`name`'
+             . ' ORDER BY `total` DESC';
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function getGroupTotalsByYears(array $years): array {
+        if (empty($years)) { return []; }
+        $db = Database::getConnection();
+        $yearCases = [];
+        foreach ($years as $y) {
+            $y = (int)$y;
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y AND t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `$y`";
+        }
+        $sql = 'SELECT g.`name` AS `name`, '
+             . implode(', ', $yearCases)
+             . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
+             FROM `transactions` t'
+             . ' JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
+             . ' GROUP BY g.`id`, g.`name`'
+             . ' ORDER BY `total` DESC';
+        $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
