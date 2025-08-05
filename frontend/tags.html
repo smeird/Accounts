@@ -13,8 +13,8 @@
         <main class="flex-1 p-6">
             <h1 class="text-2xl font-semibold mb-4">Manage Tags</h1>
             <form id="tag-form" class="space-y-4">
-                <label class="block">Tag Name<br><input type="text" id="tag-name" class="border p-2 rounded w-full"></label>
-                <label class="block">Keyword (for auto tagging)<br><input type="text" id="tag-keyword" class="border p-2 rounded w-full"></label>
+                <label class="block">Tag Name<br><input type="text" id="tag-name" class="border p-2 rounded w-full" data-help="Name for the tag"></label>
+                <label class="block">Keyword (for auto tagging)<br><input type="text" id="tag-keyword" class="border p-2 rounded w-full" data-help="Keyword used to auto-tag transactions"></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Tag</button>
             </form>
             <h2 class="text-xl font-semibold mt-6 mb-2">Existing Tags</h2>
@@ -22,6 +22,7 @@
         </main>
     </div>
     <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
 <script>
 async function loadTags(){
     const res = await fetch('../php_backend/public/tags.php');

@@ -54,17 +54,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2 class="text-xl font-semibold mt-6 mb-2">Add User</h2>
         <form method="post" class="space-y-4 mb-6">
             <input type="hidden" name="action" value="add">
-            <label class="block">Username: <input type="text" name="username" class="border p-2 rounded w-full"></label>
-            <label class="block">Password: <input type="password" name="password" class="border p-2 rounded w-full"></label>
+            <label class="block">Username: <input type="text" name="username" class="border p-2 rounded w-full" data-help="Choose a username"></label>
+            <label class="block">Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Set a password"></label>
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Add User</button>
         </form>
 
         <h2 class="text-xl font-semibold mt-6 mb-2">Update Password</h2>
         <form method="post" class="space-y-4">
             <input type="hidden" name="action" value="update">
-            <label class="block">New Password: <input type="password" name="password" class="border p-2 rounded w-full"></label>
+            <label class="block">New Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Enter your new password"></label>
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update Password</button>
         </form>
     </div>
+    <script src="frontend/js/input_help.js"></script>
 </body>
 </html>

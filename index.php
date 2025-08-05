@@ -40,13 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         <form method="post" class="space-y-4">
             <label class="block">Username:
-                <input type="text" name="username" class="mt-1 w-full border p-2 rounded">
+                <input type="text" name="username" class="mt-1 w-full border p-2 rounded" data-help="Enter your username">
             </label>
             <label class="block">Password:
-                <input type="password" name="password" class="mt-1 w-full border p-2 rounded">
+                <input type="password" name="password" class="mt-1 w-full border p-2 rounded" data-help="Enter your password">
             </label>
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
         </form>
     </div>
+    <script src="frontend/js/input_help.js"></script>
 </body>
 </html>
