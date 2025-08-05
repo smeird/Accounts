@@ -28,7 +28,10 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
-let tagValues = {};
+
+let tagOptions = [];
+let tagLookup = {};
+
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -77,9 +80,14 @@ form.addEventListener('submit', function(e) {
         fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year).then(r => r.json()),
         fetch('../php_backend/public/tags.php').then(r => r.json())
     ]).then(([data, tags]) => {
-        tagValues = {};
-        tags.forEach(t => { tagValues[t.id] = t.name; });
-        tagValues['__new'] = 'Add New Tag...';
+
+        tagOptions = [];
+        tagLookup = {};
+        tags.forEach(t => {
+            tagOptions.push({ value: t.id, label: t.name });
+            tagLookup[t.id] = t.name;
+        });
+        tagOptions.push({ value: '__new', label: 'Add New Tag...' });
 
         new Tabulator('#transactions-grid', {
             data: data,
@@ -91,11 +99,11 @@ form.addEventListener('submit', function(e) {
                 {
                     title: 'Tag',
                     field: 'tag_id',
-
                     editor: 'list',
-
-                    editorParams: { values: tagValues },
-                    formatter: function(cell) { return tagValues[cell.getValue()] || ''; }
+                    editorParams: { values: tagOptions },
+                    formatter: function(cell) {
+                        return tagLookup[cell.getValue()] || '';
+                    }
                 },
                 { title: 'Group', field: 'group_name' },
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
@@ -104,16 +112,13 @@ form.addEventListener('submit', function(e) {
                 if (cell.getField() === 'tag_id') {
                     const val = cell.getValue();
                     const data = cell.getRow().getData();
-
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
-
                     if (val === '__new') {
                         const name = prompt('Enter new tag name:');
                         if (!name) {
                             cell.setValue(data.tag_id, true);
                             return;
                         }
-
                         payload.tag_name = name;
                     } else {
                         payload.tag_id = val;
@@ -136,10 +141,10 @@ form.addEventListener('submit', function(e) {
                         alert('Failed to save tag');
                         cell.setValue(data.tag_id, true);
                     });
-
                 }
             }
         });
+
     });
 });
 </script>
