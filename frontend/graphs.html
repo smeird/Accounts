@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6 space-y-8">
+            <h1 class="text-2xl font-semibold">Graphs</h1>
+            <div id="line-chart" style="height:400px"></div>
+            <div id="column-chart" style="height:400px"></div>
+            <div id="area-chart" style="height:400px"></div>
+            <div id="pie-chart" style="height:400px"></div>
+            <div id="bar-chart" style="height:400px"></div>
+            <div id="scatter-chart" style="height:400px"></div>
+        </main>
+    </div>
+
+    <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const year = new Date().getFullYear();
+        Promise.all([
+            fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
+            fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json())
+        ]).then(([monthly, yearly]) => {
+            const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
+            const totals = monthly.map(m => parseFloat(m.total));
+
+            Highcharts.chart('line-chart', {
+                chart: { type: 'line' },
+                title: { text: 'Monthly Spending' },
+                xAxis: { categories: months },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: String(year), data: totals }]
+            });
+
+            Highcharts.chart('column-chart', {
+                chart: { type: 'column' },
+                title: { text: 'Monthly Spending (Column)' },
+                xAxis: { categories: months },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: String(year), data: totals }]
+            });
+
+            const cumulative = totals.reduce((acc, val) => {
+                const last = acc.length ? acc[acc.length - 1] : 0;
+                acc.push(last + val);
+                return acc;
+            }, []);
+            Highcharts.chart('area-chart', {
+                chart: { type: 'area' },
+                title: { text: 'Cumulative Spending' },
+                xAxis: { categories: months },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: String(year), data: cumulative }]
+            });
+
+            const catData = yearly.categories.map(c => ({ name: c.name, y: parseFloat(c.total) }));
+            Highcharts.chart('pie-chart', {
+                chart: { type: 'pie' },
+                title: { text: 'Category Breakdown' },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: 'Categories', data: catData }]
+            });
+
+            const tagNames = yearly.tags.map(t => t.name);
+            const tagTotals = yearly.tags.map(t => parseFloat(t.total));
+            Highcharts.chart('bar-chart', {
+                chart: { type: 'bar' },
+                title: { text: 'Tag Totals' },
+                xAxis: { categories: tagNames },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: 'Total', data: tagTotals }]
+            });
+
+            Highcharts.chart('scatter-chart', {
+                chart: { type: 'scatter' },
+                title: { text: 'Monthly Spending Scatter' },
+                xAxis: { categories: months, title: { text: 'Month' } },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: function(){ return this.category + ': £' + Highcharts.numberFormat(this.y, 2); } },
+                series: [{ name: 'Spending', data: totals.map((v, i) => ({ x: i, y: v })) }]
+            });
+        }).catch(err => console.error('Graph data load failed', err));
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
