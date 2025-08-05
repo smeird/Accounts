@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Tags</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Missing Tags</h1>
+            <div id="untagged-table"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script>
+    let table;
+    async function loadUntagged(){
+        const res = await fetch('../php_backend/public/untagged_transactions.php');
+        const data = await res.json();
+        if (table) {
+            table.setData(data);
+        } else {
+            table = new Tabulator('#untagged-table', {
+                data: data,
+                layout: 'fitColumns',
+                initialSort: [{column:'count', dir:'desc'}],
+                columns: [
+                    { title: 'Description', field: 'description' },
+                    { title: 'Count', field: 'count', hozAlign: 'right' },
+                    { title: 'Action', formatter: () => '<button class="bg-blue-600 text-white px-2 py-1 rounded">Auto Tag</button>', width: 120, align: 'center', cellClick: async (e, cell) => {
+                        const desc = cell.getRow().getData().description;
+                        const name = prompt('Tag Name', desc);
+                        if (!name) return;
+                        await fetch('../php_backend/public/tags.php', {
+                            method: 'POST',
+                            headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({name: name, keyword: desc})
+                        });
+                        showMessage('Tag created');
+                        loadUntagged();
+                    }}
+                ]
+            });
+        }
+    }
+    loadUntagged();
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

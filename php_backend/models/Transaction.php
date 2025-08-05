@@ -509,5 +509,18 @@ class Transaction {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Return descriptions of untagged transactions with occurrence counts.
+     * Results are ordered by most common description first.
+     */
+    public static function getUntaggedCounts(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT `description`, COUNT(*) AS `count` '
+             . 'FROM `transactions` WHERE `tag_id` IS NULL '
+             . 'GROUP BY `description` ORDER BY `count` DESC';
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
