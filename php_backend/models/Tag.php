@@ -71,6 +71,15 @@ class Tag {
     }
 
     /**
+     * Forcefully set a tag's keyword, overwriting any existing value.
+     */
+    public static function setKeyword(int $tagId, string $keyword): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id');
+        $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
+    }
+
+    /**
      * Apply tag keywords to untagged transactions for a given account.
      * Returns the number of transactions updated.
      */

@@ -28,8 +28,12 @@ if (!$transactionId || !$accountId || !$description) {
 }
 
 try {
+    $tagChanged = false;
+    $categoryChanged = false;
+
     if ($categoryId !== null) {
         Transaction::setCategory((int)$transactionId, $categoryId === '' ? null : (int)$categoryId);
+        $categoryChanged = true;
     }
     if ($groupId !== null) {
         Transaction::setGroup((int)$transactionId, $groupId === '' ? null : (int)$groupId);
@@ -39,13 +43,14 @@ try {
             $tagId = Tag::create($tagName, $description);
             Log::write("Created tag $tagName");
         } else {
-            Tag::setKeywordIfMissing((int)$tagId, $description);
+            Tag::setKeyword((int)$tagId, $description);
         }
         Transaction::setTag((int)$transactionId, (int)$tagId);
+        $tagChanged = true;
     }
 
-    $applied = Tag::applyToAccountTransactions((int)$accountId);
-    $categorised = CategoryTag::applyToAccountTransactions((int)$accountId);
+    $applied = $tagChanged ? Tag::applyToAccountTransactions((int)$accountId) : 0;
+    $categorised = ($tagChanged || $categoryChanged) ? CategoryTag::applyToAccountTransactions((int)$accountId) : 0;
 
     echo json_encode([
         'status' => 'ok',
