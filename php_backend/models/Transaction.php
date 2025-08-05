@@ -32,7 +32,24 @@ class Transaction {
             'group' => $group,
             'ofx_id' => $ofx_id
         ]);
-        return (int)$db->lastInsertId();
+        $id = (int)$db->lastInsertId();
+
+        // Attempt to detect matching transfer (opposite entry in another account)
+        $matchStmt = $db->prepare('SELECT id FROM transactions WHERE account_id != :account AND `date` = :date AND `description` = :description AND `amount` = :oppAmount AND transfer_id IS NULL LIMIT 1');
+        $matchStmt->execute([
+            'account' => $account,
+            'date' => $date,
+            'description' => $description,
+            'oppAmount' => -$amount
+        ]);
+        if ($row = $matchStmt->fetch(PDO::FETCH_ASSOC)) {
+            $matchId = (int)$row['id'];
+            $transferId = min($id, $matchId);
+            $upd = $db->prepare('UPDATE transactions SET transfer_id = :tid WHERE id IN (:id1, :id2)');
+            $upd->execute(['tid' => $transferId, 'id1' => $id, 'id2' => $matchId]);
+        }
+
+        return $id;
     }
 
 
@@ -44,7 +61,7 @@ class Transaction {
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`category_id` = :category';
+             . 'WHERE t.`category_id` = :category AND t.`transfer_id` IS NULL';
         $stmt = $db->prepare($sql);
         $stmt->execute(['category' => $categoryId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -58,7 +75,7 @@ class Transaction {
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`tag_id` = :tag';
+             . 'WHERE t.`tag_id` = :tag AND t.`transfer_id` IS NULL';
         $stmt = $db->prepare($sql);
         $stmt->execute(['tag' => $tagId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -72,7 +89,7 @@ class Transaction {
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`group_id` = :grp';
+             . 'WHERE t.`group_id` = :grp AND t.`transfer_id` IS NULL';
         $stmt = $db->prepare($sql);
         $stmt->execute(['grp' => $groupId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -90,7 +107,7 @@ class Transaction {
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE 1=1';
+             . 'WHERE t.`transfer_id` IS NULL';
 
         $params = [];
         if ($category !== null) {
@@ -127,7 +144,7 @@ class Transaction {
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
-             . 't.`category_id`, t.`tag_id`, t.`group_id`, '
+             . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
@@ -146,13 +163,13 @@ class Transaction {
      */
     public static function get(int $id): ?array {
         $db = Database::getConnection();
-        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, ' 
-             . 't.`category_id`, t.`tag_id`, t.`group_id`, ' 
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name ' 
-             . 'FROM `transactions` t ' 
-             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` ' 
-             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` ' 
-             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` ' 
+        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+             . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`id` = :id LIMIT 1';
         $stmt = $db->prepare($sql);
         $stmt->execute(['id' => $id]);
@@ -208,7 +225,7 @@ class Transaction {
         $db = Database::getConnection();
         $stmt = $db->prepare('SELECT MONTH(`date`) AS `month`, SUM(CASE WHEN `amount` < 0 THEN -`amount` ELSE 0 END) AS `spent`
             FROM `transactions`
-            WHERE YEAR(`date`) = :year
+            WHERE YEAR(`date`) = :year AND `transfer_id` IS NULL
             GROUP BY MONTH(`date`)
             ORDER BY MONTH(`date`)');
         $stmt->execute(['year' => $year]);
@@ -242,7 +259,7 @@ class Transaction {
                 SUM(CASE WHEN t.`amount` > 0 THEN t.`amount` ELSE 0 END) AS income,
                 SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS outgoings
              FROM `transactions` t
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year'
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL'
         );
         $stmt->execute(['month' => $month, 'year' => $year]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -270,7 +287,7 @@ class Transaction {
              FROM `transactions` t
              JOIN `tags` tg ON t.`tag_id` = tg.`id`
              JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
              GROUP BY c.`id`, c.`name`, tg.`id`, tg.`name`
              ORDER BY c.`name`, `total` DESC';
 
@@ -296,7 +313,7 @@ class Transaction {
              . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
              FROM `transactions` t
              JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
              GROUP BY c.`id`, c.`name`
              ORDER BY `total` DESC';
 
@@ -322,7 +339,7 @@ class Transaction {
              . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
              FROM `transactions` t
              JOIN `transaction_groups` g ON t.`group_id` = g.`id`
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
              GROUP BY g.`id`, g.`name`
              ORDER BY `total` DESC';
 
@@ -350,7 +367,7 @@ class Transaction {
              FROM `transactions` t
              JOIN `tags` tg ON t.`tag_id` = tg.`id`
              JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE YEAR(t.`date`) = :year
+             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
              GROUP BY c.`id`, c.`name`, tg.`id`, tg.`name`
              ORDER BY c.`name`, `total` DESC';
 
@@ -376,7 +393,7 @@ class Transaction {
              . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
              FROM `transactions` t
              JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE YEAR(t.`date`) = :year
+             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
              GROUP BY c.`id`, c.`name`
              ORDER BY `total` DESC';
 
@@ -402,7 +419,7 @@ class Transaction {
              . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
              FROM `transactions` t
              JOIN `transaction_groups` g ON t.`group_id` = g.`id`
-             WHERE YEAR(t.`date`) = :year
+             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
              GROUP BY g.`id`, g.`name`
              ORDER BY `total` DESC';
 
@@ -425,6 +442,7 @@ class Transaction {
              FROM `transactions` t'
              . ' JOIN `tags` tg ON t.`tag_id` = tg.`id`'
              . ' JOIN `categories` c ON t.`category_id` = c.`id`'
+             . ' WHERE t.`transfer_id` IS NULL'
              . ' GROUP BY c.`id`, c.`name`, tg.`id`, tg.`name`'
              . ' ORDER BY c.`name`, `total` DESC';
         $stmt = $db->query($sql);
@@ -444,6 +462,7 @@ class Transaction {
              . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
              FROM `transactions` t'
              . ' JOIN `categories` c ON t.`category_id` = c.`id`'
+             . ' WHERE t.`transfer_id` IS NULL'
              . ' GROUP BY c.`id`, c.`name`'
              . ' ORDER BY `total` DESC';
         $stmt = $db->query($sql);
@@ -463,6 +482,7 @@ class Transaction {
              . ', SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS `total`
              FROM `transactions` t'
              . ' JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
+             . ' WHERE t.`transfer_id` IS NULL'
              . ' GROUP BY g.`id`, g.`name`'
              . ' ORDER BY `total` DESC';
         $stmt = $db->query($sql);
@@ -477,17 +497,17 @@ class Transaction {
     public static function search(string $value): array {
         $db = Database::getConnection();
 
-        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE (t.`description` LIKE :val '
-             . 'OR t.`memo` LIKE :val '
-             . 'OR t.`date` LIKE :val '
-             . 'OR t.`ofx_id` LIKE :val '
-             . 'OR c.`name` LIKE :val '
+              . 'OR t.`memo` LIKE :val '
+              . 'OR t.`date` LIKE :val '
+              . 'OR t.`ofx_id` LIKE :val '
+              . 'OR c.`name` LIKE :val '
              . 'OR tg.`name` LIKE :val '
              . 'OR g.`name` LIKE :val';
 

@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     category_id INT DEFAULT NULL,
     tag_id INT DEFAULT NULL,
     group_id INT DEFAULT NULL,
+    transfer_id INT DEFAULT NULL,
     ofx_id VARCHAR(255) UNIQUE,
     FOREIGN KEY (account_id) REFERENCES accounts(id),
     FOREIGN KEY (category_id) REFERENCES categories(id),
@@ -86,6 +87,12 @@ $db->exec($createSql);
 $result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'keyword'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `tags` ADD COLUMN `keyword` VARCHAR(100) DEFAULT NULL");
+}
+
+// Ensure transfer_id column exists in transactions
+$result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'transfer_id'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `transactions` ADD COLUMN `transfer_id` INT DEFAULT NULL");
 }
 
 echo "Database tables created.\n";
