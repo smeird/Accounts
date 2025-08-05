@@ -16,6 +16,7 @@
             <p class="mb-4">Find specific transactions using keywords and view the results below.</p>
             <form id="search-form" class="space-y-4">
                 <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
+                <input type="number" step="0.01" id="amount" placeholder="Amount (£)" class="border p-2 rounded w-full" data-help="Exact amount to match">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
             </form>
             <div id="results-grid" class="mt-4"></div>
@@ -36,7 +37,10 @@
     document.getElementById('search-form').addEventListener('submit', function(e){
         e.preventDefault();
         const term = document.getElementById('term').value;
-        const params = new URLSearchParams({value: term});
+        const amount = document.getElementById('amount').value;
+        const params = new URLSearchParams();
+        if (term) params.append('value', term);
+        if (amount) params.append('amount', amount);
         fetch('../php_backend/public/search_transactions.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {

@@ -490,11 +490,10 @@ class Transaction {
     }
 
     /**
-     * Search transactions by a specific field.
+     * Search transactions across fields.
      * Supports partial matches for text fields and exact matches for numeric fields.
-
      */
-    public static function search(string $value): array {
+    public static function search(?string $value, ?float $amount = null): array {
         $db = Database::getConnection();
 
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
@@ -502,28 +501,41 @@ class Transaction {
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
-             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE (t.`description` LIKE :val '
-              . 'OR t.`memo` LIKE :val '
-              . 'OR t.`date` LIKE :val '
-              . 'OR t.`ofx_id` LIKE :val '
-              . 'OR c.`name` LIKE :val '
-             . 'OR tg.`name` LIKE :val '
-             . 'OR g.`name` LIKE :val';
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`';
 
-        $params = ['val' => '%' . $value . '%'];
+        $conditions = [];
+        $params = [];
 
-        if (is_numeric($value)) {
-            $sql .= ' OR t.`id` = :num'
-                  . ' OR t.`account_id` = :num'
-                  . ' OR t.`category_id` = :num'
-                  . ' OR t.`tag_id` = :num'
-                  . ' OR t.`group_id` = :num'
-                  . ' OR t.`amount` = :num';
-            $params['num'] = $value;
+        if ($value !== null && $value !== '') {
+            $conditions[] = '(t.`description` LIKE :val'
+                . ' OR t.`memo` LIKE :val'
+                . ' OR t.`date` LIKE :val'
+                . ' OR t.`ofx_id` LIKE :val'
+                . ' OR c.`name` LIKE :val'
+                . ' OR tg.`name` LIKE :val'
+                . ' OR g.`name` LIKE :val)';
+            $params['val'] = '%' . $value . '%';
+
+            if (is_numeric($value)) {
+                $conditions[] = '(t.`id` = :num'
+                    . ' OR t.`account_id` = :num'
+                    . ' OR t.`category_id` = :num'
+                    . ' OR t.`tag_id` = :num'
+                    . ' OR t.`group_id` = :num'
+                    . ' OR t.`amount` = :num)';
+                $params['num'] = $value;
+            }
         }
 
-        $sql .= ')';
+        if ($amount !== null) {
+            $conditions[] = 't.`amount` = :amount';
+            $params['amount'] = $amount;
+        }
+
+        if ($conditions) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
 
