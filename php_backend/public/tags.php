@@ -1,6 +1,7 @@
 <?php
 // API endpoint for creating, listing, updating, and deleting tags.
 require_once __DIR__ . '/../models/Tag.php';
+require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');
 
@@ -16,8 +17,10 @@ if ($method === 'POST') {
     }
     try {
         $id = Tag::create($name, $keyword);
-        Log::write("Created tag $name");
-        echo json_encode(['id' => $id]);
+        $tagged = Tag::applyToAllTransactions();
+        $categorised = CategoryTag::applyToAllTransactions();
+        Log::write("Created tag $name; retagged $tagged transactions; categorised $categorised transactions");
+        echo json_encode(['id' => $id, 'tagged' => $tagged, 'categorised' => $categorised]);
     } catch (Exception $e) {
         http_response_code(500);
         Log::write('Tag error: ' . $e->getMessage(), 'ERROR');

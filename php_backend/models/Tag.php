@@ -76,5 +76,19 @@ class Tag {
         }
         return $updated;
     }
+
+    /**
+     * Apply tag keywords to transactions across all accounts.
+     * Returns the total number of transactions updated.
+     */
+    public static function applyToAllTransactions(): int {
+        $db = Database::getConnection();
+        $accountIds = $db->query('SELECT `id` FROM `accounts`')->fetchAll(PDO::FETCH_COLUMN);
+        $total = 0;
+        foreach ($accountIds as $accId) {
+            $total += self::applyToAccountTransactions((int)$accId);
+        }
+        return $total;
+    }
 }
 ?>
