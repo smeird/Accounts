@@ -27,6 +27,20 @@
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
                 </form>
             </div>
+            <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Income</p>
+                    <p id="income-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Outgoings</p>
+                    <p id="outgoings-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Delta</p>
+                    <p id="delta-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+            </div>
             <div id="transactions-grid" class="mt-4"></div>
         </main>
     </div>
@@ -94,6 +108,21 @@ form.addEventListener('submit', function(e) {
             groupOptions.push({ value: g.id, label: g.name });
             groupLookup[g.id] = g.name;
         });
+
+        let income = 0, outgoings = 0;
+        data.forEach(t => {
+            if (t.transfer_id !== null) return;
+            const amt = parseFloat(t.amount);
+            if (amt > 0) income += amt;
+            else if (amt < 0) outgoings += -amt;
+        });
+        const delta = income - outgoings;
+        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
+        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
+        const deltaEl = document.getElementById('delta-total');
+        deltaEl.textContent = '£' + delta.toFixed(2);
+        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
+
         tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitColumns',
