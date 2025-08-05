@@ -14,15 +14,19 @@
         <main class="flex-1 p-6">
             <h1 class="text-2xl font-semibold mb-4">Monthly Statement</h1>
             <p class="mb-4">Select a month to view a detailed list of transactions.</p>
-            <form id="statement-form" class="space-y-4">
-                <label for="year" class="block">Year:
-                    <select id="year" name="year" class="border p-2 rounded w-full" data-help="Select year"></select>
-                </label>
-                <label for="month" class="block">Month:
-                    <select id="month" name="month" class="border p-2 rounded w-full" data-help="Select month"></select>
-                </label>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
-            </form>
+            <div class="bg-white p-6 rounded shadow">
+                <form id="statement-form" class="flex items-end space-x-4">
+                    <div>
+                        <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                        <select id="year" name="year" class="border p-2 rounded w-32" data-help="Select year"></select>
+                    </div>
+                    <div>
+                        <label for="month" class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                        <select id="month" name="month" class="border p-2 rounded w-32" data-help="Select month"></select>
+                    </div>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
+                </form>
+            </div>
             <div id="transactions-grid" class="mt-4"></div>
         </main>
     </div>
