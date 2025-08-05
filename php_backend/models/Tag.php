@@ -49,6 +49,15 @@ class Tag {
     }
 
     /**
+     * Set a tag's keyword if it is currently blank.
+     */
+    public static function setKeywordIfMissing(int $tagId, string $keyword): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id AND (`keyword` IS NULL OR `keyword` = "")');
+        $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
+    }
+
+    /**
      * Apply tag keywords to untagged transactions for a given account.
      * Returns the number of transactions updated.
      */
