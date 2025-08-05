@@ -20,6 +20,9 @@ function badgeFormatter(colorClasses) {
 
 function tailwindTabulator(element, options) {
     options = options || {};
+    if (!options.layout || options.layout === 'fitColumns') {
+        options.layout = 'fitDataStretch';
+    }
     const userRowFormatter = options.rowFormatter;
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
@@ -34,5 +37,11 @@ function tailwindTabulator(element, options) {
     if (header) header.classList.add('bg-gray-100');
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) paginator.classList.add('bg-gray-50', 'border-t', 'border-gray-200', 'p-2');
+    table.on('tableBuilt', () => {
+        const cols = table.getColumns();
+        if (cols.length) {
+            cols[0].fitData();
+        }
+    });
     return table;
 }
