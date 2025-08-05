@@ -1,3 +1,23 @@
+function createBadge(text, colorClasses) {
+    const span = document.createElement('span');
+    span.textContent = text;
+    span.className = `inline-block px-2 py-1 text-xs font-semibold rounded ${colorClasses}`;
+    return span;
+}
+
+function badgeFormatter(colorClasses) {
+    return function (cell) {
+        const value = cell.getValue();
+        if (!value) return '';
+        if (Array.isArray(value)) {
+            const container = document.createElement('div');
+            value.forEach(v => container.appendChild(createBadge(v, colorClasses)));
+            return container;
+        }
+        return createBadge(value, colorClasses);
+    };
+}
+
 function tailwindTabulator(element, options) {
     options = options || {};
     const userRowFormatter = options.rowFormatter;

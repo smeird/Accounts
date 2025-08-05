@@ -132,14 +132,15 @@ form.addEventListener('submit', function(e) {
                     const id = cell.getRow().getData().id;
                     return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                 } },
-                { title: 'Category', field: 'category_name' },
+                { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
                 {
                     title: 'Group',
                     field: 'group_id',
                     editor: 'list',
                     editorParams: { values: groupOptions },
                     formatter: function(cell) {
-                        return groupLookup[cell.getValue()] || '';
+                        const name = groupLookup[cell.getValue()] || '';
+                        return name ? createBadge(name, 'bg-purple-200 text-purple-800') : '';
                     }
                 },
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }

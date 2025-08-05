@@ -117,9 +117,9 @@
                         columns: [
                             { title: 'Date', field: 'date' },
                             { title: 'Description', field: 'description', bottomCalc: function() { return 'Total'; } },
-                            { title: 'Category', field: 'category_name' },
-                            { title: 'Tag', field: 'tag_name' },
-                            { title: 'Group', field: 'group_name' },
+                            { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+                            { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
+                            { title: 'Group', field: 'group_name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
                             { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: function(values) { var total = 0; values.forEach(function(value) { total += parseFloat(value) || 0; }); return total; }, bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
                         ]
                     });
