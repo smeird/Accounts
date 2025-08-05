@@ -32,7 +32,7 @@
             fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json())
         ]).then(([monthly, yearly]) => {
             const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
-            const totals = monthly.map(m => parseFloat(m.total));
+            const totals = monthly.map(m => parseFloat(m.spent));
 
             Highcharts.chart('line-chart', {
                 chart: { type: 'line' },
