@@ -22,6 +22,9 @@
             <div id="categories-table"></div>
             <div id="categories-chart" style="height:400px"></div>
 
+            <h2>Category & Tag Breakdown</h2>
+            <div id="category-tag-donut" style="height:400px"></div>
+
             <h2>Group Totals</h2>
             <div id="groups-table"></div>
             <div id="groups-chart" style="height:400px"></div>
@@ -77,6 +80,34 @@
         });
     }
 
+    function buildDonutChart(id, categories, tags){
+        Highcharts.chart(id, {
+            chart: { type: 'pie' },
+            title: { text: 'Categories and Tags' },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+            plotOptions: {
+                pie: {
+                    dataLabels: {
+                        formatter: function(){ return this.point.name + ': £' + Highcharts.numberFormat(this.y, 2); }
+                    }
+                }
+            },
+            series: [
+                {
+                    name: 'Categories',
+                    data: categories.map(c => ({ name: c.name, y: parseFloat(c.total) })),
+                    size: '60%'
+                },
+                {
+                    name: 'Tags',
+                    data: tags.map(t => ({ name: t.name, y: parseFloat(t.total) })),
+                    size: '80%',
+                    innerSize: '60%'
+                }
+            ]
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         fetch('../php_backend/public/all_years_dashboard.php')
             .then(resp => resp.json())
@@ -85,6 +116,7 @@
                 buildChart('tags-chart', 'Tag Totals', data.tags);
                 buildTable('categories-table', data.categories, data.years);
                 buildChart('categories-chart', 'Category Totals', data.categories);
+                buildDonutChart('category-tag-donut', data.categories, data.tags);
                 buildTable('groups-table', data.groups, data.years);
                 buildChart('groups-chart', 'Group Totals', data.groups);
             });
