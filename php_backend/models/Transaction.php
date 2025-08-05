@@ -142,12 +142,49 @@ class Transaction {
     }
 
     /**
+     * Retrieve a single transaction by its ID including related names.
+     */
+    public static function get(int $id): ?array {
+        $db = Database::getConnection();
+        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, ' 
+             . 't.`category_id`, t.`tag_id`, t.`group_id`, ' 
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name ' 
+             . 'FROM `transactions` t ' 
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` ' 
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` ' 
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` ' 
+             . 'WHERE t.`id` = :id LIMIT 1';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row : null;
+    }
+
+    /**
      * Update the tag of a specific transaction.
      */
     public static function setTag(int $transactionId, int $tagId): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
         return $stmt->execute(['tag' => $tagId, 'id' => $transactionId]);
+    }
+
+    /**
+     * Update the category of a specific transaction.
+     */
+    public static function setCategory(int $transactionId, ?int $categoryId): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `transactions` SET `category_id` = :cat WHERE `id` = :id');
+        return $stmt->execute(['cat' => $categoryId, 'id' => $transactionId]);
+    }
+
+    /**
+     * Update the group of a specific transaction.
+     */
+    public static function setGroup(int $transactionId, ?int $groupId): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `transactions` SET `group_id` = :grp WHERE `id` = :id');
+        return $stmt->execute(['grp' => $groupId, 'id' => $transactionId]);
     }
 
     public static function getAvailableMonths(): array {

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Details</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar" id="menu"></nav>
+        <main class="content">
+            <h1>Transaction Details</h1>
+            <div id="transaction-details"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const container = document.getElementById('transaction-details');
+    if (!id) {
+        container.textContent = 'No transaction id provided.';
+    } else {
+        Promise.all([
+            fetch('../php_backend/public/transaction.php?id=' + id).then(r => r.json()),
+            fetch('../php_backend/public/categories.php').then(r => r.json()),
+            fetch('../php_backend/public/tags.php').then(r => r.json()),
+            fetch('../php_backend/public/groups.php').then(r => r.json())
+        ]).then(([tx, categories, tags, groups]) => {
+            if (tx.error) {
+                container.textContent = 'Transaction not found.';
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.innerHTML = `
+                <p><strong>Date:</strong> ${tx.date}</p>
+                <p><strong>Description:</strong> ${tx.description}</p>
+                <p><strong>Memo:</strong> ${tx.memo || ''}</p>
+                <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
+                <label>Category: <select id="category"></select></label><br>
+                <label>Tag: <select id="tag"></select></label><br>
+                <label>Group: <select id="group"></select></label><br>
+                <button type="submit">Save</button>
+            `;
+            container.appendChild(form);
+
+            const catSel = form.querySelector('#category');
+            const blankCat = document.createElement('option');
+            blankCat.value = '';
+            blankCat.textContent = '-- None --';
+            catSel.appendChild(blankCat);
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                if (c.id == tx.category_id) opt.selected = true;
+                catSel.appendChild(opt);
+            });
+
+            const tagSel = form.querySelector('#tag');
+            const blankTag = document.createElement('option');
+            blankTag.value = '';
+            blankTag.textContent = '-- None --';
+            tagSel.appendChild(blankTag);
+            tags.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                if (t.id == tx.tag_id) opt.selected = true;
+                tagSel.appendChild(opt);
+            });
+            const newOpt = document.createElement('option');
+            newOpt.value = '__new';
+            newOpt.textContent = 'Add New Tag...';
+            tagSel.appendChild(newOpt);
+
+            const groupSel = form.querySelector('#group');
+            const blankGrp = document.createElement('option');
+            blankGrp.value = '';
+            blankGrp.textContent = '-- None --';
+            groupSel.appendChild(blankGrp);
+            groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.textContent = g.name;
+                if (g.id == tx.group_id) opt.selected = true;
+                groupSel.appendChild(opt);
+            });
+
+            form.addEventListener('submit', function(ev){
+                ev.preventDefault();
+                const payload = {
+                    transaction_id: tx.id,
+                    account_id: tx.account_id,
+                    description: tx.description
+                };
+                if (catSel.value !== '') payload.category_id = catSel.value;
+                if (groupSel.value !== '') payload.group_id = groupSel.value;
+                if (tagSel.value === '__new') {
+                    const name = prompt('Enter new tag name:');
+                    if (!name) return;
+                    payload.tag_name = name;
+                } else if (tagSel.value !== '') {
+                    payload.tag_id = tagSel.value;
+                }
+
+                fetch('../php_backend/public/update_transaction.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(r => r.json()).then(res => {
+                    if (res && res.status === 'ok') {
+                        showMessage('Saved');
+                    } else {
+                        alert('Failed to save');
+                    }
+                }).catch(() => alert('Failed to save'));
+            });
+        });
+    }
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

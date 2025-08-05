@@ -96,7 +96,10 @@ form.addEventListener('submit', function(e) {
             layout: 'fitColumns',
             columns: [
                 { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description' },
+                { title: 'Description', field: 'description', formatter: function(cell) {
+                    const id = cell.getRow().getData().id;
+                    return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
+                } },
                 { title: 'Category', field: 'category_name' },
                 {
                     title: 'Tag',
