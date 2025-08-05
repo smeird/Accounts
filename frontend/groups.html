@@ -41,7 +41,7 @@ async function loadGroups() {
         data: groups,
         layout: 'fitColumns',
         columns: [
-            { title: 'Name', field: 'name' },
+            { title: 'Name', field: 'name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
             { title: 'Actions', formatter: function(cell){
                 const g = cell.getRow().getData();
                 const container = document.createElement('div');
