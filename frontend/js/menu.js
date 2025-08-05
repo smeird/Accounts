@@ -18,4 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => console.error('Menu load failed', err));
   }
+
+  // Apply Tailwind card styling to all sections or wrap main content in a card
+  document.querySelectorAll('main').forEach(main => {
+    const sections = main.querySelectorAll('section');
+    if (sections.length > 0) {
+      sections.forEach(section => {
+        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow');
+      });
+    } else {
+      const wrapper = document.createElement('section');
+      wrapper.className = 'bg-white p-6 rounded shadow';
+      while (main.firstChild) {
+        wrapper.appendChild(main.firstChild);
+      }
+      main.appendChild(wrapper);
+    }
+  });
 });
