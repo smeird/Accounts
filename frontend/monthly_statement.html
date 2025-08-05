@@ -133,6 +133,7 @@ form.addEventListener('submit', function(e) {
                     return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                 } },
                 { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+                { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
                 {
                     title: 'Group',
                     field: 'group_id',
