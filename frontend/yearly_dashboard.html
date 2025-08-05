@@ -84,6 +84,7 @@
     }
 
     function buildDonutChart(id, categories, tags){
+
         const colors = Highcharts.getOptions().colors;
         const categoryData = [];
         const tagData = [];
@@ -101,6 +102,7 @@
             });
         });
 
+
         Highcharts.chart(id, {
             chart: { type: 'pie' },
             title: { text: 'Categories and Tags' },
@@ -113,8 +115,10 @@
                 }
             },
             series: [
+
                 { name: 'Categories', data: categoryData, size: '60%', dataLabels: { distance: -30 } },
                 { name: 'Tags', data: tagData, size: '80%', innerSize: '60%' }
+
             ]
         });
     }
