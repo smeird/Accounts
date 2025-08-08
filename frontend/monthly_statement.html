@@ -182,6 +182,7 @@ form.addEventListener('submit', function(e) {
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
 
                     payload.group_id = val === '' ? '' : parseInt(val, 10);
+                    console.log('Sending update payload', payload);
                     savingRows.add(data.id);
                     const el = cell.getElement();
                     el.classList.add('opacity-50', 'pointer-events-none');
@@ -190,8 +191,12 @@ form.addEventListener('submit', function(e) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     })
-                    .then(resp => resp.json())
+                    .then(resp => {
+                        console.log('Update response status', resp.status);
+                        return resp.json();
+                    })
                     .then(res => {
+                        console.log('Update response body', res);
                         if (res && res.status === 'ok') {
                             showMessage('Group saved');
                             console.log('Group selected:', val === '' ? 'None' : groupLookup[val], 'for transaction', data.id);
@@ -200,7 +205,8 @@ form.addEventListener('submit', function(e) {
                             cell.setValue(oldVal, true);
                         }
                     })
-                    .catch(() => {
+                    .catch(err => {
+                        console.error('Update request failed', err);
                         showMessage('Failed to save group');
                         cell.setValue(oldVal, true);
                     })
