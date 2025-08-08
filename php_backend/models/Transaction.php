@@ -543,6 +543,69 @@ class Transaction {
     }
 
     /**
+     * Retrieve all transactions linked as transfers, returned as pairs.
+     */
+    public static function getTransfers(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT t.`id`, t.`account_id`, a.`name` AS account_name, t.`date`, '
+             . 't.`amount`, t.`description`, t.`transfer_id`
+             FROM `transactions` t '
+             . 'JOIN `accounts` a ON t.`account_id` = a.`id`
+             WHERE t.`transfer_id` IS NOT NULL '
+             . 'ORDER BY t.`transfer_id`, t.`id`';
+        $stmt = $db->query($sql);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $tid = $row['transfer_id'];
+            if (!isset($grouped[$tid])) {
+                $grouped[$tid] = [];
+            }
+            $grouped[$tid][] = $row;
+        }
+
+        $result = [];
+        foreach ($grouped as $tid => $pair) {
+            if (count($pair) === 2) {
+                $from = $pair[0]['amount'] < 0 ? $pair[0] : $pair[1];
+                $to   = $pair[0]['amount'] < 0 ? $pair[1] : $pair[0];
+                $result[] = [
+                    'transfer_id' => (int)$tid,
+                    'date' => $from['date'],
+                    'description' => $from['description'],
+                    'amount' => abs((float)$from['amount']),
+                    'from_id' => (int)$from['id'],
+                    'from_account' => $from['account_name'],
+                    'to_id' => (int)$to['id'],
+                    'to_account' => $to['account_name']
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Link two existing transactions as a transfer pair.
+     */
+    public static function linkTransfer(int $id1, int $id2): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT `id`, `amount` FROM `transactions` WHERE `id` IN (?, ?)');
+        $stmt->execute([$id1, $id2]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($rows) !== 2) {
+            return false;
+        }
+        if ((float)$rows[0]['amount'] !== -(float)$rows[1]['amount']) {
+            return false;
+        }
+        $tid = min($id1, $id2);
+        $upd = $db->prepare('UPDATE `transactions` SET `transfer_id` = :tid WHERE `id` IN (:a, :b)');
+        return $upd->execute(['tid' => $tid, 'a' => $id1, 'b' => $id2]);
+    }
+
+    /**
      * Return descriptions of untagged transactions with occurrence counts and totals.
      * Results are ordered by most common description first.
      */

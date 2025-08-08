@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Transfers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6 space-y-6">
+            <section>
+                <h1 class="text-2xl font-semibold mb-4">Detected Transfers</h1>
+                <div id="transfers-table"></div>
+            </section>
+            <section>
+                <h2 class="text-xl font-semibold mb-4">Link Transactions as Transfer</h2>
+                <form id="link-form" class="space-y-4">
+                    <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
+                    <input type="number" id="id2" placeholder="Second transaction ID" class="border p-2 rounded w-full" data-help="ID of the matching transaction">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-link mr-2"></i>Link</button>
+                </form>
+            </section>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script>
+    fetch('../php_backend/public/transfers.php')
+        .then(resp => resp.json())
+        .then(data => {
+            tailwindTabulator(document.getElementById('transfers-table'), {
+                data: data.transfers,
+                layout: 'fitColumns',
+                columns: [
+                    { title: 'Date', field: 'date' },
+                    { title: 'Description', field: 'description' },
+                    { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
+                    { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
+                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+                ]
+            });
+        });
+
+    document.getElementById('link-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        const id1 = document.getElementById('id1').value;
+        const id2 = document.getElementById('id2').value;
+        fetch('../php_backend/public/link_transfer.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id1: id1, id2: id2 })
+        })
+        .then(resp => resp.json())
+        .then(res => {
+            if (res.status === 'ok') {
+                location.reload();
+            } else {
+                alert(res.error || 'Failed to link transactions');
+            }
+        });
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
