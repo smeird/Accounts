@@ -36,6 +36,7 @@ try {
         $categoryChanged = true;
     }
     if ($groupId !== null) {
+
         $newGroup = $groupId === '' ? null : (int)$groupId;
         $saved = Transaction::setGroup((int)$transactionId, $newGroup);
         if (!$saved) {
@@ -43,6 +44,7 @@ try {
             throw new Exception('Failed to update group');
         }
         Log::write('Updated group for transaction ' . $transactionId . ' to ' . ($newGroup === null ? 'NULL' : $newGroup));
+
     }
     if ($tagId !== null || $tagName) {
         if (!$tagId && $tagName) {
