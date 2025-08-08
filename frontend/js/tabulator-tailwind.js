@@ -26,17 +26,21 @@ function tailwindTabulator(element, options) {
     const userRowFormatter = options.rowFormatter;
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
-        row.getElement().classList.add('odd:bg-white', 'even:bg-gray-50', 'hover:bg-gray-100');
+        const rowEl = row.getElement();
+        rowEl.classList.add('bg-white', 'hover:bg-gray-50', 'border-b', 'border-gray-200', 'border-b-[0.5px]');
+        rowEl.querySelectorAll('.tabulator-cell').forEach(cell => {
+            cell.classList.add('border-r', 'border-gray-200', 'border-r-[0.5px]');
+        });
     };
     options.pagination = options.pagination || 'local';
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
     const el = table.element;
-    el.classList.add('border', 'border-gray-200', 'rounded', 'bg-white', 'shadow-sm');
+    el.classList.add('border', 'border-gray-200', 'border-[0.5px]', 'rounded', 'bg-white', 'shadow-sm');
     const header = el.querySelector('.tabulator-header');
-    if (header) header.classList.add('bg-gray-100');
+    if (header) header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]');
     const paginator = el.querySelector('.tabulator-paginator');
-    if (paginator) paginator.classList.add('bg-gray-50', 'border-t', 'border-gray-200', 'p-2');
+    if (paginator) paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2');
     table.on('tableBuilt', () => {
         const cols = table.getColumns();
         if (cols.length) {
