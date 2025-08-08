@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS budgets;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS accounts;
 SQL;
@@ -34,6 +35,16 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS budgets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT NOT NULL,
+    month TINYINT NOT NULL,
+    year INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    UNIQUE KEY unique_budget (category_id, month, year),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 CREATE TABLE IF NOT EXISTS tags (
