@@ -36,7 +36,13 @@ try {
         $categoryChanged = true;
     }
     if ($groupId !== null) {
-        Transaction::setGroup((int)$transactionId, $groupId === '' ? null : (int)$groupId);
+        $newGroup = $groupId === '' ? null : (int)$groupId;
+        $saved = Transaction::setGroup((int)$transactionId, $newGroup);
+        if (!$saved) {
+            Log::write('Failed to update group for transaction ' . $transactionId, 'ERROR');
+            throw new Exception('Failed to update group');
+        }
+        Log::write('Updated group for transaction ' . $transactionId . ' to ' . ($newGroup === null ? 'NULL' : $newGroup));
     }
     if ($tagId !== null || $tagName) {
         if (!$tagId && $tagName) {
@@ -55,6 +61,7 @@ try {
     echo json_encode([
         'status' => 'ok',
         'tag_id' => $tagId ? (int)$tagId : null,
+        'group_id' => $groupId === '' ? null : ($groupId !== null ? (int)$groupId : null),
         'auto_tagged' => $applied,
         'auto_categorised' => $categorised
     ]);
