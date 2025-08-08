@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
+require_once __DIR__ . '/../models/TransactionGroup.php';
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
@@ -43,7 +44,13 @@ try {
             Log::write('Failed to update group for transaction ' . $transactionId, 'ERROR');
             throw new Exception('Failed to update group');
         }
-        Log::write('Updated group for transaction ' . $transactionId . ' to ' . ($newGroup === null ? 'NULL' : $newGroup));
+
+        $groupName = 'NULL';
+        if ($newGroup !== null) {
+            $group = TransactionGroup::find($newGroup);
+            $groupName = $group ? $group['name'] : $newGroup;
+        }
+        Log::write('Updated group for transaction ' . $transactionId . ' to ' . $groupName);
 
     }
     if ($tagId !== null || $tagName) {

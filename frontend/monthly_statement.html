@@ -165,6 +165,7 @@ form.addEventListener('submit', function(e) {
                     .then(res => {
                         if (res && res.status === 'ok') {
                             showMessage('Group saved');
+                            console.log('Group selected:', val === '' ? 'None' : groupLookup[val], 'for transaction', data.id);
                         } else {
                             alert('Failed to save group');
                             cell.setValue(oldVal, true);

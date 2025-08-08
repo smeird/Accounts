@@ -27,6 +27,14 @@ class TransactionGroup {
         return $stmt->execute(['id' => $id]);
     }
 
+    public static function find(int $id): ?array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT id, name FROM transaction_groups WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public static function all(): array {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT id, name FROM transaction_groups ORDER BY id');
