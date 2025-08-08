@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
+Log::write('update_transaction payload: ' . json_encode($data));
 $transactionId = $data['transaction_id'] ?? null;
 $accountId = $data['account_id'] ?? null;
 $description = $data['description'] ?? null;
@@ -39,7 +40,9 @@ try {
     if ($groupId !== null) {
 
         $newGroup = $groupId === '' ? null : (int)$groupId;
+        Log::write('Attempting group update for transaction ' . $transactionId . ' to ' . ($newGroup === null ? 'NULL' : $newGroup));
         $saved = Transaction::setGroup((int)$transactionId, $newGroup);
+        Log::write('setGroup result for transaction ' . $transactionId . ': ' . ($saved ? 'success' : 'failure'));
         if (!$saved) {
             Log::write('Failed to update group for transaction ' . $transactionId, 'ERROR');
             throw new Exception('Failed to update group');
