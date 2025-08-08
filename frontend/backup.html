@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- Page for backing up and restoring data -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Restore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-1P4Wf2M1yGvdfq3NzfIgVVP8341/ySfWaSrtwE0NtP28s8Qd8VVS6I5aOQSXgjOaX4nHCqB6f+GO6zkRgLpmMQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6 space-y-6">
+            <h1 class="text-2xl font-semibold mb-4">Backup &amp; Restore</h1>
+            <section class="bg-white p-6 rounded shadow space-y-4">
+                <h2 class="text-xl font-semibold">Download Backup</h2>
+                <p>Download all transactions, categories, tags, and groups as a JSON file.</p>
+                <button id="download-backup" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-download mr-2"></i>Download</button>
+            </section>
+            <section class="bg-white p-6 rounded shadow space-y-4">
+                <h2 class="text-xl font-semibold">Restore Backup</h2>
+                <p>Select a backup JSON file to restore transactions, categories, tags, and groups.</p>
+                <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <input type="file" id="backup-file" name="backup_file" accept="application/json" required data-help="Choose a previously downloaded backup JSON file">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-upload mr-2"></i>Restore</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="js/backup.js"></script>
+</body>
+</html>
