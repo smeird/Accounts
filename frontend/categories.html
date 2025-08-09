@@ -30,6 +30,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let categoryTable;
+// Fetch categories and render them with their tags
 async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
     const cats = await res.json();

@@ -41,6 +41,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 
+    // Load filter options for categories, tags and groups
     async function loadOptions() {
         const [catRes, tagRes, grpRes] = await Promise.all([
             fetch('../php_backend/public/categories.php'),
@@ -76,6 +77,7 @@
         });
     }
 
+    // Populate the saved reports dropdown from localStorage
     function loadSavedReports() {
         const saved = JSON.parse(localStorage.getItem('reports') || '[]');
         const select = document.getElementById('saved-reports');
@@ -89,6 +91,7 @@
         document.getElementById('delete-report').disabled = saved.length === 0;
     }
 
+    // Execute the report query and render results and chart
     function runReport() {
         const category = document.getElementById('category').value;
         const tag = document.getElementById('tag').value;

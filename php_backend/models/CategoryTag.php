@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../Database.php';
 
 class CategoryTag {
+    /**
+     * Link a tag to a category, ensuring it isn't already assigned.
+     */
     public static function add(int $categoryId, int $tagId): void {
         $db = Database::getConnection();
         $check = $db->prepare('SELECT 1 FROM category_tags WHERE tag_id = :tag_id');
@@ -14,6 +17,9 @@ class CategoryTag {
         $stmt->execute(['category_id' => $categoryId, 'tag_id' => $tagId]);
     }
 
+    /**
+     * Remove the association between a category and a tag.
+     */
     public static function remove(int $categoryId, int $tagId): void {
         $db = Database::getConnection();
         $stmt = $db->prepare('DELETE FROM category_tags WHERE category_id = :category_id AND tag_id = :tag_id');

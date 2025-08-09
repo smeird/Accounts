@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../Database.php';
 
 class TransactionGroup {
+    /**
+     * Create a new transaction group and return its ID.
+     */
     public static function create(string $name): int {
         $db = Database::getConnection();
         $stmt = $db->prepare('INSERT INTO transaction_groups (name) VALUES (:name)');
@@ -10,12 +13,18 @@ class TransactionGroup {
         return (int)$db->lastInsertId();
     }
 
+    /**
+     * Rename an existing transaction group.
+     */
     public static function update(int $id, string $name): void {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE transaction_groups SET name = :name WHERE id = :id');
         $stmt->execute(['id' => $id, 'name' => $name]);
     }
 
+    /**
+     * Delete a transaction group and clear any references to it.
+     */
     public static function delete(int $id): bool {
         $db = Database::getConnection();
         // clear references from transactions
@@ -27,6 +36,9 @@ class TransactionGroup {
         return $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Find a transaction group by ID.
+     */
     public static function find(int $id): ?array {
         $db = Database::getConnection();
         $stmt = $db->prepare('SELECT id, name FROM transaction_groups WHERE id = :id');
@@ -35,6 +47,9 @@ class TransactionGroup {
         return $row ?: null;
     }
 
+    /**
+     * Return all transaction groups.
+     */
     public static function all(): array {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT id, name FROM transaction_groups ORDER BY id');

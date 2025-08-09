@@ -21,6 +21,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
     let table;
+    // Retrieve untagged transaction summaries and display them
     async function loadUntagged(){
         const res = await fetch('../php_backend/public/untagged_transactions.php');
         const data = await res.json();

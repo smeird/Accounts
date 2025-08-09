@@ -89,6 +89,7 @@ fetch('../php_backend/public/transaction_months.php')
             monthsByYear[y].sort((a, b) => b - a);
         });
 
+        // Fill the month dropdown based on the selected year
         function populateMonths() {
             const year = yearSelect.value;
             monthSelect.innerHTML = '';

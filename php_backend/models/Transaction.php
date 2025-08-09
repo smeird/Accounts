@@ -4,6 +4,9 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/Tag.php';
 
 class Transaction {
+    /**
+     * Insert a new transaction and attempt to auto-tag and link transfers.
+     */
     public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null): int {
         if ($tag === null) {
             $tag = Tag::findMatch($description);
@@ -53,6 +56,9 @@ class Transaction {
     }
 
 
+    /**
+     * Return transactions for a given category excluding transfers.
+     */
     public static function getByCategory(int $categoryId): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
@@ -67,6 +73,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Return transactions for a given tag excluding transfers.
+     */
     public static function getByTag(int $tagId): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
@@ -81,6 +90,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Return transactions for a given group excluding transfers.
+     */
     public static function getByGroup(int $groupId): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
@@ -95,6 +107,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Filter transactions by optional category, tag, group, text and date range.
+     */
     public static function filter(?int $category = null, ?int $tag = null, ?int $group = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
         if ($category === null && $tag === null && $group === null && $text === null && $start === null && $end === null) {
             return [];
@@ -141,6 +156,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Retrieve all transactions for a specific month and year.
+     */
     public static function getByMonth(int $month, int $year): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
@@ -204,12 +222,18 @@ class Transaction {
         return $stmt->execute(['grp' => $groupId, 'id' => $transactionId]);
     }
 
+    /**
+     * List months that have at least one transaction recorded.
+     */
     public static function getAvailableMonths(): array {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT DISTINCT YEAR(`date`) AS year, MONTH(`date`) AS month FROM `transactions` ORDER BY YEAR(`date`) DESC, MONTH(`date`) DESC');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * List years that have at least one transaction recorded.
+     */
     public static function getAvailableYears(): array {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT DISTINCT YEAR(`date`) AS year FROM `transactions` ORDER BY YEAR(`date`)');
@@ -428,6 +452,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Retrieve tag totals across multiple years.
+     */
     public static function getTagTotalsByYears(array $years): array {
         if (empty($years)) { return []; }
         $db = Database::getConnection();
@@ -449,6 +476,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Retrieve category totals across multiple years.
+     */
     public static function getCategoryTotalsByYears(array $years): array {
         if (empty($years)) { return []; }
         $db = Database::getConnection();
@@ -469,6 +499,9 @@ class Transaction {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Retrieve group totals across multiple years.
+     */
     public static function getGroupTotalsByYears(array $years): array {
         if (empty($years)) { return []; }
         $db = Database::getConnection();

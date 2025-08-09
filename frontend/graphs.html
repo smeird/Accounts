@@ -26,6 +26,7 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Retrieve data for the chosen year and draw a variety of charts
     function loadYear(year){
         Promise.all([
             fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),

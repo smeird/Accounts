@@ -1,4 +1,5 @@
 // Handles downloading and restoring backups
+// Set up handlers for downloading and restoring backups
 function initBackup() {
     const dlBtn = document.getElementById('download-backup');
     const form = document.getElementById('restore-form');
