@@ -7,7 +7,7 @@ class Transaction {
     /**
      * Insert a new transaction and attempt to auto-tag and link transfers.
      */
-    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null): int {
+    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null): int {
         if ($tag === null) {
             $tag = Tag::findMatch($description);
         }
@@ -23,7 +23,7 @@ class Transaction {
             }
         }
 
-        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id)');
+        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type)');
         $stmt->execute([
             'account' => $account,
             'date' => $date,
@@ -33,7 +33,8 @@ class Transaction {
             'category' => $category,
             'tag' => $tag,
             'group' => $group,
-            'ofx_id' => $ofx_id
+            'ofx_id' => $ofx_id,
+            'ofx_type' => $ofx_type
         ]);
         $id = (int)$db->lastInsertId();
 
@@ -50,6 +51,9 @@ class Transaction {
             $transferId = min($id, $matchId);
             $upd = $db->prepare('UPDATE transactions SET transfer_id = :tid WHERE id IN (:id1, :id2)');
             $upd->execute(['tid' => $transferId, 'id1' => $id, 'id2' => $matchId]);
+        } elseif ($ofx_type === 'XFER') {
+            $upd = $db->prepare('UPDATE transactions SET transfer_id = :tid WHERE id = :id');
+            $upd->execute(['tid' => $id, 'id' => $id]);
         }
 
         return $id;
@@ -617,6 +621,21 @@ class Transaction {
         }
 
         return $result;
+    }
+
+    /**
+     * Retrieve transactions marked as transfers in the imported OFX data.
+     */
+    public static function getOfxTransfers(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, '
+             . 'a.`name` AS account_name '
+             . 'FROM `transactions` t '
+             . 'JOIN `accounts` a ON t.`account_id` = a.`id` '
+             . "WHERE t.`ofx_type` = 'XFER' "
+             . 'ORDER BY t.`date`';
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

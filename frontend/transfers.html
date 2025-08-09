@@ -19,6 +19,10 @@
                 <div id="transfers-table"></div>
             </section>
             <section>
+                <h2 class="text-xl font-semibold mb-4">OFX Marked Transfers</h2>
+                <div id="ofx-transfers-table"></div>
+            </section>
+            <section>
                 <h2 class="text-xl font-semibold mb-4">Link Transactions as Transfer</h2>
                 <form id="link-form" class="space-y-4">
                     <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
@@ -44,6 +48,17 @@
                     { title: 'Description', field: 'description' },
                     { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
                     { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
+                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+                ]
+            });
+
+            tailwindTabulator(document.getElementById('ofx-transfers-table'), {
+                data: data.ofx_transfers,
+                layout: 'fitColumns',
+                columns: [
+                    { title: 'Date', field: 'date' },
+                    { title: 'Description', field: 'description' },
+                    { title: 'Account', field: 'account_name', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.id}">${cell.getValue()}</a>`; } },
                     { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
                 ]
             });

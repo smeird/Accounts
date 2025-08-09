@@ -59,6 +59,7 @@ try {
             $amount = (float)trim($am[1]);
             $desc = '';
             $memo = '';
+            $type = null;
             if (preg_match('/<NAME>([^\r\n<]+)/i', $block, $dm)) {
                 $desc = trim($dm[1]);
             }
@@ -68,11 +69,14 @@ try {
                     $desc = $memo;
                 }
             }
+            if (preg_match('/<TRNTYPE>([^\r\n<]+)/i', $block, $tm)) {
+                $type = strtoupper(trim($tm[1]));
+            }
             $ofxId = null;
             if (preg_match('/<FITID>([^\r\n<]+)/i', $block, $om)) {
                 $ofxId = trim($om[1]);
             }
-            Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $ofxId);
+            Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $ofxId, $type);
             $inserted++;
         }
 

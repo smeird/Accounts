@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'search.html': 'Find specific transactions using keywords and view results.',
     'tags.html': 'Create and manage tags for categorising transactions.',
     'transaction.html': 'Review or edit the information for a single transaction.',
-    'transfers.html': 'List detected transfers between accounts.',
+    'transfers.html': 'List detected transfers between accounts and transactions marked as transfers in uploaded OFX files.',
     'yearly_dashboard.html': 'Analyse totals for a single year through charts and tables.'
   };
 
