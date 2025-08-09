@@ -1,4 +1,14 @@
 // Dynamically loads the shared navigation menu into pages and ensures icon support.
+// Override fetch globally to bypass browser caching.
+const originalFetch = window.fetch;
+window.fetch = (input, init = {}) => {
+  init = init || {};
+  if (!init.cache) {
+    init.cache = 'no-store';
+  }
+  return originalFetch(input, init);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const menu = document.getElementById('menu');
   if (menu) {
