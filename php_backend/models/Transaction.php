@@ -669,5 +669,30 @@ class Transaction {
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Analyse the last 12 months to find regularly occurring spend items.
+     * Transactions marked as transfers are ignored.
+     *
+     * @return array{description:string, occurrences:int, total:float}[]
+     */
+    public static function getRecurringSpend(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT `description`, COUNT(*) AS occurrences, SUM(`amount`) AS total '
+             . 'FROM `transactions` '
+             . 'WHERE `date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) '
+             . 'AND `amount` < 0 '
+             . 'AND `transfer_id` IS NULL '
+             . 'GROUP BY `description` '
+             . 'HAVING COUNT(*) > 1 '
+             . 'ORDER BY total';
+        $stmt = $db->query($sql);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as &$row) {
+            $row['occurrences'] = (int)$row['occurrences'];
+            $row['total'] = -(float)$row['total'];
+        }
+        return $rows;
+    }
 }
 ?>
