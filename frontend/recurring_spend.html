@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- Page to run recurring spend detection over the past year -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Recurring Spend Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_modern.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+        <main class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-4">Recurring Spend Detection</h1>
+            <p class="mb-4">Run an analysis of the last 12 months to find subscriptions and other repeat expenses.</p>
+            <button id="run-analysis" class="bg-blue-600 text-white px-4 py-2 rounded mb-4"><i class="fa-solid fa-play mr-2"></i>Run Analysis</button>
+            <div id="results-grid"></div>
+            <p id="total" class="mt-4 text-right"></p>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script>
+    function formatCurrency(value){
+        return '£' + parseFloat(value).toFixed(2);
+    }
+    document.getElementById('run-analysis').addEventListener('click', () => {
+        fetch('../php_backend/public/recurring_spend.php')
+            .then(resp => resp.json())
+            .then(data => {
+                const gridEl = document.getElementById('results-grid');
+                gridEl.innerHTML = '';
+                if(data.results && data.results.length){
+                    tailwindTabulator(gridEl, {
+                        data: data.results,
+                        layout: 'fitColumns',
+                        columns: [
+                            { title: 'Description', field: 'description' },
+                            { title: 'Occurrences', field: 'occurrences', hozAlign: 'right' },
+                            { title: 'Yearly Total', field: 'total', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } }
+                        ]
+                    });
+                    const total = data.results.reduce((sum, row) => sum + parseFloat(row.total), 0);
+                    document.getElementById('total').textContent = 'Total: ' + formatCurrency(total);
+                } else {
+                    gridEl.innerHTML = 'No recurring spend found.';
+                    document.getElementById('total').textContent = '';
+                }
+            });
+    });
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

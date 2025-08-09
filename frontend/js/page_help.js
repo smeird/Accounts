@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'tags.html': 'Create and manage tags for categorising transactions.',
     'transaction.html': 'Review or edit the information for a single transaction.',
     'transfers.html': 'List detected transfers between accounts and transactions marked as transfers in uploaded OFX files.',
-    'yearly_dashboard.html': 'Analyse totals for a single year through charts and tables.'
+    'yearly_dashboard.html': 'Analyse totals for a single year through charts and tables.',
+    'recurring_spend.html': 'Detect recurring expenses over the past year.'
   };
 
   const helpText = helpTexts[page];
