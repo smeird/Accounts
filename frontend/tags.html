@@ -31,6 +31,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let tagTable;
+// Load all tags and display them in the table
 async function loadTags(){
     const res = await fetch('../php_backend/public/tags.php');
     const tags = await res.json();

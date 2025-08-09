@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../Database.php';
 
 class Tag {
+    /**
+     * Create a new tag optionally with a keyword for auto tagging.
+     */
     public static function create(string $name, ?string $keyword = null): int {
         $db = Database::getConnection();
         $stmt = $db->prepare('INSERT INTO `tags` (`name`, `keyword`) VALUES (:name, :keyword)');
@@ -10,6 +13,9 @@ class Tag {
         return (int)$db->lastInsertId();
     }
 
+    /**
+     * Retrieve all tags with their IDs, names and keywords.
+     */
     public static function all(): array {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT `id`, `name`, `keyword` FROM `tags`');
@@ -29,12 +35,18 @@ class Tag {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Update a tag's name and keyword.
+     */
     public static function update(int $id, string $name, ?string $keyword = null): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword WHERE `id` = :id');
         return $stmt->execute(['name' => $name, 'keyword' => $keyword, 'id' => $id]);
     }
 
+    /**
+     * Remove a tag and any references to it.
+     */
     public static function delete(int $id): bool {
         $db = Database::getConnection();
         // remove any relationships to categories
@@ -50,6 +62,9 @@ class Tag {
         return $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Find a tag whose keyword appears in the provided text.
+     */
     public static function findMatch(string $text): ?int {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');

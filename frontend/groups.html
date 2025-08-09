@@ -30,6 +30,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let groupTable;
+// Fetch groups from the server and render them in the table
 async function loadGroups() {
     const res = await fetch('../php_backend/public/groups.php');
     const groups = await res.json();

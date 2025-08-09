@@ -1,3 +1,4 @@
+// Create a coloured badge element used in table cells
 function createBadge(text, colorClasses) {
     const span = document.createElement('span');
     span.textContent = text;
@@ -5,6 +6,7 @@ function createBadge(text, colorClasses) {
     return span;
 }
 
+// Return a Tabulator formatter that displays values as badges
 function badgeFormatter(colorClasses) {
     return function (cell) {
         const value = cell.getValue();
@@ -18,6 +20,7 @@ function badgeFormatter(colorClasses) {
     };
 }
 
+// Initialise a Tabulator table with Tailwind styling defaults
 function tailwindTabulator(element, options) {
     options = options || {};
     if (!options.layout || options.layout === 'fitColumns') {

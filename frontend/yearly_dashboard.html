@@ -43,6 +43,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Format totals with currency and colour coding
     function totalFormatter(cell){
         const value = cell.getValue();
         const el = cell.getElement();
@@ -51,6 +52,7 @@
         return '£' + parseFloat(value).toFixed(2);
     }
 
+    // Render a Tabulator table showing monthly breakdowns
     function buildTable(id, data){
         const el = document.getElementById(id);
         el.innerHTML = '';
@@ -78,6 +80,7 @@
         });
     }
 
+    // Draw a column chart for the provided data set
     function buildChart(id, title, data){
         Highcharts.chart(id, {
             chart: { type: 'column' },
@@ -89,10 +92,12 @@
         });
     }
 
+    // Create nested donut charts for income and outgoings categories/tags
     function buildDonutCharts(incomeId, outgoingsId, categories, tags){
 
         const colors = Highcharts.getOptions().colors;
 
+        // Build series data filtered by income or outgoings
         function createData(isIncome){
             const categoryData = [];
             const tagData = [];
@@ -115,6 +120,7 @@
             return { categoryData, tagData };
         }
 
+        // Render a donut chart into the specified element
         function render(id, title, data){
             Highcharts.chart(id, {
                 chart: { type: 'pie' },
@@ -140,6 +146,7 @@
         render(outgoingsId, 'Outgoings Categories and Tags', outData);
     }
 
+    // Load dashboard data for a specific year and update the UI
     function loadYear(year){
         fetch('../php_backend/public/yearly_dashboard.php?year=' + year)
             .then(resp => resp.json())

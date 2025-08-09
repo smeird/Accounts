@@ -1,8 +1,10 @@
+// Detect whether the user agent represents macOS
 function isMacOS(ua) {
     ua = ua || (typeof navigator !== 'undefined' ? navigator.userAgent : '');
     return /Mac OS X/i.test(ua);
 }
 
+// Configure the upload form and progress display
 function initUpload() {
     const form = document.querySelector('form');
     if (!form) return;

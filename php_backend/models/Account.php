@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../Database.php';
 
 class Account {
+    /**
+     * Create a new account with the provided name.
+     */
     public static function create(string $name): int {
         $db = Database::getConnection();
         $stmt = $db->prepare('INSERT INTO accounts (name) VALUES (:name)');

@@ -61,6 +61,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Format totals with currency and sign-based colouring
     function totalFormatter(cell){
         const value = cell.getValue();
         const el = cell.getElement();
@@ -69,6 +70,7 @@
         return '£' + parseFloat(value).toFixed(2);
     }
 
+    // Render a table showing daily totals for the month
     function buildTable(id, data, days){
         const el = document.getElementById(id);
         el.innerHTML = '';
@@ -96,6 +98,7 @@
         });
     }
 
+    // Draw a column chart visualising totals
     function buildChart(id, title, data){
         Highcharts.chart(id, {
             chart: { type: 'column' },
@@ -107,10 +110,12 @@
         });
     }
 
+    // Render paired donut charts for categories and tags
     function buildDonutCharts(incomeId, outgoingsId, categories, tags){
 
         const colors = Highcharts.getOptions().colors;
 
+        // Build chart data arrays for income or outgoings
         function createData(isIncome){
             const categoryData = [];
             const tagData = [];
@@ -133,6 +138,7 @@
             return { categoryData, tagData };
         }
 
+        // Render a donut chart into the given element
         function render(id, title, data){
             Highcharts.chart(id, {
                 chart: { type: 'pie' },
@@ -158,6 +164,7 @@
         render(outgoingsId, 'Outgoings Categories and Tags', outData);
     }
 
+    // Fetch and display dashboard data for a specific month
     function loadMonth(year, month){
         fetch('../php_backend/public/monthly_dashboard.php?year=' + year + '&month=' + month)
             .then(resp => resp.json())
@@ -201,6 +208,7 @@
                 });
 
                 const monthSelect = document.getElementById('month-select');
+                // Populate the month dropdown based on available data
                 function populateMonths(){
                     const y = yearSelect.value;
                     monthSelect.innerHTML = '';

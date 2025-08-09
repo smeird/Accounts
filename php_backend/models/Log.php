@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../Database.php';
 
 class Log {
+    /**
+     * Persist a message and level to the logs table.
+     */
     public static function write(string $message, string $level = 'INFO'): void {
         try {
             $db = Database::getConnection();
@@ -14,6 +17,9 @@ class Log {
         }
     }
 
+    /**
+     * Fetch the most recent log entries up to the provided limit.
+     */
     public static function all(int $limit = 100): array {
         $db = Database::getConnection();
         $sql = 'SELECT id, level, message, created_at FROM logs ORDER BY created_at DESC';
@@ -24,6 +30,9 @@ class Log {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Register global error and exception handlers that log automatically.
+     */
     public static function registerHandlers(): void {
 
         error_reporting(E_ALL);

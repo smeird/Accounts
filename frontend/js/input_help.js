@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     helpBox.className = 'absolute bg-white border p-2 rounded shadow hidden z-50 text-sm';
     document.body.appendChild(helpBox);
 
+    // Display the help popover near the focused input
     function showHelp(input) {
         helpBox.textContent = input.dataset.help;
         const rect = input.getBoundingClientRect();
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         helpBox.classList.remove('hidden');
     }
 
+    // Hide the help popover
     function hideHelp() {
         helpBox.classList.add('hidden');
     }

@@ -26,6 +26,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Format balance cells with currency and positive/negative colouring
     function balanceFormatter(cell){
         const value = cell.getValue();
         const el = cell.getElement();
