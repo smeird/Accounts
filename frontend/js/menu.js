@@ -45,4 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
       main.appendChild(wrapper);
     }
   });
+
+  // Load page help overlay on every page
+  const helpScript = document.createElement('script');
+  helpScript.src = 'js/page_help.js';
+  document.body.appendChild(helpScript);
 });

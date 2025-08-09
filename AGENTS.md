@@ -17,6 +17,7 @@
 
 ## Features
 - Flag transactions recognised as transfers and exclude them from income and expense totals.
+- Each page must provide a self-help overlay with a brief description of its purpose.
 
 ## Testing
 - There are currently no automated test scripts. Manually verify functionality.
