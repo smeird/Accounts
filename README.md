@@ -59,9 +59,9 @@ Then open `http://localhost:8000/frontend/index.html` in your browser.
 
 Back up and restore your data through the web interface. From the navigation
 menu open **Backup & Restore** under *Administration*. The page lets you
-download a JSON file containing all transactions, categories, tags (and their
-category links), and groups. To restore a backup, choose the JSON file on the
-same page and click **Restore**.
+choose which parts of the database to download—transactions, categories, tags,
+groups, or budgets. To restore a backup, choose the JSON file on the same page
+and click **Restore**; any included sections are imported.
 
 ## Frontend
 

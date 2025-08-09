@@ -5,7 +5,9 @@ function initBackup() {
     const form = document.getElementById('restore-form');
     if (dlBtn) {
         dlBtn.addEventListener('click', () => {
-            fetch('../php_backend/public/backup.php')
+            const parts = Array.from(document.querySelectorAll('input[name="parts"]:checked')).map(cb => cb.value);
+            const qs = parts.length ? `?parts=${parts.join(',')}` : '';
+            fetch(`../php_backend/public/backup.php${qs}`)
                 .then(resp => resp.blob())
                 .then(blob => {
                     const url = URL.createObjectURL(blob);
