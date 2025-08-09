@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     group_id INT DEFAULT NULL,
     transfer_id INT DEFAULT NULL,
     ofx_id VARCHAR(255) UNIQUE,
+    ofx_type VARCHAR(50) DEFAULT NULL,
     FOREIGN KEY (account_id) REFERENCES accounts(id),
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (tag_id) REFERENCES tags(id),
@@ -104,6 +105,12 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'transfer_id'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `transactions` ADD COLUMN `transfer_id` INT DEFAULT NULL");
+}
+
+// Ensure ofx_type column exists in transactions
+$result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'ofx_type'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `transactions` ADD COLUMN `ofx_type` VARCHAR(50) DEFAULT NULL");
 }
 
 echo "Database tables created.\n";
