@@ -46,6 +46,7 @@
                 <div class="flex space-x-2 mb-2">
                     <button id="undo-btn" class="bg-gray-200 px-2 py-1 rounded" type="button"><i class="fas fa-undo"></i></button>
                     <button id="redo-btn" class="bg-gray-200 px-2 py-1 rounded" type="button"><i class="fas fa-redo"></i></button>
+                    <button id="save-btn" class="bg-blue-600 text-white px-4 py-2 rounded" type="button">Save</button>
                 </div>
                 <div id="transactions-grid"></div>
             </div>
@@ -61,6 +62,10 @@ const yearSelect = document.getElementById('year');
 let groupOptions = [];
 let groupLookup = {};
 const savingRows = new Set();
+const pendingChanges = new Map();
+let table;
+const saveBtn = document.getElementById('save-btn');
+saveBtn.disabled = true;
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -110,12 +115,17 @@ form.addEventListener('submit', function(e) {
         fetch('../php_backend/public/groups.php').then(r => r.json())
     ]).then(([data, groups]) => {
 
+        pendingChanges.clear();
+        saveBtn.disabled = true;
+
         groupOptions = [{ value: '', label: '-- None --' }];
         groupLookup = { '': '' };
         groups.forEach(g => {
             groupOptions.push({ value: g.id, label: g.name });
             groupLookup[g.id] = g.name;
         });
+
+        data.forEach(t => { t.original_group_id = t.group_id; });
 
         let income = 0, outgoings = 0;
         data.forEach(t => {
@@ -131,7 +141,7 @@ form.addEventListener('submit', function(e) {
         deltaEl.textContent = '£' + delta.toFixed(2);
         deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
 
-        const table = tailwindTabulator('#transactions-grid', {
+        table = tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitColumns',
             history: true,
@@ -176,50 +186,73 @@ form.addEventListener('submit', function(e) {
                 const field = cell.getField();
                 if (field === 'group_id') {
                     const val = cell.getValue();
-                    const oldVal = cell.getOldValue();
-                    if (val === oldVal) return;
                     const data = cell.getRow().getData();
-                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
+                    const valStr = val === '' ? '' : String(val);
+                    const origStr = data.original_group_id === null ? '' : String(data.original_group_id);
+                    const rowEl = cell.getRow().getElement();
 
-                    payload.group_id = val === '' ? '' : parseInt(val, 10);
-                    console.log('Sending update payload', payload);
-                    savingRows.add(data.id);
-                    const el = cell.getElement();
-                    el.classList.add('opacity-50', 'pointer-events-none');
-                    fetch('../php_backend/public/update_transaction.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(resp => {
-                        console.log('Update response status', resp.status);
-                        return resp.json();
-                    })
-                    .then(res => {
-                        console.log('Update response body', res);
-                        if (res && res.status === 'ok') {
-                            showMessage('Group saved');
-                            console.log('Group selected:', val === '' ? 'None' : groupLookup[val], 'for transaction', data.id);
-                        } else {
-                            showMessage('Failed to save group');
-                            cell.setValue(oldVal, true);
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Update request failed', err);
-                        showMessage('Failed to save group');
-                        cell.setValue(oldVal, true);
-                    })
-                    .finally(() => {
-                        savingRows.delete(data.id);
-                        el.classList.remove('opacity-50', 'pointer-events-none');
-                    });
+                    if (valStr === origStr) {
+                        pendingChanges.delete(data.id);
+                        rowEl.classList.remove('bg-yellow-50');
+                    } else {
+                        pendingChanges.set(data.id, {
+                            group_id: val === '' ? '' : parseInt(val, 10),
+                            account_id: data.account_id,
+                            description: data.description
+                        });
+                        rowEl.classList.add('bg-yellow-50');
+                    }
+                    saveBtn.disabled = pendingChanges.size === 0;
                 }
             }
         });
         document.getElementById('undo-btn').addEventListener('click', () => table.undo());
         document.getElementById('redo-btn').addEventListener('click', () => table.redo());
 
+    });
+});
+
+saveBtn.addEventListener('click', function() {
+    const updates = Array.from(pendingChanges.entries());
+    const promises = updates.map(([id, change]) => {
+        savingRows.add(id);
+        const row = table.getRow(id);
+        const rowEl = row.getElement();
+        rowEl.classList.add('opacity-50', 'pointer-events-none');
+        return fetch('../php_backend/public/update_transaction.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                transaction_id: id,
+                account_id: change.account_id,
+                description: change.description,
+                group_id: change.group_id
+            })
+        })
+        .then(resp => resp.json())
+        .then(res => {
+            if (res && res.status === 'ok') {
+                row.getData().original_group_id = change.group_id === '' ? null : change.group_id;
+                rowEl.classList.remove('bg-yellow-50');
+                pendingChanges.delete(id);
+            } else {
+                showMessage('Failed to save group');
+            }
+        })
+        .catch(err => {
+            console.error('Update request failed', err);
+            showMessage('Failed to save group');
+        })
+        .finally(() => {
+            savingRows.delete(id);
+            rowEl.classList.remove('opacity-50', 'pointer-events-none');
+        });
+    });
+    Promise.all(promises).then(() => {
+        saveBtn.disabled = pendingChanges.size === 0;
+        if (pendingChanges.size === 0) {
+            showMessage('Groups saved');
+        }
     });
 });
 </script>
