@@ -53,10 +53,14 @@ function tailwindTabulator(element, options) {
         autoFitDone = true;
         requestAnimationFrame(() => {
             const cols = table.getColumns();
+            const allHaveFitToData = cols.every(col => typeof col.fitToData === 'function');
 
-            if (cols.length && typeof cols[0].fitToData === 'function') {
-                cols[0].fitToData();
+            if (!allHaveFitToData) {
+                console.warn('Tabulator columns lack fitToData; ensure the ResizeColumns module is included.');
+                return;
             }
+
+            cols.forEach(col => col.fitToData());
         });
 
     });
