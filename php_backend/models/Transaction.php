@@ -186,7 +186,7 @@ class Transaction {
     public static function get(int $id): ?array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
-             . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
+             . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, t.`ofx_type`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '

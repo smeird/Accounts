@@ -46,6 +46,7 @@ function tailwindTabulator(element, options) {
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
+
     let autoFitDone = false;
     table.on('tableBuilt', () => {
         if (autoFitDone) return;
@@ -56,6 +57,7 @@ function tailwindTabulator(element, options) {
                 cols[0].fitData();
             }
         });
+
     });
     return table;
 }
