@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Manage Categories</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_modern.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -30,10 +33,11 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let categoryTable;
+// Fetch categories and render them with their tags
 async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
     const cats = await res.json();
-    const data = cats.map(c => ({id: c.id, name: c.name, tags: c.tags.map(t => t.name).join(', ')}));
+    const data = cats.map(c => ({id: c.id, name: c.name, tags: c.tags.map(t => t.name)}));
     if (categoryTable) {
         categoryTable.setData(data);
         return;
@@ -42,8 +46,8 @@ async function loadCategories() {
         data: data,
         layout: 'fitColumns',
         columns: [
-            { title: 'Name', field: 'name' },
-            { title: 'Tags', field: 'tags' },
+            { title: 'Name', field: 'name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+            { title: 'Tags', field: 'tags', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
             { title: 'Actions', formatter: function(cell){
                 const c = cell.getRow().getData();
                 const container = document.createElement('div');

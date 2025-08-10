@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Transaction Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -42,6 +45,7 @@
                 <p><strong>Description:</strong> ${tx.description}</p>
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
+                <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
                 <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category"></select></label>
                 <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Assign a tag"></select></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>

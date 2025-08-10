@@ -4,9 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Monthly Statement</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_modern.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -27,7 +31,28 @@
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
                 </form>
             </div>
-            <div id="transactions-grid" class="mt-4"></div>
+            <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Income</p>
+                    <p id="income-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Outgoings</p>
+                    <p id="outgoings-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Delta</p>
+                    <p id="delta-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded shadow mt-4">
+                <div class="flex space-x-2 mb-2">
+                    <button id="undo-btn" class="bg-gray-200 px-2 py-1 rounded" type="button"><i class="fas fa-undo"></i></button>
+                    <button id="redo-btn" class="bg-gray-200 px-2 py-1 rounded" type="button"><i class="fas fa-redo"></i></button>
+                    <button id="save-btn" class="bg-blue-600 text-white px-4 py-2 rounded" type="button">Save</button>
+                </div>
+                <div id="transactions-grid"></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -39,6 +64,11 @@ const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
 let groupOptions = [];
 let groupLookup = {};
+const savingRows = new Set();
+const pendingChanges = new Map();
+let table;
+const saveBtn = document.getElementById('save-btn');
+saveBtn.disabled = true;
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -62,6 +92,7 @@ fetch('../php_backend/public/transaction_months.php')
             monthsByYear[y].sort((a, b) => b - a);
         });
 
+        // Fill the month dropdown based on the selected year
         function populateMonths() {
             const year = yearSelect.value;
             monthSelect.innerHTML = '';
@@ -88,41 +119,84 @@ form.addEventListener('submit', function(e) {
         fetch('../php_backend/public/groups.php').then(r => r.json())
     ]).then(([data, groups]) => {
 
+        pendingChanges.clear();
+        saveBtn.disabled = true;
+
         groupOptions = [{ value: '', label: '-- None --' }];
         groupLookup = { '': '' };
         groups.forEach(g => {
             groupOptions.push({ value: g.id, label: g.name });
             groupLookup[g.id] = g.name;
         });
-        tailwindTabulator('#transactions-grid', {
+
+        data.forEach(t => { t.original_group_id = t.group_id; });
+
+        let income = 0, outgoings = 0;
+        data.forEach(t => {
+            if (t.transfer_id !== null) return;
+            const amt = parseFloat(t.amount);
+            if (amt > 0) income += amt;
+            else if (amt < 0) outgoings += -amt;
+        });
+        const delta = income - outgoings;
+        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
+        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
+        const deltaEl = document.getElementById('delta-total');
+        deltaEl.textContent = '£' + delta.toFixed(2);
+        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
+
+        table = tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitColumns',
+            history: true,
             columns: [
                 { title: 'Date', field: 'date' },
                 { title: 'Description', field: 'description', formatter: function(cell) {
                     const id = cell.getRow().getData().id;
                     return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                 } },
-                { title: 'Category', field: 'category_name' },
+                { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+                { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
                 {
                     title: 'Group',
                     field: 'group_id',
                     editor: 'list',
                     editorParams: { values: groupOptions },
+                    editable: function(cell){
+                        const data = cell.getRow().getData();
+                        return data.transfer_id === null && !savingRows.has(data.id);
+                    },
+                    validator: function(cell, value){
+                        return value === '' || groupLookup.hasOwnProperty(value);
+                    },
+                    validationFailed: function(cell){
+                        showMessage('Invalid group selection');
+                    },
                     formatter: function(cell) {
-                        return groupLookup[cell.getValue()] || '';
+                        const name = groupLookup[cell.getValue()] || '';
+                        return name ? createBadge(name, 'bg-purple-200 text-purple-800') : '';
                     }
                 },
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
             ],
+            cellEditing: function(cell){
+                cell.getElement().classList.add('bg-yellow-100');
+            },
+            cellEditCancelled: function(cell){
+                cell.getElement().classList.remove('bg-yellow-100');
+            },
             cellEdited: function(cell) {
+                cell.getElement().classList.remove('bg-yellow-100');
                 const field = cell.getField();
                 if (field === 'group_id') {
                     const val = cell.getValue();
                     const oldVal = cell.getOldValue();
                     if (val === oldVal) return;
                     const data = cell.getRow().getData();
-                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
+                    const valStr = val === '' ? '' : String(val);
+                    const origStr = data.original_group_id === null ? '' : String(data.original_group_id);
+                    const rowEl = cell.getRow().getElement();
+
 
                     payload.group_id = val === '' ? '' : parseInt(val, 10);
                     fetch('../php_backend/public/update_transaction.php', {
@@ -141,10 +215,57 @@ form.addEventListener('submit', function(e) {
                         alert('Failed to save group');
                         cell.setValue(oldVal, true);
                     });
+
                 }
             }
         });
+        document.getElementById('undo-btn').addEventListener('click', () => table.undo());
+        document.getElementById('redo-btn').addEventListener('click', () => table.redo());
 
+    });
+});
+
+saveBtn.addEventListener('click', function() {
+    const updates = Array.from(pendingChanges.entries());
+    const promises = updates.map(([id, change]) => {
+        savingRows.add(id);
+        const row = table.getRow(id);
+        const rowEl = row.getElement();
+        rowEl.classList.add('opacity-50', 'pointer-events-none');
+        return fetch('../php_backend/public/update_transaction.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                transaction_id: id,
+                account_id: change.account_id,
+                description: change.description,
+                group_id: change.group_id
+            })
+        })
+        .then(resp => resp.json())
+        .then(res => {
+            if (res && res.status === 'ok') {
+                row.getData().original_group_id = change.group_id === '' ? null : change.group_id;
+                rowEl.classList.remove('bg-yellow-50');
+                pendingChanges.delete(id);
+            } else {
+                showMessage('Failed to save group');
+            }
+        })
+        .catch(err => {
+            console.error('Update request failed', err);
+            showMessage('Failed to save group');
+        })
+        .finally(() => {
+            savingRows.delete(id);
+            rowEl.classList.remove('opacity-50', 'pointer-events-none');
+        });
+    });
+    Promise.all(promises).then(() => {
+        saveBtn.disabled = pendingChanges.size === 0;
+        if (pendingChanges.size === 0) {
+            showMessage('Groups saved');
+        }
     });
 });
 </script>

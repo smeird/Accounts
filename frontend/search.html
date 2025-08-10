@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Search Transactions</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_modern.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -16,6 +19,7 @@
             <p class="mb-4">Find specific transactions using keywords and view the results below.</p>
             <form id="search-form" class="space-y-4">
                 <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
+                <input type="number" step="0.01" id="amount" placeholder="Amount (£)" class="border p-2 rounded w-full" data-help="Exact amount to match">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
             </form>
             <div id="results-grid" class="mt-4"></div>
@@ -29,6 +33,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Format a numeric value as pounds and pence
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
     }
@@ -36,7 +41,10 @@
     document.getElementById('search-form').addEventListener('submit', function(e){
         e.preventDefault();
         const term = document.getElementById('term').value;
-        const params = new URLSearchParams({value: term});
+        const amount = document.getElementById('amount').value;
+        const params = new URLSearchParams();
+        if (term) params.append('value', term);
+        if (amount) params.append('amount', amount);
         fetch('../php_backend/public/search_transactions.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
@@ -53,9 +61,9 @@
                                 return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                             } },
                             { title: 'Memo', field: 'memo' },
-                            { title: 'Category', field: 'category_name' },
-                            { title: 'Tag', field: 'tag_name' },
-                            { title: 'Group', field: 'group_name' },
+                            { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+                            { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
+                            { title: 'Group', field: 'group_name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
                             { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
                         ]
                     });

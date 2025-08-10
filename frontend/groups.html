@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Manage Groups</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_modern.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -30,6 +33,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let groupTable;
+// Fetch groups from the server and render them in the table
 async function loadGroups() {
     const res = await fetch('../php_backend/public/groups.php');
     const groups = await res.json();
@@ -41,7 +45,7 @@ async function loadGroups() {
         data: groups,
         layout: 'fitColumns',
         columns: [
-            { title: 'Name', field: 'name' },
+            { title: 'Name', field: 'name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
             { title: 'Actions', formatter: function(cell){
                 const g = cell.getRow().getData();
                 const container = document.createElement('div');

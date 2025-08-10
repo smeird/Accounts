@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- Page for managing monthly category budgets -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Budgets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_modern.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
+    <main class="flex-1 p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4">Budgets</h1>
+        <section>
+            <form id="budget-form" class="md:flex md:space-x-4 space-y-4 md:space-y-0">
+                <label class="block">Month<br><input type="month" id="month" class="border p-2 rounded" data-help="Month for the budget"></label>
+                <label class="block">Category<br><select id="category" class="border p-2 rounded" data-help="Category to assign the budget"></select></label>
+                <label class="block">Amount (£)<br><input type="number" step="0.01" id="amount" class="border p-2 rounded" data-help="Budget amount in pounds"></label>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded self-end">Set Budget</button>
+            </form>
+        </section>
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Current Budgets</h2>
+            <div id="budget-table"></div>
+        </section>
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Budget Progress</h2>
+            <div id="budget-chart" style="height:400px"></div>
+        </section>
+    </main>
+</div>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+<script src="js/tabulator-tailwind.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script>
+// Format a number as currency with a pound symbol
+function formatCurrency(value){return '£'+parseFloat(value).toFixed(2);}
+let budgetTable;
+const monthInput=document.getElementById('month');
+monthInput.value=new Date().toISOString().slice(0,7);
+
+// Populate the category select with options from the server
+async function loadCategories(){
+    const res=await fetch('../php_backend/public/categories.php');
+    const cats=await res.json();
+    const sel=document.getElementById('category');
+    sel.innerHTML='';
+    cats.forEach(c=>{
+        const opt=document.createElement('option');
+        opt.value=c.id; opt.textContent=c.name; sel.appendChild(opt);
+    });
+}
+
+// Fetch and display budgets for the selected month
+async function loadBudgets(){
+    const [year,month]=monthInput.value.split('-');
+    const res=await fetch(`../php_backend/public/budgets.php?month=${parseInt(month)}&year=${parseInt(year)}`);
+    const data=await res.json();
+    if(budgetTable){budgetTable.setData(data);}else{
+        budgetTable=tailwindTabulator('#budget-table',{
+            data:data,
+            layout:'fitColumns',
+            columns:[
+                {title:'Category',field:'category'},
+                {title:'Budget',field:'amount',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
+                {title:'Spent',field:'spent',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
+                {title:'Left',field:'left',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'}
+            ]
+        });
+    }
+    Highcharts.chart('budget-chart',{
+        chart:{type:'column'},
+        title:{text:''},
+        xAxis:{categories:data.map(b=>b.category)},
+        yAxis:{title:{text:'£'}},
+        series:[
+            {name:'Budget',data:data.map(b=>parseFloat(b.amount))},
+            {name:'Spent',data:data.map(b=>parseFloat(b.spent))}
+        ]
+    });
+}
+
+monthInput.addEventListener('change',loadBudgets);
+
+document.getElementById('budget-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const [year,month]=monthInput.value.split('-');
+    const category=document.getElementById('category').value;
+    const amount=document.getElementById('amount').value;
+    await fetch('../php_backend/public/budgets.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({category_id:category,amount:amount,month:parseInt(month),year:parseInt(year)})
+    });
+    document.getElementById('amount').value='';
+    loadBudgets();
+    showMessage('Budget saved');
+});
+
+loadCategories().then(loadBudgets);
+</script>
+<script src="js/overlay.js"></script>
+</body>
+</html>

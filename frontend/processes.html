@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Run Processes</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -24,6 +27,7 @@
     </div>
     <script src="js/menu.js"></script>
     <script>
+    // Trigger a backend process with a progress indicator
     async function run(action){
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');

@@ -15,6 +15,8 @@ A basic login page is available at the project root (`index.php`). Users are sto
 - Tabulator tables apply Tailwind utility classes for a consistent look.
 - Form inputs may include a `data-help` attribute to show popover guidance.
 - Transactions identified as transfers are flagged and ignored in totals.
+- The interface is responsive. Each page includes a viewport meta tag and uses Tailwind's responsive utilities so the site works
+  on mobile devices. The navigation menu collapses to a toggle button on small screens.
 
 ## PHP Development Setup
 
@@ -54,6 +56,14 @@ php -S localhost:8000
 
 Then open `http://localhost:8000/frontend/index.html` in your browser.
 
+
+## Backup and Recovery
+
+Back up and restore your data through the web interface. From the navigation
+menu open **Backup & Restore** under *Administration*. The page lets you
+choose which parts of the database to download—transactions, categories, tags,
+groups, or budgets. To restore a backup, choose the JSON file on the same page
+and click **Restore**; any included sections are imported.
 
 ## Frontend
 

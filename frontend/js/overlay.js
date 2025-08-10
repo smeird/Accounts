@@ -1,5 +1,6 @@
 // Provides a simple overlay for displaying temporary messages.
 (function(){
+    // Build the overlay element and insert it into the DOM
     function createOverlay(){
         const overlay = document.createElement('div');
         overlay.id = 'overlay';
@@ -17,6 +18,7 @@
 
     let hideTimer;
 
+    // Display a temporary message in the overlay
     window.showMessage = function(msg){
         const overlay = window.__overlay || document.getElementById('overlay') || createOverlay();
         overlay.querySelector('div').textContent = msg;

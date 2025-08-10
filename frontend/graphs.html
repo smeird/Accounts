@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Graphs</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -26,6 +29,7 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Retrieve data for the chosen year and draw a variety of charts
     function loadYear(year){
         Promise.all([
             fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
@@ -33,6 +37,10 @@
         ]).then(([monthly, yearly]) => {
             const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
             const totals = monthly.map(m => parseFloat(m.spent));
+            const categorySeries = yearly.categories.map(c => ({
+                name: c.name,
+                data: months.map((_, i) => parseFloat(c[String(i + 1)]) || 0)
+            }));
 
             Highcharts.chart('line-chart', {
                 chart: { type: 'line' },
@@ -43,7 +51,7 @@
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-                series: [{ name: String(year), data: totals }]
+                series: [{ name: String(year), data: totals }, ...categorySeries]
             });
 
             Highcharts.chart('column-chart', {
@@ -55,7 +63,7 @@
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-                series: [{ name: String(year), data: totals }]
+                series: [{ name: String(year), data: totals }, ...categorySeries]
             });
 
             const cumulative = totals.reduce((acc, val) => {
@@ -63,6 +71,14 @@
                 acc.push(last + val);
                 return acc;
             }, []);
+            const categoryCumulative = categorySeries.map(cs => ({
+                name: cs.name,
+                data: cs.data.reduce((acc, val) => {
+                    const last = acc.length ? acc[acc.length - 1] : 0;
+                    acc.push(last + val);
+                    return acc;
+                }, [])
+            }));
             Highcharts.chart('area-chart', {
                 chart: { type: 'area' },
                 title: { text: 'Cumulative Spending' },
@@ -72,7 +88,7 @@
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-                series: [{ name: String(year), data: cumulative }]
+                series: [{ name: String(year), data: cumulative }, ...categoryCumulative]
             });
 
             const catData = yearly.categories.map(c => ({ name: c.name, y: parseFloat(c.total) }));
