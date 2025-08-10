@@ -53,8 +53,9 @@ function tailwindTabulator(element, options) {
         autoFitDone = true;
         requestAnimationFrame(() => {
             const cols = table.getColumns();
-            if (cols.length) {
-                cols[0].fitData();
+
+            if (cols.length && typeof cols[0].fitToData === 'function') {
+                cols[0].fitToData();
             }
         });
 
