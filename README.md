@@ -15,6 +15,8 @@ A basic login page is available at the project root (`index.php`). Users are sto
 - Tabulator tables apply Tailwind utility classes for a consistent look.
 - Form inputs may include a `data-help` attribute to show popover guidance.
 - Transactions identified as transfers are flagged and ignored in totals.
+- The interface is responsive. Each page includes a viewport meta tag and uses Tailwind's responsive utilities so the site works
+  on mobile devices. The navigation menu collapses to a toggle button on small screens.
 
 ## PHP Development Setup
 

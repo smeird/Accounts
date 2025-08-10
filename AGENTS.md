@@ -14,6 +14,8 @@
 - Use Font Awesome for interface icons.
 - Tabulator tables should apply Tailwind utility classes.
 - Provide popover help for form inputs using `data-help` attributes handled by `frontend/js/input_help.js`.
+- Ensure the site remains mobile-friendly: include `<meta name="viewport" content="width=device-width, initial-scale=1.0">` on
+  every page and use Tailwind's responsive utilities so navigation and layouts work on small screens.
 
 ## Features
 - Flag transactions recognised as transfers and exclude them from income and expense totals.
