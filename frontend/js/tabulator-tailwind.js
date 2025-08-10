@@ -46,9 +46,11 @@ function tailwindTabulator(element, options) {
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
-    table.on('tableBuilt', function handler() {
-        table.off('tableBuilt', handler);
 
+    let autoFitDone = false;
+    table.on('tableBuilt', () => {
+        if (autoFitDone) return;
+        autoFitDone = true;
         requestAnimationFrame(() => {
             const cols = table.getColumns();
             if (cols.length) {
