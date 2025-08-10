@@ -46,11 +46,16 @@ function tailwindTabulator(element, options) {
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
+    let autoFitDone = false;
     table.on('tableBuilt', () => {
-        const cols = table.getColumns();
-        if (cols.length) {
-            cols[0].fitData();
-        }
+        if (autoFitDone) return;
+        autoFitDone = true;
+        requestAnimationFrame(() => {
+            const cols = table.getColumns();
+            if (cols.length && typeof cols[0].fitToData === 'function') {
+                cols[0].fitToData();
+            }
+        });
     });
     return table;
 }
