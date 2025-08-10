@@ -190,23 +190,32 @@ form.addEventListener('submit', function(e) {
                 const field = cell.getField();
                 if (field === 'group_id') {
                     const val = cell.getValue();
+                    const oldVal = cell.getOldValue();
+                    if (val === oldVal) return;
                     const data = cell.getRow().getData();
                     const valStr = val === '' ? '' : String(val);
                     const origStr = data.original_group_id === null ? '' : String(data.original_group_id);
                     const rowEl = cell.getRow().getElement();
 
-                    if (valStr === origStr) {
-                        pendingChanges.delete(data.id);
-                        rowEl.classList.remove('bg-yellow-50');
-                    } else {
-                        pendingChanges.set(data.id, {
-                            group_id: val === '' ? '' : parseInt(val, 10),
-                            account_id: data.account_id,
-                            description: data.description
-                        });
-                        rowEl.classList.add('bg-yellow-50');
-                    }
-                    saveBtn.disabled = pendingChanges.size === 0;
+
+                    payload.group_id = val === '' ? '' : parseInt(val, 10);
+                    fetch('../php_backend/public/update_transaction.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(resp => resp.json())
+                    .then(res => {
+                        if (!(res && res.status === 'ok')) {
+                            alert('Failed to save group');
+                            cell.setValue(oldVal, true);
+                        }
+                    })
+                    .catch(() => {
+                        alert('Failed to save group');
+                        cell.setValue(oldVal, true);
+                    });
+
                 }
             }
         });
