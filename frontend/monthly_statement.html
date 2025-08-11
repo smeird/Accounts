@@ -216,22 +216,11 @@ form.addEventListener('submit', function(e) {
             ],
             cellEditing: function(cell){
                 cell.getElement().classList.add('bg-yellow-100');
-                if (cell.getField() === 'group_id') {
-                    setTimeout(() => {
-                        const editor = cell.getElement().querySelector('select');
-                        if (editor) {
-                            editor.addEventListener('change', e => {
-                                alert('Group dropdown changed to ' + e.target.value);
-                            }, { once: true });
-                        }
-                    }, 0);
-                }
             },
             cellEditCancelled: function(cell){
                 cell.getElement().classList.remove('bg-yellow-100');
             },
             cellEdited: function(cell) {
-
                 const field = cell.getField();
                 if (field === 'group_id') {
                     const val = cell.getValue();
@@ -239,29 +228,21 @@ form.addEventListener('submit', function(e) {
                     if (val === oldVal) return;
                     const data = cell.getRow().getData();
                     const rowEl = cell.getRow().getElement();
+                    const newVal = val === '' ? '' : parseInt(val, 10);
+                    const origVal = data.original_group_id === null ? '' : data.original_group_id;
+
+                    if (newVal === origVal) {
+                        pendingChanges.delete(data.id);
+                        rowEl.classList.remove('bg-yellow-50');
+                    } else {
+                        pendingChanges.set(data.id, {
+                            account_id: data.account_id,
+                            description: data.description,
+                            group_id: newVal
+                        });
+                        rowEl.classList.add('bg-yellow-50');
+                    }
                     showMessage('Group selected: ' + (groupLookup[val] || 'None'));
-                    debug('Group selection changed to ' + val);
-                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
-
-                    payload.group_id = val === '' ? '' : parseInt(val, 10);
-                    fetch('../php_backend/public/update_transaction.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(resp => resp.json())
-                    .then(res => {
-                        if (!(res && res.status === 'ok')) {
-                            alert('Failed to save group');
-                            cell.setValue(oldVal, true);
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to save group');
-                        cell.setValue(oldVal, true);
-
-                    });
-                    rowEl.classList.add('bg-yellow-50');
                 }
                 saveBtn.disabled = pendingChanges.size === 0;
             }
