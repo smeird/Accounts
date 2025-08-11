@@ -66,7 +66,9 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
-let groupOptions = {};
+
+let groupSelectValues = {};
+
 let groupLookup = {};
 const savingRows = new Set();
 const pendingChanges = new Map();
@@ -133,10 +135,12 @@ form.addEventListener('submit', function(e) {
         pendingChanges.clear();
         saveBtn.disabled = true;
 
-        groupOptions = { '': '-- None --' };
+
+        groupSelectValues = { '': '-- None --' };
         groupLookup = { '': '' };
         groups.forEach(g => {
-            groupOptions[g.id] = g.name;
+            groupSelectValues[g.id] = g.name;
+
             groupLookup[g.id] = g.name;
         });
 
@@ -196,7 +200,9 @@ form.addEventListener('submit', function(e) {
                     title: 'Group',
                     field: 'group_id',
                     editor: 'select',
-                    editorParams: { values: groupOptions },
+
+                    editorParams: { values: groupSelectValues },
+
                     editable: function(cell){
                         const data = cell.getRow().getData();
                         return data.transfer_id === null && !savingRows.has(data.id);
