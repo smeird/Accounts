@@ -13,8 +13,8 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
-        <main class="flex-1 p-6">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4">Recurring Spend Detection</h1>
             <p class="mb-4">Run an analysis of the last 12 months to find subscriptions and other repeat expenses.</p>
             <button id="run-analysis" class="bg-blue-600 text-white px-4 py-2 rounded mb-4"><i class="fa-solid fa-play mr-2"></i>Run Analysis</button>
