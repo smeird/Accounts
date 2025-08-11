@@ -181,7 +181,7 @@ form.addEventListener('submit', function(e) {
                         return value === '' || groupLookup.hasOwnProperty(value);
                     },
                     validationFailed: function(cell){
-                        showMessage('Invalid group selection');
+                        showMessage('Invalid group selection', 'error');
                     },
                     formatter: function(cell) {
                         const name = groupLookup[cell.getValue()] || '';
@@ -274,12 +274,12 @@ saveBtn.addEventListener('click', function() {
                 rowEl.classList.remove('bg-yellow-50');
                 pendingChanges.delete(id);
             } else {
-                showMessage('Failed to save group');
+                showMessage('Failed to save group', 'error');
             }
         })
         .catch(err => {
             console.error('Update request failed', err);
-            showMessage('Failed to save group');
+            showMessage('Failed to save group', 'error');
         })
         .finally(() => {
             savingRows.delete(id);

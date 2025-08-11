@@ -22,7 +22,7 @@ function initBackup() {
                         showMessage('Backup downloaded');
                     }
                 })
-                .catch(() => showMessage && showMessage('Download failed'));
+                .catch(() => showMessage && showMessage('Download failed', 'error'));
         });
     }
 
@@ -38,7 +38,7 @@ function initBackup() {
             fetch(form.action, { method: 'POST', body: fd })
                 .then(resp => resp.text())
                 .then(showMessage)
-                .catch(() => showMessage('Restore failed'));
+                .catch(() => showMessage('Restore failed', 'error'));
         });
     }
 }

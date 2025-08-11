@@ -41,7 +41,7 @@ function initUpload() {
                         showMessage(xhr.responseText);
                     } else {
                         bar.classList.add('bg-red-600');
-                        showMessage('Upload failed');
+                        showMessage('Upload failed', 'error');
                     }
                 };
                 xhr.send(fd);
@@ -51,7 +51,7 @@ function initUpload() {
             fetch(form.action, { method: 'POST', body: data })
                 .then((resp) => resp.text())
                 .then(showMessage)
-                .catch(() => showMessage('Upload failed'));
+                .catch(() => showMessage('Upload failed', 'error'));
         }
     });
 }
