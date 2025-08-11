@@ -3,6 +3,9 @@
 class Database {
     private static $instance = null;
 
+    /**
+     * Return a singleton PDO connection using environment credentials.
+     */
     public static function getConnection(): PDO {
         if (self::$instance === null) {
             $host = getenv('DB_HOST') ?: 'localhost';

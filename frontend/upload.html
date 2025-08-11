@@ -4,13 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Upload OFX</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
-        <main class="flex-1 p-6">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4">Upload OFX Files</h1>
             <p class="mb-4">Upload one or more OFX statements from your bank to import transactions.</p>
             <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" class="space-y-4">

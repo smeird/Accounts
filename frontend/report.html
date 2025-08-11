@@ -4,14 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Transaction Reports</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
-        <main class="flex-1 p-6">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4">Transaction Reports</h1>
             <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria.</p>
             <form id="report-form" class="bg-white p-4 rounded shadow grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -41,6 +44,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 
+    // Load filter options for categories, tags and groups
     async function loadOptions() {
         const [catRes, tagRes, grpRes] = await Promise.all([
             fetch('../php_backend/public/categories.php'),
@@ -76,6 +80,7 @@
         });
     }
 
+    // Populate the saved reports dropdown from localStorage
     function loadSavedReports() {
         const saved = JSON.parse(localStorage.getItem('reports') || '[]');
         const select = document.getElementById('saved-reports');
@@ -89,6 +94,7 @@
         document.getElementById('delete-report').disabled = saved.length === 0;
     }
 
+    // Execute the report query and render results and chart
     function runReport() {
         const category = document.getElementById('category').value;
         const tag = document.getElementById('tag').value;
@@ -117,9 +123,9 @@
                         columns: [
                             { title: 'Date', field: 'date' },
                             { title: 'Description', field: 'description', bottomCalc: function() { return 'Total'; } },
-                            { title: 'Category', field: 'category_name' },
-                            { title: 'Tag', field: 'tag_name' },
-                            { title: 'Group', field: 'group_name' },
+                            { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+                            { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
+                            { title: 'Group', field: 'group_name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
                             { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: function(values) { var total = 0; values.forEach(function(value) { total += parseFloat(value) || 0; }); return total; }, bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
                         ]
                     });

@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../Database.php';
 
 class User {
+    /**
+     * Create a new user with the given username and password.
+     */
     public static function create(string $username, string $password): int {
         $db = Database::getConnection();
         $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -11,6 +14,9 @@ class User {
         return (int)$db->lastInsertId();
     }
 
+    /**
+     * Look up a user record by username.
+     */
     public static function findByUsername(string $username): ?array {
         $db = Database::getConnection();
         $stmt = $db->prepare('SELECT `id`, `username`, `password` FROM `users` WHERE `username` = :username');
@@ -20,6 +26,9 @@ class User {
     }
 
 
+    /**
+     * Verify a username and password, returning the user ID or null on failure.
+     */
     public static function verify(string $username, string $password, ?string &$reason = null): ?int {
         $user = self::findByUsername($username);
         if (!$user) {
@@ -34,6 +43,9 @@ class User {
         return null;
     }
 
+    /**
+     * Update the password for the specified user ID.
+     */
     public static function updatePassword(int $id, string $password): bool {
         $db = Database::getConnection();
         $hash = password_hash($password, PASSWORD_DEFAULT);

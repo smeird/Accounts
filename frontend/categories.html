@@ -4,14 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Manage Categories</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
-        <main class="flex-1 p-6">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4">Manage Categories</h1>
             <p class="mb-4">Create categories and assign tags to organise your transactions.</p>
             <form id="category-form" class="space-y-4">
@@ -30,10 +33,11 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let categoryTable;
+// Fetch categories and render them with their tags
 async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
     const cats = await res.json();
-    const data = cats.map(c => ({id: c.id, name: c.name, tags: c.tags.map(t => t.name).join(', ')}));
+    const data = cats.map(c => ({id: c.id, name: c.name, tags: c.tags.map(t => t.name)}));
     if (categoryTable) {
         categoryTable.setData(data);
         return;
@@ -42,8 +46,8 @@ async function loadCategories() {
         data: data,
         layout: 'fitColumns',
         columns: [
-            { title: 'Name', field: 'name' },
-            { title: 'Tags', field: 'tags' },
+            { title: 'Name', field: 'name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+            { title: 'Tags', field: 'tags', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
             { title: 'Actions', formatter: function(cell){
                 const c = cell.getRow().getData();
                 const container = document.createElement('div');
@@ -82,8 +86,22 @@ async function loadCategories() {
                     loadCategories();
                     showMessage('Tag assigned');
                 });
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'Delete';
+                delBtn.className = 'bg-red-600 text-white px-2 py-1 rounded ml-2';
+                delBtn.addEventListener('click', async () => {
+                    if (!confirm('Delete this category?')) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: c.id})
+                    });
+                    loadCategories();
+                    showMessage('Category deleted');
+                });
                 container.appendChild(editBtn);
                 container.appendChild(tagBtn);
+                container.appendChild(delBtn);
                 return container;
             }}
         ]

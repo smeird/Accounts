@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
+require_once __DIR__ . '/../models/TransactionGroup.php';
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
@@ -13,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
+Log::write('update_transaction payload: ' . json_encode($data));
 $transactionId = $data['transaction_id'] ?? null;
 $accountId = $data['account_id'] ?? null;
 $description = $data['description'] ?? null;
@@ -36,7 +38,23 @@ try {
         $categoryChanged = true;
     }
     if ($groupId !== null) {
-        Transaction::setGroup((int)$transactionId, $groupId === '' ? null : (int)$groupId);
+
+        $newGroup = $groupId === '' ? null : (int)$groupId;
+        Log::write('Attempting group update for transaction ' . $transactionId . ' to ' . ($newGroup === null ? 'NULL' : $newGroup));
+        $saved = Transaction::setGroup((int)$transactionId, $newGroup);
+        Log::write('setGroup result for transaction ' . $transactionId . ': ' . ($saved ? 'success' : 'failure'));
+        if (!$saved) {
+            Log::write('Failed to update group for transaction ' . $transactionId, 'ERROR');
+            throw new Exception('Failed to update group');
+        }
+
+        $groupName = 'NULL';
+        if ($newGroup !== null) {
+            $group = TransactionGroup::find($newGroup);
+            $groupName = $group ? $group['name'] : $newGroup;
+        }
+        Log::write('Updated group for transaction ' . $transactionId . ' to ' . $groupName);
+
     }
     if ($tagId !== null || $tagName) {
         if (!$tagId && $tagName) {
@@ -55,6 +73,7 @@ try {
     echo json_encode([
         'status' => 'ok',
         'tag_id' => $tagId ? (int)$tagId : null,
+        'group_id' => $groupId === '' ? null : ($groupId !== null ? (int)$groupId : null),
         'auto_tagged' => $applied,
         'auto_categorised' => $categorised
     ]);

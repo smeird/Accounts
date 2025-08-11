@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS budgets;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS accounts;
 SQL;
@@ -34,6 +35,16 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS budgets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT NOT NULL,
+    month TINYINT NOT NULL,
+    year INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    UNIQUE KEY unique_budget (category_id, month, year),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 CREATE TABLE IF NOT EXISTS tags (
@@ -67,6 +78,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     group_id INT DEFAULT NULL,
     transfer_id INT DEFAULT NULL,
     ofx_id VARCHAR(255) UNIQUE,
+    ofx_type VARCHAR(50) DEFAULT NULL,
     FOREIGN KEY (account_id) REFERENCES accounts(id),
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (tag_id) REFERENCES tags(id),
@@ -93,6 +105,12 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'transfer_id'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `transactions` ADD COLUMN `transfer_id` INT DEFAULT NULL");
+}
+
+// Ensure ofx_type column exists in transactions
+$result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'ofx_type'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `transactions` ADD COLUMN `ofx_type` VARCHAR(50) DEFAULT NULL");
 }
 
 echo "Database tables created.\n";
