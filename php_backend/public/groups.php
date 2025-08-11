@@ -1,5 +1,6 @@
 <?php
 // API endpoint for creating, listing, updating, and deleting transaction groups.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/TransactionGroup.php';
 require_once __DIR__ . '/../models/Log.php';
 

@@ -1,6 +1,7 @@
 <?php
 // Exports selected data as JSON. Allows selecting categories, tags, groups,
 // transactions, and budgets via the `parts` query parameter.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
 header('Content-Type: application/json');

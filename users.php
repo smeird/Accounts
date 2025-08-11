@@ -2,6 +2,7 @@
 // Simple user management page to add users and change passwords.
 session_start();
 require_once __DIR__ . '/php_backend/models/User.php';
+require_once __DIR__ . '/php_backend/nocache.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
@@ -40,6 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>User Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
