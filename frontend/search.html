@@ -38,8 +38,7 @@
         return '£' + parseFloat(value).toFixed(2);
     }
 
-    document.getElementById('search-form').addEventListener('submit', function(e){
-        e.preventDefault();
+    function runSearch(){
         const term = document.getElementById('term').value;
         const amount = document.getElementById('amount').value;
         const params = new URLSearchParams();
@@ -106,7 +105,19 @@
                     chartEl.innerHTML = '';
                 }
             });
+    }
+
+    document.getElementById('search-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        runSearch();
     });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialValue = urlParams.get('value');
+    if (initialValue) {
+        document.getElementById('term').value = initialValue;
+        runSearch();
+    }
     </script>
     <script src="js/overlay.js"></script>
 </body>

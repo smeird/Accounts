@@ -166,8 +166,32 @@ form.addEventListener('submit', function(e) {
                     const id = cell.getRow().getData().id;
                     return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                 } },
-                { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
-                { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
+                {
+                    title: 'Category',
+                    field: 'category_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-green-200 text-green-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
+                    }
+                },
+                {
+                    title: 'Tag',
+                    field: 'tag_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
+                    }
+                },
                 {
                     title: 'Group',
                     field: 'group_id',
