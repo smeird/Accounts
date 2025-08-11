@@ -33,6 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
       document.head.appendChild(link);
     }
 
+    // Load Roboto font for a lighter appearance
+    if (!document.getElementById('roboto-font')) {
+      const fontLink = document.createElement('link');
+      fontLink.id = 'roboto-font';
+      fontLink.rel = 'stylesheet';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap';
+      document.head.appendChild(fontLink);
+    }
+    document.body.style.fontFamily = 'Roboto, sans-serif';
+    document.body.style.fontWeight = '300';
+
     fetch('menu.html')
       .then(resp => resp.text())
       .then(html => {
