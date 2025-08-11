@@ -70,6 +70,12 @@
                 </div>
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
+                <div id="sankey-chart" style="height:400px;"></div>
+            </div>
+            <div class="bg-white p-6 rounded shadow mt-4">
+                <div id="category-bubbles" style="height:400px;"></div>
+            </div>
+            <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="transactions-grid"></div>
             </div>
         </main>
@@ -78,6 +84,10 @@
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    <script src="https://code.highcharts.com/modules/sankey.js"></script>
+    <script src="https://code.highcharts.com/modules/packed-bubble.js"></script>
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
@@ -141,6 +151,158 @@ function loadTransactions() {
     const month = parseInt(monthSelect.value);
     const year = parseInt(yearSelect.value);
     const untaggedParam = untaggedOnly.checked ? '&untagged=1' : '';
+
+
+    const prevDate = new Date(year, month - 1);
+    prevDate.setMonth(prevDate.getMonth() - 1);
+    const prevMonth = prevDate.getMonth() + 1;
+    const prevYear = prevDate.getFullYear();
+
+    Promise.all([
+        fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json()),
+        fetch('../php_backend/public/transactions.php?month=' + prevMonth + '&year=' + prevYear + untaggedParam).then(r => r.json())
+    ]).then(([data, prevData]) => {
+        let income = 0, outgoings = 0;
+        const incomes = {};
+        const spendings = {};
+        const prevSpendings = {};
+
+        data.forEach(t => {
+            if (t.transfer_id !== null) return;
+            const amt = parseFloat(t.amount);
+            const cat = t.category_name || 'Uncategorised';
+            if (amt > 0) {
+                income += amt;
+                incomes[cat] = (incomes[cat] || 0) + amt;
+            } else if (amt < 0) {
+                outgoings += -amt;
+                spendings[cat] = (spendings[cat] || 0) + (-amt);
+            }
+        });
+
+        prevData.forEach(t => {
+            if (t.transfer_id !== null) return;
+            const amt = parseFloat(t.amount);
+            const cat = t.category_name || 'Uncategorised';
+            if (amt < 0) {
+                prevSpendings[cat] = (prevSpendings[cat] || 0) + (-amt);
+            }
+        });
+
+        const delta = income - outgoings;
+        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
+        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
+        const deltaEl = document.getElementById('delta-total');
+        deltaEl.textContent = '£' + delta.toFixed(2);
+        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
+
+        buildSankeyChart(incomes, spendings);
+        buildBubbleChart(spendings, prevSpendings);
+
+        table = tailwindTabulator('#transactions-grid', {
+            data: data,
+            layout: 'fitColumns',
+            columns: [
+                { title: 'Date', field: 'date' },
+                { title: 'Description', field: 'description', formatter: function(cell) {
+                    const id = cell.getRow().getData().id;
+                    return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
+                } },
+                {
+                    title: 'Category',
+                    field: 'category_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-green-200 text-green-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
+                    }
+                },
+                {
+                    title: 'Tag',
+                    field: 'tag_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
+                    }
+                },
+                {
+                    title: 'Group',
+                    field: 'group_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        return createBadge(value, 'bg-purple-200 text-purple-800');
+                    }
+                },
+                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+            ]
+        });
+    });
+}
+
+function buildSankeyChart(incomes, spendings){
+    const totalIncome = Object.values(incomes).reduce((a,b) => a + b, 0);
+    const links = [];
+    Object.entries(incomes).forEach(([source, amount]) => {
+        const share = amount / totalIncome;
+        Object.entries(spendings).forEach(([cat, total]) => {
+            links.push([source, cat, +(total * share).toFixed(2)]);
+        });
+    });
+    Highcharts.chart('sankey-chart', {
+        title: { text: 'Income to Spending Flow' },
+        tooltip: {
+            pointFormatter: function(){
+                return '£' + Highcharts.numberFormat(this.weight, 2);
+            }
+        },
+        series: [{
+            keys: ['from', 'to', 'weight'],
+            data: links,
+            type: 'sankey',
+            name: 'Flow'
+        }]
+    });
+}
+
+function buildBubbleChart(spendings, prevSpendings){
+    const data = Object.entries(spendings).map(([cat, total]) => {
+        const prev = prevSpendings[cat] || 0;
+        const change = total - prev;
+        const color = change > 0 ? '#dc2626' : (change < 0 ? '#16a34a' : '#9ca3af');
+        return { name: cat, value: parseFloat(total.toFixed(2)), color, change };
+    });
+    Highcharts.chart('category-bubbles', {
+        chart: { type: 'packedbubble' },
+        title: { text: 'Spending by Category' },
+        tooltip: {
+            useHTML: true,
+            pointFormatter: function(){
+                const change = this.change;
+                const sign = change >= 0 ? '+' : '-';
+                return `<b>${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.value, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}`;
+            }
+        },
+        plotOptions: {
+            packedbubble: {
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.name}',
+                    style: { color: 'black', textOutline: 'none', fontWeight: 'normal' }
+                }
+            }
+        },
+        series: [{ data: data }]
+=======
     Promise.all([
         recurringPromise,
         balancePromise,
@@ -250,6 +412,7 @@ function loadTransactions() {
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
             ]
         });
+
     });
 }
 
