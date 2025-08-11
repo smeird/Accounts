@@ -1,17 +1,18 @@
 
-<header class="sticky top-0 z-40 bg-canvas/80 backdrop-blur supports-[backdrop-filter]:bg-canvas/60 border-b border-ink-100 h-16 flex items-center">
-  <div class="w-full flex items-center justify-between px-g-6">
-    <div class="flex items-center gap-g-4">
-      <button id="menu-toggle" class="md:hidden rounded-pill p-g-2 text-ink-700 hover:bg-ink-50"><i class="fa-solid fa-bars"></i></button>
-      <div class="text-h3 font-semibold text-ink-900">Personal Finance Manager</div>
+<header class="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white h-16 flex items-center shadow">
+  <div class="w-full flex items-center justify-between px-4">
+    <div class="flex items-center space-x-4">
+      <button id="menu-toggle" class="md:hidden bg-blue-700 p-2 rounded"><i class="fa-solid fa-bars"></i></button>
+      <div class="font-bold text-lg">Personal Finance Manager</div>
     </div>
-    <div class="flex items-center gap-g-4">
+    <div class="flex items-center space-x-4">
       <form id="topbar-search" action="search.html" method="get" class="flex">
-        <input type="text" name="value" placeholder="Search transactions" class="w-full rounded-pill border border-ink-200 bg-canvas px-g-5 py-g-2 text-body text-ink-800 placeholder:text-ink-300 focus:outline-none focus:ring-4 focus:ring-primary-600/20 focus:border-primary-600" />
-        <button type="submit" class="ml-g-2 text-primary-600 hover:text-primary-700"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black" />
+        <button type="submit" class="ml-2"><i class="fa-solid fa-magnifying-glass"></i></button>
       </form>
-      <a id="latest-statement-link" href="monthly_statement.html" class="flex items-center text-primary-600 hover:text-primary-700">
-        <i class="fa-solid fa-file-invoice-dollar mr-g-1"></i>
+      <a id="latest-statement-link" href="monthly_statement.html" class="flex items-center">
+
+        <i class="fa-solid fa-file-invoice-dollar mr-1"></i>
         <span id="latest-statement-text">Latest Statement</span>
       </a>
     </div>
