@@ -17,12 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
       'hidden',
       'md:block',
       'fixed',
-      'md:relative',
-      'top-0',
+      'top-16',
+      'bottom-0',
       'left-0',
-      'h-full',
       'overflow-y-auto',
-      'z-50'
+      'z-40'
     );
 
     // Load Font Awesome for menu icons if not already loaded
@@ -33,17 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
       link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
       document.head.appendChild(link);
     }
-
-    // Button to toggle the menu on mobile devices
-    const toggle = document.createElement('button');
-    toggle.id = 'menu-toggle';
-    toggle.className =
-      'md:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded shadow z-50';
-    toggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
-    toggle.addEventListener('click', () => {
-      menu.classList.toggle('hidden');
-    });
-    document.body.appendChild(toggle);
 
     fetch('menu.html')
       .then(resp => resp.text())
@@ -56,6 +44,48 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => console.error('Menu load failed', err));
   }
+
+  // Load the top bar with site name, search and latest statement link
+  fetch('topbar.html')
+    .then(resp => resp.text())
+    .then(html => {
+      document.body.insertAdjacentHTML('afterbegin', html);
+      const content = document.querySelector('body > div.flex');
+      if (content) {
+        content.classList.add('pt-16', 'h-screen', 'overflow-hidden');
+        const main = content.querySelector('main');
+        if (main) {
+          main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64');
+        }
+      }
+
+      const toggle = document.getElementById('menu-toggle');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          if (menu) menu.classList.toggle('hidden');
+        });
+      }
+
+      const latestLink = document.getElementById('latest-statement-link');
+      const latestText = document.getElementById('latest-statement-text');
+      if (latestLink && latestText) {
+        fetch('../php_backend/public/transaction_months.php')
+          .then(r => r.json())
+          .then(months => {
+            if (months.length > 0) {
+              const { year, month } = months[0];
+              const names = [
+                'January','February','March','April','May','June',
+                'July','August','September','October','November','December'
+              ];
+              latestLink.href = `monthly_statement.html?year=${year}&month=${month}`;
+              latestText.textContent = `Latest Statement: ${names[month - 1]} ${year}`;
+            }
+          })
+          .catch(err => console.error('Latest statement load failed', err));
+      }
+    })
+    .catch(err => console.error('Top bar load failed', err));
 
   // Apply Tailwind card styling to all sections or wrap main content in a card
   document.querySelectorAll('main').forEach(main => {

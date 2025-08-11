@@ -1,0 +1,18 @@
+<header class="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white h-16 flex items-center shadow">
+  <div class="w-full flex items-center justify-between px-4">
+    <div class="flex items-center space-x-4">
+      <button id="menu-toggle" class="md:hidden bg-blue-700 p-2 rounded"><i class="fa-solid fa-bars"></i></button>
+      <div class="font-bold text-lg">Personal Finance Manager</div>
+    </div>
+    <div class="flex items-center space-x-4">
+      <form id="topbar-search" action="search.html" method="get" class="flex">
+        <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black" />
+        <button type="submit" class="ml-2"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </form>
+      <a id="latest-statement-link" href="monthly_statement.html" class="flex items-center">
+        <i class="fa-solid fa-file-invoice-dollar mr-1"></i>
+        <span id="latest-statement-text">Latest Statement</span>
+      </a>
+    </div>
+  </div>
+</header>
