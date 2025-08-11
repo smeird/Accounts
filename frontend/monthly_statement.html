@@ -197,27 +197,32 @@ form.addEventListener('submit', function(e) {
                 cell.getElement().classList.remove('bg-yellow-100');
             },
             cellEdited: function(cell) {
-                cell.getElement().classList.remove('bg-yellow-100');
-                if (cell.getField() !== 'group_id') return;
 
+                const field = cell.getField();
+                if (field === 'group_id') {
+                    const val = cell.getValue();
+                    const oldVal = cell.getOldValue();
+                    if (val === oldVal) return;
+                    const data = cell.getRow().getData();
+                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
 
-                const data = cell.getRow().getData();
-                const newVal = cell.getValue();
-                const origVal = data.original_group_id === null ? '' : String(data.original_group_id);
-                const rowEl = cell.getRow().getElement();
-                const newValStr = newVal === '' ? '' : String(newVal);
+                    payload.group_id = val === '' ? '' : parseInt(val, 10);
+                    fetch('../php_backend/public/update_transaction.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(resp => resp.json())
+                    .then(res => {
+                        if (!(res && res.status === 'ok')) {
+                            alert('Failed to save group');
+                            cell.setValue(oldVal, true);
+                        }
+                    })
+                    .catch(() => {
+                        alert('Failed to save group');
+                        cell.setValue(oldVal, true);
 
-                debug(`Cell edited for transaction ${data.id}: ${origVal} -> ${newValStr}`);
-
-
-                if (newValStr === origVal) {
-                    pendingChanges.delete(data.id);
-                    rowEl.classList.remove('bg-yellow-50');
-                } else {
-                    pendingChanges.set(data.id, {
-                        account_id: data.account_id,
-                        description: data.description,
-                        group_id: newVal === '' ? '' : parseInt(newVal, 10)
                     });
                     rowEl.classList.add('bg-yellow-50');
                 }
