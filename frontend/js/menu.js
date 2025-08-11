@@ -17,12 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
       'hidden',
       'md:block',
       'fixed',
-      'md:relative',
-      'top-0',
+      'top-16',
+      'bottom-0',
       'left-0',
-      'h-full',
       'overflow-y-auto',
-      'z-50'
+      'z-40'
     );
 
     // Load Font Awesome for menu icons if not already loaded
@@ -33,6 +32,17 @@ document.addEventListener('DOMContentLoaded', () => {
       link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
       document.head.appendChild(link);
     }
+
+    // Load Roboto font for a lighter appearance
+    if (!document.getElementById('roboto-font')) {
+      const fontLink = document.createElement('link');
+      fontLink.id = 'roboto-font';
+      fontLink.rel = 'stylesheet';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap';
+      document.head.appendChild(fontLink);
+    }
+    document.body.style.fontFamily = 'Roboto, sans-serif';
+    document.body.style.fontWeight = '300';
 
     fetch('menu.html')
       .then(resp => resp.text())
@@ -51,9 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(resp => resp.text())
     .then(html => {
       document.body.insertAdjacentHTML('afterbegin', html);
-      const content = document.querySelector('body > .flex');
+
+      const content = document.querySelector('body > div.flex');
       if (content) {
-        content.classList.add('mt-16');
+
+        content.classList.add('pt-16', 'h-screen', 'overflow-hidden');
+        const main = content.querySelector('main');
+        if (main) {
+          main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64');
+        }
+
       }
 
       const toggle = document.getElementById('menu-toggle');

@@ -43,8 +43,9 @@ function tailwindTabulator(element, options) {
         if (userRowFormatter) userRowFormatter(row);
         const rowEl = row.getElement();
         rowEl.classList.add('bg-white', 'hover:bg-gray-50', 'border-b', 'border-gray-200', 'border-b-[0.5px]');
+        rowEl.classList.remove('tabulator-row-even', 'tabulator-row-odd');
         rowEl.querySelectorAll('.tabulator-cell').forEach(cell => {
-            cell.classList.add('border-r', 'border-gray-200', 'border-r-[0.5px]');
+            cell.style.borderRight = '0';
         });
     };
     options.pagination = options.pagination || 'local';
@@ -53,7 +54,12 @@ function tailwindTabulator(element, options) {
     const el = table.element;
     el.classList.add('border', 'border-gray-200', 'border-[0.5px]', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
     const header = el.querySelector('.tabulator-header');
-    if (header) header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]', 'rounded-t-lg');
+    if (header) {
+        header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]', 'rounded-t-lg');
+        header.querySelectorAll('.tabulator-col').forEach(col => {
+            col.style.borderRight = '0';
+        });
+    }
     const tableHolder = el.querySelector('.tabulator-tableholder');
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
