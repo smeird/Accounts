@@ -23,8 +23,8 @@ function badgeFormatter(colorClasses) {
 // Initialise a Tabulator table with Tailwind styling defaults
 function tailwindTabulator(element, options) {
     options = options || {};
-    if (!options.layout || options.layout === 'fitColumns') {
-        options.layout = 'fitDataStretch';
+    if (!options.layout) {
+        options.layout = 'fitColumns';
     }
     const userRowFormatter = options.rowFormatter;
     options.rowFormatter = function(row) {
@@ -46,23 +46,5 @@ function tailwindTabulator(element, options) {
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
-
-    let autoFitDone = false;
-    table.on('tableBuilt', () => {
-        if (autoFitDone) return;
-        autoFitDone = true;
-        requestAnimationFrame(() => {
-            const cols = table.getColumns();
-            const allHaveFitToData = cols.every(col => typeof col.fitToData === 'function');
-
-            if (!allHaveFitToData) {
-                console.warn('Tabulator columns lack fitToData; ensure the ResizeColumns module is included.');
-                return;
-            }
-
-            cols.forEach(col => col.fitToData());
-        });
-
-    });
     return table;
 }
