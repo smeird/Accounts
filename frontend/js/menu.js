@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(resp => resp.text())
     .then(html => {
       document.body.insertAdjacentHTML('afterbegin', html);
-      const content = document.querySelector('body > .flex');
+
+      const content = document.querySelector('body > div.flex');
       if (content) {
 
         content.classList.add('pt-16', 'h-screen', 'overflow-hidden');
