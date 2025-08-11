@@ -1,5 +1,6 @@
 <?php
 // Simple user management page to add users and change passwords.
+ini_set('session.cookie_secure', '1');
 session_start();
 require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/nocache.php';

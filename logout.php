@@ -1,5 +1,6 @@
 <?php
 // Log out the current user and redirect to login page.
+ini_set('session.cookie_secure', '1');
 session_start();
 require_once __DIR__ . '/php_backend/nocache.php';
 session_destroy();
