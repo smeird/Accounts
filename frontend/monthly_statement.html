@@ -204,6 +204,9 @@ form.addEventListener('submit', function(e) {
                     const oldVal = cell.getOldValue();
                     if (val === oldVal) return;
                     const data = cell.getRow().getData();
+                    const rowEl = cell.getRow().getElement();
+                    showMessage('Group selected: ' + (groupLookup[val] || 'None'));
+                    debug('Group selection changed to ' + val);
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
 
                     payload.group_id = val === '' ? '' : parseInt(val, 10);
