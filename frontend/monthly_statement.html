@@ -198,57 +198,49 @@ form.addEventListener('submit', function(e) {
             },
             cellEdited: function(cell) {
                 cell.getElement().classList.remove('bg-yellow-100');
-                const field = cell.getField();
-                if (field === 'group_id') {
-                    const val = cell.getValue();
-                    const oldVal = cell.getOldValue();
-                    if (val === oldVal) return;
-                    const data = cell.getRow().getData();
-                    const valStr = val === '' ? '' : String(val);
-                    const origStr = data.original_group_id === null ? '' : String(data.original_group_id);
-                    const rowEl = cell.getRow().getElement();
+                if (cell.getField() !== 'group_id') return;
 
-                    debug(`Cell edited for transaction ${data.id}: ${origStr} -> ${valStr}`);
-                    const payload = {
-                        transaction_id: data.id,
+
+                const data = cell.getRow().getData();
+                const newVal = cell.getValue();
+                const origVal = data.original_group_id === null ? '' : String(data.original_group_id);
+                const rowEl = cell.getRow().getElement();
+                const newValStr = newVal === '' ? '' : String(newVal);
+
+                debug(`Cell edited for transaction ${data.id}: ${origVal} -> ${newValStr}`);
+
+
+                if (newValStr === origVal) {
+                    pendingChanges.delete(data.id);
+                    rowEl.classList.remove('bg-yellow-50');
+                } else {
+                    pendingChanges.set(data.id, {
                         account_id: data.account_id,
-                        group_id: val === '' ? '' : parseInt(val, 10)
-                    };
-                    debug('Sending update: ' + JSON.stringify(payload));
-                    fetch('../php_backend/public/update_transaction.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(resp => {
-                        debug('HTTP status: ' + resp.status);
-                        return resp.json();
-                    })
-                    .then(res => {
-                        debug('Response: ' + JSON.stringify(res));
-                        if (!(res && res.status === 'ok')) {
-                            alert('Failed to save group');
-                            debug('Update failed, reverting');
-                            cell.setValue(oldVal, true);
-                        }
-                    })
-                    .catch(err => {
-                        debug('Fetch error: ' + err);
-                        alert('Failed to save group');
-                        cell.setValue(oldVal, true);
+                        description: data.description,
+                        group_id: newVal === '' ? '' : parseInt(newVal, 10)
                     });
-
+                    rowEl.classList.add('bg-yellow-50');
                 }
+                saveBtn.disabled = pendingChanges.size === 0;
             }
         });
-        document.getElementById('undo-btn').addEventListener('click', () => table.undo());
-        document.getElementById('redo-btn').addEventListener('click', () => table.redo());
+        document.getElementById('undo-btn').addEventListener('click', () => {
+            debug('Undo clicked');
+            table && table.undo();
+        });
+        document.getElementById('redo-btn').addEventListener('click', () => {
+            debug('Redo clicked');
+            table && table.redo();
+        });
 
     });
 });
 
 saveBtn.addEventListener('click', function() {
     const updates = Array.from(pendingChanges.entries());
+
+    debug('Save clicked');
+
     debug('Saving changes for transactions: ' + updates.map(u => u[0]).join(', '));
     const promises = updates.map(([id, change]) => {
         debug('Saving transaction ' + id + ' with ' + JSON.stringify(change));
