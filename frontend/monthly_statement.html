@@ -53,6 +53,10 @@
                 </div>
                 <div id="transactions-grid"></div>
             </div>
+            <div id="debug-panel" class="bg-white p-6 rounded shadow mt-4">
+                <h2 class="text-lg font-semibold mb-2">Debug Output</h2>
+                <pre id="debug-log" class="text-xs whitespace-pre-wrap"></pre>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -69,6 +73,13 @@ const pendingChanges = new Map();
 let table;
 const saveBtn = document.getElementById('save-btn');
 saveBtn.disabled = true;
+
+const debugLog = document.getElementById('debug-log');
+function debug(message) {
+    if (debugLog) {
+        debugLog.textContent += message + '\n';
+    }
+}
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -187,47 +198,48 @@ form.addEventListener('submit', function(e) {
             },
             cellEdited: function(cell) {
                 cell.getElement().classList.remove('bg-yellow-100');
-                const field = cell.getField();
-                if (field === 'group_id') {
-                    const val = cell.getValue();
-                    const oldVal = cell.getOldValue();
-                    if (val === oldVal) return;
-                    const data = cell.getRow().getData();
-                    const valStr = val === '' ? '' : String(val);
-                    const origStr = data.original_group_id === null ? '' : String(data.original_group_id);
-                    const rowEl = cell.getRow().getElement();
+                if (cell.getField() !== 'group_id') return;
 
+                const data = cell.getRow().getData();
+                const newVal = cell.getValue();
+                const origVal = data.original_group_id === null ? '' : String(data.original_group_id);
+                const rowEl = cell.getRow().getElement();
+                const newValStr = newVal === '' ? '' : String(newVal);
 
-                    payload.group_id = val === '' ? '' : parseInt(val, 10);
-                    fetch('../php_backend/public/update_transaction.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(resp => resp.json())
-                    .then(res => {
-                        if (!(res && res.status === 'ok')) {
-                            alert('Failed to save group');
-                            cell.setValue(oldVal, true);
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to save group');
-                        cell.setValue(oldVal, true);
+                debug(`Cell edited for transaction ${data.id}: ${origVal} -> ${newValStr}`);
+
+                if (newValStr === origVal) {
+                    pendingChanges.delete(data.id);
+                    rowEl.classList.remove('bg-yellow-50');
+                } else {
+                    pendingChanges.set(data.id, {
+                        account_id: data.account_id,
+                        description: data.description,
+                        group_id: newVal === '' ? '' : parseInt(newVal, 10)
                     });
-
+                    rowEl.classList.add('bg-yellow-50');
                 }
+                saveBtn.disabled = pendingChanges.size === 0;
             }
         });
-        document.getElementById('undo-btn').addEventListener('click', () => table.undo());
-        document.getElementById('redo-btn').addEventListener('click', () => table.redo());
+        document.getElementById('undo-btn').addEventListener('click', () => {
+            debug('Undo clicked');
+            table && table.undo();
+        });
+        document.getElementById('redo-btn').addEventListener('click', () => {
+            debug('Redo clicked');
+            table && table.redo();
+        });
 
     });
 });
 
 saveBtn.addEventListener('click', function() {
     const updates = Array.from(pendingChanges.entries());
+    debug('Save clicked');
+    debug('Saving changes for transactions: ' + updates.map(u => u[0]).join(', '));
     const promises = updates.map(([id, change]) => {
+        debug('Saving transaction ' + id + ' with ' + JSON.stringify(change));
         savingRows.add(id);
         const row = table.getRow(id);
         const rowEl = row.getElement();
@@ -242,8 +254,12 @@ saveBtn.addEventListener('click', function() {
                 group_id: change.group_id
             })
         })
-        .then(resp => resp.json())
+        .then(resp => {
+            debug('HTTP status for ' + id + ': ' + resp.status);
+            return resp.json();
+        })
         .then(res => {
+            debug('Response for ' + id + ': ' + JSON.stringify(res));
             if (res && res.status === 'ok') {
                 row.getData().original_group_id = change.group_id === '' ? null : change.group_id;
                 rowEl.classList.remove('bg-yellow-50');
