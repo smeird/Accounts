@@ -1,5 +1,6 @@
 <?php
 // Simple login page for user authentication.
+ini_set('session.cookie_secure', '1');
 session_start();
 require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/models/User.php';
