@@ -8,9 +8,10 @@ header('Content-Type: application/json');
 
 $month = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+$onlyUntagged = isset($_GET['untagged']) && $_GET['untagged'] === '1';
 
 try {
-    $transactions = Transaction::getByMonth($month, $year);
+    $transactions = Transaction::getByMonth($month, $year, $onlyUntagged);
     echo json_encode($transactions);
 } catch (Exception $e) {
     http_response_code(500);
