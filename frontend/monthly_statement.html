@@ -68,14 +68,12 @@
                     <p class="text-gray-500">Days Until Negative Balance</p>
                     <p id="days-negative" class="text-3xl font-bold">N/A</p>
                 </div>
-
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="sankey-chart" style="height:400px;"></div>
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="category-bubbles" style="height:400px;"></div>
-
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="transactions-grid"></div>
@@ -93,6 +91,8 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
+const form = document.getElementById('statement-form');
+const untaggedOnly = document.getElementById('untagged-only');
 let table;
 
 const recurringPromise = fetch('../php_backend/public/recurring_spend.php')
@@ -129,7 +129,6 @@ fetch('../php_backend/public/transaction_months.php')
             monthsByYear[y].sort((a, b) => b - a);
         });
 
-        // Fill the month dropdown based on the selected year
         function populateMonths() {
             const year = yearSelect.value;
             monthSelect.innerHTML = '';
@@ -172,15 +171,10 @@ fetch('../php_backend/public/transaction_months.php')
         monthSelect.value = currentMonth;
     });
 
-const form = document.getElementById('statement-form');
-const untaggedOnly = document.getElementById('untagged-only');
-
 function loadTransactions() {
     const month = parseInt(monthSelect.value);
     const year = parseInt(yearSelect.value);
     const untaggedParam = untaggedOnly.checked ? '&untagged=1' : '';
-
-
 
     const prevDate = new Date(year, month - 1);
     prevDate.setMonth(prevDate.getMonth() - 1);
@@ -188,13 +182,17 @@ function loadTransactions() {
     const prevYear = prevDate.getFullYear();
 
     Promise.all([
+        recurringPromise,
+        balancePromise,
         fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json()),
         fetch('../php_backend/public/transactions.php?month=' + prevMonth + '&year=' + prevYear + untaggedParam).then(r => r.json())
-    ]).then(([data, prevData]) => {
-        let income = 0, outgoings = 0;
+    ]).then(([recurringSet, totalBalance, data, prevData]) => {
+        let income = 0, outgoings = 0, numIncome = 0, numExpense = 0;
         const incomes = {};
         const spendings = {};
         const prevSpendings = {};
+        const categoryTotals = {};
+        let recurringTotal = 0, oneoffTotal = 0;
 
         data.forEach(t => {
             if (t.transfer_id !== null) return;
@@ -202,18 +200,27 @@ function loadTransactions() {
             const cat = t.category_name || 'Uncategorised';
             if (amt > 0) {
                 income += amt;
+                numIncome++;
                 incomes[cat] = (incomes[cat] || 0) + amt;
             } else if (amt < 0) {
-                outgoings += -amt;
-                spendings[cat] = (spendings[cat] || 0) + (-amt);
+                const exp = -amt;
+                outgoings += exp;
+                numExpense++;
+                spendings[cat] = (spendings[cat] || 0) + exp;
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + exp;
+                if (recurringSet.has(t.description.toLowerCase())) {
+                    recurringTotal += exp;
+                } else {
+                    oneoffTotal += exp;
+                }
             }
         });
 
         prevData.forEach(t => {
             if (t.transfer_id !== null) return;
             const amt = parseFloat(t.amount);
-            const cat = t.category_name || 'Uncategorised';
             if (amt < 0) {
+                const cat = t.category_name || 'Uncategorised';
                 prevSpendings[cat] = (prevSpendings[cat] || 0) + (-amt);
             }
         });
@@ -224,6 +231,34 @@ function loadTransactions() {
         const deltaEl = document.getElementById('delta-total');
         deltaEl.textContent = '£' + delta.toFixed(2);
         deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
+
+        const savingsRate = income > 0 ? (delta / income) * 100 : 0;
+        document.getElementById('savings-rate').textContent = savingsRate.toFixed(1) + '%';
+
+        let largestCategory = 'N/A';
+        if (Object.keys(categoryTotals).length) {
+            largestCategory = Object.entries(categoryTotals).sort((a,b) => b[1] - a[1])[0][0];
+        }
+        document.getElementById('largest-category').textContent = largestCategory;
+
+        const recurringPercent = outgoings > 0 ? (recurringTotal / outgoings) * 100 : 0;
+        const oneoffPercent = outgoings > 0 ? (oneoffTotal / outgoings) * 100 : 0;
+        document.getElementById('recurring-ratio').innerHTML =
+            `Recurring: £${recurringTotal.toFixed(2)} (${recurringPercent.toFixed(1)}%)<br>` +
+            `One-off: £${oneoffTotal.toFixed(2)} (${oneoffPercent.toFixed(1)}%)`;
+
+        const avgIncome = numIncome > 0 ? income / numIncome : 0;
+        const avgExpense = numExpense > 0 ? outgoings / numExpense : 0;
+        document.getElementById('avg-transaction').innerHTML =
+            `Income: £${avgIncome.toFixed(2)}<br>Expenses: £${avgExpense.toFixed(2)}`;
+
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const burnRate = (outgoings - income) / daysInMonth;
+        let daysNegative = 'N/A';
+        if (burnRate > 0 && totalBalance > 0) {
+            daysNegative = Math.floor(totalBalance / burnRate);
+        }
+        document.getElementById('days-negative').textContent = daysNegative;
 
         buildSankeyChart(incomes, spendings);
         buildBubbleChart(spendings, prevSpendings);
@@ -330,119 +365,7 @@ function buildBubbleChart(spendings, prevSpendings){
                 }
             }
         },
-        series: [{ data: data }]
-
-    Promise.all([
-        recurringPromise,
-        balancePromise,
-        fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json())
-    ]).then(([recurringSet, totalBalance, data]) => {
-        let income = 0, outgoings = 0, numIncome = 0, numExpense = 0;
-        const categoryTotals = {};
-        let recurringTotal = 0, oneoffTotal = 0;
-        data.forEach(t => {
-            if (t.transfer_id !== null) return;
-            const amt = parseFloat(t.amount);
-            if (amt > 0) {
-                income += amt;
-                numIncome++;
-            } else if (amt < 0) {
-                const exp = -amt;
-                outgoings += exp;
-                numExpense++;
-                const cat = t.category_name || 'Uncategorised';
-                categoryTotals[cat] = (categoryTotals[cat] || 0) + exp;
-                if (recurringSet.has(t.description.toLowerCase())) {
-                    recurringTotal += exp;
-                } else {
-                    oneoffTotal += exp;
-                }
-            }
-
-        });
-        const delta = income - outgoings;
-        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
-        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
-        const deltaEl = document.getElementById('delta-total');
-        deltaEl.textContent = '£' + delta.toFixed(2);
-        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
-
-        const savingsRate = income > 0 ? (delta / income) * 100 : 0;
-        document.getElementById('savings-rate').textContent = savingsRate.toFixed(1) + '%';
-
-        let largestCategory = 'N/A';
-        if (Object.keys(categoryTotals).length) {
-            largestCategory = Object.entries(categoryTotals).sort((a,b) => b[1]-a[1])[0][0];
-        }
-        document.getElementById('largest-category').textContent = largestCategory;
-
-        const recurringPercent = outgoings > 0 ? (recurringTotal / outgoings) * 100 : 0;
-        const oneoffPercent = outgoings > 0 ? (oneoffTotal / outgoings) * 100 : 0;
-        document.getElementById('recurring-ratio').innerHTML =
-            `Recurring: £${recurringTotal.toFixed(2)} (${recurringPercent.toFixed(1)}%)<br>` +
-            `One-off: £${oneoffTotal.toFixed(2)} (${oneoffPercent.toFixed(1)}%)`;
-
-        const avgIncome = numIncome > 0 ? income / numIncome : 0;
-        const avgExpense = numExpense > 0 ? outgoings / numExpense : 0;
-        document.getElementById('avg-transaction').innerHTML =
-            `Income: £${avgIncome.toFixed(2)}<br>Expenses: £${avgExpense.toFixed(2)}`;
-
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const burnRate = (outgoings - income) / daysInMonth;
-        let daysNegative = 'N/A';
-        if (burnRate > 0 && totalBalance > 0) {
-            daysNegative = Math.floor(totalBalance / burnRate);
-        }
-        document.getElementById('days-negative').textContent = daysNegative;
-
-        table = tailwindTabulator('#transactions-grid', {
-            data: data,
-            layout: 'fitColumns',
-            columns: [
-                { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description', formatter: function(cell) {
-                    const id = cell.getRow().getData().id;
-                    return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
-                } },
-                {
-                    title: 'Category',
-                    field: 'category_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-green-200 text-green-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                {
-                    title: 'Tag',
-                    field: 'tag_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                {
-                    title: 'Group',
-                    field: 'group_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        return createBadge(value, 'bg-purple-200 text-purple-800');
-                    }
-                },
-                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-            ]
-        });
-
+        series: [{ data }]
     });
 }
 

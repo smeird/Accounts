@@ -1,13 +1,12 @@
-// Ensure the ResizeColumns module is available for Tabulator
+// Ensure the ResizeColumns module is available for Tabulator. Loading it via
+// a synchronous XHR causes cross-origin errors when the page is served from a
+// different domain, so instead inject the script tag which allows the browser
+// to fetch it without CORS issues.
 if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulator.prototype.modules.resizeColumns)) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://unpkg.com/tabulator-tables@5.5.0/dist/js/modules/resizeColumns.js', false);
-    xhr.send(null);
-    if (xhr.status === 200) {
-        eval(xhr.responseText);
-    } else {
-        console.error('Failed to load Tabulator ResizeColumns module: ' + xhr.status);
-    }
+    var script = document.createElement('script');
+    script.src = 'https://unpkg.com/tabulator-tables@5.5.0/dist/js/modules/resizeColumns.js';
+    script.async = false;
+    document.head.appendChild(script);
 }
 
 // Create a coloured badge element used in table cells
