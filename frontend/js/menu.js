@@ -12,8 +12,7 @@ window.fetch = (input, init = {}) => {
 document.addEventListener('DOMContentLoaded', () => {
   const menu = document.getElementById('menu');
   if (menu) {
-    // Reset and add responsive classes so the navigation can toggle on small screens
-    menu.className = '';
+    // Add responsive classes so the navigation can toggle on small screens
     menu.classList.add(
       'hidden',
       'md:block',
@@ -22,16 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'bottom-0',
       'left-0',
       'overflow-y-auto',
-      'z-40',
-      'w-64',
-      'flex-shrink-0',
-      'bg-canvas/80',
-      'backdrop-blur',
-      'supports-[backdrop-filter]:bg-canvas/60',
-      'border-r',
-      'border-ink-100',
-      'p-g-6',
-      'shadow-card'
+      'z-40'
     );
 
     // Load Font Awesome for menu icons if not already loaded
@@ -105,11 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = main.querySelectorAll('section');
     if (sections.length > 0) {
       sections.forEach(section => {
-        section.classList.add('bg-canvas', 'p-g-6', 'rounded-xl', 'shadow-card', 'border', 'border-ink-100');
+        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow');
       });
     } else {
       const wrapper = document.createElement('section');
-      wrapper.className = 'bg-canvas p-g-6 rounded-xl shadow-card border border-ink-100';
+      wrapper.className = 'bg-white p-6 rounded shadow';
       while (main.firstChild) {
         wrapper.appendChild(main.firstChild);
       }
