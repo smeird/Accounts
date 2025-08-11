@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 120 40">
-  <rect width="120" height="40" rx="5" fill="#1d4ed8" />
-  <text x="60" y="25" font-size="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif">FM</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>Wallet Icon</title>
+  <rect x="6" y="18" width="52" height="30" rx="4" ry="4" fill="#1d4ed8" />
+  <rect x="6" y="12" width="32" height="12" rx="4" ry="4" fill="#3b82f6" />
+  <circle cx="46" cy="33" r="4" fill="#ffffff" />
 </svg>
