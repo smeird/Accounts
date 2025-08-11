@@ -162,8 +162,9 @@ class Transaction {
 
     /**
      * Retrieve all transactions for a specific month and year.
+     * Optionally limit results to only untagged transactions.
      */
-    public static function getByMonth(int $month, int $year): array {
+    public static function getByMonth(int $month, int $year, bool $onlyUntagged = false): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
@@ -172,8 +173,11 @@ class Transaction {
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
-             . 'ORDER BY t.`date`';
+             . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year';
+        if ($onlyUntagged) {
+            $sql .= ' AND t.`tag_id` IS NULL';
+        }
+        $sql .= ' ORDER BY t.`date`';
         $stmt = $db->prepare($sql);
         $stmt->execute(['month' => $month, 'year' => $year]);
 
