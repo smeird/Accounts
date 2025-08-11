@@ -66,7 +66,7 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
-let groupOptions = [];
+let groupSelectValues = {};
 let groupLookup = {};
 const savingRows = new Set();
 const pendingChanges = new Map();
@@ -133,10 +133,10 @@ form.addEventListener('submit', function(e) {
         pendingChanges.clear();
         saveBtn.disabled = true;
 
-        groupOptions = [{ value: '', label: '-- None --' }];
+        groupSelectValues = { '': '-- None --' };
         groupLookup = { '': '' };
         groups.forEach(g => {
-            groupOptions.push({ value: g.id, label: g.name });
+            groupSelectValues[g.id] = g.name;
             groupLookup[g.id] = g.name;
         });
 
@@ -195,8 +195,8 @@ form.addEventListener('submit', function(e) {
                 {
                     title: 'Group',
                     field: 'group_id',
-                    editor: 'list',
-                    editorParams: { values: groupOptions },
+                    editor: 'select',
+                    editorParams: { values: groupSelectValues },
                     editable: function(cell){
                         const data = cell.getRow().getData();
                         return data.transfer_id === null && !savingRows.has(data.id);
@@ -216,16 +216,6 @@ form.addEventListener('submit', function(e) {
             ],
             cellEditing: function(cell){
                 cell.getElement().classList.add('bg-yellow-100');
-                if (cell.getField() === 'group_id') {
-                    setTimeout(() => {
-                        const editor = cell.getElement().querySelector('select');
-                        if (editor) {
-                            editor.addEventListener('change', e => {
-                                alert('Group dropdown changed to ' + e.target.value);
-                            }, { once: true });
-                        }
-                    }, 0);
-                }
             },
             cellEditCancelled: function(cell){
                 cell.getElement().classList.remove('bg-yellow-100');
