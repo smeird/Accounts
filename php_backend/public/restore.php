@@ -29,23 +29,23 @@ try {
     $db->exec('SET FOREIGN_KEY_CHECKS=1');
 
     if (isset($data['categories'])) {
-        $stmtCat = $db->prepare('INSERT INTO categories (id, name) VALUES (:id, :name)');
+        $stmtCat = $db->prepare('INSERT INTO categories (id, name, description) VALUES (:id, :name, :description)');
         foreach ($data['categories'] as $row) {
-            $stmtCat->execute(['id' => $row['id'], 'name' => $row['name']]);
+            $stmtCat->execute(['id' => $row['id'], 'name' => $row['name'], 'description' => $row['description'] ?? null]);
         }
     }
 
     if (isset($data['tags'])) {
-        $stmtTag = $db->prepare('INSERT INTO tags (id, name, keyword) VALUES (:id, :name, :keyword)');
+        $stmtTag = $db->prepare('INSERT INTO tags (id, name, keyword, description) VALUES (:id, :name, :keyword, :description)');
         foreach ($data['tags'] as $row) {
-            $stmtTag->execute(['id' => $row['id'], 'name' => $row['name'], 'keyword' => $row['keyword']]);
+            $stmtTag->execute(['id' => $row['id'], 'name' => $row['name'], 'keyword' => $row['keyword'], 'description' => $row['description'] ?? null]);
         }
     }
 
     if (isset($data['groups'])) {
-        $stmtGrp = $db->prepare('INSERT INTO transaction_groups (id, name) VALUES (:id, :name)');
+        $stmtGrp = $db->prepare('INSERT INTO transaction_groups (id, name, description) VALUES (:id, :name, :description)');
         foreach ($data['groups'] as $row) {
-            $stmtGrp->execute(['id' => $row['id'], 'name' => $row['name']]);
+            $stmtGrp->execute(['id' => $row['id'], 'name' => $row['name'], 'description' => $row['description'] ?? null]);
         }
     }
 

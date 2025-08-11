@@ -6,20 +6,20 @@ class TransactionGroup {
     /**
      * Create a new transaction group and return its ID.
      */
-    public static function create(string $name): int {
+    public static function create(string $name, ?string $description = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO transaction_groups (name) VALUES (:name)');
-        $stmt->execute(['name' => $name]);
+        $stmt = $db->prepare('INSERT INTO transaction_groups (name, description) VALUES (:name, :description)');
+        $stmt->execute(['name' => $name, 'description' => $description]);
         return (int)$db->lastInsertId();
     }
 
     /**
      * Rename an existing transaction group.
      */
-    public static function update(int $id, string $name): void {
+    public static function update(int $id, string $name, ?string $description = null): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE transaction_groups SET name = :name WHERE id = :id');
-        $stmt->execute(['id' => $id, 'name' => $name]);
+        $stmt = $db->prepare('UPDATE transaction_groups SET name = :name, description = :description WHERE id = :id');
+        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description]);
     }
 
     /**
@@ -41,7 +41,7 @@ class TransactionGroup {
      */
     public static function find(int $id): ?array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT id, name FROM transaction_groups WHERE id = :id');
+        $stmt = $db->prepare('SELECT id, name, description FROM transaction_groups WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
@@ -52,7 +52,7 @@ class TransactionGroup {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT id, name FROM transaction_groups ORDER BY id');
+        $stmt = $db->query('SELECT id, name, description FROM transaction_groups ORDER BY id');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

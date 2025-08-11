@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS accounts (
 
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
+    name VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS budgets (
@@ -50,7 +51,8 @@ CREATE TABLE IF NOT EXISTS budgets (
 CREATE TABLE IF NOT EXISTS tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    keyword VARCHAR(100) DEFAULT NULL
+    keyword VARCHAR(100) DEFAULT NULL,
+    description TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS category_tags (
@@ -63,7 +65,8 @@ CREATE TABLE IF NOT EXISTS category_tags (
 
 CREATE TABLE IF NOT EXISTS transaction_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
+    name VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -99,6 +102,24 @@ $db->exec($createSql);
 $result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'keyword'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `tags` ADD COLUMN `keyword` VARCHAR(100) DEFAULT NULL");
+}
+
+// Ensure description column exists in tags
+$result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'description'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tags` ADD COLUMN `description` TEXT DEFAULT NULL");
+}
+
+// Ensure description column exists in categories
+$result = $db->query("SHOW COLUMNS FROM `categories` LIKE 'description'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `categories` ADD COLUMN `description` TEXT DEFAULT NULL");
+}
+
+// Ensure description column exists in transaction_groups
+$result = $db->query("SHOW COLUMNS FROM `transaction_groups` LIKE 'description'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `transaction_groups` ADD COLUMN `description` TEXT DEFAULT NULL");
 }
 
 // Ensure transfer_id column exists in transactions

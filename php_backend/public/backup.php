@@ -21,16 +21,16 @@ try {
 
     $data = [];
     if (in_array('categories', $parts)) {
-        $data['categories'] = $getAll('SELECT id, name FROM categories ORDER BY id');
+        $data['categories'] = $getAll('SELECT id, name, description FROM categories ORDER BY id');
     }
     if (in_array('tags', $parts)) {
-        $data['tags'] = $getAll('SELECT id, name, keyword FROM tags ORDER BY id');
+        $data['tags'] = $getAll('SELECT id, name, keyword, description FROM tags ORDER BY id');
     }
     if (in_array('categories', $parts) || in_array('tags', $parts)) {
         $data['category_tags'] = $getAll('SELECT category_id, tag_id FROM category_tags ORDER BY category_id, tag_id');
     }
     if (in_array('groups', $parts)) {
-        $data['groups'] = $getAll('SELECT id, name FROM transaction_groups ORDER BY id');
+        $data['groups'] = $getAll('SELECT id, name, description FROM transaction_groups ORDER BY id');
     }
     if (in_array('transactions', $parts)) {
         $data['transactions'] = $getAll('SELECT id, account_id, date, amount, description, memo, category_id, tag_id, group_id, transfer_id, ofx_id FROM transactions ORDER BY id');
