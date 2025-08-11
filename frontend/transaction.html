@@ -120,6 +120,13 @@
                 }).then(r => r.json()).then(res => {
                     if (res && res.status === 'ok') {
                         showMessage('Saved');
+                        setTimeout(() => {
+                            if (document.referrer) {
+                                window.location = document.referrer;
+                            } else {
+                                history.back();
+                            }
+                        }, 500);
                     } else {
                         alert('Failed to save');
                     }
