@@ -1,12 +1,12 @@
 // Ensure the ResizeColumns module is available for Tabulator
 if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulator.prototype.modules.resizeColumns)) {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://unpkg.com/tabulator-tables@5.5.0/dist/js/modules/resizeColumns.min.js', false);
+    xhr.open('GET', 'https://unpkg.com/tabulator-tables@5.5.0/dist/js/modules/resizeColumns.js', false);
     xhr.send(null);
     if (xhr.status === 200) {
         eval(xhr.responseText);
     } else {
-        console.error('Failed to load Tabulator ResizeColumns module');
+        console.error('Failed to load Tabulator ResizeColumns module: ' + xhr.status);
     }
 }
 
