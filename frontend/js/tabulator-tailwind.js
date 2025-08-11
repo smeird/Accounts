@@ -51,10 +51,11 @@ function tailwindTabulator(element, options) {
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
     const el = table.element;
-    el.classList.add('border', 'border-gray-200', 'border-[0.5px]', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
+    el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
     const header = el.querySelector('.tabulator-header');
     if (header) {
         header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]', 'rounded-t-lg');
+        header.style.backgroundColor = 'white';
         header.querySelectorAll('.tabulator-col').forEach(col => {
             col.style.borderRight = '0';
         });
@@ -62,6 +63,9 @@ function tailwindTabulator(element, options) {
     const tableHolder = el.querySelector('.tabulator-tableholder');
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
-    if (paginator) paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
+    if (paginator) {
+        paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
+        paginator.style.backgroundColor = 'white';
+    }
     return table;
 }
