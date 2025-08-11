@@ -72,7 +72,7 @@ async function loadCategories() {
                     const resTags = await fetch('../php_backend/public/tags.php?unassigned=1');
                     const allTags = await resTags.json();
                     if (allTags.length === 0) {
-                        showMessage('No unassigned tags available');
+                        showMessage('No unassigned tags available', 'error');
                         return;
                     }
                     const tagOptions = allTags.map(t => `${t.id}: ${t.name}`).join('\n');

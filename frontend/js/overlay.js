@@ -5,7 +5,7 @@
         const overlay = document.createElement('div');
         overlay.id = 'overlay';
         overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden';
-        overlay.innerHTML = '<div class="bg-white p-4 rounded shadow"></div>';
+        overlay.innerHTML = '<div class="p-6 rounded shadow text-white"></div>';
         overlay.addEventListener('click', () => overlay.classList.add('hidden'));
         document.body.appendChild(overlay);
         return overlay;
@@ -19,9 +19,16 @@
     let hideTimer;
 
     // Display a temporary message in the overlay
-    window.showMessage = function(msg){
+    window.showMessage = function(msg, type = 'success'){
         const overlay = window.__overlay || document.getElementById('overlay') || createOverlay();
-        overlay.querySelector('div').textContent = msg;
+        const box = overlay.querySelector('div');
+        box.textContent = msg;
+        box.className = 'p-6 rounded shadow text-white';
+        if(type === 'error') {
+            box.classList.add('bg-red-600');
+        } else {
+            box.classList.add('bg-green-600');
+        }
         overlay.classList.remove('hidden');
 
         clearTimeout(hideTimer);

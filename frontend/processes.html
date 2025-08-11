@@ -45,7 +45,7 @@
             });
             const data = await res.json();
             if(data.error){
-                showMessage('Error: ' + data.error);
+                showMessage('Error: ' + data.error, 'error');
                 return;
             }
             if(action === 'tagging'){
