@@ -46,16 +46,7 @@
                 </div>
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
-                <div class="flex space-x-2 mb-2">
-                    <button id="undo-btn" class="bg-gray-200 px-2 py-1 rounded" type="button"><i class="fas fa-undo"></i></button>
-                    <button id="redo-btn" class="bg-gray-200 px-2 py-1 rounded" type="button"><i class="fas fa-redo"></i></button>
-                    <button id="save-btn" class="bg-blue-600 text-white px-4 py-2 rounded" type="button">Save</button>
-                </div>
                 <div id="transactions-grid"></div>
-            </div>
-            <div id="debug-panel" class="bg-white p-6 rounded shadow mt-4">
-                <h2 class="text-lg font-semibold mb-2">Debug Output</h2>
-                <pre id="debug-log" class="text-xs whitespace-pre-wrap"></pre>
             </div>
         </main>
     </div>
@@ -66,22 +57,7 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
-
-let groupSelectValues = {};
-
-let groupLookup = {};
-const savingRows = new Set();
-const pendingChanges = new Map();
 let table;
-const saveBtn = document.getElementById('save-btn');
-saveBtn.disabled = true;
-
-const debugLog = document.getElementById('debug-log');
-function debug(message) {
-    if (debugLog) {
-        debugLog.textContent += message + '\n';
-    }
-}
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -127,196 +103,71 @@ form.addEventListener('submit', function(e) {
     e.preventDefault();
     const month = monthSelect.value;
     const year = yearSelect.value;
-    Promise.all([
-        fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year).then(r => r.json()),
-        fetch('../php_backend/public/groups.php').then(r => r.json())
-    ]).then(([data, groups]) => {
+    fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year)
+        .then(r => r.json())
+        .then(data => {
+            let income = 0, outgoings = 0;
+            data.forEach(t => {
+                if (t.transfer_id !== null) return;
+                const amt = parseFloat(t.amount);
+                if (amt > 0) income += amt;
+                else if (amt < 0) outgoings += -amt;
+            });
+            const delta = income - outgoings;
+            document.getElementById('income-total').textContent = '£' + income.toFixed(2);
+            document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
+            const deltaEl = document.getElementById('delta-total');
+            deltaEl.textContent = '£' + delta.toFixed(2);
+            deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
 
-        pendingChanges.clear();
-        saveBtn.disabled = true;
-
-
-        groupSelectValues = { '': '-- None --' };
-        groupLookup = { '': '' };
-        groups.forEach(g => {
-            groupSelectValues[g.id] = g.name;
-
-            groupLookup[g.id] = g.name;
-        });
-
-        data.forEach(t => { t.original_group_id = t.group_id; });
-
-        let income = 0, outgoings = 0;
-        data.forEach(t => {
-            if (t.transfer_id !== null) return;
-            const amt = parseFloat(t.amount);
-            if (amt > 0) income += amt;
-            else if (amt < 0) outgoings += -amt;
-        });
-        const delta = income - outgoings;
-        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
-        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
-        const deltaEl = document.getElementById('delta-total');
-        deltaEl.textContent = '£' + delta.toFixed(2);
-        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
-
-        table = tailwindTabulator('#transactions-grid', {
-            data: data,
-            layout: 'fitColumns',
-            history: true,
-            columns: [
-                { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description', formatter: function(cell) {
-                    const id = cell.getRow().getData().id;
-                    return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
-                } },
-                {
-                    title: 'Category',
-                    field: 'category_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-green-200 text-green-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                {
-                    title: 'Tag',
-                    field: 'tag_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                {
-                    title: 'Group',
-                    field: 'group_id',
-                    editor: 'select',
-
-                    editorParams: { values: groupSelectValues },
-
-                    editable: function(cell){
-                        const data = cell.getRow().getData();
-                        return data.transfer_id === null && !savingRows.has(data.id);
+            table = tailwindTabulator('#transactions-grid', {
+                data: data,
+                layout: 'fitColumns',
+                columns: [
+                    { title: 'Date', field: 'date' },
+                    { title: 'Description', field: 'description', formatter: function(cell) {
+                        const id = cell.getRow().getData().id;
+                        return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
+                    } },
+                    {
+                        title: 'Category',
+                        field: 'category_name',
+                        formatter: function(cell){
+                            const value = cell.getValue();
+                            if (!value) return '';
+                            const badge = createBadge(value, 'bg-green-200 text-green-800');
+                            const link = document.createElement('a');
+                            link.href = `search.html?value=${encodeURIComponent(value)}`;
+                            link.appendChild(badge);
+                            return link;
+                        }
                     },
-                    validator: function(cell, value){
-                        return value === '' || groupLookup.hasOwnProperty(value);
+                    {
+                        title: 'Tag',
+                        field: 'tag_name',
+                        formatter: function(cell){
+                            const value = cell.getValue();
+                            if (!value) return '';
+                            const badge = createBadge(value, 'bg-blue-200 text-blue-800');
+                            const link = document.createElement('a');
+                            link.href = `search.html?value=${encodeURIComponent(value)}`;
+                            link.appendChild(badge);
+                            return link;
+                        }
                     },
-                    validationFailed: function(cell){
-                        showMessage('Invalid group selection', 'error');
+                    {
+                        title: 'Group',
+                        field: 'group_name',
+                        formatter: function(cell){
+                            const value = cell.getValue();
+                            if (!value) return '';
+                            return createBadge(value, 'bg-purple-200 text-purple-800');
+                        }
                     },
-                    formatter: function(cell) {
-                        const name = groupLookup[cell.getValue()] || '';
-                        return name ? createBadge(name, 'bg-purple-200 text-purple-800') : '';
-                    }
-                },
-                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-            ],
-            cellEditing: function(cell){
-                cell.getElement().classList.add('bg-yellow-100');
-            },
-            cellEditCancelled: function(cell){
-                cell.getElement().classList.remove('bg-yellow-100');
-            },
-            cellEdited: function(cell) {
-                const field = cell.getField();
-                if (field === 'group_id') {
-                    const val = cell.getValue();
-                    const oldVal = cell.getOldValue();
-                    if (val === oldVal) return;
-                    const data = cell.getRow().getData();
-                    const rowEl = cell.getRow().getElement();
-                    showMessage('Group selected: ' + (groupLookup[val] || 'None'));
-                    debug('Group selection changed to ' + val);
-                    const numericVal = val === '' ? null : parseInt(val, 10);
-
-                    if (numericVal === (data.original_group_id ?? null)) {
-                        pendingChanges.delete(data.id);
-                        rowEl.classList.remove('bg-yellow-50');
-                    } else {
-                        pendingChanges.set(data.id, {
-                            account_id: data.account_id,
-                            description: data.description,
-                            group_id: val === '' ? '' : numericVal
-                        });
-                        rowEl.classList.add('bg-yellow-50');
-                    }
-
-                    saveBtn.disabled = pendingChanges.size === 0;
-                }
-            }
+                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+                ]
+            });
         });
-        document.getElementById('undo-btn').addEventListener('click', () => {
-            debug('Undo clicked');
-            table && table.undo();
-        });
-        document.getElementById('redo-btn').addEventListener('click', () => {
-            debug('Redo clicked');
-            table && table.redo();
-        });
-
-    });
-});
-
-saveBtn.addEventListener('click', function() {
-    const updates = Array.from(pendingChanges.entries());
-
-    debug('Save clicked');
-
-    debug('Saving changes for transactions: ' + updates.map(u => u[0]).join(', '));
-    const promises = updates.map(([id, change]) => {
-        debug('Saving transaction ' + id + ' with ' + JSON.stringify(change));
-        savingRows.add(id);
-        const row = table.getRow(id);
-        const rowEl = row.getElement();
-        rowEl.classList.add('opacity-50', 'pointer-events-none');
-        return fetch('../php_backend/public/update_transaction.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                transaction_id: id,
-                account_id: change.account_id,
-                description: change.description,
-                group_id: change.group_id
-            })
-        })
-        .then(resp => {
-            debug('HTTP status for ' + id + ': ' + resp.status);
-            return resp.json();
-        })
-        .then(res => {
-            debug('Response for ' + id + ': ' + JSON.stringify(res));
-            if (res && res.status === 'ok') {
-                row.getData().original_group_id = change.group_id === '' ? null : change.group_id;
-                rowEl.classList.remove('bg-yellow-50');
-                pendingChanges.delete(id);
-            } else {
-                showMessage('Failed to save group', 'error');
-            }
-        })
-        .catch(err => {
-            console.error('Update request failed', err);
-            showMessage('Failed to save group', 'error');
-        })
-        .finally(() => {
-            savingRows.delete(id);
-            rowEl.classList.remove('opacity-50', 'pointer-events-none');
-        });
-    });
-    Promise.all(promises).then(() => {
-        saveBtn.disabled = pendingChanges.size === 0;
-        if (pendingChanges.size === 0) {
-            showMessage('Groups saved');
-        }
-    });
 });
 </script>
     <script src="js/overlay.js"></script>
