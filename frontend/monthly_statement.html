@@ -192,6 +192,16 @@ form.addEventListener('submit', function(e) {
             ],
             cellEditing: function(cell){
                 cell.getElement().classList.add('bg-yellow-100');
+                if (cell.getField() === 'group_id') {
+                    setTimeout(() => {
+                        const editor = cell.getElement().querySelector('select');
+                        if (editor) {
+                            editor.addEventListener('change', e => {
+                                alert('Group dropdown changed to ' + e.target.value);
+                            }, { once: true });
+                        }
+                    }, 0);
+                }
             },
             cellEditCancelled: function(cell){
                 cell.getElement().classList.remove('bg-yellow-100');
@@ -204,6 +214,9 @@ form.addEventListener('submit', function(e) {
                     const oldVal = cell.getOldValue();
                     if (val === oldVal) return;
                     const data = cell.getRow().getData();
+                    const rowEl = cell.getRow().getElement();
+                    showMessage('Group selected: ' + (groupLookup[val] || 'None'));
+                    debug('Group selection changed to ' + val);
                     const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
 
                     payload.group_id = val === '' ? '' : parseInt(val, 10);
