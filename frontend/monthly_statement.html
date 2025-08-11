@@ -241,25 +241,11 @@ form.addEventListener('submit', function(e) {
                     const rowEl = cell.getRow().getElement();
                     showMessage('Group selected: ' + (groupLookup[val] || 'None'));
                     debug('Group selection changed to ' + val);
-                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
-
-                    payload.group_id = val === '' ? '' : parseInt(val, 10);
-                    fetch('../php_backend/public/update_transaction.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(resp => resp.json())
-                    .then(res => {
-                        if (!(res && res.status === 'ok')) {
-                            alert('Failed to save group');
-                            cell.setValue(oldVal, true);
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to save group');
-                        cell.setValue(oldVal, true);
-
+                    const newGroupId = val === '' ? '' : parseInt(val, 10);
+                    pendingChanges.set(data.id, {
+                        account_id: data.account_id,
+                        description: data.description,
+                        group_id: newGroupId
                     });
                     rowEl.classList.add('bg-yellow-50');
                 }
