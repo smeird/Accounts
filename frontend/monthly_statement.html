@@ -35,7 +35,7 @@
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
                 </form>
             </div>
-            <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div class="bg-white p-4 rounded shadow text-center">
                     <p class="text-gray-500">Income</p>
                     <p id="income-total" class="text-3xl font-bold">£0.00</p>
@@ -47,6 +47,26 @@
                 <div class="bg-white p-4 rounded shadow text-center">
                     <p class="text-gray-500">Delta</p>
                     <p id="delta-total" class="text-3xl font-bold">£0.00</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Savings Rate</p>
+                    <p id="savings-rate" class="text-3xl font-bold">0%</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Largest Expense Category</p>
+                    <p id="largest-category" class="text-3xl font-bold">N/A</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Recurring vs One-off</p>
+                    <p id="recurring-ratio" class="text-lg font-bold">Recurring: £0.00 (0%)<br>One-off: £0.00 (0%)</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Average Transaction Size</p>
+                    <p id="avg-transaction" class="text-lg font-bold">Income: £0.00<br>Expenses: £0.00</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center">
+                    <p class="text-gray-500">Days Until Negative Balance</p>
+                    <p id="days-negative" class="text-3xl font-bold">N/A</p>
                 </div>
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
@@ -62,6 +82,18 @@
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
 let table;
+
+const recurringPromise = fetch('../php_backend/public/recurring_spend.php')
+    .then(r => r.json())
+    .then(d => {
+        const set = new Set();
+        (d.results || []).forEach(item => set.add(item.description.toLowerCase()));
+        return set;
+    });
+
+const balancePromise = fetch('../php_backend/public/account_dashboard.php')
+    .then(r => r.json())
+    .then(rows => rows.reduce((sum, row) => sum + parseFloat(row.balance), 0));
 
 fetch('../php_backend/public/transaction_months.php')
     .then(resp => resp.json())
@@ -106,74 +138,119 @@ const form = document.getElementById('statement-form');
 const untaggedOnly = document.getElementById('untagged-only');
 
 function loadTransactions() {
-    const month = monthSelect.value;
-    const year = yearSelect.value;
+    const month = parseInt(monthSelect.value);
+    const year = parseInt(yearSelect.value);
     const untaggedParam = untaggedOnly.checked ? '&untagged=1' : '';
-    fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam)
-        .then(r => r.json())
-        .then(data => {
-            let income = 0, outgoings = 0;
-            data.forEach(t => {
-                if (t.transfer_id !== null) return;
-                const amt = parseFloat(t.amount);
-                if (amt > 0) income += amt;
-                else if (amt < 0) outgoings += -amt;
-            });
-            const delta = income - outgoings;
-            document.getElementById('income-total').textContent = '£' + income.toFixed(2);
-            document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
-            const deltaEl = document.getElementById('delta-total');
-            deltaEl.textContent = '£' + delta.toFixed(2);
-            deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
-
-            table = tailwindTabulator('#transactions-grid', {
-                data: data,
-                layout: 'fitColumns',
-                columns: [
-                    { title: 'Date', field: 'date' },
-                    { title: 'Description', field: 'description', formatter: function(cell) {
-                        const id = cell.getRow().getData().id;
-                        return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
-                    } },
-                    {
-                        title: 'Category',
-                        field: 'category_name',
-                        formatter: function(cell){
-                            const value = cell.getValue();
-                            if (!value) return '';
-                            const badge = createBadge(value, 'bg-green-200 text-green-800');
-                            const link = document.createElement('a');
-                            link.href = `search.html?value=${encodeURIComponent(value)}`;
-                            link.appendChild(badge);
-                            return link;
-                        }
-                    },
-                    {
-                        title: 'Tag',
-                        field: 'tag_name',
-                        formatter: function(cell){
-                            const value = cell.getValue();
-                            if (!value) return '';
-                            const badge = createBadge(value, 'bg-blue-200 text-blue-800');
-                            const link = document.createElement('a');
-                            link.href = `search.html?value=${encodeURIComponent(value)}`;
-                            link.appendChild(badge);
-                            return link;
-                        }
-                    },
-                    {
-                        title: 'Group',
-                        field: 'group_name',
-                        formatter: function(cell){
-                            const value = cell.getValue();
-                            if (!value) return '';
-                            return createBadge(value, 'bg-purple-200 text-purple-800');
-                        }
-                    },
-                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-                ]
-            });
+    Promise.all([
+        recurringPromise,
+        balancePromise,
+        fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json())
+    ]).then(([recurringSet, totalBalance, data]) => {
+        let income = 0, outgoings = 0, numIncome = 0, numExpense = 0;
+        const categoryTotals = {};
+        let recurringTotal = 0, oneoffTotal = 0;
+        data.forEach(t => {
+            if (t.transfer_id !== null) return;
+            const amt = parseFloat(t.amount);
+            if (amt > 0) {
+                income += amt;
+                numIncome++;
+            } else if (amt < 0) {
+                const exp = -amt;
+                outgoings += exp;
+                numExpense++;
+                const cat = t.category_name || 'Uncategorised';
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + exp;
+                if (recurringSet.has(t.description.toLowerCase())) {
+                    recurringTotal += exp;
+                } else {
+                    oneoffTotal += exp;
+                }
+            }
         });
+        const delta = income - outgoings;
+        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
+        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
+        const deltaEl = document.getElementById('delta-total');
+        deltaEl.textContent = '£' + delta.toFixed(2);
+        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
+
+        const savingsRate = income > 0 ? (delta / income) * 100 : 0;
+        document.getElementById('savings-rate').textContent = savingsRate.toFixed(1) + '%';
+
+        let largestCategory = 'N/A';
+        if (Object.keys(categoryTotals).length) {
+            largestCategory = Object.entries(categoryTotals).sort((a,b) => b[1]-a[1])[0][0];
+        }
+        document.getElementById('largest-category').textContent = largestCategory;
+
+        const recurringPercent = outgoings > 0 ? (recurringTotal / outgoings) * 100 : 0;
+        const oneoffPercent = outgoings > 0 ? (oneoffTotal / outgoings) * 100 : 0;
+        document.getElementById('recurring-ratio').innerHTML =
+            `Recurring: £${recurringTotal.toFixed(2)} (${recurringPercent.toFixed(1)}%)<br>` +
+            `One-off: £${oneoffTotal.toFixed(2)} (${oneoffPercent.toFixed(1)}%)`;
+
+        const avgIncome = numIncome > 0 ? income / numIncome : 0;
+        const avgExpense = numExpense > 0 ? outgoings / numExpense : 0;
+        document.getElementById('avg-transaction').innerHTML =
+            `Income: £${avgIncome.toFixed(2)}<br>Expenses: £${avgExpense.toFixed(2)}`;
+
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const burnRate = (outgoings - income) / daysInMonth;
+        let daysNegative = 'N/A';
+        if (burnRate > 0 && totalBalance > 0) {
+            daysNegative = Math.floor(totalBalance / burnRate);
+        }
+        document.getElementById('days-negative').textContent = daysNegative;
+
+        table = tailwindTabulator('#transactions-grid', {
+            data: data,
+            layout: 'fitColumns',
+            columns: [
+                { title: 'Date', field: 'date' },
+                { title: 'Description', field: 'description', formatter: function(cell) {
+                    const id = cell.getRow().getData().id;
+                    return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
+                } },
+                {
+                    title: 'Category',
+                    field: 'category_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-green-200 text-green-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
+                    }
+                },
+                {
+                    title: 'Tag',
+                    field: 'tag_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
+                    }
+                },
+                {
+                    title: 'Group',
+                    field: 'group_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        return createBadge(value, 'bg-purple-200 text-purple-800');
+                    }
+                },
+                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
+            ]
+        });
+    });
 }
 
 form.addEventListener('submit', function(e) {
