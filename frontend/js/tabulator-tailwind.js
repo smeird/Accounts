@@ -4,7 +4,7 @@
 // to fetch it without CORS issues.
 if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulator.prototype.modules.resizeColumns)) {
     var script = document.createElement('script');
-    script.src = 'https://unpkg.com/tabulator-tables@5.5.0/dist/js/modules/resizeColumns.js';
+    script.src = 'https://unpkg.com/tabulator-tables@6.3.0/dist/js/modules/resizeColumns.js';
     script.async = false;
     document.head.appendChild(script);
 }
