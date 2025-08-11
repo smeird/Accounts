@@ -66,7 +66,9 @@
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
+
 let groupSelectValues = {};
+
 let groupLookup = {};
 const savingRows = new Set();
 const pendingChanges = new Map();
@@ -133,10 +135,12 @@ form.addEventListener('submit', function(e) {
         pendingChanges.clear();
         saveBtn.disabled = true;
 
+
         groupSelectValues = { '': '-- None --' };
         groupLookup = { '': '' };
         groups.forEach(g => {
             groupSelectValues[g.id] = g.name;
+
             groupLookup[g.id] = g.name;
         });
 
@@ -196,7 +200,9 @@ form.addEventListener('submit', function(e) {
                     title: 'Group',
                     field: 'group_id',
                     editor: 'select',
+
                     editorParams: { values: groupSelectValues },
+
                     editable: function(cell){
                         const data = cell.getRow().getData();
                         return data.transfer_id === null && !savingRows.has(data.id);
@@ -221,7 +227,6 @@ form.addEventListener('submit', function(e) {
                 cell.getElement().classList.remove('bg-yellow-100');
             },
             cellEdited: function(cell) {
-
                 const field = cell.getField();
                 if (field === 'group_id') {
                     const val = cell.getValue();
@@ -231,29 +236,22 @@ form.addEventListener('submit', function(e) {
                     const rowEl = cell.getRow().getElement();
                     showMessage('Group selected: ' + (groupLookup[val] || 'None'));
                     debug('Group selection changed to ' + val);
-                    const payload = { transaction_id: data.id, account_id: data.account_id, description: data.description };
+                    const numericVal = val === '' ? null : parseInt(val, 10);
 
-                    payload.group_id = val === '' ? '' : parseInt(val, 10);
-                    fetch('../php_backend/public/update_transaction.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(resp => resp.json())
-                    .then(res => {
-                        if (!(res && res.status === 'ok')) {
-                            alert('Failed to save group');
-                            cell.setValue(oldVal, true);
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to save group');
-                        cell.setValue(oldVal, true);
+                    if (numericVal === (data.original_group_id ?? null)) {
+                        pendingChanges.delete(data.id);
+                        rowEl.classList.remove('bg-yellow-50');
+                    } else {
+                        pendingChanges.set(data.id, {
+                            account_id: data.account_id,
+                            description: data.description,
+                            group_id: val === '' ? '' : numericVal
+                        });
+                        rowEl.classList.add('bg-yellow-50');
+                    }
 
-                    });
-                    rowEl.classList.add('bg-yellow-50');
+                    saveBtn.disabled = pendingChanges.size === 0;
                 }
-                saveBtn.disabled = pendingChanges.size === 0;
             }
         });
         document.getElementById('undo-btn').addEventListener('click', () => {
