@@ -50,13 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(resp => resp.text())
     .then(html => {
       document.body.insertAdjacentHTML('afterbegin', html);
+
       const content = document.querySelector('body > div.flex');
       if (content) {
+
         content.classList.add('pt-16', 'h-screen', 'overflow-hidden');
         const main = content.querySelector('main');
         if (main) {
           main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64');
         }
+
       }
 
       const toggle = document.getElementById('menu-toggle');
