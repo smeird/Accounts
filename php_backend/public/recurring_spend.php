@@ -1,5 +1,6 @@
 <?php
 // API endpoint to analyse recurring spending over the past year.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Transaction.php';
 
 header('Content-Type: application/json');

@@ -1,5 +1,6 @@
 <?php
 // API endpoint to update a transaction's tag and apply auto-tagging.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';

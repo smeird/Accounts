@@ -1,5 +1,6 @@
 <?php
 // API endpoint for managing category budgets.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Budget.php';
 require_once __DIR__ . '/../models/Log.php';
 

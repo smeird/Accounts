@@ -1,5 +1,6 @@
 <?php
 // Outputs the current git commit hash for version display without relying on shell_exec.
+require_once __DIR__ . '/../nocache.php';
 header('Content-Type: application/json');
 $rootDir = dirname(__DIR__, 2);
 $commitHash = '';

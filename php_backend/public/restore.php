@@ -1,5 +1,6 @@
 <?php
 // Restores categories, tags, groups, transactions, and budgets from an uploaded JSON backup.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
 try {

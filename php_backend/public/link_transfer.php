@@ -1,5 +1,6 @@
 <?php
 // API endpoint to manually link two transactions as a transfer.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Log.php';
 

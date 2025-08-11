@@ -1,5 +1,6 @@
 <?php
 // API endpoint returning totals across all available years for tags, categories, and groups.
+require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 

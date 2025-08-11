@@ -1,8 +1,8 @@
 <?php
 // Simple login page for user authentication.
 session_start();
+require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/models/User.php';
-
 require_once __DIR__ . '/php_backend/models/Log.php';
 
 $error = '';
@@ -29,6 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
