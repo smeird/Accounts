@@ -86,8 +86,22 @@ async function loadCategories() {
                     loadCategories();
                     showMessage('Tag assigned');
                 });
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'Delete';
+                delBtn.className = 'bg-red-600 text-white px-2 py-1 rounded ml-2';
+                delBtn.addEventListener('click', async () => {
+                    if (!confirm('Delete this category?')) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: c.id})
+                    });
+                    loadCategories();
+                    showMessage('Category deleted');
+                });
                 container.appendChild(editBtn);
                 container.appendChild(tagBtn);
+                container.appendChild(delBtn);
                 return container;
             }}
         ]
