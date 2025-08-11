@@ -28,12 +28,13 @@ try {
             case null:
             case 'create':
                 $name = trim($data['name'] ?? '');
+                $description = $data['description'] ?? null;
                 if ($name === '') {
                     http_response_code(400);
                     echo json_encode(['error' => 'Name required']);
                     return;
                 }
-                $id = Category::create($name);
+                $id = Category::create($name, $description);
                 Log::write("Created category $name");
                 echo json_encode(['id' => $id]);
                 break;
@@ -74,12 +75,13 @@ try {
     } elseif ($method === 'PUT') {
         $id = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');
+        $description = $data['description'] ?? null;
         if ($id <= 0 || $name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'ID and name required']);
             return;
         }
-        Category::update($id, $name);
+        Category::update($id, $name, $description);
         Log::write("Updated category $id");
         echo json_encode(['status' => 'ok']);
     } else {

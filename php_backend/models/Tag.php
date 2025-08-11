@@ -6,19 +6,19 @@ class Tag {
     /**
      * Create a new tag optionally with a keyword for auto tagging.
      */
-    public static function create(string $name, ?string $keyword = null): int {
+    public static function create(string $name, ?string $keyword = null, ?string $description = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `keyword`) VALUES (:name, :keyword)');
-        $stmt->execute(['name' => $name, 'keyword' => $keyword]);
+        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `keyword`, `description`) VALUES (:name, :keyword, :description)');
+        $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description]);
         return (int)$db->lastInsertId();
     }
 
     /**
-     * Retrieve all tags with their IDs, names and keywords.
+     * Retrieve all tags with their IDs, names, keywords and descriptions.
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `name`, `keyword` FROM `tags`');
+        $stmt = $db->query('SELECT `id`, `name`, `keyword`, `description` FROM `tags`');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -27,7 +27,7 @@ class Tag {
      */
     public static function unassigned(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT t.id, t.name, t.keyword '
+        $sql = 'SELECT t.id, t.name, t.keyword, t.description '
              . 'FROM tags t '
              . 'LEFT JOIN category_tags ct ON t.id = ct.tag_id '
              . 'WHERE ct.tag_id IS NULL';
@@ -36,12 +36,12 @@ class Tag {
     }
 
     /**
-     * Update a tag's name and keyword.
+     * Update a tag's name, keyword and description.
      */
-    public static function update(int $id, string $name, ?string $keyword = null): bool {
+    public static function update(int $id, string $name, ?string $keyword = null, ?string $description = null): bool {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword WHERE `id` = :id');
-        return $stmt->execute(['name' => $name, 'keyword' => $keyword, 'id' => $id]);
+        $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword, `description` = :description WHERE `id` = :id');
+        return $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
     }
 
     /**

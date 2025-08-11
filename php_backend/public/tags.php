@@ -11,13 +11,14 @@ if ($method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $name = $data['name'] ?? null;
     $keyword = $data['keyword'] ?? null;
+    $description = $data['description'] ?? null;
     if (!$name) {
         http_response_code(400);
         echo json_encode(['error' => 'Name required']);
         exit;
     }
     try {
-        $id = Tag::create($name, $keyword);
+        $id = Tag::create($name, $keyword, $description);
         $tagged = Tag::applyToAllTransactions();
         $categorised = CategoryTag::applyToAllTransactions();
         Log::write("Created tag $name; retagged $tagged transactions; categorised $categorised transactions");
@@ -44,13 +45,14 @@ if ($method === 'POST') {
     $id = $data['id'] ?? null;
     $name = $data['name'] ?? null;
     $keyword = $data['keyword'] ?? null;
+    $description = $data['description'] ?? null;
     if (!$id || !$name) {
         http_response_code(400);
         echo json_encode(['error' => 'ID and name required']);
         exit;
     }
     try {
-        Tag::update((int)$id, $name, $keyword);
+        Tag::update((int)$id, $name, $keyword, $description);
         Log::write("Updated tag $id");
         echo json_encode(['status' => 'ok']);
     } catch (Exception $e) {

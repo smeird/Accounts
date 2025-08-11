@@ -20,6 +20,7 @@
             <form id="tag-form" class="space-y-4">
                 <label class="block">Tag Name<br><input type="text" id="tag-name" class="border p-2 rounded w-full" data-help="Name for the tag"></label>
                 <label class="block">Keyword (for auto tagging)<br><input type="text" id="tag-keyword" class="border p-2 rounded w-full" data-help="Keyword used to auto-tag transactions"></label>
+                <label class="block">Description<br><textarea id="tag-description" class="border p-2 rounded w-full" data-help="Description for the tag"></textarea></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Tag</button>
             </form>
             <div class="mt-6 bg-white p-4 rounded shadow">
@@ -48,6 +49,7 @@ async function loadTags(){
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
             { title: 'Keyword', field: 'keyword' },
+            { title: 'Description', field: 'description' },
             { title: 'Actions', formatter: function(cell){
                 const t = cell.getRow().getData();
                 const container = document.createElement('div');
@@ -59,10 +61,12 @@ async function loadTags(){
                     if (name === null) return;
                     const keyword = prompt('Keyword (for auto tagging)', t.keyword || '');
                     if (keyword === null) return;
+                    const description = prompt('Description', t.description || '');
+                    if (description === null) return;
                     await fetch('../php_backend/public/tags.php', {
                         method: 'PUT',
                         headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({id: t.id, name, keyword})
+                        body: JSON.stringify({id: t.id, name, keyword, description})
                     });
                     loadTags();
                     showMessage('Tag updated');
@@ -92,13 +96,15 @@ document.getElementById('tag-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const name = document.getElementById('tag-name').value;
     const keyword = document.getElementById('tag-keyword').value;
+    const description = document.getElementById('tag-description').value;
     await fetch('../php_backend/public/tags.php', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({name, keyword})
+        body: JSON.stringify({name, keyword, description})
     });
     document.getElementById('tag-name').value='';
     document.getElementById('tag-keyword').value='';
+    document.getElementById('tag-description').value='';
     loadTags();
     showMessage("Tag created");
 });

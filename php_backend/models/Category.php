@@ -6,20 +6,20 @@ class Category {
     /**
      * Insert a new category and return its ID.
      */
-    public static function create(string $name): int {
+    public static function create(string $name, ?string $description = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO categories (name) VALUES (:name)');
-        $stmt->execute(['name' => $name]);
+        $stmt = $db->prepare('INSERT INTO categories (name, description) VALUES (:name, :description)');
+        $stmt->execute(['name' => $name, 'description' => $description]);
         return (int)$db->lastInsertId();
     }
 
     /**
-     * Update the name of an existing category.
+     * Update the name and description of an existing category.
      */
-    public static function update(int $id, string $name): void {
+    public static function update(int $id, string $name, ?string $description = null): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE categories SET name = :name WHERE id = :id');
-        $stmt->execute(['id' => $id, 'name' => $name]);
+        $stmt = $db->prepare('UPDATE categories SET name = :name, description = :description WHERE id = :id');
+        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description]);
     }
 
     /**
@@ -27,7 +27,7 @@ class Category {
      */
     public static function allWithTags(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT c.id AS category_id, c.name AS category_name, '
+        $sql = 'SELECT c.id AS category_id, c.name AS category_name, c.description AS category_description, '
              . 't.id AS tag_id, t.name AS tag_name '
              . 'FROM categories c '
              . 'LEFT JOIN category_tags ct ON c.id = ct.category_id '
@@ -43,6 +43,7 @@ class Category {
                 $categories[$id] = [
                     'id' => $id,
                     'name' => $row['category_name'],
+                    'description' => $row['category_description'],
                     'tags' => []
                 ];
             }
