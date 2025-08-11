@@ -60,6 +60,16 @@ try {
                 http_response_code(400);
                 echo json_encode(['error' => 'Invalid action']);
         }
+    } elseif ($method === 'DELETE') {
+        $id = (int)($data['id'] ?? 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID required']);
+            return;
+        }
+        Category::delete($id);
+        Log::write("Deleted category $id");
+        echo json_encode(['status' => 'ok']);
     } elseif ($method === 'PUT') {
         $id = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');

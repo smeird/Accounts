@@ -14,8 +14,8 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="w-64 bg-white border-r p-6"></nav>
-        <main class="flex-1 p-6">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4">Monthly Statement</h1>
             <p class="mb-4">Select a month to view a detailed list of transactions.</p>
             <div class="bg-white p-6 rounded shadow">
@@ -200,6 +200,7 @@ form.addEventListener('submit', function(e) {
                 cell.getElement().classList.remove('bg-yellow-100');
                 if (cell.getField() !== 'group_id') return;
 
+
                 const data = cell.getRow().getData();
                 const newVal = cell.getValue();
                 const origVal = data.original_group_id === null ? '' : String(data.original_group_id);
@@ -207,6 +208,7 @@ form.addEventListener('submit', function(e) {
                 const newValStr = newVal === '' ? '' : String(newVal);
 
                 debug(`Cell edited for transaction ${data.id}: ${origVal} -> ${newValStr}`);
+
 
                 if (newValStr === origVal) {
                     pendingChanges.delete(data.id);
@@ -236,7 +238,9 @@ form.addEventListener('submit', function(e) {
 
 saveBtn.addEventListener('click', function() {
     const updates = Array.from(pendingChanges.entries());
+
     debug('Save clicked');
+
     debug('Saving changes for transactions: ' + updates.map(u => u[0]).join(', '));
     const promises = updates.map(([id, change]) => {
         debug('Saving transaction ' + id + ' with ' + JSON.stringify(change));
