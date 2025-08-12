@@ -95,6 +95,11 @@ const form = document.getElementById('statement-form');
 const untaggedOnly = document.getElementById('untagged-only');
 let table;
 
+// Determine initial year and month from query parameters if provided
+const urlParams = new URLSearchParams(window.location.search);
+const paramYear = urlParams.get('year');
+const paramMonth = urlParams.get('month');
+
 const recurringPromise = fetch('../php_backend/public/recurring_spend.php')
     .then(r => r.json())
     .then(d => {
@@ -149,6 +154,19 @@ fetch('../php_backend/public/transaction_months.php')
             yearSelect.selectedIndex = 0;
             populateMonths();
         }
+
+        // Override defaults with query parameters if present
+        if (paramYear && monthsByYear[paramYear]) {
+            yearSelect.value = paramYear;
+            populateMonths();
+            const monthInt = parseInt(paramMonth, 10);
+            if (paramMonth && monthsByYear[paramYear].includes(monthInt)) {
+                monthSelect.value = monthInt;
+            }
+        }
+
+        // Automatically load the initially selected statement
+        loadTransactions();
     })
     .catch(() => {
         const now = new Date();
@@ -167,8 +185,9 @@ fetch('../php_backend/public/transaction_months.php')
             opt.textContent = d.toLocaleString('default', { month: 'long' });
             monthSelect.appendChild(opt);
         }
-        yearSelect.value = currentYear;
-        monthSelect.value = currentMonth;
+        yearSelect.value = paramYear || currentYear;
+        monthSelect.value = paramMonth || currentMonth;
+        loadTransactions();
     });
 
 function loadTransactions() {
