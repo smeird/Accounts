@@ -22,7 +22,16 @@
                 <label class="block">Description<br><textarea id="category-description" class="border p-2 rounded w-full" data-help="Description for the category"></textarea></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Category</button>
             </form>
-            <div id="category-container" class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+
+            <div id="unassigned-card" class="mt-6 bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Unassigned Tags</h2>
+                <div id="unassigned-tags" class="flex flex-wrap gap-2 min-h-[3rem]"></div>
+            </div>
+            <div class="mt-6 bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Existing Categories</h2>
+                <div id="category-table"></div>
+            </div>
+
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -34,6 +43,40 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 let categoryTable;
+const unassignedContainer = document.getElementById('unassigned-tags');
+unassignedContainer.addEventListener('dragover', e => e.preventDefault());
+unassignedContainer.addEventListener('drop', async e => {
+    e.preventDefault();
+    const tagId = e.dataTransfer.getData('tagId');
+    const categoryId = e.dataTransfer.getData('categoryId');
+    if (!tagId || !categoryId) return;
+    await fetch('../php_backend/public/categories.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'remove_tag', category_id: categoryId, tag_id: tagId})
+    });
+    loadCategories();
+    loadUnassignedTags();
+    showMessage('Tag removed');
+});
+
+function createTagBadge(tag, categoryId){
+    const badge = createBadge(tag.name, 'bg-blue-200 text-blue-800');
+    badge.draggable = true;
+    badge.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('tagId', tag.id);
+        e.dataTransfer.setData('categoryId', categoryId || '');
+    });
+    return badge;
+}
+
+async function loadUnassignedTags(){
+    const res = await fetch('../php_backend/public/tags.php?unassigned=1');
+    const tags = await res.json();
+    unassignedContainer.innerHTML = '';
+    tags.forEach(t => unassignedContainer.appendChild(createTagBadge(t)));
+}
+
 // Fetch categories and render them with their tags
 async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
@@ -53,32 +96,34 @@ async function loadCategories() {
                 const tags = cell.getValue() || [];
                 const rowData = cell.getRow().getData();
                 const container = document.createElement('div');
-                container.dataset.categoryId = rowData.id;
+
+                const categoryId = cell.getRow().getData().id;
+                container.className = 'flex flex-wrap gap-2 min-h-[3rem]';
                 container.addEventListener('dragover', e => e.preventDefault());
                 container.addEventListener('drop', async e => {
                     e.preventDefault();
-                    const tagId = e.dataTransfer.getData('text/tag-id');
-                    const oldCategoryId = e.dataTransfer.getData('text/old-category-id');
-                    const newCategoryId = container.dataset.categoryId;
-                    if (tagId && oldCategoryId && newCategoryId && oldCategoryId !== newCategoryId) {
+                    const tagId = e.dataTransfer.getData('tagId');
+                    const fromCategory = e.dataTransfer.getData('categoryId');
+                    if (!tagId) return;
+                    if (fromCategory && fromCategory === String(categoryId)) return;
+                    if (fromCategory) {
                         await fetch('../php_backend/public/categories.php', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({action: 'move_tag', category_id: newCategoryId, old_category_id: oldCategoryId, tag_id: tagId})
+                            body: JSON.stringify({action: 'remove_tag', category_id: fromCategory, tag_id: tagId})
                         });
-                        loadCategories();
-                        showMessage('Tag moved');
                     }
-                });
-                tags.forEach(t => {
-                    const badge = createBadge(t.name, 'bg-blue-200 text-blue-800');
-                    badge.draggable = true;
-                    badge.addEventListener('dragstart', e => {
-                        e.dataTransfer.setData('text/tag-id', t.id);
-                        e.dataTransfer.setData('text/old-category-id', rowData.id);
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({action: 'add_tag', category_id: categoryId, tag_id: tagId})
                     });
-                    container.appendChild(badge);
+                    loadCategories();
+                    loadUnassignedTags();
+                    showMessage('Tag assigned');
                 });
+                tags.forEach(t => container.appendChild(createTagBadge(t, categoryId)));
+
                 return container;
             } },
             { title: 'Actions', formatter: function(cell){
@@ -119,6 +164,7 @@ async function loadCategories() {
                         body: JSON.stringify({action: 'add_tag', category_id: c.id, tag_id: tagId})
                     });
                     loadCategories();
+                    loadUnassignedTags();
                     showMessage('Tag assigned');
                 });
 
@@ -139,6 +185,7 @@ async function loadCategories() {
                         body: JSON.stringify({action: 'remove_tag', category_id: c.id, tag_id: tagId})
                     });
                     loadCategories();
+                    loadUnassignedTags();
                     showMessage('Tag removed');
                 });
                 const delBtn = document.createElement('button');
@@ -152,6 +199,7 @@ async function loadCategories() {
                         body: JSON.stringify({id: c.id})
                     });
                     loadCategories();
+                    loadUnassignedTags();
                     showMessage('Category deleted');
                 });
                 container.appendChild(editBtn);
@@ -176,10 +224,12 @@ document.getElementById('category-form').addEventListener('submit', async e => {
     document.getElementById('category-name').value = '';
     document.getElementById('category-description').value = '';
     loadCategories();
+    loadUnassignedTags();
     showMessage('Category created');
 });
 
 loadCategories();
+loadUnassignedTags();
     </script>
 
     <script src="js/overlay.js"></script>
