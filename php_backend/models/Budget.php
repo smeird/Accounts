@@ -19,6 +19,15 @@ class Budget {
     }
 
     /**
+     * Delete a budget by its ID.
+     */
+    public static function delete(int $id): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('DELETE FROM budgets WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+    }
+
+    /**
      * Retrieve budgets and spending for a given month and year.
      * Returns category name, budget amount, spent, and remaining.
      */

@@ -43,5 +43,25 @@ if ($method === 'POST') {
     return;
 }
 
+if ($method === 'DELETE') {
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $id = (int)($data['id'] ?? 0);
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID required']);
+        return;
+    }
+    try {
+        Budget::delete($id);
+        Log::write("Deleted budget $id");
+        echo json_encode(['status' => 'ok']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        Log::write('Budget delete error: ' . $e->getMessage(), 'ERROR');
+        echo json_encode(['error' => 'Server error']);
+    }
+    return;
+}
+
 http_response_code(405);
 ?>
