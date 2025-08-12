@@ -301,6 +301,7 @@ function loadTransactions() {
                     const id = cell.getRow().getData().id;
                     return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
                 } },
+                { title: 'Memo', field: 'memo' },
                 {
                     title: 'Category',
                     field: 'category_name',
