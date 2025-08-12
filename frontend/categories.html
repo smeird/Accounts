@@ -23,7 +23,10 @@
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Category</button>
             </form>
 
-            <div id="category-container" class="mt-6 flex gap-4 overflow-x-auto items-start"></div>
+            <div id="category-layout" class="mt-6 flex items-start gap-4">
+                <div id="unassigned" class="flex-shrink-0"></div>
+                <div id="category-container" class="flex-1 flex gap-4 overflow-x-auto items-start"></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
