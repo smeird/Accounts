@@ -8,12 +8,20 @@ function initBackup() {
             const parts = Array.from(document.querySelectorAll('input[name="parts"]:checked')).map(cb => cb.value);
             const qs = parts.length ? `?parts=${parts.join(',')}` : '';
             fetch(`../php_backend/public/backup.php${qs}`)
-                .then(resp => resp.blob())
-                .then(blob => {
+                .then(resp => {
+                    const disposition = resp.headers.get('Content-Disposition') || '';
+                    let filename = `${window.location.hostname}-${new Date().toISOString().slice(0, 10)}.json`;
+                    const match = disposition.match(/filename="?([^";]+)"?/i);
+                    if (match) {
+                        filename = match[1];
+                    }
+                    return resp.blob().then(blob => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'backup.json';
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
