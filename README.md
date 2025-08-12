@@ -12,7 +12,9 @@ A basic login page is available at the project root (`index.php`). Users are sto
 - Highcharts is used for graphs, while Tabulator renders interactive tables.
 - Display all monetary values using the pound symbol (£) instead of the dollar sign ($).
 - Tailwind CSS provides the styling and Font Awesome supplies icons. Sections are wrapped in card components.
+
 - Tabulator tables apply Tailwind utility classes for a consistent look and use the Simple theme.
+
 - Form inputs may include a `data-help` attribute to show popover guidance.
 - Transactions identified as transfers are flagged and ignored in totals.
 - The interface is responsive. Each page includes a viewport meta tag and uses Tailwind's responsive utilities so the site works
