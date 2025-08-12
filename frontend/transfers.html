@@ -42,7 +42,7 @@
         .then(data => {
             tailwindTabulator(document.getElementById('transfers-table'), {
                 data: data.transfers,
-                layout: 'fitColumns',
+                layout: 'fitData',
                 columns: [
                     { title: 'Date', field: 'date' },
                     { title: 'Description', field: 'description' },
@@ -54,7 +54,7 @@
 
             tailwindTabulator(document.getElementById('ofx-transfers-table'), {
                 data: data.ofx_transfers,
-                layout: 'fitColumns',
+                layout: 'fitData',
                 columns: [
                     { title: 'Date', field: 'date' },
                     { title: 'Description', field: 'description' },
