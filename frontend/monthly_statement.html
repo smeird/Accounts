@@ -97,6 +97,9 @@ const form = document.getElementById('statement-form');
 const untaggedOnly = document.getElementById('untagged-only');
 let table;
 
+// fetch available transaction groups once
+const groupsPromise = fetch('../php_backend/public/groups.php').then(r => r.json());
+
 // Determine initial year and month from query parameters if provided
 const urlParams = new URLSearchParams(window.location.search);
 const paramYear = urlParams.get('year');
@@ -205,9 +208,15 @@ function loadTransactions() {
     Promise.all([
         recurringPromise,
         balancePromise,
+        groupsPromise,
         fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json()),
         fetch('../php_backend/public/transactions.php?month=' + prevMonth + '&year=' + prevYear + untaggedParam).then(r => r.json())
-    ]).then(([recurringSet, totalBalance, data, prevData]) => {
+    ]).then(([recurringSet, totalBalance, groups, data, prevData]) => {
+        const groupValues = { '': 'None' };
+        groups.forEach(g => groupValues[g.id] = g.name);
+
+        // normalise group ids for Tabulator
+        data.forEach(t => { t.group_id = t.group_id ? String(t.group_id) : ''; });
         let income = 0, outgoings = 0, numIncome = 0, numExpense = 0;
         const incomes = {};
         const spendings = {};
@@ -318,11 +327,31 @@ function loadTransactions() {
                 },
                 {
                     title: 'Group',
-                    field: 'group_name',
+                    field: 'group_id',
                     formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        return createBadge(value, 'bg-purple-200 text-purple-800');
+                        const id = cell.getValue();
+                        const name = groupValues[id] || '';
+                        if (!name) return '';
+                        return createBadge(name, 'bg-purple-200 text-purple-800');
+                    },
+                    editor: 'list',
+                    editorParams: { values: groupValues },
+                    cellEdited: function(cell){
+                        const newId = cell.getValue();
+                        const row = cell.getRow().getData();
+                        fetch('../php_backend/public/update_transaction.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                transaction_id: row.id,
+                                account_id: row.account_id,
+                                description: row.description,
+                                group_id: newId === '' ? '' : parseInt(newId, 10)
+                            })
+                        }).then(r => r.json()).then(res => {
+                            const name = groupValues[newId] || '';
+                            cell.getRow().update({ group_name: name });
+                        });
                     }
                 },
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
