@@ -10,8 +10,6 @@
     <title>Manage Categories</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
-
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -24,6 +22,7 @@
                 <label class="block">Description<br><textarea id="category-description" class="border p-2 rounded w-full" data-help="Description for the category"></textarea></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Category</button>
             </form>
+
             <div id="unassigned-card" class="mt-6 bg-white p-4 rounded shadow">
                 <h2 class="text-xl font-semibold mb-2">Unassigned Tags</h2>
                 <div id="unassigned-tags" class="flex flex-wrap gap-2 min-h-[3rem]"></div>
@@ -32,10 +31,14 @@
                 <h2 class="text-xl font-semibold mb-2">Existing Categories</h2>
                 <div id="category-table"></div>
             </div>
+
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
+
+    <script src="js/category_drag.js"></script>
+
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
@@ -91,7 +94,9 @@ async function loadCategories() {
             { title: 'Description', field: 'description' },
             { title: 'Tags', field: 'tags', formatter: function(cell){
                 const tags = cell.getValue() || [];
+                const rowData = cell.getRow().getData();
                 const container = document.createElement('div');
+
                 const categoryId = cell.getRow().getData().id;
                 container.className = 'flex flex-wrap gap-2 min-h-[3rem]';
                 container.addEventListener('dragover', e => e.preventDefault());
@@ -118,6 +123,7 @@ async function loadCategories() {
                     showMessage('Tag assigned');
                 });
                 tags.forEach(t => container.appendChild(createTagBadge(t, categoryId)));
+
                 return container;
             } },
             { title: 'Actions', formatter: function(cell){
@@ -225,6 +231,7 @@ document.getElementById('category-form').addEventListener('submit', async e => {
 loadCategories();
 loadUnassignedTags();
     </script>
+
     <script src="js/overlay.js"></script>
 </body>
 </html>

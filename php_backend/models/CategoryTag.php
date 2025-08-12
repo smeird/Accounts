@@ -27,6 +27,29 @@ class CategoryTag {
     }
 
     /**
+     * Move a tag from one category to another atomically.
+     */
+    public static function move(int $oldCategoryId, int $newCategoryId, int $tagId): void {
+        $db = Database::getConnection();
+        $db->beginTransaction();
+        try {
+            $del = $db->prepare('DELETE FROM category_tags WHERE category_id = :old AND tag_id = :tag');
+            $del->execute(['old' => $oldCategoryId, 'tag' => $tagId]);
+
+            $ins = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:new, :tag)');
+            $ins->execute(['new' => $newCategoryId, 'tag' => $tagId]);
+
+            $upd = $db->prepare('UPDATE transactions SET category_id = :new WHERE tag_id = :tag AND category_id = :old');
+            $upd->execute(['new' => $newCategoryId, 'tag' => $tagId, 'old' => $oldCategoryId]);
+
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
      * Apply category IDs to transactions for a specific account based on their tag.
      * Only transactions that are tagged and currently uncategorised will be updated.
      * Returns the number of transactions that were categorised.
