@@ -70,13 +70,13 @@
                 </div>
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
+                <div id="transactions-grid"></div>
+            </div>
+            <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="sankey-chart" style="height:400px;"></div>
             </div>
             <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="category-bubbles" style="height:400px;"></div>
-            </div>
-            <div class="bg-white p-6 rounded shadow mt-4">
-                <div id="transactions-grid"></div>
             </div>
         </main>
     </div>
@@ -260,9 +260,6 @@ function loadTransactions() {
         }
         document.getElementById('days-negative').textContent = daysNegative;
 
-        buildSankeyChart(incomes, spendings);
-        buildBubbleChart(spendings, prevSpendings);
-
         table = tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitColumns',
@@ -310,6 +307,9 @@ function loadTransactions() {
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
             ]
         });
+
+        buildSankeyChart(incomes, spendings);
+        buildBubbleChart(spendings, prevSpendings);
     });
 }
 
