@@ -118,17 +118,21 @@
                             chartTitle = 'Monthly Spend';
                         }
 
+
                         const baseColor = Highcharts.color('#4f46e5');
                         const step = 0.25 / Math.max(values.length - 1, 1);
                         const points = values.map((v, i) => ({
                             y: v,
                             color: baseColor.brighten(step * i).get()
+
                         }));
 
                         Highcharts.chart('results-chart', {
                             chart: {
                                 type: 'column',
+
                                 options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
+
                             },
                             title: { text: chartTitle },
                             xAxis: { categories: categories },
