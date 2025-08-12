@@ -9,6 +9,14 @@ if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulat
     document.head.appendChild(script);
 }
 
+// Ensure the global Search module is available so tables can use simple search
+if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulator.prototype.modules.search)) {
+    var searchScript = document.createElement('script');
+    searchScript.src = 'https://unpkg.com/tabulator-tables@6.3.0/dist/js/modules/search.js';
+    searchScript.async = false;
+    document.head.appendChild(searchScript);
+}
+
 // Create a coloured badge element used in table cells
 function createBadge(text, colorClasses) {
     const span = document.createElement('span');
@@ -35,6 +43,8 @@ function badgeFormatter(colorClasses) {
 function tailwindTabulator(element, options) {
     options = options || {};
 
+    const enableSearch = options.simpleSearch !== false;
+
 
     // Apply the Simple theme to all Tabulator tables
     options.theme = 'simple';
@@ -60,6 +70,27 @@ function tailwindTabulator(element, options) {
     options.pagination = options.pagination || 'local';
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
+
+    if (enableSearch) {
+        const tableEl = typeof element === 'string' ? document.querySelector(element) : element;
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search';
+        searchInput.className = 'mb-2 p-2 border rounded w-full';
+        tableEl.parentNode.insertBefore(searchInput, tableEl);
+        searchInput.addEventListener('input', function() {
+            if (typeof table.search === 'function') {
+                table.search(this.value);
+            } else {
+                const query = this.value.toLowerCase();
+                table.setFilter(function(data) {
+                    return Object.values(data).some(v =>
+                        v && v.toString().toLowerCase().includes(query)
+                    );
+                });
+            }
+        });
+    }
     table.on('tableBuilt', function() {
         const cols = table.getColumns();
         if (cols.length) {
