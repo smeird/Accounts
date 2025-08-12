@@ -73,7 +73,18 @@ async function loadBudgets(){
                 {title:'Category',field:'category'},
                 {title:'Budget',field:'amount',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
                 {title:'Spent',field:'spent',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
-                {title:'Left',field:'left',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'}
+                {title:'Left',field:'left',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
+                {formatter:()=>'<i class="fa-solid fa-trash text-red-600"></i>',width:40,hozAlign:'center',cellClick:async(e,cell)=>{
+                    if(!confirm('Delete this budget?')) return;
+                    const id=cell.getRow().getData().id;
+                    await fetch('../php_backend/public/budgets.php',{
+                        method:'DELETE',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({id})
+                    });
+                    loadBudgets();
+                    showMessage('Budget deleted');
+                }}
             ]
         });
     }
