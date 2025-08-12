@@ -29,7 +29,9 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script>
+
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
+
     function loadYear(year){
         Promise.all([
             fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
@@ -45,7 +47,9 @@
             Highcharts.chart('monthly-chart', {
                 chart: {
                     type: 'column',
+
                     options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
+
                 },
                 title: { text: 'Monthly Spending by Category' },
                 xAxis: { categories: months },
@@ -74,7 +78,9 @@
             Highcharts.chart('cumulative-chart', {
                 chart: {
                     type: 'column',
+
                     options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
+
                 },
                 title: { text: 'Cumulative Spending by Category' },
                 xAxis: { categories: months },
@@ -90,10 +96,13 @@
             const catData = yearly.categories.map(c => ({ name: c.name, y: parseFloat(c.total) }));
             Highcharts.chart('pie-chart', {
                 chart: {
+
                     type: 'pie'
+
                 },
                 title: { text: 'Category Breakdown' },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                plotOptions: { pie: { depth: 35 } },
                 series: [{ name: 'Categories', data: catData }]
             });
 
@@ -102,7 +111,9 @@
             Highcharts.chart('tag-chart', {
                 chart: {
                     type: 'bar',
+
                     options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
+
                 },
                 title: { text: 'Tag Totals' },
                 xAxis: { categories: tagNames },
@@ -117,7 +128,9 @@
 
             Highcharts.chart('scatter-chart', {
                 chart: {
+
                     type: 'scatter'
+
                 },
                 title: { text: 'Monthly Spending Scatter' },
                 xAxis: { categories: months, title: { text: 'Month' } },
@@ -126,7 +139,9 @@
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
                 tooltip: { pointFormatter: function(){ return this.category + ': £' + Highcharts.numberFormat(this.y, 2); } },
+
                 series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]) }]
+
             });
         }).catch(err => console.error('Graph data load failed', err));
     }
