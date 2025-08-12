@@ -5,6 +5,10 @@ require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
 header('Content-Type: application/json');
+$host = $_SERVER['HTTP_HOST'] ?? 'backup';
+$host = preg_replace('/[^A-Za-z0-9_-]/', '_', $host);
+$filename = $host . '-' . date('Y-m-d') . '.json';
+header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 try {
     $db = Database::getConnection();
