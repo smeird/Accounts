@@ -58,7 +58,7 @@
     }
 
     // Render a Tabulator table showing monthly breakdowns
-    function buildTable(id, data){
+    function buildTable(id, data, colorClasses){
         const el = document.getElementById(id);
         el.innerHTML = '';
 
@@ -73,7 +73,19 @@
         }));
 
         const columns = [
-            { title: 'Name', field: 'name', bottomCalc: () => 'Total' },
+            {
+                title: 'Name',
+                field: 'name',
+                bottomCalc: () => 'Total',
+                formatter: function(cell){
+                    const value = cell.getValue();
+                    const badge = createBadge(value, colorClasses);
+                    const link = document.createElement('a');
+                    link.href = `search.html?value=${encodeURIComponent(value)}`;
+                    link.appendChild(badge);
+                    return link;
+                }
+            },
             ...monthCols,
             { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];
@@ -156,12 +168,12 @@
         fetch('../php_backend/public/yearly_dashboard.php?year=' + year)
             .then(resp => resp.json())
             .then(data => {
-                buildTable('tags-table', data.tags);
+                buildTable('tags-table', data.tags, 'bg-blue-200 text-blue-800');
                 buildChart('tags-chart', 'Tag Totals ' + year, data.tags);
-                buildTable('categories-table', data.categories);
+                buildTable('categories-table', data.categories, 'bg-green-200 text-green-800');
                 buildChart('categories-chart', 'Category Totals ' + year, data.categories);
                 buildDonutCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
-                buildTable('groups-table', data.groups);
+                buildTable('groups-table', data.groups, 'bg-purple-200 text-purple-800');
                 buildChart('groups-chart', 'Group Totals ' + year, data.groups);
             });
     }

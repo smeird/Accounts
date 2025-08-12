@@ -65,7 +65,19 @@
             bottomCalcFormatter: totalFormatter
         }));
         const columns = [
-            { title: 'Name', field: 'name', bottomCalc: () => 'Total' },
+            {
+                title: 'Name',
+                field: 'name',
+                bottomCalc: () => 'Total',
+                formatter: function(cell){
+                    const value = cell.getValue();
+                    const badge = createBadge(value, 'bg-purple-200 text-purple-800');
+                    const link = document.createElement('a');
+                    link.href = `search.html?value=${encodeURIComponent(value)}`;
+                    link.appendChild(badge);
+                    return link;
+                }
+            },
             ...monthCols,
             { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];
@@ -86,7 +98,19 @@
             bottomCalcFormatter: totalFormatter
         }));
         const columns = [
-            { title: 'Name', field: 'name', bottomCalc: () => 'Total' },
+            {
+                title: 'Name',
+                field: 'name',
+                bottomCalc: () => 'Total',
+                formatter: function(cell){
+                    const value = cell.getValue();
+                    const badge = createBadge(value, 'bg-purple-200 text-purple-800');
+                    const link = document.createElement('a');
+                    link.href = `search.html?value=${encodeURIComponent(value)}`;
+                    link.appendChild(badge);
+                    return link;
+                }
+            },
             ...yearCols,
             { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];

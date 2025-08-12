@@ -32,10 +32,20 @@ function badgeFormatter(colorClasses) {
         if (!value) return '';
         if (Array.isArray(value)) {
             const container = document.createElement('div');
-            value.forEach(v => container.appendChild(createBadge(v, colorClasses)));
+            value.forEach(v => {
+                const badge = createBadge(v, colorClasses);
+                const link = document.createElement('a');
+                link.href = `search.html?value=${encodeURIComponent(v)}`;
+                link.appendChild(badge);
+                container.appendChild(link);
+            });
             return container;
         }
-        return createBadge(value, colorClasses);
+        const badge = createBadge(value, colorClasses);
+        const link = document.createElement('a');
+        link.href = `search.html?value=${encodeURIComponent(value)}`;
+        link.appendChild(badge);
+        return link;
     };
 }
 
