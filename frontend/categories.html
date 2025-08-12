@@ -53,8 +53,34 @@ async function loadCategories() {
             { title: 'Description', field: 'description' },
             { title: 'Tags', field: 'tags', formatter: function(cell){
                 const tags = cell.getValue() || [];
+                const rowData = cell.getRow().getData();
                 const container = document.createElement('div');
-                tags.forEach(t => container.appendChild(createBadge(t.name, 'bg-blue-200 text-blue-800')));
+                container.dataset.categoryId = rowData.id;
+                container.addEventListener('dragover', e => e.preventDefault());
+                container.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    const tagId = e.dataTransfer.getData('text/tag-id');
+                    const oldCategoryId = e.dataTransfer.getData('text/old-category-id');
+                    const newCategoryId = container.dataset.categoryId;
+                    if (tagId && oldCategoryId && newCategoryId && oldCategoryId !== newCategoryId) {
+                        await fetch('../php_backend/public/categories.php', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({action: 'move_tag', category_id: newCategoryId, old_category_id: oldCategoryId, tag_id: tagId})
+                        });
+                        loadCategories();
+                        showMessage('Tag moved');
+                    }
+                });
+                tags.forEach(t => {
+                    const badge = createBadge(t.name, 'bg-blue-200 text-blue-800');
+                    badge.draggable = true;
+                    badge.addEventListener('dragstart', e => {
+                        e.dataTransfer.setData('text/tag-id', t.id);
+                        e.dataTransfer.setData('text/old-category-id', rowData.id);
+                    });
+                    container.appendChild(badge);
+                });
                 return container;
             } },
             { title: 'Actions', formatter: function(cell){
