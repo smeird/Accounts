@@ -335,7 +335,11 @@ function loadTransactions() {
                         const id = cell.getValue();
                         const name = groupValues[id] || '';
                         if (!name) return '';
-                        return createBadge(name, 'bg-purple-200 text-purple-800');
+                        const badge = createBadge(name, 'bg-purple-200 text-purple-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(name)}`;
+                        link.appendChild(badge);
+                        return link;
                     },
                     editor: 'list',
                     editorParams: { values: groupValues },
