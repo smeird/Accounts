@@ -54,7 +54,8 @@ async function loadGroups() {
                 const g = cell.getRow().getData();
                 const container = document.createElement('div');
                 const edit = document.createElement('button');
-                edit.textContent = 'Edit';
+                edit.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                edit.setAttribute('aria-label','Edit');
                 edit.className = 'bg-blue-600 text-white px-2 py-1 rounded mr-2';
                 edit.addEventListener('click', async () => {
                     const name = prompt('Group Name', g.name);
@@ -70,7 +71,8 @@ async function loadGroups() {
                     showMessage('Group updated');
                 });
                 const del = document.createElement('button');
-                del.textContent = 'Delete';
+                del.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                del.setAttribute('aria-label','Delete');
                 del.className = 'bg-red-600 text-white px-2 py-1 rounded';
                 del.addEventListener('click', async () => {
                     if (!confirm('Delete this group?')) return;
