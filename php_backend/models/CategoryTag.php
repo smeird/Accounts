@@ -51,17 +51,18 @@ class CategoryTag {
 
     /**
      * Apply category IDs to transactions for a specific account based on their tag.
-     * Only transactions that are tagged and currently uncategorised will be updated.
+     * Transactions are updated whenever their tag implies a different category,
+     * ensuring changes in tagging are reflected in categorisation.
      * Returns the number of transactions that were categorised.
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
         $sql = 'UPDATE transactions t '
-             . 'JOIN category_tags ct ON t.tag_id = ct.tag_id '
+             . 'LEFT JOIN category_tags ct ON t.tag_id = ct.tag_id '
              . 'SET t.category_id = ct.category_id '
              . 'WHERE t.account_id = :acc '
              . 'AND t.tag_id IS NOT NULL '
-             . 'AND t.category_id IS NULL';
+             . 'AND NOT (t.category_id <=> ct.category_id)';
         $stmt = $db->prepare($sql);
         $stmt->execute(['acc' => $accountId]);
         return $stmt->rowCount();
