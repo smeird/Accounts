@@ -47,10 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta http-equiv="Expires" content="0">
     <title>User Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="frontend/wallet.svg">
 </head>
 <body class="min-h-screen bg-gray-50 font-sans p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-        <img src="frontend/logo.svg" alt="Finance Manager Logo" class="w-32 mx-auto mb-4">
+        <img src="frontend/wallet.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
         <h1 class="text-2xl font-semibold mb-4">User Management</h1>
         <p class="mb-4">Add new users or update your password from this page.</p>
         <p class="mb-4"><a href="logout.php" class="text-blue-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-blue-600 hover:underline">Home</a></p>
