@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
   <title>Wallet Icon</title>
-  <rect x="6" y="18" width="52" height="30" rx="4" ry="4" fill="#1d4ed8" />
-  <rect x="6" y="12" width="32" height="12" rx="4" ry="4" fill="#3b82f6" />
+  <rect x="6" y="18" width="52" height="30" rx="4" ry="4" fill="#4f46e5" />
+  <rect x="6" y="12" width="32" height="12" rx="4" ry="4" fill="#6366f1" />
   <circle cx="46" cy="33" r="4" fill="#ffffff" />
 </svg>
