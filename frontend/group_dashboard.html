@@ -69,7 +69,7 @@
             ...monthCols,
             { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];
-        tailwindTabulator(el, { data, layout: 'fitData', columns });
+        tailwindTabulator(el, { data, layout: 'fitDataStretch', columns });
     }
 
     // Render a table of yearly totals for each group
@@ -90,7 +90,7 @@
             ...yearCols,
             { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];
-        tailwindTabulator(el, { data, layout: 'fitData', columns });
+        tailwindTabulator(el, { data, layout: 'fitDataStretch', columns });
     }
 
     // Create a column chart for the supplied dataset

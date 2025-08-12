@@ -121,7 +121,7 @@
                 if (Array.isArray(data) && data.length) {
                     tailwindTabulator(gridEl, {
                         data: data,
-                        layout: 'fitData',
+                        layout: 'fitDataStretch',
                         columns: [
                             { title: 'Date', field: 'date' },
                             { title: 'Description', field: 'description', bottomCalc: function() { return 'Total'; } },

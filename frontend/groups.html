@@ -46,7 +46,7 @@ async function loadGroups() {
     }
     groupTable = tailwindTabulator('#group-table', {
         data: groups,
-        layout: 'fitData',
+        layout: 'fitDataStretch',
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
             { title: 'Description', field: 'description', editor: 'input' },

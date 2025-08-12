@@ -40,7 +40,7 @@ function tailwindTabulator(element, options) {
     options.theme = 'simple';
 
     if (!options.layout) {
-        options.layout = 'fitData';
+        options.layout = 'fitDataStretch';
     }
 
     const userRowFormatter = options.rowFormatter;
