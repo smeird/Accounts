@@ -125,9 +125,11 @@
     ]);
     const cats = await catRes.json();
     const unassigned = await untagRes.json();
+    const unassignedWrap = document.getElementById('unassigned');
     const container = document.getElementById('category-container');
+    unassignedWrap.innerHTML = '';
     container.innerHTML = '';
-    container.appendChild(createUnassignedCard(unassigned));
+    unassignedWrap.appendChild(createUnassignedCard(unassigned));
     cats.forEach(c => container.appendChild(createCategoryCard(c)));
   }
 
