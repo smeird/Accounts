@@ -27,7 +27,161 @@
     </div>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
+
     <script src="js/category_drag.js"></script>
+
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script>
+let categoryTable;
+// Fetch categories and render them with their tags
+async function loadCategories() {
+    const res = await fetch('../php_backend/public/categories.php');
+    const cats = await res.json();
+    const data = cats.map(c => ({id: c.id, name: c.name, description: c.description, tags: c.tags}));
+    if (categoryTable) {
+        categoryTable.setData(data);
+        return;
+    }
+    categoryTable = tailwindTabulator('#category-table', {
+        data: data,
+        layout: 'fitDataStretch',
+        columns: [
+            { title: 'Name', field: 'name', formatter: badgeFormatter('bg-green-200 text-green-800') },
+            { title: 'Description', field: 'description' },
+            { title: 'Tags', field: 'tags', formatter: function(cell){
+                const tags = cell.getValue() || [];
+                const rowData = cell.getRow().getData();
+                const container = document.createElement('div');
+                container.dataset.categoryId = rowData.id;
+                container.addEventListener('dragover', e => e.preventDefault());
+                container.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    const tagId = e.dataTransfer.getData('text/tag-id');
+                    const oldCategoryId = e.dataTransfer.getData('text/old-category-id');
+                    const newCategoryId = container.dataset.categoryId;
+                    if (tagId && oldCategoryId && newCategoryId && oldCategoryId !== newCategoryId) {
+                        await fetch('../php_backend/public/categories.php', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({action: 'move_tag', category_id: newCategoryId, old_category_id: oldCategoryId, tag_id: tagId})
+                        });
+                        loadCategories();
+                        showMessage('Tag moved');
+                    }
+                });
+                tags.forEach(t => {
+                    const badge = createBadge(t.name, 'bg-blue-200 text-blue-800');
+                    badge.draggable = true;
+                    badge.addEventListener('dragstart', e => {
+                        e.dataTransfer.setData('text/tag-id', t.id);
+                        e.dataTransfer.setData('text/old-category-id', rowData.id);
+                    });
+                    container.appendChild(badge);
+                });
+                return container;
+            } },
+            { title: 'Actions', formatter: function(cell){
+                const c = cell.getRow().getData();
+                const container = document.createElement('div');
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'bg-blue-600 text-white px-2 py-1 rounded mr-2';
+                editBtn.addEventListener('click', async () => {
+                    const name = prompt('Category Name', c.name);
+                    if (name === null) return;
+                    const description = prompt('Description', c.description || '');
+                    if (description === null) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: c.id, name, description})
+                    });
+                    loadCategories();
+                    showMessage('Category updated');
+                });
+                const tagBtn = document.createElement('button');
+                tagBtn.textContent = 'Assign Tag';
+                tagBtn.className = 'bg-gray-600 text-white px-2 py-1 rounded';
+                tagBtn.addEventListener('click', async () => {
+                    const resTags = await fetch('../php_backend/public/tags.php?unassigned=1');
+                    const allTags = await resTags.json();
+                    if (allTags.length === 0) {
+                        showMessage('No unassigned tags available', 'error');
+                        return;
+                    }
+                    const tagOptions = allTags.map(t => `${t.id}: ${t.name}`).join('\n');
+                    const tagId = prompt('Select Tag:\n' + tagOptions);
+                    if (tagId === null) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({action: 'add_tag', category_id: c.id, tag_id: tagId})
+                    });
+                    loadCategories();
+                    showMessage('Tag assigned');
+                });
+
+                const removeTagBtn = document.createElement('button');
+                removeTagBtn.textContent = 'Remove Tag';
+                removeTagBtn.className = 'bg-gray-500 text-white px-2 py-1 rounded ml-2';
+                removeTagBtn.addEventListener('click', async () => {
+                    if (!c.tags || c.tags.length === 0) {
+                        showMessage('No tags assigned', 'error');
+                        return;
+                    }
+                    const tagOptions = c.tags.map(t => `${t.id}: ${t.name}`).join('\n');
+                    const tagId = prompt('Select Tag to remove:\n' + tagOptions);
+                    if (tagId === null) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({action: 'remove_tag', category_id: c.id, tag_id: tagId})
+                    });
+                    loadCategories();
+                    showMessage('Tag removed');
+                });
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'Delete';
+                delBtn.className = 'bg-red-600 text-white px-2 py-1 rounded ml-2';
+                delBtn.addEventListener('click', async () => {
+                    if (!confirm('Delete this category?')) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: c.id})
+                    });
+                    loadCategories();
+                    showMessage('Category deleted');
+                });
+                container.appendChild(editBtn);
+                container.appendChild(tagBtn);
+                container.appendChild(removeTagBtn);
+                container.appendChild(delBtn);
+                return container;
+            }}
+        ]
+    });
+}
+
+document.getElementById('category-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('category-name').value;
+    const description = document.getElementById('category-description').value;
+    await fetch('../php_backend/public/categories.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, description})
+    });
+    document.getElementById('category-name').value = '';
+    document.getElementById('category-description').value = '';
+    loadCategories();
+    showMessage('Category created');
+});
+
+loadCategories();
+    </script>
+
     <script src="js/overlay.js"></script>
 </body>
 </html>

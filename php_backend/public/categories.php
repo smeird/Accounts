@@ -58,6 +58,20 @@ try {
                 Log::write("Removed tag $tagId from category $categoryId");
                 echo json_encode(['status' => 'ok']);
                 break;
+            case 'move_tag':
+                $newCategoryId = (int)($data['category_id'] ?? 0);
+                $oldCategoryId = (int)($data['old_category_id'] ?? 0);
+                $tagId = (int)($data['tag_id'] ?? 0);
+                try {
+                    CategoryTag::move($oldCategoryId, $newCategoryId, $tagId);
+                    Log::write("Moved tag $tagId from category $oldCategoryId to $newCategoryId");
+                    echo json_encode(['status' => 'ok']);
+                } catch (Exception $e) {
+                    http_response_code(400);
+                    Log::write('Move tag error: ' . $e->getMessage(), 'ERROR');
+                    echo json_encode(['error' => $e->getMessage()]);
+                }
+                break;
             default:
                 http_response_code(400);
                 echo json_encode(['error' => 'Invalid action']);
