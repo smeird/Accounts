@@ -24,21 +24,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'add_tag', category_id: newCategory, tag_id: dragInfo.tagId })
       });
-      showMessage('Tag moved');
     } else if (dragInfo.oldCategory && !newCategory) {
       await fetch('../php_backend/public/categories.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'remove_tag', category_id: dragInfo.oldCategory, tag_id: dragInfo.tagId })
       });
-      showMessage('Tag removed');
     } else if (!dragInfo.oldCategory && newCategory) {
       await fetch('../php_backend/public/categories.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'add_tag', category_id: newCategory, tag_id: dragInfo.tagId })
       });
-      showMessage('Tag assigned');
     }
     loadCategories();
   }
@@ -81,7 +78,6 @@
         body: JSON.stringify({ id: cat.id })
       });
       loadCategories();
-      showMessage('Category deleted');
     });
     header.appendChild(delBtn);
     card.appendChild(header);
@@ -148,7 +144,6 @@
         document.getElementById('category-name').value = '';
         document.getElementById('category-description').value = '';
         loadCategories();
-        showMessage('Category created');
       });
     }
     loadCategories();
