@@ -35,12 +35,14 @@ function badgeFormatter(colorClasses) {
 function tailwindTabulator(element, options) {
     options = options || {};
 
+
     // Apply the Simple theme to all Tabulator tables
     options.theme = 'simple';
 
     if (!options.layout) {
-        options.layout = 'fitColumns';
+        options.layout = 'fitData';
     }
+
     const userRowFormatter = options.rowFormatter;
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
@@ -58,6 +60,12 @@ function tailwindTabulator(element, options) {
     options.pagination = options.pagination || 'local';
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
+    table.on('tableBuilt', function() {
+        const cols = table.getColumns();
+        if (cols.length) {
+            cols[0].freeze(true);
+        }
+    });
     const el = table.element;
     el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
     const header = el.querySelector('.tabulator-header');

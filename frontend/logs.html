@@ -32,7 +32,7 @@
         .then(data => {
             tailwindTabulator('#logs-grid', {
                 data: data,
-                layout: 'fitColumns',
+                layout: 'fitData',
                 columns: [
                     { title: 'Time', field: 'created_at' },
                     { title: 'Level', field: 'level' },

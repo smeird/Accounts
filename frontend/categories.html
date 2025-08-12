@@ -47,7 +47,7 @@ async function loadCategories() {
     }
     categoryTable = tailwindTabulator('#category-table', {
         data: data,
-        layout: 'fitColumns',
+        layout: 'fitData',
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-green-200 text-green-800') },
             { title: 'Description', field: 'description' },

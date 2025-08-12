@@ -283,7 +283,7 @@ function loadTransactions() {
 
         table = tailwindTabulator('#transactions-grid', {
             data: data,
-            layout: 'fitColumns',
+            layout: 'fitData',
             columns: [
                 { title: 'Date', field: 'date' },
                 { title: 'Description', field: 'description', formatter: function(cell) {
