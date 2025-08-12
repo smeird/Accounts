@@ -29,10 +29,8 @@
     } else {
         Promise.all([
             fetch('../php_backend/public/transaction.php?id=' + id).then(r => r.json()),
-            fetch('../php_backend/public/categories.php').then(r => r.json()),
-            fetch('../php_backend/public/tags.php').then(r => r.json()),
             fetch('../php_backend/public/groups.php').then(r => r.json())
-        ]).then(([tx, categories, tags, groups]) => {
+        ]).then(([tx, groups]) => {
             if (tx.error) {
                 container.textContent = 'Transaction not found.';
                 return;
@@ -46,43 +44,13 @@
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
                 <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
-                <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category"></select></label>
-                <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Assign a tag"></select></label>
+                ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : ''}
+                <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
             `;
             container.appendChild(form);
-
-            const catSel = form.querySelector('#category');
-            const blankCat = document.createElement('option');
-            blankCat.value = '';
-            blankCat.textContent = '-- None --';
-            catSel.appendChild(blankCat);
-            categories.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                if (c.id == tx.category_id) opt.selected = true;
-                catSel.appendChild(opt);
-            });
-
-            const tagSel = form.querySelector('#tag');
-            const blankTag = document.createElement('option');
-            blankTag.value = '';
-            blankTag.textContent = '-- None --';
-            tagSel.appendChild(blankTag);
-            tags.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.name;
-                if (t.id == tx.tag_id) opt.selected = true;
-                tagSel.appendChild(opt);
-            });
-            const newOpt = document.createElement('option');
-            newOpt.value = '__new';
-            newOpt.textContent = 'Add New Tag...';
-            tagSel.appendChild(newOpt);
-
+            const tagInput = form.querySelector('#tag');
             const groupSel = form.querySelector('#group');
             const blankGrp = document.createElement('option');
             blankGrp.value = '';
@@ -95,6 +63,37 @@
                 if (g.id == tx.group_id) opt.selected = true;
                 groupSel.appendChild(opt);
             });
+            const newGrp = document.createElement('option');
+            newGrp.value = '__new';
+            newGrp.textContent = 'Add New Group...';
+            groupSel.appendChild(newGrp);
+
+            groupSel.addEventListener('change', () => {
+                if (groupSel.value === '__new') {
+                    const name = prompt('Enter new group name:');
+                    if (!name) { groupSel.value = ''; return; }
+                    fetch('../php_backend/public/groups.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
+                    }).then(r => r.json()).then(res => {
+                        if (res.id) {
+                            const opt = document.createElement('option');
+                            opt.value = res.id;
+                            opt.textContent = name;
+                            groupSel.insertBefore(opt, newGrp);
+                            groupSel.value = res.id;
+                            showMessage('Group created');
+                        } else {
+                            alert('Failed to create group');
+                            groupSel.value = '';
+                        }
+                    }).catch(() => {
+                        alert('Failed to create group');
+                        groupSel.value = '';
+                    });
+                }
+            });
 
             form.addEventListener('submit', function(ev){
                 ev.preventDefault();
@@ -103,15 +102,8 @@
                     account_id: tx.account_id,
                     description: tx.description
                 };
-                if (catSel.value !== '') payload.category_id = catSel.value;
                 if (groupSel.value !== '') payload.group_id = groupSel.value;
-                if (tagSel.value === '__new') {
-                    const name = prompt('Enter new tag name:');
-                    if (!name) return;
-                    payload.tag_name = name;
-                } else if (tagSel.value !== '') {
-                    payload.tag_id = tagSel.value;
-                }
+                if (tagInput.value.trim() !== '') payload.tag_name = tagInput.value.trim();
 
                 fetch('../php_backend/public/update_transaction.php', {
                     method: 'POST',
