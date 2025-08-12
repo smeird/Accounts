@@ -68,7 +68,7 @@ async function loadBudgets(){
     if(budgetTable){budgetTable.setData(data);}else{
         budgetTable=tailwindTabulator('#budget-table',{
             data:data,
-            layout:'fitData',
+            layout: 'fitDataStretch',
             columns:[
                 {title:'Category',field:'category'},
                 {title:'Budget',field:'amount',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},

@@ -45,7 +45,7 @@
         .then(data => {
             tailwindTabulator(document.getElementById('accounts-table'), {
                 data,
-                layout: 'fitData',
+                layout: 'fitDataStretch',
                 columns: [
                     { title: 'Name', field: 'name' },
                     { title: 'Transactions', field: 'transactions', hozAlign: 'right' },

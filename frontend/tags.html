@@ -47,7 +47,7 @@ async function loadTags(){
     }
     tagTable = tailwindTabulator('#tag-table', {
         data: tags,
-        layout: 'fitData',
+        layout: 'fitDataStretch',
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
             { title: 'Keyword', field: 'keyword' },
