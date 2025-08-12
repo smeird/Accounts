@@ -47,7 +47,7 @@ async function loadGroups() {
         layout: 'fitColumns',
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
-            { title: 'Description', field: 'description' },
+            { title: 'Description', field: 'description', editor: 'input' },
             { title: 'Actions', formatter: function(cell){
                 const g = cell.getRow().getData();
                 const container = document.createElement('div');
@@ -84,7 +84,17 @@ async function loadGroups() {
                 container.appendChild(del);
                 return container;
             }}
-        ]
+        ],
+        cellEdited: async function(cell){
+            if (cell.getField() !== 'description') return;
+            const g = cell.getRow().getData();
+            await fetch('../php_backend/public/groups.php', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: g.id, name: g.name, description: cell.getValue()})
+            });
+            showMessage('Group updated');
+        }
     });
 }
 
