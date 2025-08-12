@@ -24,18 +24,21 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'add_tag', category_id: newCategory, tag_id: dragInfo.tagId })
       });
+      showMessage('Tag moved');
     } else if (dragInfo.oldCategory && !newCategory) {
       await fetch('../php_backend/public/categories.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'remove_tag', category_id: dragInfo.oldCategory, tag_id: dragInfo.tagId })
       });
+      showMessage('Tag removed');
     } else if (!dragInfo.oldCategory && newCategory) {
       await fetch('../php_backend/public/categories.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'add_tag', category_id: newCategory, tag_id: dragInfo.tagId })
       });
+      showMessage('Tag assigned');
     }
     loadCategories();
   }
@@ -43,7 +46,7 @@
   function createTagBadge(tag){
     const span = document.createElement('span');
     span.textContent = tag.name;
-    span.className = 'bg-blue-200 text-blue-800 px-2 py-1 rounded cursor-move';
+    span.className = 'bg-blue-200 text-blue-800 px-2 py-1 rounded cursor-move w-full text-center';
     span.draggable = true;
     span.dataset.tagId = tag.id;
     span.addEventListener('dragstart', handleDragStart);
@@ -57,7 +60,7 @@
 
   function createCategoryCard(cat){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow';
+    card.className = 'bg-white p-4 rounded shadow w-64 flex-shrink-0';
     card.dataset.categoryId = cat.id;
 
     const header = document.createElement('div');
@@ -91,26 +94,27 @@
     }
 
     const tagWrap = document.createElement('div');
-    tagWrap.className = 'flex flex-wrap gap-2';
+    tagWrap.className = 'min-h-[3rem] flex flex-col gap-2';
+    tagWrap.dataset.categoryId = cat.id;
     (cat.tags || []).forEach(t => tagWrap.appendChild(createTagBadge(t)));
     card.appendChild(tagWrap);
 
-    addDropHandlers(card);
+    addDropHandlers(tagWrap);
     return card;
   }
 
   function createUnassignedCard(tags){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow';
+    card.className = 'bg-white p-4 rounded shadow w-64 flex-shrink-0';
     const title = document.createElement('h2');
     title.className = 'font-semibold mb-2';
     title.textContent = 'Unassigned Tags';
     card.appendChild(title);
     const tagWrap = document.createElement('div');
-    tagWrap.className = 'flex flex-wrap gap-2';
+    tagWrap.className = 'min-h-[3rem] flex flex-col gap-2';
     tags.forEach(t => tagWrap.appendChild(createTagBadge(t)));
     card.appendChild(tagWrap);
-    addDropHandlers(card);
+    addDropHandlers(tagWrap);
     return card;
   }
 
