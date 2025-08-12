@@ -67,6 +67,29 @@
     title.textContent = cat.name;
     header.appendChild(title);
 
+    const actions = document.createElement('div');
+    actions.className = 'flex gap-2';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'text-blue-600';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    editBtn.addEventListener('click', async () => {
+      const name = prompt('Category Name', cat.name);
+      if (name === null) return;
+      const description = prompt('Description', cat.description || '');
+      if (description === null) return;
+      await fetch('../php_backend/public/categories.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: cat.id, name, description })
+      });
+      loadCategories();
+      if (typeof showMessage !== 'undefined') {
+        showMessage('Category updated');
+      }
+    });
+    actions.appendChild(editBtn);
+
     const delBtn = document.createElement('button');
     delBtn.className = 'text-red-600';
     delBtn.innerHTML = '<i class="fas fa-trash"></i>';
@@ -79,7 +102,9 @@
       });
       loadCategories();
     });
-    header.appendChild(delBtn);
+    actions.appendChild(delBtn);
+
+    header.appendChild(actions);
     card.appendChild(header);
 
     if (cat.description) {
