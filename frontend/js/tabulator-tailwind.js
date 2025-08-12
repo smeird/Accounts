@@ -41,10 +41,14 @@ function tailwindTabulator(element, options) {
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
         const rowEl = row.getElement();
-        rowEl.classList.add('bg-white', 'hover:bg-gray-50', 'border-b', 'border-gray-200', 'border-b-[0.5px]');
+        rowEl.classList.add('bg-white', 'hover:bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]');
         rowEl.classList.remove('tabulator-row-even', 'tabulator-row-odd');
+        rowEl.style.borderTop = '0';
         rowEl.querySelectorAll('.tabulator-cell').forEach(cell => {
             cell.style.borderRight = '0';
+            cell.style.borderLeft = '0';
+            cell.style.borderTop = '0';
+            cell.style.borderBottom = '0';
         });
     };
     options.pagination = options.pagination || 'local';
@@ -58,6 +62,7 @@ function tailwindTabulator(element, options) {
         header.style.backgroundColor = 'white';
         header.querySelectorAll('.tabulator-col').forEach(col => {
             col.style.borderRight = '0';
+            col.style.borderLeft = '0';
         });
     }
     const tableHolder = el.querySelector('.tabulator-tableholder');
