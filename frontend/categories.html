@@ -40,7 +40,7 @@ let categoryTable;
 async function loadCategories() {
     const res = await fetch('../php_backend/public/categories.php');
     const cats = await res.json();
-    const data = cats.map(c => ({id: c.id, name: c.name, description: c.description, tags: c.tags.map(t => t.name)}));
+    const data = cats.map(c => ({id: c.id, name: c.name, description: c.description, tags: c.tags}));
     if (categoryTable) {
         categoryTable.setData(data);
         return;
@@ -51,7 +51,12 @@ async function loadCategories() {
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-green-200 text-green-800') },
             { title: 'Description', field: 'description' },
-            { title: 'Tags', field: 'tags', formatter: badgeFormatter('bg-blue-200 text-blue-800') },
+            { title: 'Tags', field: 'tags', formatter: function(cell){
+                const tags = cell.getValue() || [];
+                const container = document.createElement('div');
+                tags.forEach(t => container.appendChild(createBadge(t.name, 'bg-blue-200 text-blue-800')));
+                return container;
+            } },
             { title: 'Actions', formatter: function(cell){
                 const c = cell.getRow().getData();
                 const container = document.createElement('div');
@@ -92,6 +97,26 @@ async function loadCategories() {
                     loadCategories();
                     showMessage('Tag assigned');
                 });
+
+                const removeTagBtn = document.createElement('button');
+                removeTagBtn.textContent = 'Remove Tag';
+                removeTagBtn.className = 'bg-gray-500 text-white px-2 py-1 rounded ml-2';
+                removeTagBtn.addEventListener('click', async () => {
+                    if (!c.tags || c.tags.length === 0) {
+                        showMessage('No tags assigned', 'error');
+                        return;
+                    }
+                    const tagOptions = c.tags.map(t => `${t.id}: ${t.name}`).join('\n');
+                    const tagId = prompt('Select Tag to remove:\n' + tagOptions);
+                    if (tagId === null) return;
+                    await fetch('../php_backend/public/categories.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({action: 'remove_tag', category_id: c.id, tag_id: tagId})
+                    });
+                    loadCategories();
+                    showMessage('Tag removed');
+                });
                 const delBtn = document.createElement('button');
                 delBtn.textContent = 'Delete';
                 delBtn.className = 'bg-red-600 text-white px-2 py-1 rounded ml-2';
@@ -107,6 +132,7 @@ async function loadCategories() {
                 });
                 container.appendChild(editBtn);
                 container.appendChild(tagBtn);
+                container.appendChild(removeTagBtn);
                 container.appendChild(delBtn);
                 return container;
             }}
