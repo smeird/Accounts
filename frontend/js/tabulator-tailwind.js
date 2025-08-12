@@ -34,6 +34,8 @@ function badgeFormatter(colorClasses) {
 // Initialise a Tabulator table with Tailwind styling defaults
 function tailwindTabulator(element, options) {
     options = options || {};
+    // Apply the Simple theme to all Tabulator tables
+    options.theme = 'simple';
     if (!options.layout) {
         options.layout = 'fitColumns';
     }
