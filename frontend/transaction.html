@@ -41,11 +41,26 @@
             card.className = 'relative bg-white p-6 rounded shadow';
 
             const icons = document.createElement('div');
-            icons.className = 'absolute top-2 right-2 flex space-x-2 text-4xl';
-            icons.innerHTML = `
-                ${tx.tag_id ? '<i class="fa-solid fa-tag text-green-600" title="Tagged"></i>' : '<i class="fa-solid fa-tag text-red-500" title="No tag"></i>'}
-                ${tx.category_id ? '<i class="fa-solid fa-folder-open text-green-600" title="Categorised"></i>' : '<i class="fa-solid fa-folder text-red-500" title="No category"></i>'}
+
+            icons.className = 'absolute top-2 right-2 flex space-x-3';
+
+            const tagIcon = document.createElement('div');
+            tagIcon.className = `flex flex-col items-center justify-center w-20 h-20 rounded-full text-white text-center ${tx.tag_name ? 'bg-green-600' : 'bg-red-500'}`;
+            tagIcon.innerHTML = `
+                <i class="fa-solid fa-tag fa-3x"></i>
+                <span class="mt-1 text-xs">${tx.tag_name || 'No tag'}</span>
             `;
+            icons.appendChild(tagIcon);
+
+            const catIcon = document.createElement('div');
+            catIcon.className = `flex flex-col items-center justify-center w-20 h-20 rounded-full text-white text-center ${tx.category_name ? 'bg-green-600' : 'bg-red-500'}`;
+            catIcon.innerHTML = `
+                <i class="fa-solid ${tx.category_name ? 'fa-folder-open' : 'fa-folder'} fa-3x"></i>
+                <span class="mt-1 text-xs">${tx.category_name || 'No category'}</span>
+            `;
+            icons.appendChild(catIcon);
+
+
             card.appendChild(icons);
 
             const form = document.createElement('form');
