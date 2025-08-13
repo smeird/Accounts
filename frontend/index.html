@@ -77,23 +77,7 @@
     <script src="js/menu.js"></script>
     <script src="js/version.js"></script>
     <script src="js/update.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            Highcharts.chart('home-chart', {
-                title: { text: 'Sample Spending' },
-                xAxis: { categories: ['Mon','Tue','Wed','Thu','Fri'] },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + this.value; } }
-                },
-                series: [{ name: 'Spending', data: [5, 3, 4, 7, 2] }],
-                tooltip: {
-                    pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); }
-                }
-            });
-        });
-    </script>
+
     <script src="js/overlay.js"></script>
   </body>
 </html>
