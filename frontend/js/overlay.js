@@ -1,38 +1,45 @@
 // Provides a simple overlay for displaying temporary messages.
 (function(){
-    // Build the overlay element and insert it into the DOM
+    // Build a small notification element anchored to the top bar
     function createOverlay(){
         const overlay = document.createElement('div');
         overlay.id = 'overlay';
-        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden';
-        overlay.innerHTML = '<div class="p-6 rounded shadow text-white"></div>';
-        overlay.addEventListener('click', () => overlay.classList.add('hidden'));
+        overlay.className = 'fixed top-2 right-4 z-50 px-4 py-2 rounded shadow text-white hidden transform translate-x-full transition-transform duration-300';
         document.body.appendChild(overlay);
         return overlay;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         window.__overlay = createOverlay();
+        window.__topbarRight = document.getElementById('topbar-right');
     });
-
 
     let hideTimer;
 
-    // Display a temporary message in the overlay
+    // Display a temporary message in the top bar with a barging animation
     window.showMessage = function(msg, type = 'success'){
         const overlay = window.__overlay || document.getElementById('overlay') || createOverlay();
-        const box = overlay.querySelector('div');
-        box.textContent = msg;
-        box.className = 'p-6 rounded shadow text-white';
-        if(type === 'error') {
-            box.classList.add('bg-red-600');
-        } else {
-            box.classList.add('bg-green-600');
-        }
-        overlay.classList.remove('hidden');
+        const rightBar = window.__topbarRight || document.getElementById('topbar-right');
+        overlay.textContent = msg;
+        overlay.classList.remove('hidden', 'bg-green-600', 'bg-red-600');
+        overlay.classList.add(type === 'error' ? 'bg-red-600' : 'bg-green-600', 'translate-x-full');
+
+        const width = overlay.offsetWidth;
+
+        overlay.classList.remove('translate-x-full');
+        if(rightBar) rightBar.style.transform = `translateX(-${width + 16}px)`;
 
         clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => overlay.classList.add('hidden'), 2000);
+        hideTimer = setTimeout(() => {
+            overlay.classList.add('translate-x-full');
+            if(rightBar) rightBar.style.transform = '';
+        }, 2000);
 
+        overlay.addEventListener('transitionend', function handler(e){
+            if(e.propertyName === 'transform' && overlay.classList.contains('translate-x-full')){
+                overlay.classList.add('hidden');
+                overlay.removeEventListener('transitionend', handler);
+            }
+        });
     };
 })();
