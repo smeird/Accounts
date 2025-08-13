@@ -44,6 +44,7 @@
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
                 <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
+                <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals</span>' : 'No'}</p>
                 ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : ''}
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
