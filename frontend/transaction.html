@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Transaction Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -36,6 +37,17 @@
                 return;
             }
 
+            const card = document.createElement('div');
+            card.className = 'relative bg-white p-6 rounded shadow';
+
+            const icons = document.createElement('div');
+            icons.className = 'absolute top-2 right-2 flex space-x-2 text-4xl';
+            icons.innerHTML = `
+                ${tx.tag_id ? '<i class="fa-solid fa-tag text-green-600" title="Tagged"></i>' : '<i class="fa-solid fa-tag text-red-500" title="No tag"></i>'}
+                ${tx.category_id ? '<i class="fa-solid fa-folder-open text-green-600" title="Categorised"></i>' : '<i class="fa-solid fa-folder text-red-500" title="No category"></i>'}
+            `;
+            card.appendChild(icons);
+
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
@@ -50,7 +62,8 @@
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
             `;
-            container.appendChild(form);
+            card.appendChild(form);
+            container.appendChild(card);
             const tagInput = form.querySelector('#tag');
             const groupSel = form.querySelector('#group');
             const blankGrp = document.createElement('option');
