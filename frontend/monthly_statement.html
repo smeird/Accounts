@@ -74,12 +74,11 @@
             <div class="bg-white p-6 rounded shadow mt-4">
                 <div id="transactions-grid"></div>
             </div>
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="mt-4">
                 <div class="bg-white p-6 rounded shadow">
-                    <div id="sankey-chart" style="height:400px;"></div>
-                </div>
-                <div class="bg-white p-6 rounded shadow">
-                    <div id="category-donut" style="height:400px;"></div>
+
+                    <div id="category-donut" style="height:500px;"></div>
+
                 </div>
             </div>
         </main>
@@ -89,8 +88,7 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/highcharts-more.js"></script>
-    <script src="https://code.highcharts.com/modules/sankey.js"></script>
+
     
 <script>
 const monthSelect = document.getElementById('month');
@@ -220,7 +218,6 @@ function loadTransactions() {
         // normalise group ids for Tabulator
         data.forEach(t => { t.group_id = t.group_id ? String(t.group_id) : ''; });
         let income = 0, outgoings = 0, numIncome = 0, numExpense = 0;
-        const incomes = {};
         const spendings = {};
         const prevSpendings = {};
         const categoryTotals = {};
@@ -233,7 +230,6 @@ function loadTransactions() {
             if (amt > 0) {
                 income += amt;
                 numIncome++;
-                incomes[cat] = (incomes[cat] || 0) + amt;
             } else if (amt < 0) {
                 const exp = -amt;
                 outgoings += exp;
@@ -365,33 +361,9 @@ function loadTransactions() {
             ]
         });
 
-        buildSankeyChart(incomes, spendings);
-        buildDonutChart(spendings, prevSpendings);
-    });
-}
 
-function buildSankeyChart(incomes, spendings){
-    const totalIncome = Object.values(incomes).reduce((a,b) => a + b, 0);
-    const links = [];
-    Object.entries(incomes).forEach(([source, amount]) => {
-        const share = amount / totalIncome;
-        Object.entries(spendings).forEach(([cat, total]) => {
-            links.push([source, cat, +(total * share).toFixed(2)]);
-        });
-    });
-    Highcharts.chart('sankey-chart', {
-        title: { text: 'Income to Spending Flow' },
-        tooltip: {
-            pointFormatter: function(){
-                return '£' + Highcharts.numberFormat(this.weight, 2);
-            }
-        },
-        series: [{
-            keys: ['from', 'to', 'weight'],
-            data: links,
-            type: 'sankey',
-            name: 'Flow'
-        }]
+        buildDonutChart(spendings, prevSpendings);
+
     });
 }
 
@@ -403,15 +375,25 @@ function buildDonutChart(spendings, prevSpendings){
         return { name: cat, y: parseFloat(total.toFixed(2)), color, change };
     });
     Highcharts.chart('category-donut', {
-        chart: { type: 'pie' },
+
+        chart: { type: 'pie', height: 500 },
         title: { text: 'Spending by Category' },
+        legend: {
+            enabled: true,
+            useHTML: true,
+            labelFormatter: function(){
+                return '<span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs">'+this.name+'</span>';
+            }
+        },
+
         plotOptions: {
             pie: {
                 innerSize: '60%',
                 dataLabels: {
                     enabled: true,
-                    format: '{point.name}',
-                    style: { color: 'black', textOutline: 'none', fontWeight: 'normal' }
+                    useHTML: true,
+                    format: '<span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs">{point.name}</span>',
+                    style: { textOutline: 'none' }
                 }
             }
         },
