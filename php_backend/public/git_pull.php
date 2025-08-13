@@ -6,10 +6,12 @@ header('Content-Type: application/json');
 // so the script operates within the deployed application directory.
 $rootDir = realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname(__DIR__, 2);
 
+
 // Git expects a HOME environment variable even when no global configuration is
 // required. Point it at the repository root to satisfy this requirement.
 putenv('HOME=' . $rootDir);
 $_SERVER['HOME'] = $rootDir;
+
 
 $output = [];
 $returnVar = 0;

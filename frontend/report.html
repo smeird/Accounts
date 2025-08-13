@@ -13,12 +13,12 @@
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4">Transaction Reports</h1>
-            <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria.</p>
+            <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
             <form id="report-form" class="bg-white p-4 rounded shadow grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
                 <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>

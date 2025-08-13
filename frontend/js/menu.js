@@ -10,6 +10,16 @@ window.fetch = (input, init = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply consistent hover styling across the site
+  const hoverStyle = document.createElement('style');
+  hoverStyle.textContent = `
+    a { transition: color 0.2s ease; }
+    a:hover { color: #4f46e5; }
+    button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+  `;
+  document.head.appendChild(hoverStyle);
+
   const menu = document.getElementById('menu');
   if (menu) {
     // Add responsive classes so the navigation can toggle on small screens
@@ -52,6 +62,21 @@ document.addEventListener('DOMContentLoaded', () => {
         menu.querySelectorAll('a').forEach(a =>
           a.addEventListener('click', () => menu.classList.add('hidden'))
         );
+
+        // Build breadcrumb text above the page title
+        const current = location.pathname.split('/').pop();
+        const link = menu.querySelector(`a[href="${current}"]`);
+        if (link) {
+          const section = link.closest('div')?.querySelector('h3')?.textContent?.trim();
+          const page = link.textContent.trim();
+          const heading = document.querySelector('main h1');
+          if (section && page && heading) {
+            const crumb = document.createElement('div');
+            crumb.textContent = `${section} / ${page}`.toUpperCase();
+            crumb.className = 'uppercase text-indigo-900 text-[0.6rem] mb-1';
+            heading.before(crumb);
+          }
+        }
       })
       .catch(err => console.error('Menu load failed', err));
   }

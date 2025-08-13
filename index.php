@@ -36,12 +36,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="frontend/wallet.svg">
+    <style>
+        a { transition: color 0.2s ease; }
+        a:hover { color: #4f46e5; }
+        button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
         <img src="frontend/wallet.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
+        <div class="uppercase text-indigo-900 text-[0.6rem] mb-1 text-center">AUTHENTICATION / LOGIN</div>
         <h1 class="text-2xl font-semibold mb-4 text-center">Login</h1>
-        <p class="mb-4 text-center">Use your account credentials to sign in and access the finance manager.</p>
+        <p class="mb-4 text-center">Use your account credentials to sign in and access the finance manager. Enter your username and password in the boxes below and press the login button to continue.</p>
         <?php if ($error): ?>
             <p class="mb-4 text-red-500 text-center"><?= htmlspecialchars($error) ?></p>
         <?php endif; ?>
