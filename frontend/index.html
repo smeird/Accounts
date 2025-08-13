@@ -20,8 +20,10 @@
         <nav id="menu" class="w-64 flex-shrink-0 bg-white/80 backdrop-blur border-r p-6 shadow"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-3xl font-semibold mb-4 text-indigo-700">Welcome to Finance Manager</h1>
-            <p class="text-gray-700">Select an option from the menu to get started.</p>
+             <p class="text-gray-700">Select an option from the menu to get started.</p>
             <p id="version" class="text-gray-500">Version: loading...</p>
+            <button id="update-btn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded flex items-center"><i class="fas fa-sync-alt mr-2"></i>Update</button>
+            <pre id="update-output" class="mt-2 text-sm text-gray-600 whitespace-pre-wrap"></pre>
 
             <section class="mt-8 bg-white p-8 rounded-lg shadow-lg">
                 <h2 class="text-2xl font-semibold mb-4 text-indigo-700">What You Can Do</h2>
@@ -54,7 +56,8 @@
 
     <script src="js/menu.js"></script>
     <script src="js/version.js"></script>
+    <script src="js/update.js"></script>
 
     <script src="js/overlay.js"></script>
-</body>
+  </body>
 </html>
