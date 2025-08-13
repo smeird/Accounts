@@ -20,7 +20,7 @@ function initUpload() {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'w-full bg-gray-200 rounded h-2';
                 const bar = document.createElement('div');
-                bar.className = 'bg-blue-600 h-2 rounded';
+                bar.className = 'bg-indigo-600 h-2 rounded';
                 bar.style.width = '0%';
                 wrapper.appendChild(bar);
                 progressContainer.appendChild(wrapper);

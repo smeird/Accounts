@@ -18,7 +18,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <h1 class="text-2xl font-semibold mb-4">Monthly Statement</h1>
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Monthly Statement</h1>
             <p class="mb-4">Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.</p>
             <div class="bg-white p-6 rounded shadow">
                 <form id="statement-form" class="flex items-end space-x-4">
@@ -34,7 +34,7 @@
                         <input type="checkbox" id="untagged-only" class="h-4 w-4" checked data-help="Show only untagged transactions">
                         <label for="untagged-only" class="text-sm text-gray-700">Only untagged</label>
                     </div>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">View</button>
                 </form>
             </div>
             <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -321,7 +321,7 @@ function loadTransactions() {
                     formatter: function(cell){
                         const value = cell.getValue();
                         if (!value) return '';
-                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
+                        const badge = createBadge(value, 'bg-indigo-200 text-indigo-800');
                         const link = document.createElement('a');
                         link.href = `search.html?value=${encodeURIComponent(value)}`;
                         link.appendChild(badge);

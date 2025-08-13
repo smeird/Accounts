@@ -59,9 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
         <img src="favicon.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
-        <h1 class="text-2xl font-semibold mb-4">User Management</h1>
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">User Management</h1>
         <p class="mb-4">Add new users or update your own password from this page. Use the forms below to manage access so everyone who needs the system can sign in securely.</p>
-        <p class="mb-4"><a href="logout.php" class="text-blue-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-blue-600 hover:underline">Home</a></p>
+        <p class="mb-4"><a href="logout.php" class="text-indigo-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-indigo-600 hover:underline">Home</a></p>
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
@@ -71,14 +71,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="hidden" name="action" value="add">
             <label class="block">Username: <input type="text" name="username" class="border p-2 rounded w-full" data-help="Choose a username"></label>
             <label class="block">Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Set a password"></label>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Add User</button>
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Add User</button>
         </form>
 
         <h2 class="text-xl font-semibold mt-6 mb-2">Update Password</h2>
         <form method="post" class="space-y-4">
             <input type="hidden" name="action" value="update">
             <label class="block">New Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Enter your new password"></label>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update Password</button>
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Update Password</button>
         </form>
     </div>
     <script src="frontend/js/input_help.js"></script>
