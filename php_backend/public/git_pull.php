@@ -6,6 +6,7 @@ $rootDir = dirname(__DIR__, 2);
 $output = [];
 $returnVar = 0;
 
+
 // Determine the current branch and available remotes
 $branch = trim(shell_exec('cd ' . escapeshellarg($rootDir) . ' && git rev-parse --abbrev-ref HEAD 2>/dev/null'));
 $remote = trim(shell_exec('cd ' . escapeshellarg($rootDir) . ' && git remote 2>/dev/null'));
@@ -21,6 +22,7 @@ if ($remote === '') {
         $returnVar
     );
 }
+
 echo json_encode([
     'success' => $returnVar === 0,
     'output' => trim(implode("\n", $output))
