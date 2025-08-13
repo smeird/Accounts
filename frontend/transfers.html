@@ -19,18 +19,17 @@
             <section>
                 <h1 class="text-2xl font-semibold mb-4 flex items-center justify-between">
                     Detected Transfers
-                    <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Assist</button>
+
+                    <span class="space-x-2">
+                        <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Assist</button>
+                        <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fa-solid fa-check-double mr-1"></i>Mark All</button>
+                    </span>
+
                 </h1>
                 <div id="transfers-table"></div>
             </section>
             <section>
-                <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
-                    OFX Marked Transfers
-                    <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fa-solid fa-check-double mr-1"></i>Mark All</button>
-                </h2>
-                <div id="ofx-transfers-table"></div>
-            </section>
-            <section>
+
                 <h2 class="text-xl font-semibold mb-4">Link Transactions as Transfer</h2>
                 <form id="link-form" class="space-y-4">
                     <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
@@ -45,64 +44,69 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
-    function markTransfers(ids){
+
+    let transfersTable = null;
+
+    function renderTransfers(data){
+        if(transfersTable){
+            transfersTable.setData(data);
+            return;
+        }
+        transfersTable = tailwindTabulator(document.getElementById('transfers-table'), {
+            data: data,
+            layout: 'fitDataStretch',
+            columns: [
+                { title: 'Date', field: 'date' },
+                { title: 'Description', field: 'description' },
+                { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
+                { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
+                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'Mark', formatter: function(){ return '<button class="bg-green-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-check"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); markTransfers([[r.from_id, r.to_id]]); } }
+            ]
+        });
+    }
+
+    function markTransfers(pairs){
         fetch('../php_backend/public/mark_transfer.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: ids })
+            body: JSON.stringify({ pairs: pairs })
         })
+
         .then(resp => resp.json())
         .then(res => {
             if(res.status === 'ok') {
-                location.reload();
+                loadCandidates();
             } else {
                 alert(res.error || 'Failed to mark transfers');
             }
         });
     }
 
-    fetch('../php_backend/public/transfers.php')
-        .then(resp => resp.json())
-        .then(data => {
-            tailwindTabulator(document.getElementById('transfers-table'), {
-                data: data.transfers,
-                layout: 'fitDataStretch',
-                columns: [
-                    { title: 'Date', field: 'date' },
-                    { title: 'Description', field: 'description' },
-                    { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
-                    { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
-                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-                ]
-            });
 
-            tailwindTabulator(document.getElementById('ofx-transfers-table'), {
-                data: data.ofx_transfers,
-                layout: 'fitDataStretch',
-                columns: [
-                    { title: 'Date', field: 'date' },
-                    { title: 'Description', field: 'description' },
-                    { title: 'Account', field: 'account_name', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.id}">${cell.getValue()}</a>`; } },
-                    { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
-                    { title: 'Mark', formatter: function(){ return '<button class="bg-green-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-check"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ markTransfers([cell.getRow().getData().id]); } }
-                ]
-            });
+    function loadCandidates(){
 
-            document.getElementById('mark-all').addEventListener('click', function(){
-                markTransfers(data.ofx_transfers.map(t => t.id));
-            });
-        });
-
-    document.getElementById('assist-btn').addEventListener('click', function(){
         fetch('../php_backend/public/assist_transfers.php', { method: 'POST' })
         .then(resp => resp.json())
         .then(res => {
             if(res.status === 'ok') {
-                location.reload();
+
+                renderTransfers(res.candidates);
+
             } else {
                 alert(res.error || 'Assist failed');
             }
         });
+
+    }
+
+    document.getElementById('assist-btn').addEventListener('click', loadCandidates);
+
+    document.getElementById('mark-all').addEventListener('click', function(){
+        if(!transfersTable) return;
+        const pairs = transfersTable.getData().map(r => [r.from_id, r.to_id]);
+        if(pairs.length){ markTransfers(pairs); }
+
     });
 
     document.getElementById('link-form').addEventListener('submit', function(e){

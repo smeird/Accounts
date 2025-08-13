@@ -643,6 +643,55 @@ class Transaction {
     }
 
     /**
+     * Locate transactions that appear to be transfers but are not yet linked.
+     * Matches items on the same date with opposite amounts where neither side
+     * has a transfer_id.
+     *
+     * @return array<int, array{date:string, description:string, amount:float, from_id:int, from_account:string, to_id:int, to_account:string}>
+     */
+    public static function getTransferCandidates(): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT t1.id AS id1, t1.amount AS amt1, a1.name AS acc1, '
+             . 't2.id AS id2, t2.amount AS amt2, a2.name AS acc2, '
+             . 't1.date, t1.description '
+             . 'FROM `transactions` t1 '
+             . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
+             . 'AND t1.`amount` = -t2.`amount` '
+             . 'AND t1.`id` < t2.`id` '
+             . 'JOIN `accounts` a1 ON t1.`account_id` = a1.`id` '
+             . 'JOIN `accounts` a2 ON t2.`account_id` = a2.`id` '
+             . 'WHERE t1.`transfer_id` IS NULL '
+             . 'AND t2.`transfer_id` IS NULL';
+        $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $result = [];
+        foreach ($rows as $row) {
+            if ((float)$row['amt1'] < 0) {
+                $fromId = (int)$row['id1'];
+                $fromAcc = $row['acc1'];
+                $toId = (int)$row['id2'];
+                $toAcc = $row['acc2'];
+                $amount = abs((float)$row['amt1']);
+            } else {
+                $fromId = (int)$row['id2'];
+                $fromAcc = $row['acc2'];
+                $toId = (int)$row['id1'];
+                $toAcc = $row['acc1'];
+                $amount = abs((float)$row['amt2']);
+            }
+            $result[] = [
+                'date' => $row['date'],
+                'description' => $row['description'],
+                'amount' => $amount,
+                'from_id' => $fromId,
+                'from_account' => $fromAcc,
+                'to_id' => $toId,
+                'to_account' => $toAcc
+            ];
+        }
+        return $result;
+    }
+
+    /**
      * Link two existing transactions as a transfer pair.
      */
     public static function linkTransfer(int $id1, int $id2): bool {

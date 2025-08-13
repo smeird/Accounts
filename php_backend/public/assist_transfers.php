@@ -1,5 +1,7 @@
 <?php
-// API endpoint to auto-link transfers with matching date and opposite amounts.
+
+// API endpoint to search for transactions that look like transfers.
+
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Log.php';
@@ -12,8 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $linked = Transaction::assistTransfers();
-    echo json_encode(['status' => 'ok', 'linked' => $linked]);
+
+    $candidates = Transaction::getTransferCandidates();
+    echo json_encode(['status' => 'ok', 'candidates' => $candidates]);
+
 } catch (Exception $e) {
     http_response_code(500);
     Log::write('Assist transfers error: ' . $e->getMessage(), 'ERROR');
