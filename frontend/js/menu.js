@@ -10,6 +10,16 @@ window.fetch = (input, init = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply consistent hover styling across the site
+  const hoverStyle = document.createElement('style');
+  hoverStyle.textContent = `
+    a { transition: color 0.2s ease; }
+    a:hover { color: #4f46e5; }
+    button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+  `;
+  document.head.appendChild(hoverStyle);
+
   const menu = document.getElementById('menu');
   if (menu) {
     // Add responsive classes so the navigation can toggle on small screens

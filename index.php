@@ -36,6 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="frontend/wallet.svg">
+    <style>
+        a { transition: color 0.2s ease; }
+        a:hover { color: #4f46e5; }
+        button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
