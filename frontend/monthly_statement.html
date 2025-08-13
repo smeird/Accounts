@@ -79,7 +79,7 @@
                     <div id="sankey-chart" style="height:400px;"></div>
                 </div>
                 <div class="bg-white p-6 rounded shadow">
-                    <div id="category-bubbles" style="height:400px;"></div>
+                    <div id="category-donut" style="height:400px;"></div>
                 </div>
             </div>
         </main>
@@ -91,7 +91,7 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/sankey.js"></script>
-    <script src="https://code.highcharts.com/modules/packed-bubble.js"></script>
+    
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
@@ -366,7 +366,7 @@ function loadTransactions() {
         });
 
         buildSankeyChart(incomes, spendings);
-        buildBubbleChart(spendings, prevSpendings);
+        buildDonutChart(spendings, prevSpendings);
     });
 }
 
@@ -395,31 +395,32 @@ function buildSankeyChart(incomes, spendings){
     });
 }
 
-function buildBubbleChart(spendings, prevSpendings){
+function buildDonutChart(spendings, prevSpendings){
     const data = Object.entries(spendings).map(([cat, total]) => {
         const prev = prevSpendings[cat] || 0;
         const change = total - prev;
         const color = change > 0 ? '#dc2626' : (change < 0 ? '#16a34a' : '#9ca3af');
-        return { name: cat, value: parseFloat(total.toFixed(2)), color, change };
+        return { name: cat, y: parseFloat(total.toFixed(2)), color, change };
     });
-    Highcharts.chart('category-bubbles', {
-        chart: { type: 'packedbubble' },
+    Highcharts.chart('category-donut', {
+        chart: { type: 'pie' },
         title: { text: 'Spending by Category' },
-        tooltip: {
-            useHTML: true,
-            pointFormatter: function(){
-                const change = this.change;
-                const sign = change >= 0 ? '+' : '-';
-                return `<b>${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.value, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}`;
-            }
-        },
         plotOptions: {
-            packedbubble: {
+            pie: {
+                innerSize: '60%',
                 dataLabels: {
                     enabled: true,
                     format: '{point.name}',
                     style: { color: 'black', textOutline: 'none', fontWeight: 'normal' }
                 }
+            }
+        },
+        tooltip: {
+            useHTML: true,
+            pointFormatter: function(){
+                const change = this.change;
+                const sign = change >= 0 ? '+' : '-';
+                return `<b>${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.y, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}`;
             }
         },
         series: [{ data }]
