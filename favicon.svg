@@ -1,13 +1,13 @@
 <svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Accounts favicon" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
-      .ink{stroke:#1F1539;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      .ink{stroke:#111827;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     </style>
   </defs>
-  <rect x="4" y="4" width="56" height="56" rx="12" fill="#8E79D6"/>
-  <!-- Stylised £ mark constructed from bars so it scales cleanly -->
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#4f46e5"/>
+  <!-- Stylised £ via simple bars for crisp scaling -->
   <path d="M24 22c0-5 4-8 9-8 4 0 7 1 9 3" fill="none" class="ink"/>
   <path d="M18 32h20M22 42h22" fill="none" class="ink"/>
-  <!-- Tiny upward bar to hint “report growth” -->
-  <rect x="42" y="34" width="4" height="10" rx="1" fill="#1F1539"/>
+  <!-- Tiny growth bar -->
+  <rect x="42" y="34" width="4" height="10" rx="1" fill="#111827"/>
 </svg>
