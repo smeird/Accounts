@@ -15,7 +15,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
-            <h1 class="text-2xl font-semibold mb-4">Backup &amp; Restore</h1>
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Backup &amp; Restore</h1>
             <p class="mb-4">Create backups of your data or restore from an earlier snapshot. Use the tools below to download a copy of your information or load a previous backup.</p>
             <section class="bg-white p-6 rounded shadow space-y-4">
                 <h2 class="text-xl font-semibold">Download Backup</h2>
@@ -27,14 +27,14 @@
                     <label class="block"><input type="checkbox" name="parts" value="groups" class="mr-2">Groups</label>
                     <label class="block"><input type="checkbox" name="parts" value="budgets" class="mr-2">Budgets</label>
                 </div>
-                <button id="download-backup" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-download mr-2"></i>Download</button>
+                <button id="download-backup" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-download mr-2"></i>Download</button>
             </section>
             <section class="bg-white p-6 rounded shadow space-y-4">
                 <h2 class="text-xl font-semibold">Restore Backup</h2>
                 <p>Select a backup JSON file to restore any included transactions, categories, tags, groups, or budgets.</p>
                 <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="file" id="backup-file" name="backup_file" accept="application/json" required data-help="Choose a previously downloaded backup JSON file">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-upload mr-2"></i>Restore</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-upload mr-2"></i>Restore</button>
                 </form>
             </section>
         </main>

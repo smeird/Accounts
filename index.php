@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
         <img src="favicon.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1 text-center">AUTHENTICATION / LOGIN</div>
-        <h1 class="text-2xl font-semibold mb-4 text-center">Login</h1>
+        <h1 class="text-2xl font-semibold mb-4 text-center text-indigo-700">Login</h1>
         <p class="mb-4 text-center">Use your account credentials to sign in and access the finance manager. Enter your username and password in the boxes below and press the login button to continue.</p>
         <?php if ($error): ?>
             <p class="mb-4 text-red-500 text-center"><?= htmlspecialchars($error) ?></p>
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="block">Password:
                 <input type="password" name="password" class="mt-1 w-full border p-2 rounded" data-help="Enter your password">
             </label>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
+            <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded">Login</button>
         </form>
     </div>
     <script src="frontend/js/input_help.js"></script>
