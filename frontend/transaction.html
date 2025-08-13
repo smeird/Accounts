@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Transaction Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="flex min-h-screen">
@@ -36,6 +37,38 @@
                 return;
             }
 
+            const card = document.createElement('div');
+            card.className = 'relative bg-white p-6 rounded shadow';
+
+            const icons = document.createElement('div');
+            icons.className = 'absolute top-2 right-2 flex flex-col space-y-2 items-end';
+
+            const tagBtn = document.createElement('button');
+            tagBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.tag_name ? 'bg-green-600' : 'bg-gray-400'}`;
+            tagBtn.innerHTML = `
+                <i class="fa-solid fa-tag fa-2x"></i>
+                <span class="ml-4 flex-1 text-right">${tx.tag_name || 'No tag'}</span>
+            `;
+            icons.appendChild(tagBtn);
+
+            const catBtn = document.createElement('button');
+            catBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.category_name ? 'bg-blue-600' : 'bg-gray-400'}`;
+            catBtn.innerHTML = `
+                <i class="fa-solid ${tx.category_name ? 'fa-folder-open' : 'fa-folder'} fa-2x"></i>
+                <span class="ml-4 flex-1 text-right">${tx.category_name || 'No category'}</span>
+            `;
+            icons.appendChild(catBtn);
+
+            const groupBtn = document.createElement('button');
+            groupBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.group_name ? 'bg-purple-600' : 'bg-gray-400'}`;
+            groupBtn.innerHTML = `
+                <i class="fa-solid fa-layer-group fa-2x"></i>
+                <span class="ml-4 flex-1 text-right">${tx.group_name || 'No group'}</span>
+            `;
+            icons.appendChild(groupBtn);
+
+            card.appendChild(icons);
+
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
@@ -44,12 +77,14 @@
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
                 <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
+                <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals</span>' : 'No'}</p>
                 ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : ''}
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
             `;
-            container.appendChild(form);
+            card.appendChild(form);
+            container.appendChild(card);
             const tagInput = form.querySelector('#tag');
             const groupSel = form.querySelector('#group');
             const blankGrp = document.createElement('option');
