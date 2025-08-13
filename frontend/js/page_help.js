@@ -3,30 +3,32 @@
 document.addEventListener('DOMContentLoaded', () => {
   const page = location.pathname.split('/').pop();
   const helpTexts = {
-    'index.php': 'Use this page to sign in to the finance manager. Enter your username and password and submit the form to open the main dashboard.',
-    'users.php': 'Manage user accounts here. Add new logins for colleagues or change your own password to keep your access secure.',
-    'index.html': 'The home page provides an overview of the system and links to every feature. Use the side menu to navigate through dashboards, reports and settings.',
-    'upload.html': 'Upload OFX statement files from your bank. Choose a file, start the upload and the transactions will be imported into the database.',
-    'account_dashboard.html': 'Check balances and recent activity for each account. Use the charts and tables to monitor how funds move over time.',
-    'all_years_dashboard.html': 'Compare totals across all recorded years to spot long‑term trends. The page highlights changes in income and spending year by year.',
-    'backup.html': 'Create downloads of your data or restore from a previous snapshot. Use this section regularly to protect your records against loss.',
-    'budgets.html': 'Set monthly spending limits for categories and track progress. Review how closely your actual costs follow the targets you set.',
-    'categories.html': 'Maintain the list of categories and link them to tags. Organised categories ensure reports group transactions meaningfully.',
-    'graphs.html': 'Explore interactive charts that analyse your finances. Switch between graph types to highlight trends and unusual activity.',
-    'group_dashboard.html': 'Assess spending by category group for each month and year. Drill into a group to understand where your money is allocated.',
-    'groups.html': 'Create groups that bundle related categories together so you can compare broader areas such as household or leisure.',
-    'logs.html': 'Review system log entries to monitor activity and troubleshoot issues. Filters help you focus on specific time periods or severities.',
-    'missing_tags.html': 'Find transactions that are not yet tagged so nothing is overlooked. Apply tags here to keep reports and budgets accurate.',
-    'monthly_dashboard.html': 'Inspect detailed income and expenses for a chosen month. Charts and summaries show how that period compares with others.',
-    'monthly_statement.html': 'Select a month to display every transaction in order. Review individual entries and confirm their tags and categories.',
-    'processes.html': 'Run maintenance tasks such as auto‑tagging or category assignment. Start a process and monitor its progress on this page.',
-    'report.html': 'Generate transaction reports based on flexible criteria. Filter by date range, categories or amounts and download the results.',
-    'search.html': 'Search for transactions using keywords or amounts. The results list matching items so you can locate specific payments or receipts.',
-    'tags.html': 'Add, edit and remove tags used to classify transactions. Clear tagging improves the accuracy of analyses and budgets.',
-    'transaction.html': 'Review detailed information for a single transaction. Edit its description, amount, tags or category if necessary.',
-    'transfers.html': 'List transfers detected between accounts and those marked in uploaded files. Use the table to confirm or adjust transfer recognition.',
-    'yearly_dashboard.html': 'Analyse totals for a chosen year using charts and tables. Compare months within the year to see how your finances evolve.',
-    'recurring_spend.html': 'Identify expenses that recur over the past year. The page highlights regular payments so you can manage ongoing commitments.'
+
+    'index.php': `Use this page to sign in to the finance manager. Begin by typing your username and password into the boxes provided and then press the login button. If you are new or cannot remember your details, ask the person who set up the system to help you get access. Once signed in you will be taken to the main dashboard where your information is stored.`,
+    'users.php': `Manage user accounts here so that each person has their own login. You can add new accounts for family members, reset passwords when someone forgets them and remove access that is no longer needed. Keeping accounts separate makes it easier to see who made changes and keeps your data safer.`,
+    'index.html': `The home page is the starting point for exploring your finances. It shows a summary of the system and provides links to every feature. Use the menu on the left to open dashboards, run reports or adjust settings. Spend a moment getting familiar with these links before diving into the details.`,
+    'upload.html': `Upload OFX statement files from your bank so the system can read your transactions. Click Choose File, find the statement on your computer and then press Start Upload. When the process finishes you will see the new transactions ready for review. Importing regularly keeps your records up to date.`,
+    'account_dashboard.html': `Check balances and recent activity for each account in one place. Charts show how money moves in and out over time, while tables list individual transactions. Look for jumps or dips that you do not recognise and click through to investigate further. This helps you spot unusual activity quickly.`,
+    'all_years_dashboard.html': `Compare totals across all recorded years to see the bigger picture. Scroll through the charts to watch how income and spending rise or fall over time. Use this long view to plan savings goals or decide where to cut costs. Understanding these trends makes long‑term planning easier.`,
+    'backup.html': `Create downloads of your data or restore from a previous snapshot. Click Make Backup to save a copy to your computer so you always have a safe version. If something goes wrong you can return here and use Restore Backup to put the saved information back. Regular backups protect your records against loss or mistakes.`,
+    'budgets.html': `Set monthly spending limits for each category and track how you are doing. Enter a target amount and watch the progress bars show whether you are under or over budget. You can adjust the numbers as your priorities change. Checking this page often helps avoid surprise bills.`,
+    'categories.html': `Maintain the list of categories and link them to tags so transactions are grouped sensibly. Add new categories when you start tracking a different type of expense and remove ones you no longer use. Keeping this list tidy ensures reports are easy to read and understand.`,
+    'graphs.html': `Explore interactive charts that analyse your finances from different angles. Switch between graph types or time ranges to highlight trends and unusual activity. Hover over a point to see exact amounts and compare periods. These visuals make it easier to spot patterns than looking at raw numbers.`,
+    'group_dashboard.html': `Assess spending by category group for each month and year. Click a group to drill down into the categories it contains and see where your money is going. Comparing groups such as household, travel or leisure helps you understand which areas take the largest share of your budget.`,
+    'groups.html': `Create and manage groups that bundle related categories together. You might group groceries and dining under Food or combine rent and utilities into Home. Grouping similar expenses gives you a clearer overview in dashboards and reports. Adjust the groups whenever your circumstances change.`,
+    'logs.html': `Review system log entries to monitor activity and troubleshoot issues. Filters allow you to focus on a specific time or message type so the list does not feel overwhelming. Reading the logs can reveal what happened just before a problem appeared, which is helpful when asking for support.`,
+    'missing_tags.html': `Find transactions that are not yet tagged so nothing is overlooked. Work through the list and assign a tag to each item using the controls provided. Tagged transactions show up correctly in reports and budgets, so keeping this page clear ensures the rest of the system stays accurate.`,
+    'monthly_dashboard.html': `Inspect detailed income and expenses for a chosen month. Charts and summaries show where your money came from and where it went during that time. Compare different months to spot patterns such as higher bills in winter or extra income in summer. These insights help you plan ahead.`,
+    'monthly_statement.html': `Select a month to display every transaction in order just like a bank statement. Review each entry carefully, edit its description or amount if needed and confirm the tags and categories. Taking a few minutes here keeps the rest of your analysis reliable and can help you remember purchases you forgot.`,
+    'processes.html': `Run maintenance tasks such as auto‑tagging or category assignment to tidy your data. Choose a process from the list, start it and watch the progress indicator until it completes. These tools save time by doing repetitive work for you, leaving you free to focus on decisions rather than data entry.`,
+    'report.html': `Generate transaction reports based on flexible criteria. Pick a date range, categories or amounts and then click Run Report to see matching transactions. You can download the results as a file to share or study further. Reports are useful for answering specific questions like how much you spent on travel last year.`,
+    'search.html': `Search for transactions using keywords or amounts when you need to find something quickly. Enter a word or number, press Search and the system will list any items that match. You can click a result to view or edit the full transaction. This feature saves time when looking through large histories.`,
+    'tags.html': `Add, edit and remove tags used to classify transactions. Tags act like labels such as Grocery or Salary that make filtering and reporting easier. Try to keep them short and clear so you can reuse them across many entries. Regularly reviewing tags keeps your organisation consistent.`,
+    'transaction.html': `Review detailed information for a single transaction to ensure it is recorded correctly. Here you can change the description, amount, date, tags or category if something does not look right. After saving, the updates flow through to dashboards, reports and budgets automatically.`,
+    'transfers.html': `List transfers detected between accounts and those marked in uploaded files. Confirm each transfer so it does not count as income or expense, or adjust the pairing if the system matched it wrongly. Accurate transfers keep your totals honest and stop the same money being counted twice.`,
+    'yearly_dashboard.html': `Analyse totals for a chosen year using charts and tables. Look through the months to see how spending and income evolved as the year progressed. This broader view helps you understand whether you are meeting your long‑term goals and where you might need to cut back.`,
+    'recurring_spend.html': `Identify expenses that recur over the past year so you are aware of ongoing commitments. The page highlights regular payments like subscriptions or rent and shows how much they cost overall. Spotting these repeated charges helps you decide which ones are essential and which could be reduced or cancelled.`
+
   };
 
   const helpText = helpTexts[page];
@@ -65,3 +67,4 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(btn);
   document.body.appendChild(overlay);
 });
+
