@@ -76,7 +76,9 @@
             </div>
             <div class="mt-4">
                 <div class="bg-white p-6 rounded shadow">
+
                     <div id="category-donut" style="height:500px;"></div>
+
                 </div>
             </div>
         </main>
@@ -86,6 +88,7 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+
     
 <script>
 const monthSelect = document.getElementById('month');
@@ -358,7 +361,9 @@ function loadTransactions() {
             ]
         });
 
+
         buildDonutChart(spendings, prevSpendings);
+
     });
 }
 
@@ -370,6 +375,7 @@ function buildDonutChart(spendings, prevSpendings){
         return { name: cat, y: parseFloat(total.toFixed(2)), color, change };
     });
     Highcharts.chart('category-donut', {
+
         chart: { type: 'pie', height: 500 },
         title: { text: 'Spending by Category' },
         legend: {
@@ -379,6 +385,7 @@ function buildDonutChart(spendings, prevSpendings){
                 return '<span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs">'+this.name+'</span>';
             }
         },
+
         plotOptions: {
             pie: {
                 innerSize: '60%',
