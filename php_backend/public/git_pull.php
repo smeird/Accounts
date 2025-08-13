@@ -2,7 +2,9 @@
 // Runs 'git pull' to update the application to the latest version.
 require_once __DIR__ . '/../nocache.php';
 header('Content-Type: application/json');
-$rootDir = dirname(__DIR__, 2);
+// Determine the repository root. Prefer the web server's document root
+// so the script operates within the deployed application directory.
+$rootDir = realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname(__DIR__, 2);
 $output = [];
 $returnVar = 0;
 
