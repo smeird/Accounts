@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta http-equiv="Expires" content="0">
     <title>User Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/svg+xml" href="frontend/wallet.svg">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         a { transition: color 0.2s ease; }
         a:hover { color: #4f46e5; }
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="min-h-screen bg-gray-50 font-sans p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-        <img src="frontend/wallet.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
+        <img src="favicon.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
         <h1 class="text-2xl font-semibold mb-4">User Management</h1>
         <p class="mb-4">Add new users or update your own password from this page. Use the forms below to manage access so everyone who needs the system can sign in securely.</p>

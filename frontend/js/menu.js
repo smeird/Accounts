@@ -20,6 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   document.head.appendChild(hoverStyle);
 
+  // Ensure every page uses the shared favicon
+  if (!document.querySelector('link[rel="icon"]')) {
+    const icon = document.createElement('link');
+    icon.rel = 'icon';
+    icon.type = 'image/svg+xml';
+    icon.href = '../favicon.svg';
+    document.head.appendChild(icon);
+  }
+
   const menu = document.getElementById('menu');
   if (menu) {
     // Add responsive classes so the navigation can toggle on small screens
