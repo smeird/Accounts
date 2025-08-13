@@ -29,7 +29,13 @@
                 <div id="transfers-table"></div>
             </section>
             <section>
-
+                <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
+                    Marked Transfers
+                    <button id="undo-all" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fa-solid fa-rotate-left mr-1"></i>Undo All</button>
+                </h2>
+                <div id="linked-table"></div>
+            </section>
+            <section>
                 <h2 class="text-xl font-semibold mb-4">Link Transactions as Transfer</h2>
                 <form id="link-form" class="space-y-4">
                     <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
@@ -46,6 +52,7 @@
     <script>
 
     let transfersTable = null;
+    let linkedTable = null;
 
     function renderTransfers(data){
         if(transfersTable){
@@ -77,8 +84,53 @@
         .then(res => {
             if(res.status === 'ok') {
                 loadCandidates();
+                loadTransfers();
             } else {
                 alert(res.error || 'Failed to mark transfers');
+            }
+        });
+    }
+
+    function renderLinked(data){
+        if(linkedTable){
+            linkedTable.setData(data);
+            return;
+        }
+        linkedTable = tailwindTabulator(document.getElementById('linked-table'), {
+            data: data,
+            layout: 'fitDataStretch',
+            columns: [
+                { title: 'Date', field: 'date' },
+                { title: 'Description', field: 'description' },
+                { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
+                { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
+                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'Undo', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-rotate-left"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); unmarkTransfers([r.from_id]); } }
+            ]
+        });
+    }
+
+    function loadTransfers(){
+        fetch('../php_backend/public/transfers.php')
+        .then(resp => resp.json())
+        .then(res => {
+            renderLinked(res.transfers || []);
+        });
+    }
+
+    function unmarkTransfers(ids){
+        fetch('../php_backend/public/unmark_transfer.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(resp => resp.json())
+        .then(res => {
+            if(res.status === 'ok'){
+                loadTransfers();
+                loadCandidates();
+            } else {
+                alert(res.error || 'Failed to undo transfers');
             }
         });
     }
@@ -104,9 +156,14 @@
 
     document.getElementById('mark-all').addEventListener('click', function(){
         if(!transfersTable) return;
-        const pairs = transfersTable.getData().map(r => [r.from_id, r.to_id]);
-        if(pairs.length){ markTransfers(pairs); }
+       const pairs = transfersTable.getData().map(r => [r.from_id, r.to_id]);
+       if(pairs.length){ markTransfers(pairs); }
 
+    });
+    document.getElementById('undo-all').addEventListener('click', function(){
+        if(!linkedTable) return;
+        const ids = linkedTable.getData().map(r => r.from_id);
+        if(ids.length){ unmarkTransfers(ids); }
     });
 
     document.getElementById('link-form').addEventListener('submit', function(e){
@@ -127,6 +184,8 @@
             }
         });
     });
+
+    loadTransfers();
     </script>
     <script src="js/overlay.js"></script>
 </body>

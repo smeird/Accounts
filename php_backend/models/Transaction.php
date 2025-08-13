@@ -711,6 +711,22 @@ class Transaction {
     }
 
     /**
+     * Remove a transfer link using one of the transaction IDs.
+     * Both sides of the pair are cleared so they appear in reports again.
+     */
+    public static function unlinkTransferById(int $id): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT `transfer_id` FROM `transactions` WHERE `id` = :id');
+        $stmt->execute(['id' => $id]);
+        $tid = $stmt->fetchColumn();
+        if ($tid === false || $tid === null) {
+            return false;
+        }
+        $upd = $db->prepare('UPDATE `transactions` SET `transfer_id` = NULL WHERE `transfer_id` = :tid');
+        return $upd->execute(['tid' => $tid]);
+    }
+
+    /**
      * Mark the given transactions as transfers without pairing.
      * Each transaction gets its own transfer_id so it is ignored in reports.
      *
