@@ -6,10 +6,23 @@ $rootDir = dirname(__DIR__, 2);
 $output = [];
 $returnVar = 0;
 
-// Allow git to operate even if repository ownership differs from the running user.
-exec('git config --global --add safe.directory ' . escapeshellarg($rootDir));
 
-exec('cd ' . escapeshellarg($rootDir) . ' && git pull 2>&1', $output, $returnVar);
+// Determine the current branch and available remotes
+$branch = trim(shell_exec('cd ' . escapeshellarg($rootDir) . ' && git rev-parse --abbrev-ref HEAD 2>/dev/null'));
+$remote = trim(shell_exec('cd ' . escapeshellarg($rootDir) . ' && git remote 2>/dev/null'));
+$remote = $remote !== '' ? strtok($remote, "\n") : '';
+
+if ($remote === '') {
+    $output[] = 'No git remote configured';
+    $returnVar = 1;
+} else {
+    exec(
+        'cd ' . escapeshellarg($rootDir) . ' && git pull ' . escapeshellarg($remote) . ' ' . escapeshellarg($branch) . ' 2>&1',
+        $output,
+        $returnVar
+    );
+}
+
 echo json_encode([
     'success' => $returnVar === 0,
     'output' => trim(implode("\n", $output))
