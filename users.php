@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="min-h-screen bg-gray-50 font-sans p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
         <img src="frontend/wallet.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
+        <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
         <h1 class="text-2xl font-semibold mb-4">User Management</h1>
         <p class="mb-4">Add new users or update your own password from this page. Use the forms below to manage access so everyone who needs the system can sign in securely.</p>
         <p class="mb-4"><a href="logout.php" class="text-blue-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-blue-600 hover:underline">Home</a></p>
