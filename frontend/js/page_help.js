@@ -1,6 +1,6 @@
 // Provides a help overlay describing the purpose of the current page.
 // Loads Font Awesome for the help icon if it is not already available.
-document.addEventListener('DOMContentLoaded', () => {
+const init = () => {
   const page = location.pathname.split('/').pop();
   const helpTexts = {
 
@@ -66,5 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.body.appendChild(btn);
   document.body.appendChild(overlay);
-});
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
