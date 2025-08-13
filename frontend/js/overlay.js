@@ -3,8 +3,8 @@
     // Build a small notification element anchored to the top bar
     function createOverlay(){
         const overlay = document.createElement('div');
-        overlay.id = 'overlay';
-        overlay.className = 'fixed top-2 right-4 z-50 px-4 py-2 rounded shadow text-white hidden transform translate-x-full transition-transform duration-300';
+        overlay.id = 'overlay';        overlay.className = 'fixed top-2 right-4 z-50 px-4 py-2 rounded shadow text-white hidden transform translate-x-full transition-transform duration-300';
+
         document.body.appendChild(overlay);
         return overlay;
     }
@@ -15,6 +15,7 @@
     });
 
     let hideTimer;
+
 
     // Display a temporary message in the top bar with a barging animation
     window.showMessage = function(msg, type = 'success'){
@@ -41,5 +42,6 @@
                 overlay.removeEventListener('transitionend', handler);
             }
         });
+
     };
 })();

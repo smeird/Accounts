@@ -8,8 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <title>Transaction Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
@@ -36,6 +37,32 @@
                 return;
             }
 
+            const card = document.createElement('div');
+            card.className = 'relative bg-white p-6 rounded shadow';
+
+            const icons = document.createElement('div');
+
+            icons.className = 'absolute top-2 right-2 flex space-x-3';
+
+            const tagIcon = document.createElement('div');
+            tagIcon.className = `flex flex-col items-center justify-center w-20 h-20 rounded-full text-white text-center ${tx.tag_name ? 'bg-green-600' : 'bg-red-500'}`;
+            tagIcon.innerHTML = `
+                <i class="fa-solid fa-tag fa-3x"></i>
+                <span class="mt-1 text-xs">${tx.tag_name || 'No tag'}</span>
+            `;
+            icons.appendChild(tagIcon);
+
+            const catIcon = document.createElement('div');
+            catIcon.className = `flex flex-col items-center justify-center w-20 h-20 rounded-full text-white text-center ${tx.category_name ? 'bg-green-600' : 'bg-red-500'}`;
+            catIcon.innerHTML = `
+                <i class="fa-solid ${tx.category_name ? 'fa-folder-open' : 'fa-folder'} fa-3x"></i>
+                <span class="mt-1 text-xs">${tx.category_name || 'No category'}</span>
+            `;
+            icons.appendChild(catIcon);
+
+
+            card.appendChild(icons);
+
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
@@ -44,12 +71,14 @@
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
                 <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
+                <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals</span>' : 'No'}</p>
                 ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : ''}
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
             `;
-            container.appendChild(form);
+            card.appendChild(form);
+            container.appendChild(card);
             const tagInput = form.querySelector('#tag');
             const groupSel = form.querySelector('#group');
             const blankGrp = document.createElement('option');
