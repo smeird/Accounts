@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const page = location.pathname.split('/').pop();
   const helpTexts = {
+
     'index.php': `Use this page to sign in to the finance manager. Begin by typing your username and password into the boxes provided and then press the login button. If you are new or cannot remember your details, ask the person who set up the system to help you get access. Once signed in you will be taken to the main dashboard where your information is stored.`,
     'users.php': `Manage user accounts here so that each person has their own login. You can add new accounts for family members, reset passwords when someone forgets them and remove access that is no longer needed. Keeping accounts separate makes it easier to see who made changes and keeps your data safer.`,
     'index.html': `The home page is the starting point for exploring your finances. It shows a summary of the system and provides links to every feature. Use the menu on the left to open dashboards, run reports or adjust settings. Spend a moment getting familiar with these links before diving into the details.`,
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'transfers.html': `List transfers detected between accounts and those marked in uploaded files. Confirm each transfer so it does not count as income or expense, or adjust the pairing if the system matched it wrongly. Accurate transfers keep your totals honest and stop the same money being counted twice.`,
     'yearly_dashboard.html': `Analyse totals for a chosen year using charts and tables. Look through the months to see how spending and income evolved as the year progressed. This broader view helps you understand whether you are meeting your long‑term goals and where you might need to cut back.`,
     'recurring_spend.html': `Identify expenses that recur over the past year so you are aware of ongoing commitments. The page highlights regular payments like subscriptions or rent and shows how much they cost overall. Spotting these repeated charges helps you decide which ones are essential and which could be reduced or cancelled.`
+
   };
 
   const helpText = helpTexts[page];
