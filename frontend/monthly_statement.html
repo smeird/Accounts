@@ -14,11 +14,11 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <h1 class="text-2xl font-semibold mb-4">Monthly Statement</h1>
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Monthly Statement</h1>
             <p class="mb-4">Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.</p>
             <div class="bg-white p-6 rounded shadow">
                 <form id="statement-form" class="flex items-end space-x-4">
@@ -34,7 +34,7 @@
                         <input type="checkbox" id="untagged-only" class="h-4 w-4" checked data-help="Show only untagged transactions">
                         <label for="untagged-only" class="text-sm text-gray-700">Only untagged</label>
                     </div>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">View</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">View</button>
                 </form>
             </div>
             <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -79,7 +79,7 @@
                     <div id="sankey-chart" style="height:400px;"></div>
                 </div>
                 <div class="bg-white p-6 rounded shadow">
-                    <div id="category-bubbles" style="height:400px;"></div>
+                    <div id="category-donut" style="height:400px;"></div>
                 </div>
             </div>
         </main>
@@ -91,7 +91,7 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/sankey.js"></script>
-    <script src="https://code.highcharts.com/modules/packed-bubble.js"></script>
+    
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
@@ -321,7 +321,7 @@ function loadTransactions() {
                     formatter: function(cell){
                         const value = cell.getValue();
                         if (!value) return '';
-                        const badge = createBadge(value, 'bg-blue-200 text-blue-800');
+                        const badge = createBadge(value, 'bg-indigo-200 text-indigo-800');
                         const link = document.createElement('a');
                         link.href = `search.html?value=${encodeURIComponent(value)}`;
                         link.appendChild(badge);
@@ -366,7 +366,7 @@ function loadTransactions() {
         });
 
         buildSankeyChart(incomes, spendings);
-        buildBubbleChart(spendings, prevSpendings);
+        buildDonutChart(spendings, prevSpendings);
     });
 }
 
@@ -395,31 +395,32 @@ function buildSankeyChart(incomes, spendings){
     });
 }
 
-function buildBubbleChart(spendings, prevSpendings){
+function buildDonutChart(spendings, prevSpendings){
     const data = Object.entries(spendings).map(([cat, total]) => {
         const prev = prevSpendings[cat] || 0;
         const change = total - prev;
         const color = change > 0 ? '#dc2626' : (change < 0 ? '#16a34a' : '#9ca3af');
-        return { name: cat, value: parseFloat(total.toFixed(2)), color, change };
+        return { name: cat, y: parseFloat(total.toFixed(2)), color, change };
     });
-    Highcharts.chart('category-bubbles', {
-        chart: { type: 'packedbubble' },
+    Highcharts.chart('category-donut', {
+        chart: { type: 'pie' },
         title: { text: 'Spending by Category' },
-        tooltip: {
-            useHTML: true,
-            pointFormatter: function(){
-                const change = this.change;
-                const sign = change >= 0 ? '+' : '-';
-                return `<b>${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.value, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}`;
-            }
-        },
         plotOptions: {
-            packedbubble: {
+            pie: {
+                innerSize: '60%',
                 dataLabels: {
                     enabled: true,
                     format: '{point.name}',
                     style: { color: 'black', textOutline: 'none', fontWeight: 'normal' }
                 }
+            }
+        },
+        tooltip: {
+            useHTML: true,
+            pointFormatter: function(){
+                const change = this.change;
+                const sign = change >= 0 ? '+' : '-';
+                return `<b>${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.y, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}`;
             }
         },
         series: [{ data }]

@@ -11,16 +11,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <h1 class="text-2xl font-semibold mb-4">Manage Categories</h1>
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Manage Categories</h1>
             <p class="mb-4">Create categories and assign tags to organise your transactions. A well-maintained list keeps reports clear and makes searching easier.</p>
             <form id="category-form" class="space-y-4">
                 <label class="block">Category Name<br><input type="text" id="category-name" class="border p-2 rounded w-full" data-help="Name for the category"></label>
                 <label class="block">Description<br><textarea id="category-description" class="border p-2 rounded w-full" data-help="Description for the category"></textarea></label>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Create Category</button>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Create Category</button>
             </form>
 
             <div id="category-layout" class="mt-6 flex items-start gap-4">

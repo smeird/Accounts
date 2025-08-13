@@ -10,11 +10,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <h1 class="text-2xl font-semibold mb-4">Transaction Details</h1>
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Transaction Details</h1>
             <p class="mb-4">Review or edit the information for a single transaction. Changes here immediately update dashboards, reports and budgets.</p>
             <div id="transaction-details" class="mt-4"></div>
         </main>
@@ -41,6 +41,7 @@
             card.className = 'relative bg-white p-6 rounded shadow';
 
             const icons = document.createElement('div');
+
             icons.className = 'absolute top-2 right-2 flex flex-col space-y-2 items-end';
 
             const tagBtn = document.createElement('button');
@@ -67,6 +68,7 @@
             `;
             icons.appendChild(groupBtn);
 
+
             card.appendChild(icons);
 
             const form = document.createElement('form');
@@ -77,11 +79,13 @@
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
                 <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
+
                 <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals</span>' : 'No'}</p>
+
                 ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : ''}
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
             `;
             card.appendChild(form);
             container.appendChild(card);

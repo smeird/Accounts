@@ -43,7 +43,7 @@
   function createTagBadge(tag){
     const span = document.createElement('span');
     span.textContent = tag.name;
-    span.className = 'bg-blue-200 text-blue-800 px-2 py-1 rounded cursor-move w-full text-center';
+    span.className = 'bg-indigo-200 text-indigo-800 px-2 py-1 rounded cursor-move w-full text-center';
     span.draggable = true;
     span.dataset.tagId = tag.id;
     span.addEventListener('dragstart', handleDragStart);
@@ -71,7 +71,7 @@
     actions.className = 'flex gap-2';
 
     const editBtn = document.createElement('button');
-    editBtn.className = 'text-blue-600';
+    editBtn.className = 'text-indigo-600';
     editBtn.innerHTML = '<i class="fas fa-edit"></i>';
     editBtn.addEventListener('click', async () => {
       const name = prompt('Category Name', cat.name);

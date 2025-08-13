@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
             <section>
-                <h1 class="text-2xl font-semibold mb-4 flex items-center justify-between">
+                <h1 class="text-2xl font-semibold mb-4 flex items-center justify-between text-indigo-700">
                     Detected Transfers
 
                     <span class="space-x-2">
@@ -41,7 +41,7 @@
                 <form id="link-form" class="space-y-4">
                     <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
                     <input type="number" id="id2" placeholder="Second transaction ID" class="border p-2 rounded w-full" data-help="ID of the matching transaction">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-link mr-2"></i>Link</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-link mr-2"></i>Link</button>
                 </form>
             </section>
         </main>

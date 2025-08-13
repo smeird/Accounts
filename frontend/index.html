@@ -10,13 +10,13 @@
     <title>Finance Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="wallet.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Roboto', sans-serif; font-weight: 300; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+<body class="bg-gradient-to-b from-indigo-50 to-white">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white/80 backdrop-blur border-r p-6 shadow"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
@@ -39,10 +39,6 @@
                     <i class="fas fa-money-bill-wave text-indigo-600 text-4xl mb-2"></i>
                     <p class="text-gray-700">Manage budgets with ease by setting targets and watching your progress.</p>
                 </div>
-            </section>
-
-            <section class="mt-8 bg-white p-6 rounded shadow">
-                <div id="home-chart" style="height:300px"></div>
             </section>
 
             <section class="mt-8 bg-white p-8 rounded-lg shadow-lg">
@@ -77,23 +73,7 @@
     <script src="js/menu.js"></script>
     <script src="js/version.js"></script>
     <script src="js/update.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            Highcharts.chart('home-chart', {
-                title: { text: 'Sample Spending' },
-                xAxis: { categories: ['Mon','Tue','Wed','Thu','Fri'] },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + this.value; } }
-                },
-                series: [{ name: 'Spending', data: [5, 3, 4, 7, 2] }],
-                tooltip: {
-                    pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); }
-                }
-            });
-        });
-    </script>
+
     <script src="js/overlay.js"></script>
   </body>
 </html>

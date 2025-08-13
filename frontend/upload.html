@@ -10,15 +10,15 @@
     <title>Upload OFX</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <h1 class="text-2xl font-semibold mb-4">Upload OFX Files</h1>
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Upload OFX Files</h1>
         <p class="mb-4">Upload one or more OFX statements from your bank to import transactions into the system. The file contents will be processed and your data added to the database for review.</p>
             <form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                 <input type="file" name="ofx_files[]" accept=".ofx" multiple required class="block w-full" data-help="Select one or more OFX files to upload">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Upload</button>
                 <div id="progress-container" class="space-y-2"></div>
             </form>
         </main>
