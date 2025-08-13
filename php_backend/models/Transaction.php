@@ -662,6 +662,50 @@ class Transaction {
     }
 
     /**
+     * Mark the given transactions as transfers without pairing.
+     * Each transaction gets its own transfer_id so it is ignored in reports.
+     *
+     * @param int[] $ids
+     * @return int Number of transactions updated.
+     */
+    public static function markTransfers(array $ids): int {
+        $db = Database::getConnection();
+        $upd = $db->prepare('UPDATE `transactions` SET `transfer_id` = `id` WHERE `id` = :id AND `transfer_id` IS NULL');
+        $count = 0;
+        foreach ($ids as $id) {
+            if ($upd->execute(['id' => $id])) {
+                $count += $upd->rowCount();
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Link any unpaired transactions that have matching dates and opposite amounts.
+     * Useful when descriptions differ but the amounts cancel out.
+     *
+     * @return int Number of pairs linked.
+     */
+    public static function assistTransfers(): int {
+        $db = Database::getConnection();
+        $sql = 'SELECT t1.id AS id1, t2.id AS id2 '
+             . 'FROM `transactions` t1 '
+             . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
+             . 'AND t1.`amount` = -t2.`amount` '
+             . 'AND t1.`id` < t2.`id` '
+             . 'WHERE t1.`transfer_id` IS NULL '
+             . 'AND t2.`transfer_id` IS NULL';
+        $pairs = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $count = 0;
+        foreach ($pairs as $p) {
+            if (self::linkTransfer((int)$p['id1'], (int)$p['id2'])) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
      * Return descriptions of untagged transactions with occurrence counts and totals.
      * Results are ordered by most common description first.
      */
