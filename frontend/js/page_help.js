@@ -1,6 +1,6 @@
 // Provides a help overlay describing the purpose of the current page.
 // Loads Font Awesome for the help icon if it is not already available.
-document.addEventListener('DOMContentLoaded', () => {
+const init = () => {
   const page = location.pathname.split('/').pop();
   const helpTexts = {
 
@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'search.html': `Search for transactions using keywords or amounts when you need to find something quickly. Enter a word or number, press Search and the system will list any items that match. You can click a result to view or edit the full transaction. This feature saves time when looking through large histories.`,
     'tags.html': `Add, edit and remove tags used to classify transactions. Tags act like labels such as Grocery or Salary that make filtering and reporting easier. Try to keep them short and clear so you can reuse them across many entries. Regularly reviewing tags keeps your organisation consistent.`,
     'transaction.html': `Review detailed information for a single transaction to ensure it is recorded correctly. Here you can change the description, amount, date, tags or category if something does not look right. After saving, the updates flow through to dashboards, reports and budgets automatically.`,
+
     'transfers.html': `Use Assist to search for same-day transactions with equal and opposite amounts. Review each suggested pair and mark it individually or mark all at once so confirmed transfers are ignored in reports. This keeps totals accurate by preventing the same money being counted twice.`,
+
     'yearly_dashboard.html': `Analyse totals for a chosen year using charts and tables. Look through the months to see how spending and income evolved as the year progressed. This broader view helps you understand whether you are meeting your long‑term goals and where you might need to cut back.`,
     'recurring_spend.html': `Identify expenses that recur over the past year so you are aware of ongoing commitments. The page highlights regular payments like subscriptions or rent and shows how much they cost overall. Spotting these repeated charges helps you decide which ones are essential and which could be reduced or cancelled.`
 
@@ -66,5 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.body.appendChild(btn);
   document.body.appendChild(overlay);
-});
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
