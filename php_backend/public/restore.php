@@ -1,5 +1,5 @@
 <?php
-// Restores categories, tags, groups, transactions, and budgets from an uploaded JSON backup.
+// Restores categories, tags, groups, transactions, and budgets from an uploaded gzipped JSON backup.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
@@ -10,7 +10,13 @@ try {
         exit;
     }
 
-    $json = file_get_contents($_FILES['backup_file']['tmp_name']);
+    $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+    // Handle gzipped backups as well as plain JSON
+    if (substr($raw, 0, 2) === "\x1f\x8b") {
+        $json = gzdecode($raw);
+    } else {
+        $json = $raw;
+    }
     $data = json_decode($json, true);
     if (!is_array($data)) {
         http_response_code(400);

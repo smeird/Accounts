@@ -4,10 +4,11 @@
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
-header('Content-Type: application/json');
+// Send a gzipped JSON file
+header('Content-Type: application/gzip');
 $host = $_SERVER['HTTP_HOST'] ?? 'backup';
 $host = preg_replace('/[^A-Za-z0-9_-]/', '_', $host);
-$filename = $host . '-' . date('Y-m-d') . '.json';
+$filename = $host . '-' . date('Y-m-d') . '.json.gz';
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 try {
@@ -43,8 +44,10 @@ try {
         $data['budgets'] = $getAll('SELECT category_id, month, year, amount FROM budgets ORDER BY category_id, year, month');
     }
 
-    echo json_encode($data);
+    // Compress the JSON payload
+    $json = json_encode($data);
+    echo gzencode($json);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo gzencode(json_encode(['error' => $e->getMessage()]));
 }
