@@ -156,4 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const helpScript = document.createElement('script');
   helpScript.src = 'js/page_help.js';
   document.body.appendChild(helpScript);
+
+  const hintScript = document.createElement('script');
+  hintScript.src = 'js/keyboard_hints.js';
+  document.body.appendChild(hintScript);
 });
