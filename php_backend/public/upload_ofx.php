@@ -41,10 +41,24 @@ try {
         $ofxData = str_replace(["\r\n", "\r"], "\n", $ofxData);
         $ofxData = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $ofxData);
 
-        // Convert to UTF-8 if the file uses a different character set.
-        $encoding = mb_detect_encoding($ofxData, 'UTF-8, ISO-8859-1, Windows-1252', true);
-        if ($encoding && $encoding !== 'UTF-8') {
-            $ofxData = mb_convert_encoding($ofxData, 'UTF-8', $encoding);
+
+        // Convert to UTF-8 if the file uses a different character set. On
+        // systems without the mbstring extension fall back to iconv or assume
+        // the data is already UTF-8 encoded.
+        $encoding = 'UTF-8';
+        if (function_exists('mb_detect_encoding')) {
+            $detected = mb_detect_encoding($ofxData, 'UTF-8, ISO-8859-1, Windows-1252', true);
+            if ($detected) {
+                $encoding = $detected;
+            }
+        }
+        if ($encoding !== 'UTF-8') {
+            if (function_exists('mb_convert_encoding')) {
+                $ofxData = mb_convert_encoding($ofxData, 'UTF-8', $encoding);
+            } elseif (function_exists('iconv')) {
+                $ofxData = iconv($encoding, 'UTF-8//TRANSLIT', $ofxData);
+            }
+
         }
 
         // Validate basic OFX structure and supported security settings.
@@ -176,10 +190,13 @@ try {
             }
 
             // Enforce database field limits to avoid import failures
-            $desc = mb_substr($desc, 0, 255);
-            $memo = $memo === '' ? null : mb_substr($memo, 0, 255);
-            $ofxId = $ofxId === null ? null : mb_substr($ofxId, 0, 255);
-            $type = $type === null ? null : mb_substr($type, 0, 50);
+
+            $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
+            $desc = $substr($desc, 0, 255);
+            $memo = $memo === '' ? null : $substr($memo, 0, 255);
+            $ofxId = $ofxId === null ? null : $substr($ofxId, 0, 255);
+            $type = $type === null ? null : $substr($type, 0, 50);
+
 
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $ofxId, $type);
             $inserted++;

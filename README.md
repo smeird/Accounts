@@ -48,9 +48,11 @@ You can try this using the included sample file `sample_data/test.ofx` which
 contains two transactions for a checking account.
 
 The importer normalises line endings, validates required tags and security
-settings, converts character encoding to UTF-8, truncates overly long field
-values and rejects transactions with invalid dates. These steps help prevent
-issues when working with OFX files from different financial institutions.
+
+settings, converts character encoding to UTF-8 (falling back to iconv when the
+mbstring extension is unavailable), truncates overly long field values and
+rejects transactions with invalid dates. These steps help prevent issues when
+working with OFX files from different financial institutions.
 
 ## Running a Local Server
 
