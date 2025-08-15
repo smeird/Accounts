@@ -48,6 +48,7 @@ You can try this using the included sample file `sample_data/test.ofx` which
 contains two transactions for a checking account.
 
 The importer normalises line endings, validates required tags and security
+
 settings, converts character encoding to UTF-8 (falling back to iconv when the
 mbstring extension is unavailable), truncates overly long field values and
 rejects transactions with invalid dates. These steps help prevent issues when
@@ -72,11 +73,11 @@ Back up and restore your data through the web interface. From the navigation
 menu open **Backup & Restore** under *Administration*. User accounts and
 account information are always included in backups. You can additionally choose
 which other parts of the database to download—transactions, categories, tags,
-
 groups, or budgets. The downloaded file contains gzipped JSON and is named after
-your site's hostname and the current date (for example,
-`example.com-2024-05-15.json.gz`). To restore a backup, choose the compressed
-file on the same page and click **Restore**; any included sections are imported.
+your site's hostname, the current date, and the selected sections (for example,
+`example.com-2024-05-15-transactions-categories.json.gz`). To restore a backup,
+choose the compressed file on the same page and click **Restore**; any included
+sections are imported.
 
 The same page also lets you export all transactions to a single OFX file for
 use in other financial tools.
