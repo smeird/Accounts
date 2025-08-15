@@ -6,10 +6,10 @@ class Account {
     /**
      * Create a new account with the provided name.
      */
-    public static function create(string $name): int {
+    public static function create(string $name, ?string $sortCode = null, ?string $accountNumber = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO accounts (name) VALUES (:name)');
-        $stmt->execute(['name' => $name]);
+        $stmt = $db->prepare('INSERT INTO accounts (name, sort_code, account_number) VALUES (:name, :sort_code, :account_number)');
+        $stmt->execute(['name' => $name, 'sort_code' => $sortCode, 'account_number' => $accountNumber]);
         return (int)$db->lastInsertId();
     }
 
@@ -18,12 +18,12 @@ class Account {
      */
     public static function getSummaries(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT a.`id`, a.`name`, COUNT(t.`id`) AS `transactions`, '
+        $sql = 'SELECT a.`id`, a.`name`, a.`sort_code`, a.`account_number`, COUNT(t.`id`) AS `transactions`, '
              . 'COALESCE(a.`ledger_balance`, 0) AS `balance`, '
              . 'MAX(t.`date`) AS `last_transaction` '
              . 'FROM `accounts` a '
              . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
-             . 'GROUP BY a.`id`, a.`name`, a.`ledger_balance` '
+             . 'GROUP BY a.`id`, a.`name`, a.`sort_code`, a.`account_number`, a.`ledger_balance` '
              . 'ORDER BY a.`name`';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

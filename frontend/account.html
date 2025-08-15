@@ -18,6 +18,7 @@
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 id="account-name" class="text-2xl font-semibold mb-4 text-indigo-700">Account Balance</h1>
+            <p id="account-details" class="mb-4 text-gray-600"></p>
             <p class="mb-4">View the balance over time based on the latest bank statement.</p>
             <div class="bg-white p-6 rounded shadow">
                 <div id="balance-chart" style="height:400px"></div>
@@ -57,6 +58,8 @@
                     return;
                 }
                 document.getElementById('account-name').textContent = data.name;
+                const details = data.sort_code ? `Sort Code: ${data.sort_code}  Account Number: ${data.account_number}` : `Card Number: ${data.account_number}`;
+                document.getElementById('account-details').textContent = details;
                 const dates = data.history.map(h => h.date);
                 const balances = data.history.map(h => parseFloat(h.balance));
                 Highcharts.chart('balance-chart', {

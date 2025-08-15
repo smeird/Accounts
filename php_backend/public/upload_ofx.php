@@ -29,20 +29,48 @@ try {
             continue;
         }
 
-        // try to get account name from <ACCTID> tag, fallback to 'Default'
+        // Extract account identifiers
+        $sortCode = null;
+        $accountNumber = null;
         $accountName = 'Default';
-        if (preg_match('/<ACCTID>([^\r\n<]+)/i', $ofxData, $m)) {
-            $accountName = trim($m[1]);
+        if (preg_match('/<BANKACCTFROM>(.*?)<\/BANKACCTFROM>/is', $ofxData, $m)) {
+            $block = $m[1];
+            if (preg_match('/<BANKID>([^<]+)/i', $block, $sm)) {
+                $sortCode = trim($sm[1]);
+            }
+            if (preg_match('/<ACCTID>([^<]+)/i', $block, $am)) {
+                $accountNumber = trim($am[1]);
+            }
+            if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
+                $accountName = trim($nm[1]);
+            }
+        } elseif (preg_match('/<CCACCTFROM>(.*?)<\/CCACCTFROM>/is', $ofxData, $m)) {
+            $block = $m[1];
+            if (preg_match('/<ACCTID>([^<]+)/i', $block, $am)) {
+                $accountNumber = trim($am[1]);
+            }
+            if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
+                $accountName = trim($nm[1]);
+            }
+        }
+
+        if ($accountNumber === null) {
+            $messages[] = "Missing account number in " . $files['name'][$i] . ".";
+            continue;
         }
 
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT id FROM accounts WHERE name = :name LIMIT 1');
-        $stmt->execute(['name' => $accountName]);
+        $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND ((:sort IS NULL AND sort_code IS NULL) OR sort_code = :sort) LIMIT 1');
+        $stmt->execute(['num' => $accountNumber, 'sort' => $sortCode]);
         $account = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($account) {
             $accountId = (int)$account['id'];
+            if ($accountName && $account['name'] !== $accountName) {
+                $upd = $db->prepare('UPDATE accounts SET name = :name WHERE id = :id');
+                $upd->execute(['name' => $accountName, 'id' => $accountId]);
+            }
         } else {
-            $accountId = Account::create($accountName);
+            $accountId = Account::create($accountName, $sortCode, $accountNumber);
         }
 
         // Update stored ledger balance if available
