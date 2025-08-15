@@ -14,19 +14,28 @@ class Account {
     }
 
     /**
-     * Retrieve basic details for all accounts including transaction count and balance.
+     * Retrieve basic details for all accounts including transaction count and bank-reported balance.
      */
     public static function getSummaries(): array {
         $db = Database::getConnection();
         $sql = 'SELECT a.`id`, a.`name`, COUNT(t.`id`) AS `transactions`, '
-             . 'COALESCE(SUM(t.`amount`), 0) AS `balance`, '
+             . 'COALESCE(a.`ledger_balance`, 0) AS `balance`, '
              . 'MAX(t.`date`) AS `last_transaction` '
              . 'FROM `accounts` a '
              . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
-             . 'GROUP BY a.`id`, a.`name` '
+             . 'GROUP BY a.`id`, a.`name`, a.`ledger_balance` '
              . 'ORDER BY a.`name`';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Update the stored ledger balance for an account.
+     */
+    public static function updateLedgerBalance(int $accountId, float $balance, string $date): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE accounts SET ledger_balance = :bal, ledger_balance_date = :dt WHERE id = :id');
+        $stmt->execute(['bal' => $balance, 'dt' => $date, 'id' => $accountId]);
     }
 }
 ?>

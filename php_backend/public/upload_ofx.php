@@ -45,6 +45,14 @@ try {
             $accountId = Account::create($accountName);
         }
 
+        // Update stored ledger balance if available
+        if (preg_match('/<LEDGERBAL>.*?<BALAMT>([^<]+).*?<DTASOF>([^<]+)/is', $ofxData, $balMatch)) {
+            $bal = (float)trim($balMatch[1]);
+            $balDateStr = substr(trim($balMatch[2]), 0, 8);
+            $balDate = date('Y-m-d', strtotime($balDateStr));
+            Account::updateLedgerBalance($accountId, $bal, $balDate);
+        }
+
         preg_match_all('/<STMTTRN>(.*?)<\/STMTTRN>/is', $ofxData, $matches);
         $inserted = 0;
         foreach ($matches[1] as $block) {

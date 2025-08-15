@@ -46,6 +46,9 @@
             tailwindTabulator(document.getElementById('accounts-table'), {
                 data,
                 layout: 'fitDataStretch',
+                rowClick: (e, row) => {
+                    window.location = `account.html?id=${row.getData().id}`;
+                },
                 columns: [
                     { title: 'Name', field: 'name' },
                     { title: 'Transactions', field: 'transactions', hozAlign: 'right' },
