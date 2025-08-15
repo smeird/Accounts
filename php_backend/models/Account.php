@@ -20,7 +20,8 @@ class Account {
         $db = Database::getConnection();
         $sql = 'SELECT a.`id`, a.`name`, a.`sort_code`, a.`account_number`, COUNT(t.`id`) AS `transactions`, '
              . 'COALESCE(a.`ledger_balance`, 0) AS `balance`, '
-             . 'MAX(t.`date`) AS `last_transaction` '
+             . 'MAX(t.`date`) AS `last_transaction`, '
+             . 'CASE WHEN a.`sort_code` IS NULL OR a.`sort_code` = "" THEN 1 ELSE 0 END AS `is_credit_card` '
              . 'FROM `accounts` a '
              . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
              . 'GROUP BY a.`id`, a.`name`, a.`sort_code`, a.`account_number`, a.`ledger_balance` '
