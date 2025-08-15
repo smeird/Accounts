@@ -185,6 +185,24 @@ class Transaction {
     }
 
     /**
+     * Retrieve all transactions for a specific account ordered by date.
+     */
+     public static function getByAccount(int $accountId): array {
+        $db = Database::getConnection();
+        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE t.`account_id` = :acc '
+             . 'ORDER BY t.`date` DESC, t.`id` DESC';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['acc' => $accountId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+     }
+
+    /**
      * Retrieve a single transaction by its ID including related names.
      */
     public static function get(int $id): ?array {

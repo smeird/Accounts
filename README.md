@@ -72,6 +72,9 @@ file on the same page and click **Restore**; any included sections are imported.
 The same page also lets you export all transactions to a single OFX file for
 use in other financial tools.
 
+The same page also lets you export all transactions to a single OFX file for
+use in other financial tools.
+
 ## Frontend
 
 
