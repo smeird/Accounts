@@ -55,6 +55,10 @@ function tailwindTabulator(element, options) {
 
     const enableSearch = options.simpleSearch !== false;
 
+    // Allow rowClick handler to be bound after table creation
+    const rowClickHandler = options.rowClick;
+    delete options.rowClick;
+
 
     // Apply the Simple theme to all Tabulator tables
     options.theme = 'simple';
@@ -80,6 +84,10 @@ function tailwindTabulator(element, options) {
     options.pagination = options.pagination || 'local';
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
+
+    if (rowClickHandler) {
+        table.on('rowClick', rowClickHandler);
+    }
 
     if (enableSearch) {
         const tableEl = typeof element === 'string' ? document.querySelector(element) : element;

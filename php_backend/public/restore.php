@@ -1,5 +1,7 @@
 <?php
+
 // Restores users, accounts, categories, tags, groups, transactions, and budgets from an uploaded gzipped JSON backup.
+
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
@@ -11,9 +13,11 @@ try {
     }
 
     $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+
     // Try to decompress gzipped backups, fall back to plain JSON
     $json = gzdecode($raw);
     if ($json === false) {
+
         $json = $raw;
     }
     $data = json_decode($json, true);

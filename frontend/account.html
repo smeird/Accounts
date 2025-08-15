@@ -8,6 +8,10 @@
     <meta http-equiv="Expires" content="0">
     <title>Account Balance</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
@@ -18,12 +22,30 @@
             <div class="bg-white p-6 rounded shadow">
                 <div id="balance-chart" style="height:400px"></div>
             </div>
+
+            <div class="bg-white p-6 rounded shadow mt-6">
+                <div id="statement-table"></div>
+            </div>
+
         </main>
     </div>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
+
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    // Format balance cells with currency and positive/negative colouring
+    function balanceFormatter(cell){
+        const value = cell.getValue();
+        const el = cell.getElement();
+        el.classList.toggle('text-red-600', value < 0);
+        el.classList.toggle('text-green-600', value > 0);
+        return '£' + parseFloat(value).toFixed(2);
+    }
+
+
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     if (id) {
@@ -45,6 +67,25 @@
                     series: [{ name: 'Balance', data: balances }]
                 });
             });
+
+
+        fetch(`../php_backend/public/account_statement.php?id=${id}`)
+            .then(r => r.json())
+            .then(rows => {
+                tailwindTabulator(document.getElementById('statement-table'), {
+                    data: rows,
+                    layout: 'fitDataStretch',
+                    rowClick: (e, row) => {
+                        window.location = `transaction.html?id=${row.getData().id}`;
+                    },
+                    columns: [
+                        { title: 'Date', field: 'date' },
+                        { title: 'Description', field: 'description' },
+                        { title: 'Amount', field: 'amount', hozAlign: 'right', formatter: balanceFormatter }
+                    ]
+                });
+            });
+
     } else {
         document.getElementById('balance-chart').textContent = 'No account specified.';
     }
