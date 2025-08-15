@@ -69,6 +69,9 @@ and the current date (for example, `example.com-2024-05-15.json`). To restore a
 backup, choose the JSON file on the same page and click **Restore**; any
 included sections are imported.
 
+The same page also lets you export all transactions to a single OFX file for
+use in other financial tools.
+
 ## Frontend
 
 
