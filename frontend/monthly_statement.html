@@ -38,11 +38,11 @@
                 </form>
             </div>
             <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded shadow text-center">
+                <div id="income-card" class="bg-white p-4 rounded shadow text-center cursor-pointer">
                     <p class="text-gray-500">Income</p>
                     <p id="income-total" class="text-3xl font-bold">£0.00</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow text-center">
+                <div id="outgoings-card" class="bg-white p-4 rounded shadow text-center cursor-pointer">
                     <p class="text-gray-500">Outgoings</p>
                     <p id="outgoings-total" class="text-3xl font-bold">£0.00</p>
                 </div>
@@ -408,6 +408,24 @@ function buildDonutChart(spendings, prevSpendings){
         series: [{ data }]
     });
 }
+
+function showTransactions(type){
+    if(!table) return;
+    table.clearFilter();
+    if(type === 'income'){
+        table.setFilter(function(row){
+            return parseFloat(row.amount) > 0 && row.transfer_id === null;
+        });
+    } else if(type === 'outgoings'){
+        table.setFilter(function(row){
+            return parseFloat(row.amount) < 0 && row.transfer_id === null;
+        });
+    }
+    document.getElementById('transactions-grid').scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('income-card').addEventListener('click', () => showTransactions('income'));
+document.getElementById('outgoings-card').addEventListener('click', () => showTransactions('outgoings'));
 
 form.addEventListener('submit', function(e) {
     e.preventDefault();
