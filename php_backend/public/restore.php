@@ -128,9 +128,10 @@ try {
             $stmtCT->execute(['category_id' => $row['category_id'], 'tag_id' => $row['tag_id']]);
         }
     }
-
+    Log::write('Restore completed for parts: ' . implode(',', array_keys($data)));
     echo 'Restore complete.';
 } catch (Exception $e) {
+    Log::write('Restore error: ' . $e->getMessage(), 'ERROR');
     http_response_code(500);
     $msg = 'Error: ' . $e->getMessage();
     Log::write($msg, 'ERROR');

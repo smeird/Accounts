@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($userId !== null) {
         $_SESSION['user_id'] = $userId;
+        Log::write("User '$username' logged in");
         header('Location: frontend/index.html');
         exit;
     } else {

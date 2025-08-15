@@ -18,16 +18,32 @@ class Log {
     }
 
     /**
-     * Fetch the most recent log entries up to the provided limit.
+     * Fetch the most recent log entries up to the provided limit and optional day range.
      */
-    public static function all(int $limit = 100): array {
+    public static function all(int $limit = 100, ?int $days = null): array {
         $db = Database::getConnection();
-        $sql = 'SELECT id, level, message, created_at FROM logs ORDER BY created_at DESC';
+        $sql = 'SELECT id, level, message, created_at FROM logs';
+        if ($days !== null) {
+            $sql .= ' WHERE created_at >= (NOW() - INTERVAL ' . (int)$days . ' DAY)';
+        }
+        $sql .= ' ORDER BY created_at DESC';
         if ($limit !== null) {
             $sql .= ' LIMIT ' . (int)$limit;
         }
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Remove log entries older than the specified number of days.
+     */
+    public static function prune(int $days): void {
+        try {
+            $db = Database::getConnection();
+            $db->exec('DELETE FROM logs WHERE created_at < (NOW() - INTERVAL ' . (int)$days . ' DAY)');
+        } catch (Throwable $e) {
+            error_log('Log prune failed: ' . $e->getMessage());
+        }
     }
 
     /**
