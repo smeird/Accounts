@@ -31,7 +31,7 @@ try {
     $data = [];
     // Always include users and account details
     $data['users'] = $getAll('SELECT id, username, password FROM users ORDER BY id');
-    $data['accounts'] = $getAll('SELECT id, name, ledger_balance, ledger_balance_date FROM accounts ORDER BY id');
+    $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts ORDER BY id');
     if (in_array('categories', $parts)) {
         $data['categories'] = $getAll('SELECT id, name, description FROM categories ORDER BY id');
     }
@@ -53,8 +53,10 @@ try {
 
     // Compress the JSON payload
     $json = json_encode($data);
-    echo gzencode($json);
+    $gz = gzencode($json);
+    // Log before sending output to avoid corrupting the gzip stream
     Log::write('Backup generated with parts: ' . implode(',', $parts));
+    echo $gz;
 } catch (Exception $e) {
     Log::write('Backup error: ' . $e->getMessage(), 'ERROR');
     http_response_code(500);
