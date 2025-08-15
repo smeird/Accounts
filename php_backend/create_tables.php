@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS accounts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    sort_code VARCHAR(20) DEFAULT NULL,
+    account_number VARCHAR(50) DEFAULT NULL,
     ledger_balance DECIMAL(10,2) DEFAULT 0,
     ledger_balance_date DATE DEFAULT NULL
 );
@@ -137,6 +139,16 @@ if ($result->rowCount() === 0) {
 }
 
 // Ensure ledger balance columns exist in accounts
+$result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'sort_code'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `accounts` ADD COLUMN `sort_code` VARCHAR(20) DEFAULT NULL");
+}
+
+$result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'account_number'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `accounts` ADD COLUMN `account_number` VARCHAR(50) DEFAULT NULL");
+}
+
 $result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'ledger_balance'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance` DECIMAL(10,2) DEFAULT 0");

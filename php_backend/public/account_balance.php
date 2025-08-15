@@ -12,7 +12,7 @@ try {
     }
     $id = (int)$_GET['id'];
     $db = Database::getConnection();
-    $stmt = $db->prepare('SELECT name, ledger_balance, ledger_balance_date FROM accounts WHERE id = :id');
+    $stmt = $db->prepare('SELECT name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts WHERE id = :id');
     $stmt->execute(['id' => $id]);
     $account = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$account) {
@@ -30,7 +30,12 @@ try {
         $history[] = ['date' => $row['date'], 'balance' => $balance];
     }
     $history = array_reverse($history);
-    echo json_encode(['name' => $account['name'], 'history' => $history]);
+    echo json_encode([
+        'name' => $account['name'],
+        'sort_code' => $account['sort_code'],
+        'account_number' => $account['account_number'],
+        'history' => $history
+    ]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
