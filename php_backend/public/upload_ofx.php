@@ -192,7 +192,17 @@ try {
 
             // Generate synthetic ID to replace unreliable bank FITIDs
             $amountStr = number_format($amount, 2, '.', '');
-            $syntheticId = sha1($accountId . $date . $amountStr . $desc . ($memo ?? ''));
+
+            // Normalise textual fields so minor formatting differences
+            // don't generate new IDs for the same transaction
+            $normalise = function (string $text): string {
+                $text = strtoupper(trim($text));
+                return preg_replace('/\s+/', ' ', $text);
+            };
+            $normDesc = $normalise($desc);
+            $normMemo = $memo === null ? '' : $normalise($memo);
+            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc . $normMemo);
+
 
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
             $inserted++;

@@ -15,6 +15,7 @@ try {
         exit;
     }
 
+
     $errCode = $_FILES['backup_file']['error'];
     if ($errCode !== UPLOAD_ERR_OK) {
         $errMap = [
@@ -34,8 +35,10 @@ try {
     }
 
     $tmp = $_FILES['backup_file']['tmp_name'];
+
     $raw = file_get_contents($tmp);
     if ($raw === false) {
+
         http_response_code(400);
         $msg = 'Unable to read uploaded backup file.';
         Log::write($msg, 'ERROR');
@@ -43,11 +46,13 @@ try {
         exit;
     }
 
+
     // Locate gzip signature if warnings or other text prefixed the archive
     $pos = strpos($raw, "\x1f\x8b");
     if ($pos !== false) {
         $gzData = substr($raw, $pos);
         $json = gzdecode($gzData);
+
         if ($json === false) {
             http_response_code(400);
             $msg = 'Unable to decompress backup.';
@@ -58,6 +63,7 @@ try {
     } else {
         $json = $raw;
     }
+
 
     $data = json_decode($json, true);
     if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
