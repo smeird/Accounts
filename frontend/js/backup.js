@@ -1,7 +1,8 @@
-// Handles downloading and restoring backups
+// Handles downloading and restoring backups. User and account data are always included in downloads.
 // Set up handlers for downloading and restoring backups
 function initBackup() {
     const dlBtn = document.getElementById('download-backup');
+    const ofxBtn = document.getElementById('download-ofx');
     const form = document.getElementById('restore-form');
     if (dlBtn) {
         dlBtn.addEventListener('click', () => {
@@ -10,7 +11,7 @@ function initBackup() {
             fetch(`../php_backend/public/backup.php${qs}`)
                 .then(resp => {
                     const disposition = resp.headers.get('Content-Disposition') || '';
-                    let filename = `${window.location.hostname}-${new Date().toISOString().slice(0, 10)}.json`;
+                    let filename = `${window.location.hostname}-${new Date().toISOString().slice(0, 10)}.json.gz`;
                     const match = disposition.match(/filename="?([^";]+)"?/i);
                     if (match) {
                         filename = match[1];
@@ -28,6 +29,35 @@ function initBackup() {
                     URL.revokeObjectURL(url);
                     if (typeof showMessage !== 'undefined') {
                         showMessage('Backup downloaded');
+                    }
+                })
+                .catch(() => showMessage && showMessage('Download failed', 'error'));
+        });
+    }
+
+    if (ofxBtn) {
+        ofxBtn.addEventListener('click', () => {
+            fetch('../php_backend/public/export_ofx.php')
+                .then(resp => {
+                    const disposition = resp.headers.get('Content-Disposition') || '';
+                    let filename = `${window.location.hostname}-${new Date().toISOString().slice(0, 10)}.ofx`;
+                    const match = disposition.match(/filename="?([^";]+)"?/i);
+                    if (match) {
+                        filename = match[1];
+                    }
+                    return resp.blob().then(blob => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    if (typeof showMessage !== 'undefined') {
+                        showMessage('OFX exported');
                     }
                 })
                 .catch(() => showMessage && showMessage('Download failed', 'error'));

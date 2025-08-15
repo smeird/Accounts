@@ -1,5 +1,5 @@
 <?php
-// Restores categories, tags, groups, transactions, and budgets from an uploaded JSON backup.
+// Restores users, accounts, categories, tags, groups, transactions, and budgets from an uploaded gzipped JSON backup.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
@@ -10,7 +10,12 @@ try {
         exit;
     }
 
-    $json = file_get_contents($_FILES['backup_file']['tmp_name']);
+    $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+    // Try to decompress gzipped backups, fall back to plain JSON
+    $json = gzdecode($raw);
+    if ($json === false) {
+        $json = $raw;
+    }
     $data = json_decode($json, true);
     if (!is_array($data)) {
         http_response_code(400);
@@ -26,7 +31,28 @@ try {
     if (isset($data['categories'])) $db->exec('TRUNCATE TABLE categories');
     if (isset($data['groups'])) $db->exec('TRUNCATE TABLE transaction_groups');
     if (isset($data['budgets'])) $db->exec('TRUNCATE TABLE budgets');
+    if (isset($data['accounts'])) $db->exec('TRUNCATE TABLE accounts');
+    if (isset($data['users'])) $db->exec('TRUNCATE TABLE users');
     $db->exec('SET FOREIGN_KEY_CHECKS=1');
+
+    if (isset($data['users'])) {
+        $stmtUser = $db->prepare('INSERT INTO users (id, username, password) VALUES (:id, :username, :password)');
+        foreach ($data['users'] as $row) {
+            $stmtUser->execute(['id' => $row['id'], 'username' => $row['username'], 'password' => $row['password']]);
+        }
+    }
+
+    if (isset($data['accounts'])) {
+        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, ledger_balance, ledger_balance_date) VALUES (:id, :name, :ledger_balance, :ledger_balance_date)');
+        foreach ($data['accounts'] as $row) {
+            $stmtAcct->execute([
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'ledger_balance' => $row['ledger_balance'],
+                'ledger_balance_date' => $row['ledger_balance_date'] ?? null
+            ]);
+        }
+    }
 
     if (isset($data['categories'])) {
         $stmtCat = $db->prepare('INSERT INTO categories (id, name, description) VALUES (:id, :name, :description)');
