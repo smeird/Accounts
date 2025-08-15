@@ -15,8 +15,14 @@ try {
         exit;
     }
 
-    $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
-    if ($raw === false) {
+    $tmp = $_FILES['backup_file']['tmp_name'];
+    // Try to decompress gzipped backups using the zlib stream wrapper
+    $json = @file_get_contents('compress.zlib://' . $tmp);
+    if ($json === false) {
+        // Fall back to reading plain JSON
+        $json = file_get_contents($tmp);
+    }
+    if ($json === false) {
         http_response_code(400);
         $msg = 'Unable to read uploaded backup file.';
         Log::write($msg, 'ERROR');
@@ -24,12 +30,6 @@ try {
         exit;
     }
 
-    // Try to decompress gzipped backups, fall back to plain JSON
-    $json = gzdecode($raw);
-    if ($json === false) {
-
-        $json = $raw;
-    }
     $data = json_decode($json, true);
     if (!is_array($data)) {
         http_response_code(400);
