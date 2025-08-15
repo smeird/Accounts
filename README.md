@@ -47,6 +47,10 @@ curl -F "ofx_files[]=@first.ofx" -F "ofx_files[]=@second.ofx" https://localhost/
 You can try this using the included sample file `sample_data/test.ofx` which
 contains two transactions for a checking account.
 
+The importer normalises line endings, strips control characters and converts
+character encoding to UTF-8, falling back to iconv when the mbstring extension
+is unavailable.
+
 ## Running a Local Server
 
 To use the upload page the frontend must be served over HTTPS so the PHP parser
