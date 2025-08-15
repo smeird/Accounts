@@ -53,8 +53,10 @@ try {
 
     // Compress the JSON payload
     $json = json_encode($data);
-    echo gzencode($json);
+    $gz = gzencode($json);
+    // Log before sending output to avoid corrupting the gzip stream
     Log::write('Backup generated with parts: ' . implode(',', $parts));
+    echo $gz;
 } catch (Exception $e) {
     Log::write('Backup error: ' . $e->getMessage(), 'ERROR');
     http_response_code(500);
