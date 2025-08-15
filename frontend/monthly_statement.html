@@ -394,6 +394,13 @@ function buildDonutChart(spendings, prevSpendings){
                     useHTML: true,
                     format: '<span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs">{point.name}</span>',
                     style: { textOutline: 'none' }
+                },
+                point: {
+                    events: {
+                        click: function(){
+                            showCategoryTransactions(this.name);
+                        }
+                    }
                 }
             }
         },
@@ -421,6 +428,17 @@ function showTransactions(type){
             return parseFloat(row.amount) < 0 && row.transfer_id === null;
         });
     }
+    document.getElementById('transactions-grid').scrollIntoView({behavior:'smooth'});
+}
+
+function showCategoryTransactions(category){
+    if(!table) return;
+    table.clearFilter();
+    table.setFilter(function(row){
+        if(row.transfer_id !== null) return false;
+        const cat = row.category_name || 'Uncategorised';
+        return cat === category;
+    });
     document.getElementById('transactions-grid').scrollIntoView({behavior:'smooth'});
 }
 
