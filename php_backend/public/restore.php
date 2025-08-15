@@ -4,6 +4,7 @@
 
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../models/Log.php';
 
 try {
     if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
@@ -116,9 +117,10 @@ try {
             $stmtCT->execute(['category_id' => $row['category_id'], 'tag_id' => $row['tag_id']]);
         }
     }
-
+    Log::write('Restore completed for parts: ' . implode(',', array_keys($data)));
     echo 'Restore complete.';
 } catch (Exception $e) {
+    Log::write('Restore error: ' . $e->getMessage(), 'ERROR');
     http_response_code(500);
     echo 'Error: ' . $e->getMessage();
 }

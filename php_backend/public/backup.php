@@ -4,6 +4,7 @@
 // information is always included so a full backup can be restored.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../models/Log.php';
 
 // Send a gzipped JSON file
 header('Content-Type: application/gzip');
@@ -51,7 +52,9 @@ try {
     // Compress the JSON payload
     $json = json_encode($data);
     echo gzencode($json);
+    Log::write('Backup generated with parts: ' . implode(',', $parts));
 } catch (Exception $e) {
+    Log::write('Backup error: ' . $e->getMessage(), 'ERROR');
     http_response_code(500);
     echo gzencode(json_encode(['error' => $e->getMessage()]));
 }
