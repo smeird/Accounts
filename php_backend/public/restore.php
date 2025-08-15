@@ -15,7 +15,8 @@ try {
         exit;
     }
 
-    $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+    $tmp = $_FILES['backup_file']['tmp_name'];
+    $raw = file_get_contents($tmp);
     if ($raw === false) {
         http_response_code(400);
         $msg = 'Unable to read uploaded backup file.';
@@ -24,16 +25,24 @@ try {
         exit;
     }
 
-    // Try to decompress gzipped backups, fall back to plain JSON
-    $json = gzdecode($raw);
-    if ($json === false) {
-
+    // Detect gzip signature and decompress if necessary
+    if (strncmp($raw, "\x1f\x8b", 2) === 0) {
+        $json = gzdecode($raw);
+        if ($json === false) {
+            http_response_code(400);
+            $msg = 'Unable to decompress backup.';
+            Log::write($msg, 'ERROR');
+            echo $msg;
+            exit;
+        }
+    } else {
         $json = $raw;
     }
+
     $data = json_decode($json, true);
-    if (!is_array($data)) {
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
         http_response_code(400);
-        $msg = 'Invalid backup data.';
+        $msg = 'Invalid backup data: ' . json_last_error_msg();
         Log::write($msg, 'ERROR');
         echo $msg;
         exit;
@@ -59,11 +68,13 @@ try {
     }
 
     if (isset($data['accounts'])) {
-        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, ledger_balance, ledger_balance_date) VALUES (:id, :name, :ledger_balance, :ledger_balance_date)');
+        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, sort_code, account_number, ledger_balance, ledger_balance_date) VALUES (:id, :name, :sort_code, :account_number, :ledger_balance, :ledger_balance_date)');
         foreach ($data['accounts'] as $row) {
             $stmtAcct->execute([
                 'id' => $row['id'],
                 'name' => $row['name'],
+                'sort_code' => $row['sort_code'] ?? null,
+                'account_number' => $row['account_number'] ?? null,
                 'ledger_balance' => $row['ledger_balance'],
                 'ledger_balance_date' => $row['ledger_balance_date'] ?? null
             ]);
