@@ -104,7 +104,7 @@ try {
     }
 
     if (isset($data['transactions'])) {
-        $stmtTx = $db->prepare('INSERT INTO transactions (id, account_id, date, amount, description, memo, category_id, tag_id, group_id, transfer_id, ofx_id) VALUES (:id, :account_id, :date, :amount, :description, :memo, :category_id, :tag_id, :group_id, :transfer_id, :ofx_id)');
+        $stmtTx = $db->prepare('INSERT INTO transactions (id, account_id, date, amount, description, memo, category_id, tag_id, group_id, transfer_id, ofx_id, bank_ofx_id) VALUES (:id, :account_id, :date, :amount, :description, :memo, :category_id, :tag_id, :group_id, :transfer_id, :ofx_id, :bank_ofx_id)');
         foreach ($data['transactions'] as $row) {
             $stmtTx->execute([
                 'id' => $row['id'],
@@ -117,7 +117,8 @@ try {
                 'tag_id' => $row['tag_id'],
                 'group_id' => $row['group_id'],
                 'transfer_id' => $row['transfer_id'],
-                'ofx_id' => $row['ofx_id']
+                'ofx_id' => $row['ofx_id'],
+                'bank_ofx_id' => $row['bank_ofx_id'] ?? null
             ]);
         }
     }
