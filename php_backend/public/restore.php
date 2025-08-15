@@ -4,15 +4,25 @@
 
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../models/Log.php';
 
 try {
     if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
         http_response_code(400);
-        echo 'No backup file uploaded.';
+        $msg = 'No backup file uploaded.';
+        Log::write($msg, 'ERROR');
+        echo $msg;
         exit;
     }
 
     $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+    if ($raw === false) {
+        http_response_code(400);
+        $msg = 'Unable to read uploaded backup file.';
+        Log::write($msg, 'ERROR');
+        echo $msg;
+        exit;
+    }
 
     // Try to decompress gzipped backups, fall back to plain JSON
     $json = gzdecode($raw);
@@ -23,7 +33,9 @@ try {
     $data = json_decode($json, true);
     if (!is_array($data)) {
         http_response_code(400);
-        echo 'Invalid backup data.';
+        $msg = 'Invalid backup data.';
+        Log::write($msg, 'ERROR');
+        echo $msg;
         exit;
     }
 
@@ -120,5 +132,7 @@ try {
     echo 'Restore complete.';
 } catch (Exception $e) {
     http_response_code(500);
-    echo 'Error: ' . $e->getMessage();
+    $msg = 'Error: ' . $e->getMessage();
+    Log::write($msg, 'ERROR');
+    echo $msg;
 }

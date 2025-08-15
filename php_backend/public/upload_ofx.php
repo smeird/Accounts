@@ -11,7 +11,9 @@ require_once __DIR__ . '/../Database.php';
 try {
     if (!isset($_FILES['ofx_files'])) {
         http_response_code(400);
-        echo "No files uploaded.";
+        $msg = "No files uploaded.";
+        Log::write($msg, 'ERROR');
+        echo $msg;
         exit;
     }
 
@@ -19,13 +21,17 @@ try {
     $messages = [];
     for ($i = 0; $i < count($files['name']); $i++) {
         if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-            $messages[] = "No file uploaded for entry " . ($i + 1) . ".";
+            $msg = "No file uploaded for entry " . ($i + 1) . ".";
+            $messages[] = $msg;
+            Log::write($msg, 'ERROR');
             continue;
         }
 
         $ofxData = file_get_contents($files['tmp_name'][$i]);
         if ($ofxData === false) {
-            $messages[] = "Unable to read uploaded file " . $files['name'][$i] . ".";
+            $msg = "Unable to read uploaded file " . $files['name'][$i] . ".";
+            $messages[] = $msg;
+            Log::write($msg, 'ERROR');
             continue;
         }
 
@@ -55,7 +61,9 @@ try {
         }
 
         if ($accountNumber === null) {
-            $messages[] = "Missing account number in " . $files['name'][$i] . ".";
+            $msg = "Missing account number in " . $files['name'][$i] . ".";
+            $messages[] = $msg;
+            Log::write($msg, 'ERROR');
             continue;
         }
 
