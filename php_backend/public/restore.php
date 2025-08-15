@@ -15,8 +15,14 @@ try {
         exit;
     }
 
-    $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
-    if ($raw === false) {
+    $tmp = $_FILES['backup_file']['tmp_name'];
+    // Try to decompress gzipped backups using the zlib stream wrapper
+    $json = @file_get_contents('compress.zlib://' . $tmp);
+    if ($json === false) {
+        // Fall back to reading plain JSON
+        $json = file_get_contents($tmp);
+    }
+    if ($json === false) {
         http_response_code(400);
         $msg = 'Unable to read uploaded backup file.';
         Log::write($msg, 'ERROR');
@@ -24,12 +30,6 @@ try {
         exit;
     }
 
-    // Try to decompress gzipped backups, fall back to plain JSON
-    $json = gzdecode($raw);
-    if ($json === false) {
-
-        $json = $raw;
-    }
     $data = json_decode($json, true);
     if (!is_array($data)) {
         http_response_code(400);
@@ -59,11 +59,13 @@ try {
     }
 
     if (isset($data['accounts'])) {
-        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, ledger_balance, ledger_balance_date) VALUES (:id, :name, :ledger_balance, :ledger_balance_date)');
+        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, sort_code, account_number, ledger_balance, ledger_balance_date) VALUES (:id, :name, :sort_code, :account_number, :ledger_balance, :ledger_balance_date)');
         foreach ($data['accounts'] as $row) {
             $stmtAcct->execute([
                 'id' => $row['id'],
                 'name' => $row['name'],
+                'sort_code' => $row['sort_code'] ?? null,
+                'account_number' => $row['account_number'] ?? null,
                 'ledger_balance' => $row['ledger_balance'],
                 'ledger_balance_date' => $row['ledger_balance_date'] ?? null
             ]);
