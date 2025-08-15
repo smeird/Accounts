@@ -44,6 +44,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format totals with currency and colour
     function totalFormatter(cell){
         const value = cell.getValue();
@@ -96,12 +97,13 @@
     // Draw a column chart summarising totals
     function buildChart(id, title, data){
         Highcharts.chart(id, {
+            colors: gradientColors,
             chart: { type: 'column' },
             title: { text: title },
             xAxis: { categories: data.map(d => d.name) },
             yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
             tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-            series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)) }]
+            series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)), colorByPoint: true }]
         });
     }
 

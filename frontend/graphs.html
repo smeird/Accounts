@@ -32,6 +32,7 @@
     <script>
 
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
+    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
 
     function loadYear(year){
         Promise.all([
@@ -110,6 +111,7 @@
             const tagNames = yearly.tags.map(t => t.name);
             const tagTotals = yearly.tags.map(t => parseFloat(t.total));
             Highcharts.chart('tag-chart', {
+                colors: gradientColors,
                 chart: {
                     type: 'bar',
 
@@ -124,10 +126,11 @@
                 },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { bar: { depth: 40 } },
-                series: [{ name: 'Total', data: tagTotals }]
+                series: [{ name: 'Total', data: tagTotals, colorByPoint: true }]
             });
 
             Highcharts.chart('scatter-chart', {
+                colors: gradientColors,
                 chart: {
 
                     type: 'scatter'
@@ -141,7 +144,7 @@
                 },
                 tooltip: { pointFormatter: function(){ return this.category + ': £' + Highcharts.numberFormat(this.y, 2); } },
 
-                series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]) }]
+                series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]), colorByPoint: true }]
 
             });
         }).catch(err => console.error('Graph data load failed', err));

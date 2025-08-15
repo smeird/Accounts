@@ -36,6 +36,7 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script>
+    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format a numeric value as pounds and pence
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
@@ -140,6 +141,7 @@
                         }));
 
                         Highcharts.chart('results-chart', {
+                            colors: gradientColors,
                             chart: {
                                 type: 'column',
 
