@@ -41,6 +41,7 @@ try {
         $ofxData = str_replace(["\r\n", "\r"], "\n", $ofxData);
         $ofxData = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $ofxData);
 
+
         // Convert to UTF-8 if the file uses a different character set. On
         // systems without the mbstring extension fall back to iconv or assume
         // the data is already UTF-8 encoded.
@@ -57,6 +58,7 @@ try {
             } elseif (function_exists('iconv')) {
                 $ofxData = iconv($encoding, 'UTF-8//TRANSLIT', $ofxData);
             }
+
         }
 
         // Extract account identifiers
@@ -114,37 +116,71 @@ try {
         }
 
         preg_match_all('/<STMTTRN>(.*?)<\/STMTTRN>/is', $ofxData, $matches);
+        if (empty($matches[1])) {
+            $msg = 'No transactions found in ' . $files['name'][$i] . '.';
+            $messages[] = $msg;
+            Log::write($msg, 'ERROR');
+            continue;
+        }
+
         $inserted = 0;
         foreach ($matches[1] as $block) {
-            if (preg_match('/<DTPOSTED>([^\r\n<]+)/i', $block, $m)) {
+            if (preg_match('/<DTPOSTED>([^<]+)/i', $block, $m)) {
                 $dateStr = substr(trim($m[1]), 0, 8); // YYYYMMDD
-                $date = date('Y-m-d', strtotime($dateStr));
+                $dt = DateTime::createFromFormat('Ymd', $dateStr);
+                if (!$dt || $dt->format('Ymd') !== $dateStr) {
+                    Log::write('Invalid date ' . $dateStr . ' in ' . $files['name'][$i], 'ERROR');
+                    continue; // skip invalid entry
+                }
+                $date = $dt->format('Y-m-d');
             } else {
+                Log::write('Missing DTPOSTED in transaction block', 'ERROR');
                 continue; // skip invalid entry
             }
-            if (!preg_match('/<TRNAMT>([^\r\n<]+)/i', $block, $am)) {
+            if (!preg_match('/<TRNAMT>([^<]+)/i', $block, $am)) {
+                Log::write('Missing TRNAMT in transaction block', 'ERROR');
                 continue;
             }
             $amount = (float)trim($am[1]);
             $desc = '';
             $memo = '';
             $type = null;
-            if (preg_match('/<NAME>([^\r\n<]+)/i', $block, $dm)) {
+            if (preg_match('/<NAME>([^<]+)/i', $block, $dm)) {
                 $desc = trim($dm[1]);
             }
-            if (preg_match('/<MEMO>([^\r\n<]+)/i', $block, $mm)) {
+            if (preg_match('/<MEMO>([^<]+)/i', $block, $mm)) {
                 $memo = trim($mm[1]);
                 if ($desc === '') {
                     $desc = $memo;
                 }
             }
-            if (preg_match('/<TRNTYPE>([^\r\n<]+)/i', $block, $tm)) {
+            if (preg_match('/<TRNTYPE>([^<]+)/i', $block, $tm)) {
                 $type = strtoupper(trim($tm[1]));
             }
+            // Optional reference and cheque numbers with character limits
+            if (preg_match('/<REFNUM>([^<]+)/i', $block, $rm)) {
+                $ref = substr(trim($rm[1]), 0, 32);
+                $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
+            }
+            if (preg_match('/<CHECKNUM>([^<]+)/i', $block, $cm)) {
+                $chk = substr(trim($cm[1]), 0, 20);
+                $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
+            }
+
             $ofxId = null;
-            if (preg_match('/<FITID>([^\r\n<]+)/i', $block, $om)) {
+            if (preg_match('/<FITID>([^<]+)/i', $block, $om)) {
                 $ofxId = trim($om[1]);
             }
+
+            // Enforce database field limits to avoid import failures
+
+            $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
+            $desc = $substr($desc, 0, 255);
+            $memo = $memo === '' ? null : $substr($memo, 0, 255);
+            $ofxId = $ofxId === null ? null : $substr($ofxId, 0, 255);
+            $type = $type === null ? null : $substr($type, 0, 50);
+
+
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $ofxId, $type);
             $inserted++;
         }
