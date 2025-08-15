@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS accounts (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
+    name VARCHAR(100) NOT NULL,
+    ledger_balance DECIMAL(10,2) DEFAULT 0,
+    ledger_balance_date DATE DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -132,6 +134,17 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'ofx_type'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `transactions` ADD COLUMN `ofx_type` VARCHAR(50) DEFAULT NULL");
+}
+
+// Ensure ledger balance columns exist in accounts
+$result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'ledger_balance'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance` DECIMAL(10,2) DEFAULT 0");
+}
+
+$result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'ledger_balance_date'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance_date` DATE DEFAULT NULL");
 }
 
 echo "Database tables created.\n";
