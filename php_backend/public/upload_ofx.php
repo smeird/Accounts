@@ -167,9 +167,9 @@ try {
                 $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
             }
 
-            $ofxId = null;
+            $bankId = null;
             if (preg_match('/<FITID>([^<]+)/i', $block, $om)) {
-                $ofxId = trim($om[1]);
+                $bankId = trim($om[1]);
             }
 
             // Enforce database field limits to avoid import failures
@@ -177,11 +177,22 @@ try {
             $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
             $desc = $substr($desc, 0, 255);
             $memo = $memo === '' ? null : $substr($memo, 0, 255);
-            $ofxId = $ofxId === null ? null : $substr($ofxId, 0, 255);
+            $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
             $type = $type === null ? null : $substr($type, 0, 50);
 
+            // Generate synthetic ID to replace unreliable bank FITIDs
+            $amountStr = number_format($amount, 2, '.', '');
+            // Normalise textual fields so minor formatting differences
+            // don't generate new IDs for the same transaction
+            $normalise = function (string $text): string {
+                $text = strtoupper(trim($text));
+                return preg_replace('/\s+/', ' ', $text);
+            };
+            $normDesc = $normalise($desc);
+            $normMemo = $memo === null ? '' : $normalise($memo);
+            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc . $normMemo);
 
-            Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $ofxId, $type);
+            Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
             $inserted++;
         }
 

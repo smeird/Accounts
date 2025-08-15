@@ -7,7 +7,7 @@ class Transaction {
     /**
      * Insert a new transaction and attempt to auto-tag and link transfers.
      */
-    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null): int {
+    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null, ?string $bank_ofx_id = null): int {
         if ($tag === null) {
             $tag = Tag::findMatch($description);
         }
@@ -23,7 +23,30 @@ class Transaction {
             }
         }
 
-        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type)');
+        // Secondary duplicate check using bank-provided FITID with date and amount
+        if ($bank_ofx_id !== null) {
+            $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `bank_ofx_id` = :boid LIMIT 1');
+            $dupCheck->execute([
+                'account' => $account,
+                'date' => $date,
+                'amount' => $amount,
+                'boid' => $bank_ofx_id
+            ]);
+            $dup = $dupCheck->fetch(PDO::FETCH_ASSOC);
+            if ($dup) {
+                $upd = $db->prepare('UPDATE `transactions` SET `description` = :description, `memo` = :memo, `ofx_id` = :ofx_id, `ofx_type` = :ofx_type WHERE `id` = :id');
+                $upd->execute([
+                    'description' => $description,
+                    'memo' => $memo,
+                    'ofx_id' => $ofx_id,
+                    'ofx_type' => $ofx_type,
+                    'id' => $dup['id']
+                ]);
+                return (int)$dup['id'];
+            }
+        }
+
+        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`, `bank_ofx_id`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type, :bank_ofx_id)');
         $stmt->execute([
             'account' => $account,
             'date' => $date,
@@ -34,7 +57,8 @@ class Transaction {
             'tag' => $tag,
             'group' => $group,
             'ofx_id' => $ofx_id,
-            'ofx_type' => $ofx_type
+            'ofx_type' => $ofx_type,
+            'bank_ofx_id' => $bank_ofx_id
         ]);
         $id = (int)$db->lastInsertId();
 
