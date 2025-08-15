@@ -31,6 +31,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format balance cells with currency and positive/negative colouring
     function balanceFormatter(cell){
         const value = cell.getValue();
@@ -60,12 +61,13 @@
             });
 
             Highcharts.chart('accounts-chart', {
+                colors: gradientColors,
                 chart: { type: 'column' },
                 title: { text: 'Account Balances' },
                 xAxis: { categories: data.map(a => a.name) },
                 yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-                series: [{ name: 'Balance', data: data.map(a => parseFloat(a.balance)) }]
+                series: [{ name: 'Balance', data: data.map(a => parseFloat(a.balance)), colorByPoint: true }]
             });
         });
     </script>
