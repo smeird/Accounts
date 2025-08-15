@@ -20,8 +20,18 @@ try {
     $files = $_FILES['ofx_files'];
     $messages = [];
     for ($i = 0; $i < count($files['name']); $i++) {
-        if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-            $msg = "No file uploaded for entry " . ($i + 1) . ".";
+        $error = $files['error'][$i];
+        if ($error !== UPLOAD_ERR_OK) {
+            $errMap = [
+                UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini.',
+                UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive specified in the HTML form.',
+                UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded.',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder.',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+                UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.'
+            ];
+            $msg = ($errMap[$error] ?? 'Unknown upload error') . ' File: ' . $files['name'][$i];
             $messages[] = $msg;
             Log::write($msg, 'ERROR');
             continue;
