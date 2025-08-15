@@ -61,23 +61,6 @@ try {
 
         }
 
-        // Validate basic OFX structure and supported security settings.
-        if (stripos($ofxData, '<OFX>') === false || stripos($ofxData, '</OFX>') === false) {
-            $msg = 'Missing OFX root tags in ' . $files['name'][$i] . '.';
-            $messages[] = $msg;
-            Log::write($msg, 'ERROR');
-            continue;
-        }
-        if (preg_match('/SECURITY:([^\n]+)/i', $ofxData, $secMatch)) {
-            $security = strtoupper(trim($secMatch[1]));
-            if ($security !== 'NONE') {
-                $msg = "Unsupported SECURITY setting '$security' in " . $files['name'][$i] . '.';
-                $messages[] = $msg;
-                Log::write($msg, 'ERROR');
-                continue;
-            }
-        }
-
         // Extract account identifiers
         $sortCode = null;
         $accountNumber = null;
