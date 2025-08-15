@@ -1,6 +1,7 @@
 <?php
 // Exports selected data as JSON. Allows selecting categories, tags, groups,
-// transactions, and budgets via the `parts` query parameter.
+// transactions, and budgets via the `parts` query parameter. User and account
+// information is always included so a full backup can be restored.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 
@@ -25,6 +26,9 @@ try {
         : $allParts;
 
     $data = [];
+    // Always include users and account details
+    $data['users'] = $getAll('SELECT id, username, password FROM users ORDER BY id');
+    $data['accounts'] = $getAll('SELECT id, name, ledger_balance, ledger_balance_date FROM accounts ORDER BY id');
     if (in_array('categories', $parts)) {
         $data['categories'] = $getAll('SELECT id, name, description FROM categories ORDER BY id');
     }

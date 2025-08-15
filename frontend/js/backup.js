@@ -1,4 +1,4 @@
-// Handles downloading and restoring backups
+// Handles downloading and restoring backups. User and account data are always included in downloads.
 // Set up handlers for downloading and restoring backups
 function initBackup() {
     const dlBtn = document.getElementById('download-backup');
