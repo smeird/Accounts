@@ -7,10 +7,29 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 
 try {
-    if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
+    if (!isset($_FILES['backup_file'])) {
         http_response_code(400);
         $msg = 'No backup file uploaded.';
         Log::write($msg, 'ERROR');
+        echo $msg;
+        exit;
+    }
+
+
+    $errCode = $_FILES['backup_file']['error'];
+    if ($errCode !== UPLOAD_ERR_OK) {
+        $errMap = [
+            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini.',
+            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive specified in the HTML form.',
+            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded.',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder.',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.'
+        ];
+        $msg = $errMap[$errCode] ?? 'Unknown upload error.';
+        Log::write($msg, 'ERROR');
+        http_response_code(400);
         echo $msg;
         exit;
     }
@@ -28,9 +47,12 @@ try {
     }
 
 
-    // Detect gzip signature and decompress if necessary
-    if (strncmp($raw, "\x1f\x8b", 2) === 0) {
-        $json = gzdecode($raw);
+    // Locate gzip signature if warnings or other text prefixed the archive
+    $pos = strpos($raw, "\x1f\x8b");
+    if ($pos !== false) {
+        $gzData = substr($raw, $pos);
+        $json = gzdecode($gzData);
+
         if ($json === false) {
             http_response_code(400);
             $msg = 'Unable to decompress backup.';
