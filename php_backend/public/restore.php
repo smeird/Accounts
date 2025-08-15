@@ -16,14 +16,17 @@ try {
     }
 
     $tmp = $_FILES['backup_file']['tmp_name'];
+
     $raw = file_get_contents($tmp);
     if ($raw === false) {
+
         http_response_code(400);
         $msg = 'Unable to read uploaded backup file.';
         Log::write($msg, 'ERROR');
         echo $msg;
         exit;
     }
+
 
     // Detect gzip signature and decompress if necessary
     if (strncmp($raw, "\x1f\x8b", 2) === 0) {
@@ -38,6 +41,7 @@ try {
     } else {
         $json = $raw;
     }
+
 
     $data = json_decode($json, true);
     if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
