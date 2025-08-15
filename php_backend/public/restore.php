@@ -59,11 +59,13 @@ try {
     }
 
     if (isset($data['accounts'])) {
-        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, ledger_balance, ledger_balance_date) VALUES (:id, :name, :ledger_balance, :ledger_balance_date)');
+        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, sort_code, account_number, ledger_balance, ledger_balance_date) VALUES (:id, :name, :sort_code, :account_number, :ledger_balance, :ledger_balance_date)');
         foreach ($data['accounts'] as $row) {
             $stmtAcct->execute([
                 'id' => $row['id'],
                 'name' => $row['name'],
+                'sort_code' => $row['sort_code'] ?? null,
+                'account_number' => $row['account_number'] ?? null,
                 'ledger_balance' => $row['ledger_balance'],
                 'ledger_balance_date' => $row['ledger_balance_date'] ?? null
             ]);
