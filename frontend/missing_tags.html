@@ -38,7 +38,15 @@
                 layout: 'fitDataStretch',
                 initialSort: [{column:'count', dir:'desc'}],
                 columns: [
-                    { title: 'Description', field: 'description' },
+                    {
+                        title: 'Description',
+                        field: 'description',
+                        formatter: function(cell){
+                            const value = cell.getValue();
+                            const url = `search.html?value=${encodeURIComponent(value)}`;
+                            return `<a href="${url}" class="text-indigo-600 underline">${value}</a>`;
+                        }
+                    },
                     { title: 'Memo', field: 'memo' },
                     { title: 'Count', field: 'count', hozAlign: 'right', sorter: 'number' },
                     { title: 'Amount', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
