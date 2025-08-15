@@ -23,6 +23,7 @@ class Transaction {
             }
         }
 
+
         // Secondary duplicate check using bank-provided FITID with date and amount
         if ($bank_ofx_id !== null) {
             $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `bank_ofx_id` = :boid LIMIT 1');
@@ -45,6 +46,7 @@ class Transaction {
                 return (int)$dup['id'];
             }
         }
+
 
         $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`, `bank_ofx_id`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type, :bank_ofx_id)');
         $stmt->execute([

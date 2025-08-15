@@ -36,6 +36,7 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script>
+    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format a numeric value as pounds and pence
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
@@ -91,19 +92,21 @@
                         let buckets = {};
                         let categories = [];
                         let values = [];
-                        let chartTitle = '';
+                        let chartTitle = term ? `Spending for "${term}"` : 'Search Results Spending';
+                        if (amount) chartTitle += ` of £${parseFloat(amount).toFixed(2)}`;
+                        let chartSubtitle = '';
 
-                        if (diffDays <= 62) {
+                        if (diffDays > 1095) {
                             filtered.forEach(r => {
-                                const day = r.date;
+                                const year = r.date.substring(0, 4);
                                 const amt = -parseFloat(r.amount);
-                                if (amt > 0) buckets[day] = (buckets[day] || 0) + amt;
+                                if (amt > 0) buckets[year] = (buckets[year] || 0) + amt;
                             });
-                            const days = Object.keys(buckets).sort();
-                            categories = days.map(d => new Date(d).toLocaleDateString());
-                            values = days.map(d => parseFloat(buckets[d].toFixed(2)));
-                            chartTitle = 'Daily Spend';
-                        } else {
+                            const years = Object.keys(buckets).sort();
+                            categories = years;
+                            values = years.map(y => parseFloat(buckets[y].toFixed(2)));
+                            chartSubtitle = 'Yearly totals';
+                        } else if (diffDays > 62) {
                             filtered.forEach(r => {
                                 const month = r.date.substring(0, 7);
                                 const amt = -parseFloat(r.amount);
@@ -115,7 +118,17 @@
                                 return new Date(y, mth - 1).toLocaleString('default', { month: 'short', year: 'numeric' });
                             });
                             values = months.map(m => parseFloat(buckets[m].toFixed(2)));
-                            chartTitle = 'Monthly Spend';
+                            chartSubtitle = 'Monthly totals';
+                        } else {
+                            filtered.forEach(r => {
+                                const day = r.date;
+                                const amt = -parseFloat(r.amount);
+                                if (amt > 0) buckets[day] = (buckets[day] || 0) + amt;
+                            });
+                            const days = Object.keys(buckets).sort();
+                            categories = days.map(d => new Date(d).toLocaleDateString());
+                            values = days.map(d => parseFloat(buckets[d].toFixed(2)));
+                            chartSubtitle = 'Daily totals';
                         }
 
 
@@ -128,6 +141,7 @@
                         }));
 
                         Highcharts.chart('results-chart', {
+                            colors: gradientColors,
                             chart: {
                                 type: 'column',
 
@@ -135,6 +149,7 @@
 
                             },
                             title: { text: chartTitle },
+                            subtitle: { text: chartSubtitle },
                             xAxis: { categories: categories },
                             yAxis: { title: { text: 'Amount (£)' } },
                             plotOptions: { column: { depth: 25 } },

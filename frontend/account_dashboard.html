@@ -31,6 +31,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
+    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format balance cells with currency and positive/negative colouring
     function balanceFormatter(cell){
         const value = cell.getValue();
@@ -38,6 +39,10 @@
         el.classList.toggle('text-red-600', value < 0);
         el.classList.toggle('text-green-600', value > 0);
         return '£' + parseFloat(value).toFixed(2);
+    }
+
+    function creditCardFormatter(cell){
+        return cell.getValue() ? '<i class="fa-solid fa-credit-card text-indigo-600"></i>' : '';
     }
 
     fetch('../php_backend/public/account_dashboard.php')
@@ -53,6 +58,7 @@
                     { title: 'Name', field: 'name' },
                     { title: 'Sort Code', field: 'sort_code' },
                     { title: 'Account/Card Number', field: 'account_number' },
+                    { title: 'Credit Card', field: 'is_credit_card', hozAlign: 'center', formatter: creditCardFormatter, headerSort: false },
                     { title: 'Transactions', field: 'transactions', hozAlign: 'right' },
                     { title: 'Balance', field: 'balance', hozAlign: 'right', formatter: balanceFormatter },
                     { title: 'Last Transaction', field: 'last_transaction' }
@@ -60,12 +66,25 @@
             });
 
             Highcharts.chart('accounts-chart', {
+                colors: gradientColors,
                 chart: { type: 'column' },
                 title: { text: 'Account Balances' },
-                xAxis: { categories: data.map(a => a.name) },
+                xAxis: { type: 'category' },
                 yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
-                series: [{ name: 'Balance', data: data.map(a => parseFloat(a.balance)) }]
+                series: [{
+                    name: 'Balance',
+                    data: data.map(a => ({ y: parseFloat(a.balance), name: a.name, id: a.id })),
+                    colorByPoint: true,
+                    cursor: 'pointer',
+                    point: {
+                        events: {
+                            click: function(){
+                                window.location = `account.html?id=${this.options.id}`;
+                            }
+                        }
+                    }
+                }]
             });
         });
     </script>
