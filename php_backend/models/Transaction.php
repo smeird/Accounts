@@ -7,7 +7,7 @@ class Transaction {
     /**
      * Insert a new transaction and attempt to auto-tag and link transfers.
      */
-    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null): int {
+    public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null, ?string $bank_ofx_id = null): int {
         if ($tag === null) {
             $tag = Tag::findMatch($description);
         }
@@ -23,7 +23,7 @@ class Transaction {
             }
         }
 
-        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type)');
+        $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`, `bank_ofx_id`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type, :bank_ofx_id)');
         $stmt->execute([
             'account' => $account,
             'date' => $date,
@@ -34,7 +34,8 @@ class Transaction {
             'tag' => $tag,
             'group' => $group,
             'ofx_id' => $ofx_id,
-            'ofx_type' => $ofx_type
+            'ofx_type' => $ofx_type,
+            'bank_ofx_id' => $bank_ofx_id
         ]);
         $id = (int)$db->lastInsertId();
 
