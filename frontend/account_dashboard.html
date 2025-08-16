@@ -65,22 +65,46 @@
                 ]
             });
 
+            const seriesData = data.map(a => ({
+                y: parseFloat(a.balance),
+                name: a.name,
+                id: a.id
+            }));
+
+            seriesData.push({
+                name: 'Total',
+                isSum: true
+            });
+
             Highcharts.chart('accounts-chart', {
                 colors: gradientColors,
-                chart: { type: 'column' },
+                chart: { type: 'waterfall' },
                 title: { text: 'Account Balances' },
                 xAxis: { type: 'category' },
-                yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                yAxis: {
+                    title: { text: 'Balance (£)' },
+                    labels: {
+                        formatter: function(){
+                            return '£' + Highcharts.numberFormat(this.value, 2);
+                        }
+                    }
+                },
+                tooltip: {
+                    pointFormatter: function(){
+                        return '£' + Highcharts.numberFormat(this.y, 2);
+                    }
+                },
                 series: [{
                     name: 'Balance',
-                    data: data.map(a => ({ y: parseFloat(a.balance), name: a.name, id: a.id })),
+                    data: seriesData,
                     colorByPoint: true,
                     cursor: 'pointer',
                     point: {
                         events: {
                             click: function(){
-                                window.location = `account.html?id=${this.options.id}`;
+                                if(this.options.id){
+                                    window.location = `account.html?id=${this.options.id}`;
+                                }
                             }
                         }
                     }
