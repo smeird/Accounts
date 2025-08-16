@@ -47,6 +47,19 @@ class Transaction {
             }
         }
 
+        // Fallback duplicate check on core fields when no OFX identifiers are available
+        $coreCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `description` = :description AND ((`memo` IS NULL AND :memo IS NULL) OR `memo` = :memo) LIMIT 1');
+        $coreCheck->execute([
+            'account' => $account,
+            'date' => $date,
+            'amount' => $amount,
+            'description' => $description,
+            'memo' => $memo
+        ]);
+        if ($row = $coreCheck->fetch(PDO::FETCH_ASSOC)) {
+            return (int)$row['id'];
+        }
+
 
         $stmt = $db->prepare('INSERT INTO transactions (`account_id`, `date`, `amount`, `description`, `memo`, `category_id`, `tag_id`, `group_id`, `ofx_id`, `ofx_type`, `bank_ofx_id`) VALUES (:account, :date, :amount, :description, :memo, :category, :tag, :group, :ofx_id, :ofx_type, :bank_ofx_id)');
         $stmt->execute([
