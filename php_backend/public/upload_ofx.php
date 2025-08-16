@@ -94,6 +94,18 @@ try {
             if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
                 $accountName = trim($nm[1]);
             }
+        } elseif (preg_match('/<ACCTFROM>(.*?)<\/ACCTFROM>/is', $ofxData, $m)) {
+            // Some credit card OFX files use ACCTFROM without the CC prefix
+            $block = $m[1];
+            if (preg_match('/<BANKID>([^<]+)/i', $block, $sm)) {
+                $sortCode = trim($sm[1]);
+            }
+            if (preg_match('/<ACCTID>([^<]+)/i', $block, $am)) {
+                $accountNumber = trim($am[1]);
+            }
+            if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
+                $accountName = trim($nm[1]);
+            }
         }
 
         if ($accountNumber === null) {
