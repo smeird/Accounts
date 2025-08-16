@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!-- Page for reviewing and removing duplicate transactions -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Duplicate Transactions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Duplicate Transactions</h1>
+            <p class="mb-4">Remove unwanted duplicate entries to keep your records accurate.</p>
+            <div class="mb-4 space-x-2">
+                <button id="refresh" class="bg-indigo-600 text-white px-3 py-1 rounded">Refresh</button>
+                <button id="dedupe-all" class="bg-red-600 text-white px-3 py-1 rounded">Dedupe All</button>
+            </div>
+            <div id="dupe-table"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script>
+    let table = null;
+    async function loadDupes(){
+        const resp = await fetch('../php_backend/public/dedupe_transactions.php');
+        const data = await resp.json();
+        if(table){
+            table.setData(data);
+            return;
+        }
+        table = tailwindTabulator(document.getElementById('dupe-table'), {
+            data: data,
+            layout: 'fitDataStretch',
+            columns: [
+                { title: 'Account', field: 'account' },
+                { title: 'Date', field: 'date' },
+                { title: 'Description', field: 'description' },
+                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'Count', field: 'count', hozAlign: 'right' },
+                { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-trash"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
+            ]
+        });
+    }
+
+    async function dedupe(ids){
+        const resp = await fetch('../php_backend/public/dedupe_transactions.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        });
+        const res = await resp.json();
+        if(res.status === 'ok'){
+            loadDupes();
+        } else {
+            alert(res.error || 'Dedupe failed');
+        }
+    }
+
+    document.getElementById('refresh').addEventListener('click', loadDupes);
+    document.getElementById('dedupe-all').addEventListener('click', async () => {
+        if(!table) return;
+        const rows = table.getData();
+        for(const r of rows){
+            await dedupe(r.ids);
+        }
+    });
+
+    loadDupes();
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
