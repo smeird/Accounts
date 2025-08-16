@@ -30,7 +30,9 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/waterfall.js"></script>
+
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format balance cells with currency and positive/negative colouring
@@ -96,6 +98,7 @@
                     }
                 },
                 series: [{
+                    type: 'waterfall',
                     name: 'Balance',
                     data: seriesData,
                     colorByPoint: true,
