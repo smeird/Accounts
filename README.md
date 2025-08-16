@@ -105,4 +105,16 @@ Reports can be saved in the browser for reuse and removed when no longer needed.
 The page sends requests to `php_backend/public/report.php` which returns matching
 transactions as JSON.
 
+## Running Tests
+
+The repository includes a small test script that exercises the user model using
+an in-memory SQLite database. It does not require a MySQL server, making it
+suitable for environments where a database is unavailable.
+
+Run the tests with:
+
+```bash
+php tests/run_tests.php
+```
+
 
