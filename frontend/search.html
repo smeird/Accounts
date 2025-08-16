@@ -132,11 +132,9 @@
                         }
 
 
-                        const baseColor = Highcharts.color('#4f46e5');
-                        const step = 0.25 / Math.max(values.length - 1, 1);
                         const points = values.map((v, i) => ({
                             y: v,
-                            color: baseColor.brighten(step * i).get()
+                            color: gradientColors[i % gradientColors.length]
 
                         }));
 
