@@ -26,11 +26,9 @@ class Transaction {
 
         // Secondary duplicate check using bank-provided FITID with date and amount
         if ($bank_ofx_id !== null) {
-            $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `bank_ofx_id` = :boid LIMIT 1');
+            $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` = :boid LIMIT 1');
             $dupCheck->execute([
                 'account' => $account,
-                'date' => $date,
-                'amount' => $amount,
                 'boid' => $bank_ofx_id
             ]);
             $dup = $dupCheck->fetch(PDO::FETCH_ASSOC);
@@ -48,7 +46,9 @@ class Transaction {
         }
 
         // Fallback duplicate check on core fields when no OFX identifiers are available
-        $coreCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `description` = :description AND ((`memo` IS NULL AND :memo IS NULL) OR `memo` = :memo) LIMIT 1');
+
+        $coreCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `description` = :description AND COALESCE(`memo`, "") = COALESCE(:memo, "") LIMIT 1');
+
         $coreCheck->execute([
             'account' => $account,
             'date' => $date,

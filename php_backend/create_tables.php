@@ -88,6 +88,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     ofx_type VARCHAR(50) DEFAULT NULL,
     bank_ofx_id VARCHAR(255) DEFAULT NULL,
     UNIQUE KEY unique_txn (account_id, date, amount, description(150), memo(150)),
+
+    UNIQUE KEY unique_bank_fitid (account_id, bank_ofx_id),
+
     FOREIGN KEY (account_id) REFERENCES accounts(id),
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (tag_id) REFERENCES tags(id),
@@ -145,6 +148,14 @@ $result = $db->query("SHOW COLUMNS FROM `transactions` LIKE 'bank_ofx_id'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `transactions` ADD COLUMN `bank_ofx_id` VARCHAR(255) DEFAULT NULL");
 }
+
+
+// Ensure unique constraint on bank FITID per account
+$result = $db->query("SHOW INDEX FROM `transactions` WHERE Key_name = 'unique_bank_fitid'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `transactions` ADD UNIQUE KEY `unique_bank_fitid` (`account_id`,`bank_ofx_id`)");
+}
+
 
 // Ensure unique constraint on core transaction fields to prevent duplicates
 $result = $db->query("SHOW INDEX FROM `transactions` WHERE Key_name = 'unique_txn'");

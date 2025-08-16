@@ -11,9 +11,11 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $sql = 'SELECT GROUP_CONCAT(t.id) AS ids, COUNT(*) AS count, a.name AS account, '
-             . 't.date, t.amount, t.description '
+
+             . 't.date, t.amount, MIN(t.description) AS description '
              . 'FROM transactions t JOIN accounts a ON t.account_id = a.id '
-             . 'GROUP BY t.account_id, t.date, t.amount, t.description, t.memo '
+             . 'GROUP BY t.account_id, t.date, t.amount, UPPER(TRIM(t.description)), UPPER(TRIM(COALESCE(t.memo, ""))) '
+
              . 'HAVING COUNT(*) > 1';
         $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
