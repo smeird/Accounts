@@ -46,7 +46,9 @@ class Transaction {
         }
 
         // Fallback duplicate check on core fields when no OFX identifiers are available
+
         $coreCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `description` = :description AND COALESCE(`memo`, "") = COALESCE(:memo, "") LIMIT 1');
+
         $coreCheck->execute([
             'account' => $account,
             'date' => $date,
