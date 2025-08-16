@@ -1,21 +1,6 @@
-// Ensure the ResizeColumns module is available for Tabulator. Loading it via
-// a synchronous XHR causes cross-origin errors when the page is served from a
-// different domain, so instead inject the script tag which allows the browser
-// to fetch it without CORS issues.
-if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulator.prototype.modules.resizeColumns)) {
-    var script = document.createElement('script');
-    script.src = 'https://unpkg.com/tabulator-tables@6.3.0/dist/js/modules/resizeColumns.js';
-    script.async = false;
-    document.head.appendChild(script);
-}
-
-// Ensure the global Search module is available so tables can use simple search
-if (typeof Tabulator !== 'undefined' && !(Tabulator.prototype.modules && Tabulator.prototype.modules.search)) {
-    var searchScript = document.createElement('script');
-    searchScript.src = 'https://unpkg.com/tabulator-tables@6.3.0/dist/js/modules/search.js';
-    searchScript.async = false;
-    document.head.appendChild(searchScript);
-}
+// Tabulator modules are loaded via the main bundle. Avoid dynamically
+// injecting module scripts from external CDNs so the app works in offline
+// or restricted environments without console errors.
 
 // Create a coloured badge element used in table cells
 function createBadge(text, colorClasses) {

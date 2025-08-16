@@ -30,6 +30,7 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format balance cells with currency and positive/negative colouring
@@ -65,22 +66,47 @@
                 ]
             });
 
+            const seriesData = data.map(a => ({
+                y: parseFloat(a.balance),
+                name: a.name,
+                id: a.id
+            }));
+
+            seriesData.push({
+                name: 'Total',
+                isSum: true
+            });
+
             Highcharts.chart('accounts-chart', {
                 colors: gradientColors,
                 chart: { type: 'column' },
                 title: { text: 'Account Balances' },
                 xAxis: { type: 'category' },
-                yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                yAxis: {
+                    title: { text: 'Balance (£)' },
+                    labels: {
+                        formatter: function(){
+                            return '£' + Highcharts.numberFormat(this.value, 2);
+                        }
+                    }
+                },
+                tooltip: {
+                    pointFormatter: function(){
+                        return '£' + Highcharts.numberFormat(this.y, 2);
+                    }
+                },
                 series: [{
+                    type: 'waterfall',
                     name: 'Balance',
-                    data: data.map(a => ({ y: parseFloat(a.balance), name: a.name, id: a.id })),
+                    data: seriesData,
                     colorByPoint: true,
                     cursor: 'pointer',
                     point: {
                         events: {
                             click: function(){
-                                window.location = `account.html?id=${this.options.id}`;
+                                if(this.options.id){
+                                    window.location = `account.html?id=${this.options.id}`;
+                                }
                             }
                         }
                     }
