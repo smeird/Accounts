@@ -34,6 +34,19 @@ function badgeFormatter(colorClasses) {
     };
 }
 
+// Apply consistent styling to Tabulator calculation rows
+function styleCalcRows(table) {
+    const rows = table.element.querySelectorAll('.tabulator-calcs-row');
+    rows.forEach(row => {
+        row.classList.add('bg-white');
+        row.style.backgroundColor = 'white';
+        row.querySelectorAll('.tabulator-cell').forEach(cell => {
+            cell.classList.add('bg-white');
+            cell.style.backgroundColor = 'white';
+        });
+    });
+}
+
 // Initialise a Tabulator table with Tailwind styling defaults
 function tailwindTabulator(element, options) {
     options = options || {};
@@ -107,6 +120,10 @@ function tailwindTabulator(element, options) {
         if (cols.length) {
             cols[0].freeze(true);
         }
+        styleCalcRows(table);
+    });
+    table.on('dataProcessed', function() {
+        styleCalcRows(table);
     });
     const el = table.element;
     el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
