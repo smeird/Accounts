@@ -19,6 +19,7 @@
             <label for="year-select" class="block">Year:
                 <select id="year-select" class="border p-2 rounded w-full"></select>
             </label>
+            <div class="bg-white p-6 rounded shadow"><div id="sunburst-chart" style="height:600px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="monthly-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="cumulative-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="pie-chart" style="height:400px"></div></div>
@@ -35,6 +36,8 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://code.highcharts.com/modules/sunburst.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
@@ -45,8 +48,9 @@
     function loadYear(year){
         Promise.all([
             fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
-            fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json())
-        ]).then(([monthly, yearly]) => {
+            fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json()),
+            fetch('../php_backend/public/categories.php').then(r => r.json())
+        ]).then(([monthly, yearly, categories]) => {
             const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
             const totals = monthly.map(m => parseFloat(m.spent));
             const categorySeries = yearly.categories.map(c => ({
@@ -156,10 +160,98 @@
 
             });
 
+            renderSunburst(yearly, categories);
+
             if (yearly.segments) {
                 renderSegments(yearly.segments);
             }
         }).catch(err => console.error('Graph data load failed', err));
+    }
+
+    function renderSunburst(yearly, categories){
+        const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
+        const categoryMap = {};
+        categories.forEach(c => {
+            if (c.name) {
+                categoryMap[c.name] = c.segment_name || 'Not Segmented';
+            }
+        });
+
+        const data = [{ id: 'root', name: 'Total' }];
+        const segmentIds = {};
+
+        (yearly.segments || []).forEach(s => {
+            if (!s.name) return;
+            const segId = 'seg_' + makeId(s.name);
+            segmentIds[s.name] = segId;
+            data.push({ id: segId, parent: 'root', name: s.name });
+        });
+
+        const categoryTotals = {};
+        (yearly.categories || []).forEach(c => {
+            if (!c.name) return;
+            const segName = categoryMap[c.name] || 'Not Segmented';
+            let segId = segmentIds[segName];
+            if (!segId) {
+                segId = 'seg_' + makeId(segName);
+                segmentIds[segName] = segId;
+                data.push({ id: segId, parent: 'root', name: segName });
+            }
+            const catId = 'cat_' + makeId(c.name);
+            data.push({ id: catId, parent: segId, name: c.name });
+            categoryTotals[c.name] = { id: catId, total: parseFloat(c.total) };
+        });
+
+        const tagSums = {};
+        (yearly.tags || []).forEach(t => {
+            if (!t.name || !t.category) return;
+            const catInfo = categoryTotals[t.category];
+            let catId;
+            if (catInfo) {
+                catId = catInfo.id;
+            } else {
+                const segName = categoryMap[t.category] || 'Not Segmented';
+                let segId = segmentIds[segName];
+                if (!segId) {
+                    segId = 'seg_' + makeId(segName);
+                    segmentIds[segName] = segId;
+                    data.push({ id: segId, parent: 'root', name: segName });
+                }
+                catId = 'cat_' + makeId(t.category);
+                data.push({ id: catId, parent: segId, name: t.category });
+                categoryTotals[t.category] = { id: catId, total: 0 };
+            }
+            const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
+            const value = parseFloat(t.total);
+            data.push({ id: tagId, parent: catId, name: t.name, value });
+            tagSums[catId] = (tagSums[catId] || 0) + value;
+        });
+
+        Object.values(categoryTotals).forEach(ct => {
+            const tagged = tagSums[ct.id] || 0;
+            const diff = ct.total - tagged;
+            if (Math.abs(diff) > 0.01) {
+                data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
+            }
+        });
+
+        Highcharts.chart('sunburst-chart', {
+            colors: gradientColors,
+            series: [{
+                type: 'sunburst',
+                data: data,
+                allowDrillToNode: true,
+                cursor: 'pointer',
+                dataLabels: { format: '{point.name}', filter: { property: 'innerArcLength', operator: '>', value: 16 } },
+                levels: [
+                    { level: 1, levelIsConstant: false, dataLabels: { rotationMode: 'parallel' } },
+                    { level: 2, colorByPoint: true },
+                    { level: 3, colorVariation: { key: 'brightness', to: -0.5 } }
+                ]
+            }],
+            title: { text: 'Segments, Categories and Tags' },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+        });
     }
 
     function renderSegments(segments){
