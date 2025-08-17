@@ -9,16 +9,18 @@
     <meta http-equiv="Expires" content="0">
     <title>Run Processes</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Run Processes</h1>
-            <p class="mb-4">Run background tasks like auto-tagging and category assignment. These automated processes tidy your data so reports stay accurate without manual effort.</p>
+            <p class="mb-4">Run background tasks like auto-tagging, category or segment assignment. These automated processes tidy your data so reports stay accurate without manual effort.</p>
             <div class="space-x-4">
-                <button id="tagging-btn" class="bg-indigo-600 text-white px-4 py-2 rounded">Run Tagging</button>
-                <button id="categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded">Apply Categories</button>
+                <button id="tagging-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-tags mr-1"></i>Run Tagging</button>
+                <button id="categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-list mr-1"></i>Apply Categories</button>
+                <button id="segments-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-layer-group mr-1"></i>Apply Segments</button>
             </div>
             <div id="progress-container" class="w-full bg-gray-200 h-2 mt-4 rounded hidden">
                 <div id="progress-bar" class="h-full bg-indigo-600 w-0"></div>
@@ -52,6 +54,8 @@
                 showMessage(`Tagged ${data.tagged} transactions`);
             } else if(action === 'categories') {
                 showMessage(`Categorised ${data.categorised} transactions`);
+            } else if(action === 'segments') {
+                showMessage(`Assigned segments to ${data.segmented} transactions`);
             }
         } finally {
             clearInterval(interval);
@@ -64,6 +68,7 @@
     }
     document.getElementById('tagging-btn').addEventListener('click', ()=>run('tagging'));
     document.getElementById('categories-btn').addEventListener('click', ()=>run('categories'));
+    document.getElementById('segments-btn').addEventListener('click', ()=>run('segments'));
     </script>
     <script src="js/overlay.js"></script>
 </body>
