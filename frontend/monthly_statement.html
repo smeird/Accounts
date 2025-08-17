@@ -291,6 +291,7 @@ function loadTransactions() {
         table = tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitDataStretch',
+            searchFields: ['date','description','memo','category_name','tag_name','amount'],
             columns: [
                 { title: 'Date', field: 'date' },
                 { title: 'Description', field: 'description', formatter: function(cell) {
