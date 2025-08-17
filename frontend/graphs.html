@@ -37,6 +37,9 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
+
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
@@ -168,12 +171,19 @@
     }
 
     function renderSunburst(yearly, categories){
-        const makeId = str => str.replace(/\s+/g, '_');
+
+        const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
         const categoryMap = {};
-        categories.forEach(c => categoryMap[c.name] = c.segment_name || 'Not Segmented');
+        categories.forEach(c => {
+            if (c.name) {
+                categoryMap[c.name] = c.segment_name || 'Not Segmented';
+            }
+        });
 
         const segments = {};
         yearly.categories.forEach(c => {
+            if (!c.name) return;
+
             const segName = categoryMap[c.name] || 'Not Segmented';
             const segId = 'seg_' + makeId(segName);
             if (!segments[segName]) segments[segName] = { id: segId, name: segName, total: 0, categories: {} };
@@ -183,6 +193,9 @@
         });
 
         yearly.tags.forEach(t => {
+
+            if (!t.name || !t.category) return;
+
             const catName = t.category;
             const segName = categoryMap[catName] || 'Not Segmented';
             const segId = 'seg_' + makeId(segName);
