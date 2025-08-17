@@ -109,7 +109,7 @@ class Transaction {
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`category_id` = :category AND t.`transfer_id` IS NULL'
@@ -129,7 +129,7 @@ class Transaction {
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`tag_id` = :tag AND t.`transfer_id` IS NULL'
@@ -149,7 +149,7 @@ class Transaction {
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`group_id` = :grp AND t.`transfer_id` IS NULL'
@@ -170,12 +170,9 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
-
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name, s.`name` AS segment_name '
-
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
@@ -196,9 +193,7 @@ class Transaction {
             $params['grp'] = $group;
         }
         if ($segment !== null) {
-
             $sql .= ' AND t.`segment_id` = :segment';
-
             $params['segment'] = $segment;
         }
         if ($text !== null && $text !== '') {
@@ -233,7 +228,7 @@ class Transaction {
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
@@ -258,7 +253,7 @@ class Transaction {
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`account_id` = :acc '
@@ -282,7 +277,7 @@ class Transaction {
              . 'FROM `transactions` t '
              . 'LEFT JOIN `accounts` a ON t.`account_id` = a.`id` '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`id` = :id LIMIT 1';
@@ -739,7 +734,7 @@ class Transaction {
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`';
 
@@ -761,7 +756,7 @@ class Transaction {
                 $conditions[] = '(t.`id` = :num'
                     . ' OR t.`account_id` = :num'
                     . ' OR t.`category_id` = :num'
-                    . ' OR c.`segment_id` = :num'
+                    . ' OR t.`segment_id` = :num'
                     . ' OR t.`tag_id` = :num'
                     . ' OR t.`group_id` = :num'
                     . ' OR t.`amount` = :num)';
