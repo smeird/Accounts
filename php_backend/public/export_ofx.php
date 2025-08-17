@@ -14,6 +14,16 @@ try {
     $stmt = $db->query('SELECT id, date, amount, description, memo, ofx_id FROM transactions ORDER BY date');
     $txns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Retrieve basic account details for the OFX header. If there are
+    // multiple accounts we simply use the first one which mirrors the
+    // behaviour of the importer that expects a single account per file.
+    $accStmt = $db->query('SELECT name, sort_code, account_number FROM accounts ORDER BY id LIMIT 1');
+    $account = $accStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $accName   = htmlspecialchars($account['name'] ?? 'Account');
+    $sortCode  = htmlspecialchars($account['sort_code'] ?? '');
+    $accNumber = htmlspecialchars($account['account_number'] ?? '00000000');
+
     echo "OFXHEADER:100\n";
     echo "DATA:OFXSGML\n";
     echo "VERSION:102\n";
@@ -31,6 +41,14 @@ try {
     echo "      <STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS>\n";
     echo "      <STMTRS>\n";
     echo "        <CURDEF>GBP</CURDEF>\n";
+    echo "        <BANKACCTFROM>\n";
+    if ($sortCode !== '') {
+        echo "          <BANKID>{$sortCode}</BANKID>\n";
+    }
+    echo "          <ACCTID>{$accNumber}</ACCTID>\n";
+    echo "          <ACCTTYPE>CHECKING</ACCTTYPE>\n";
+    echo "          <ACCTNAME>{$accName}</ACCTNAME>\n";
+    echo "        </BANKACCTFROM>\n";
     echo "        <BANKTRANLIST>\n";
 
     foreach ($txns as $tx) {
