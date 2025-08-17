@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
+require_once __DIR__ . '/../models/Tag.php';
 
 header('Content-Type: application/json');
 
@@ -10,14 +11,18 @@ try {
     $db = Database::getConnection();
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT GROUP_CONCAT(t.id) AS ids, COUNT(*) AS count, a.name AS account, '
 
              . 't.date, t.amount, MIN(t.description) AS description '
              . 'FROM transactions t JOIN accounts a ON t.account_id = a.id '
+             . 'WHERE (t.tag_id IS NULL OR t.tag_id != :ignore) '
              . 'GROUP BY t.account_id, t.date, t.amount, UPPER(TRIM(t.description)), UPPER(TRIM(COALESCE(t.memo, ""))) '
 
              . 'HAVING COUNT(*) > 1';
-        $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
             $row['ids'] = array_map('intval', explode(',', $row['ids']));
             $row['count'] = (int)$row['count'];

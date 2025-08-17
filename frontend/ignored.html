@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Ignored Transactions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Ignored Transactions</h1>
+            <p class="mb-4">Transactions tagged with <strong>IGNORE</strong> are hidden from dashboards and reports. Use this page to review and restore them.</p>
+            <div id="ignored-table"></div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script>
+    let table;
+    async function loadIgnored(){
+        const res = await fetch('../php_backend/public/ignored_transactions.php');
+        const data = await res.json();
+        if (table){
+            table.setData(data);
+        } else {
+            table = tailwindTabulator('#ignored-table', {
+                data: data,
+                layout: 'fitDataStretch',
+                columns: [
+                    {title: 'Date', field: 'date'},
+                    {title: 'Account', field: 'account_name'},
+                    {title: 'Description', field: 'description'},
+                    {title: 'Amount', field: 'amount', formatter: 'money', formatterParams: {symbol: '£', precision: 2}, hozAlign: 'right'},
+                    {title: 'Action', formatter: () => '<button class="bg-indigo-600 text-white px-2 py-1 rounded">Unignore</button>', width: 110, hozAlign: 'center', cellClick: async (e, cell) => {
+                        const id = cell.getRow().getData().id;
+                        await fetch('../php_backend/public/unignore_transaction.php', {
+                            method: 'POST',
+                            headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({transaction_id: id})
+                        });
+                        showMessage('Transaction restored');
+                        loadIgnored();
+                    }}
+                ]
+            });
+        }
+    }
+    loadIgnored();
+    </script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
