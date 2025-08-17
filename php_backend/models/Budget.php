@@ -1,6 +1,7 @@
 <?php
 // Model for category budgets by month.
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/Tag.php';
 
 class Budget {
     /**
@@ -39,10 +40,11 @@ class Budget {
         $stmt->execute(['month' => $month, 'year' => $year]);
         $budgets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $ignore = Tag::getIgnoreId();
         $spentStmt = $db->prepare('SELECT COALESCE(SUM(amount),0) FROM transactions '
-            . 'WHERE category_id = :cid AND MONTH(`date`) = :month AND YEAR(`date`) = :year AND transfer_id IS NULL');
+            . 'WHERE category_id = :cid AND MONTH(`date`) = :month AND YEAR(`date`) = :year AND transfer_id IS NULL AND (tag_id IS NULL OR tag_id != :ignore)');
         foreach ($budgets as &$b) {
-            $spentStmt->execute(['cid' => $b['category_id'], 'month' => $month, 'year' => $year]);
+            $spentStmt->execute(['cid' => $b['category_id'], 'month' => $month, 'year' => $year, 'ignore' => $ignore]);
             $total = (float)$spentStmt->fetchColumn();
             $spent = $total < 0 ? -$total : 0; // expenses are negative amounts
             $b['spent'] = $spent;

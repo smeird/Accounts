@@ -104,15 +104,17 @@ class Transaction {
      */
     public static function getByCategory(int $categoryId): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`category_id` = :category AND t.`transfer_id` IS NULL';
+             . 'WHERE t.`category_id` = :category AND t.`transfer_id` IS NULL'
+             . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
         $stmt = $db->prepare($sql);
-        $stmt->execute(['category' => $categoryId]);
+        $stmt->execute(['category' => $categoryId, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -121,15 +123,17 @@ class Transaction {
      */
     public static function getByTag(int $tagId): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`tag_id` = :tag AND t.`transfer_id` IS NULL';
+             . 'WHERE t.`tag_id` = :tag AND t.`transfer_id` IS NULL'
+             . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
         $stmt = $db->prepare($sql);
-        $stmt->execute(['tag' => $tagId]);
+        $stmt->execute(['tag' => $tagId, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -138,15 +142,17 @@ class Transaction {
      */
     public static function getByGroup(int $groupId): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`group_id` = :grp AND t.`transfer_id` IS NULL';
+             . 'WHERE t.`group_id` = :grp AND t.`transfer_id` IS NULL'
+             . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
         $stmt = $db->prepare($sql);
-        $stmt->execute(['grp' => $groupId]);
+        $stmt->execute(['grp' => $groupId, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -159,13 +165,15 @@ class Transaction {
         }
 
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE t.`transfer_id` IS NULL';
+             . 'WHERE t.`transfer_id` IS NULL'
+             . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
 
         $params = [];
         if ($category !== null) {
@@ -195,6 +203,7 @@ class Transaction {
 
         $sql .= ' ORDER BY t.`date`';
         $stmt = $db->prepare($sql);
+        $params['ignore'] = $ignore;
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -205,6 +214,7 @@ class Transaction {
      */
     public static function getByMonth(int $month, int $year, bool $onlyUntagged = false): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
@@ -212,13 +222,14 @@ class Transaction {
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year';
+             . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
+             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
         if ($onlyUntagged) {
             $sql .= ' AND t.`tag_id` IS NULL';
         }
         $sql .= ' ORDER BY t.`date`';
         $stmt = $db->prepare($sql);
-        $stmt->execute(['month' => $month, 'year' => $year]);
+        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -228,6 +239,7 @@ class Transaction {
      */
      public static function getByAccount(int $accountId): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
@@ -235,11 +247,12 @@ class Transaction {
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`account_id` = :acc '
+             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
              . 'ORDER BY t.`date` DESC, t.`id` DESC';
         $stmt = $db->prepare($sql);
-        $stmt->execute(['acc' => $accountId]);
+        $stmt->execute(['acc' => $accountId, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-     }
+    }
 
     /**
      * Retrieve a single transaction by its ID including related names.
@@ -266,7 +279,7 @@ class Transaction {
     /**
      * Update the tag of a specific transaction.
      */
-    public static function setTag(int $transactionId, int $tagId): bool {
+    public static function setTag(int $transactionId, ?int $tagId): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
         return $stmt->execute(['tag' => $tagId, 'id' => $transactionId]);
@@ -295,7 +308,9 @@ class Transaction {
      */
     public static function getAvailableMonths(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT DISTINCT YEAR(`date`) AS year, MONTH(`date`) AS month FROM `transactions` ORDER BY YEAR(`date`) DESC, MONTH(`date`) DESC');
+        $ignore = Tag::getIgnoreId();
+        $stmt = $db->prepare('SELECT DISTINCT YEAR(`date`) AS year, MONTH(`date`) AS month FROM `transactions` WHERE `tag_id` IS NULL OR `tag_id` != :ignore ORDER BY YEAR(`date`) DESC, MONTH(`date`) DESC');
+        $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -304,7 +319,9 @@ class Transaction {
      */
     public static function getAvailableYears(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT DISTINCT YEAR(`date`) AS year FROM `transactions` ORDER BY YEAR(`date`)');
+        $ignore = Tag::getIgnoreId();
+        $stmt = $db->prepare('SELECT DISTINCT YEAR(`date`) AS year FROM `transactions` WHERE `tag_id` IS NULL OR `tag_id` != :ignore ORDER BY YEAR(`date`)');
+        $stmt->execute(['ignore' => $ignore]);
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
@@ -315,12 +332,13 @@ class Transaction {
      */
     public static function getMonthlySpending(int $year): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare('SELECT MONTH(`date`) AS `month`, SUM(CASE WHEN `amount` < 0 THEN -`amount` ELSE 0 END) AS `spent`
             FROM `transactions`
-            WHERE YEAR(`date`) = :year AND `transfer_id` IS NULL
+            WHERE YEAR(`date`) = :year AND `transfer_id` IS NULL AND (`tag_id` IS NULL OR `tag_id` != :ignore)
             GROUP BY MONTH(`date`)
             ORDER BY MONTH(`date`)');
-        $stmt->execute(['year' => $year]);
+        $stmt->execute(['year' => $year, 'ignore' => $ignore]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Ensure all months are present in the result
@@ -346,14 +364,15 @@ class Transaction {
      */
     public static function getMonthlyTotals(int $month, int $year): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
             'SELECT
                 SUM(CASE WHEN t.`amount` > 0 THEN t.`amount` ELSE 0 END) AS income,
                 SUM(CASE WHEN t.`amount` < 0 THEN -t.`amount` ELSE 0 END) AS outgoings
              FROM `transactions` t
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL'
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
         );
-        $stmt->execute(['month' => $month, 'year' => $year]);
+        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         $income = isset($row['income']) ? (float)$row['income'] : 0.0;
         $outgoings = isset($row['outgoings']) ? (float)$row['outgoings'] : 0.0;
@@ -373,18 +392,19 @@ class Transaction {
             $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT CASE WHEN t.`tag_id` IS NULL THEN \'Not Categorised\' ELSE c.`name` END AS `category`, COALESCE(tg.`name`, \'Not Tagged\') AS `name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id`
              LEFT JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
              GROUP BY `category`, `name`
              ORDER BY `category`, `total` DESC';
 
         $stmt = $db->prepare($sql);
-        $stmt->execute(['month' => $month, 'year' => $year]);
+        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -400,17 +420,18 @@ class Transaction {
             $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
              GROUP BY `name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
-        $stmt->execute(['month' => $month, 'year' => $year]);
+        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -426,17 +447,18 @@ class Transaction {
             $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
         }
 
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(g.`name`, \'Not Grouped\') AS `name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`
-             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
+             WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
              GROUP BY `name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
-        $stmt->execute(['month' => $month, 'year' => $year]);
+        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -453,18 +475,19 @@ class Transaction {
             $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT CASE WHEN t.`tag_id` IS NULL THEN \'Not Categorised\' ELSE c.`name` END AS `category`, COALESCE(tg.`name`, \'Not Tagged\') AS `name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id`
              LEFT JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
+             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
              GROUP BY `category`, `name`
              ORDER BY `category`, `total` DESC';
 
         $stmt = $db->prepare($sql);
-        $stmt->execute(['year' => $year]);
+        $stmt->execute(['year' => $year, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -480,17 +503,18 @@ class Transaction {
             $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `categories` c ON t.`category_id` = c.`id`
-             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
+             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
              GROUP BY `name`
-            ORDER BY `total` DESC';
+             ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
-        $stmt->execute(['year' => $year]);
+        $stmt->execute(['year' => $year, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -506,17 +530,18 @@ class Transaction {
             $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
         }
 
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(g.`name`, \'Not Grouped\') AS `name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`
-             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL
+             WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
              GROUP BY `name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
-        $stmt->execute(['year' => $year]);
+        $stmt->execute(['year' => $year, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -531,16 +556,18 @@ class Transaction {
             $y = (int)$y;
             $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT CASE WHEN t.`tag_id` IS NULL THEN \'Not Categorised\' ELSE c.`name` END AS `category`, COALESCE(tg.`name`, \'Not Tagged\') AS `name`, '
              . implode(', ', $yearCases)
                . ', SUM(t.`amount`) AS `total`'
                . ' FROM `transactions` t'
              . ' LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id`'
              . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
-             . ' WHERE t.`transfer_id` IS NULL'
+             . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
              . ' GROUP BY `category`, `name`'
              . ' ORDER BY `category`, `total` DESC';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -555,15 +582,17 @@ class Transaction {
             $y = (int)$y;
             $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
-             . ' WHERE t.`transfer_id` IS NULL'
+             . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -578,15 +607,17 @@ class Transaction {
             $y = (int)$y;
             $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
         }
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(g.`name`, \'Not Grouped\') AS `name`, '
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
-             . ' WHERE t.`transfer_id` IS NULL'
+             . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -633,6 +664,9 @@ class Transaction {
             $params['amount'] = $amount;
         }
 
+        $ignore = Tag::getIgnoreId();
+        $conditions[] = '(t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
+        $params['ignore'] = $ignore;
         if ($conditions) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
@@ -692,13 +726,15 @@ class Transaction {
      */
     public static function getOfxTransfers(): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, '
              . 'a.`name` AS account_name '
              . 'FROM `transactions` t '
              . 'JOIN `accounts` a ON t.`account_id` = a.`id` '
-             . "WHERE t.`ofx_type` = 'XFER' "
+             . "WHERE t.`ofx_type` = 'XFER' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) "
              . 'ORDER BY t.`date`';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -711,6 +747,7 @@ class Transaction {
      */
     public static function getTransferCandidates(): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t1.id AS id1, t1.amount AS amt1, a1.name AS acc1, '
              . 't2.id AS id2, t2.amount AS amt2, a2.name AS acc2, '
              . 't1.date, t1.description '
@@ -721,8 +758,12 @@ class Transaction {
              . 'JOIN `accounts` a1 ON t1.`account_id` = a1.`id` '
              . 'JOIN `accounts` a2 ON t2.`account_id` = a2.`id` '
              . 'WHERE t1.`transfer_id` IS NULL '
-             . 'AND t2.`transfer_id` IS NULL';
-        $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+             . 'AND t2.`transfer_id` IS NULL '
+             . 'AND (t1.`tag_id` IS NULL OR t1.`tag_id` != :ignore) '
+             . 'AND (t2.`tag_id` IS NULL OR t2.`tag_id` != :ignore)';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $result = [];
         foreach ($rows as $row) {
             if ((float)$row['amt1'] < 0) {
@@ -851,15 +892,18 @@ class Transaction {
      */
     public static function getRecurringSpend(): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT `description`, COUNT(*) AS occurrences, SUM(`amount`) AS total '
              . 'FROM `transactions` '
              . 'WHERE `date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) '
              . 'AND `amount` < 0 '
              . 'AND `transfer_id` IS NULL '
+             . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
              . 'GROUP BY `description` '
              . 'HAVING COUNT(*) > 1 '
              . 'ORDER BY total';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
             $row['occurrences'] = (int)$row['occurrences'];

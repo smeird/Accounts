@@ -2,6 +2,7 @@
 // Exports all transactions as a single OFX file
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../models/Tag.php';
 
 header('Content-Type: application/x-ofx');
 $host = $_SERVER['HTTP_HOST'] ?? 'backup';
@@ -11,7 +12,9 @@ header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 try {
     $db = Database::getConnection();
-    $stmt = $db->query('SELECT id, date, amount, description, memo, ofx_id FROM transactions ORDER BY date');
+    $ignore = Tag::getIgnoreId();
+    $stmt = $db->prepare('SELECT id, date, amount, description, memo, ofx_id FROM transactions WHERE tag_id IS NULL OR tag_id != :ignore ORDER BY date');
+    $stmt->execute(['ignore' => $ignore]);
     $txns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Retrieve basic account details for the OFX header. If there are
