@@ -38,5 +38,14 @@ class Account {
         $stmt = $db->prepare('UPDATE accounts SET ledger_balance = :bal, ledger_balance_date = :dt WHERE id = :id');
         $stmt->execute(['bal' => $balance, 'dt' => $date, 'id' => $accountId]);
     }
+
+    /**
+     * Rename an existing account.
+     */
+    public static function rename(int $accountId, string $name): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE accounts SET name = :name WHERE id = :id');
+        $stmt->execute(['name' => $name, 'id' => $accountId]);
+    }
 }
 ?>

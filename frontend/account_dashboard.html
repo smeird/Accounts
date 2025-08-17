@@ -55,10 +55,26 @@
                 data,
                 layout: 'fitDataStretch',
                 rowClick: (e, row) => {
-                    window.location = `account.html?id=${row.getData().id}`;
+                    const cell = row.getCellFromEvent(e);
+                    if (!cell || cell.getField() !== 'name') {
+                        window.location = `account.html?id=${row.getData().id}`;
+                    }
                 },
                 columns: [
-                    { title: 'Name', field: 'name' },
+                    { title: 'Name', field: 'name', editor: 'input', cellEdited: async (cell) => {
+                        const oldValue = cell.getOldValue();
+                        const newValue = cell.getValue();
+                        const id = cell.getRow().getData().id;
+                        const resp = await fetch('../php_backend/public/update_account.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ account_id: id, name: newValue })
+                        });
+                        if (!resp.ok) {
+                            alert('Failed to update name');
+                            cell.setValue(oldValue, true);
+                        }
+                    } },
                     { title: 'Sort Code', field: 'sort_code' },
                     { title: 'Account/Card Number', field: 'account_number' },
                     { title: 'Credit Card', field: 'is_credit_card', hozAlign: 'center', formatter: creditCardFormatter, headerSort: false },
