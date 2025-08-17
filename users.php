@@ -48,14 +48,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>User Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
     <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
         a { transition: color 0.2s ease; }
         a:hover { color: #4f46e5; }
         button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
         button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50 font-sans p-6">
+<body class="min-h-screen bg-gray-50 p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
         <img src="favicon.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>

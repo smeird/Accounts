@@ -54,16 +54,21 @@ document.addEventListener('DOMContentLoaded', () => {
       document.head.appendChild(link);
     }
 
-    // Load monospaced font suitable for financial records
-    if (!document.getElementById('roboto-mono-font')) {
+    // Load site fonts and apply them to headings, body text and accents
+    if (!document.getElementById('app-fonts')) {
       const fontLink = document.createElement('link');
-      fontLink.id = 'roboto-mono-font';
+      fontLink.id = 'app-fonts';
       fontLink.rel = 'stylesheet';
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;500&display=swap';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
       document.head.appendChild(fontLink);
     }
-    document.body.style.fontFamily = 'Roboto Mono, monospace';
-    document.body.style.fontWeight = '300';
+    const fontStyle = document.createElement('style');
+    fontStyle.textContent = `
+      body { font-family: 'Inter', sans-serif; font-weight: 400; }
+      h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+      button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+    `;
+    document.head.appendChild(fontStyle);
 
     fetch('menu.html')
       .then(resp => resp.text())
