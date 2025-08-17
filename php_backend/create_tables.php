@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS segment_categories;
+DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS accounts;
@@ -58,6 +60,20 @@ CREATE TABLE IF NOT EXISTS budgets (
     year INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     UNIQUE KEY unique_budget (category_id, month, year),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS segment_categories (
+    segment_id INT NOT NULL,
+    category_id INT NOT NULL,
+    PRIMARY KEY (segment_id, category_id),
+    FOREIGN KEY (segment_id) REFERENCES segments(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
