@@ -44,7 +44,7 @@
                         formatter: function(cell){
                             const value = cell.getValue();
                             const url = `search.html?value=${encodeURIComponent(value)}`;
-                            return `<a href="${url}" class="text-indigo-600 underline">${value}</a>`;
+                            return `<a href="${url}" class="text-indigo-600 no-underline hover:text-indigo-800">${value}</a>`;
                         }
                     },
                     { title: 'Memo', field: 'memo' },
