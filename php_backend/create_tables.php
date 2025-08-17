@@ -226,5 +226,70 @@ if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance_date` DATE DEFAULT NULL");
 }
 
+// Seed default segments and categories on a fresh database
+$result = $db->query('SELECT COUNT(*) FROM segments');
+if ($result->fetchColumn() == 0) {
+    $defaultSegments = [
+        [
+            'name' => 'Fixed Commitments',
+            'categories' => [
+                ['name' => 'Housing & Utilities', 'description' => 'mortgage, rent, energy, water, council tax'],
+                ['name' => 'Insurance & Protection', 'description' => 'home, car, health, life'],
+                ['name' => 'Debt Obligations', 'description' => 'loans, credit repayments'],
+                ['name' => 'Transport – Fixed', 'description' => 'car finance, season tickets, road tax'],
+                ['name' => 'Essential Services', 'description' => 'broadband, mobile, TV licence'],
+            ]
+        ],
+        [
+            'name' => 'Semi-Flexible Essentials',
+            'categories' => [
+                ['name' => 'Food & Groceries', 'description' => 'supermarkets, essential shopping'],
+                ['name' => 'Healthcare', 'description' => 'pharmacy, prescriptions, dental, opticians'],
+                ['name' => 'Transport – Variable', 'description' => 'fuel, ad-hoc travel, taxis, parking'],
+                ['name' => 'Education & Childcare', 'description' => 'school fees, childcare, training'],
+            ]
+        ],
+        [
+            'name' => 'Discretionary / Adjustable',
+            'categories' => [
+                ['name' => 'Leisure & Entertainment', 'description' => 'restaurants, cinema, streaming'],
+                ['name' => 'Shopping & Lifestyle', 'description' => 'clothing, personal care, electronics'],
+                ['name' => 'Travel & Holidays', 'description' => 'flights, hotels, excursions'],
+                ['name' => 'Subscriptions & Memberships', 'description' => 'gyms, clubs, media, apps'],
+                ['name' => 'Gifts & Celebrations', 'description' => 'birthdays, Christmas, special occasions'],
+            ]
+        ],
+        [
+            'name' => 'Future-Facing',
+            'categories' => [
+                ['name' => 'Savings & Investments', 'description' => 'ISAs, pensions, investments'],
+                ['name' => 'Charity & Donations', 'description' => 'regular giving, one-off donations'],
+                ['name' => 'Miscellaneous / Uncategorised', 'description' => 'catch-all, to be refined later'],
+            ]
+        ]
+    ];
+
+    $segStmt = $db->prepare('INSERT INTO segments (name, description) VALUES (:name, :description)');
+    $catStmt = $db->prepare('INSERT INTO categories (name, description, segment_id) VALUES (:name, :description, :segment_id)');
+    $linkStmt = $db->prepare('INSERT INTO segment_categories (segment_id, category_id) VALUES (:segment_id, :category_id)');
+
+    foreach ($defaultSegments as $seg) {
+        $segStmt->execute(['name' => $seg['name'], 'description' => null]);
+        $segmentId = (int)$db->lastInsertId();
+        foreach ($seg['categories'] as $cat) {
+            $catStmt->execute([
+                'name' => $cat['name'],
+                'description' => $cat['description'],
+                'segment_id' => $segmentId
+            ]);
+            $categoryId = (int)$db->lastInsertId();
+            $linkStmt->execute([
+                'segment_id' => $segmentId,
+                'category_id' => $categoryId
+            ]);
+        }
+    }
+}
+
 echo "Database tables created.\n";
 ?>
