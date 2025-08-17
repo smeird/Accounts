@@ -19,6 +19,7 @@
             <label for="year-select" class="block">Year:
                 <select id="year-select" class="border p-2 rounded w-full"></select>
             </label>
+            <div class="bg-white p-6 rounded shadow"><div id="sunburst-chart" style="height:600px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="monthly-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="cumulative-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="pie-chart" style="height:400px"></div></div>
@@ -35,6 +36,7 @@
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://code.highcharts.com/modules/sunburst.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
@@ -45,8 +47,9 @@
     function loadYear(year){
         Promise.all([
             fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
-            fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json())
-        ]).then(([monthly, yearly]) => {
+            fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json()),
+            fetch('../php_backend/public/categories.php').then(r => r.json())
+        ]).then(([monthly, yearly, categories]) => {
             const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
             const totals = monthly.map(m => parseFloat(m.spent));
             const categorySeries = yearly.categories.map(c => ({
@@ -156,10 +159,68 @@
 
             });
 
+            renderSunburst(yearly, categories);
+
             if (yearly.segments) {
                 renderSegments(yearly.segments);
             }
         }).catch(err => console.error('Graph data load failed', err));
+    }
+
+    function renderSunburst(yearly, categories){
+        const makeId = str => str.replace(/\s+/g, '_');
+        const categoryMap = {};
+        categories.forEach(c => categoryMap[c.name] = c.segment_name || 'Not Segmented');
+
+        const segments = {};
+        yearly.categories.forEach(c => {
+            const segName = categoryMap[c.name] || 'Not Segmented';
+            const segId = 'seg_' + makeId(segName);
+            if (!segments[segName]) segments[segName] = { id: segId, name: segName, total: 0, categories: {} };
+            segments[segName].total += parseFloat(c.total);
+            const catId = 'cat_' + makeId(c.name);
+            segments[segName].categories[c.name] = { id: catId, name: c.name, total: parseFloat(c.total), tags: {} };
+        });
+
+        yearly.tags.forEach(t => {
+            const catName = t.category;
+            const segName = categoryMap[catName] || 'Not Segmented';
+            const segId = 'seg_' + makeId(segName);
+            if (!segments[segName]) segments[segName] = { id: segId, name: segName, total: 0, categories: {} };
+            const catId = 'cat_' + makeId(catName);
+            if (!segments[segName].categories[catName]) segments[segName].categories[catName] = { id: catId, name: catName, total: 0, tags: {} };
+            const tagId = 'tag_' + makeId(t.name) + '_' + makeId(catName);
+            segments[segName].categories[catName].tags[t.name] = { id: tagId, name: t.name, total: parseFloat(t.total) };
+        });
+
+        const data = [{ id: 'root', parent: '', name: 'Total' }];
+        Object.values(segments).forEach(seg => {
+            data.push({ id: seg.id, parent: 'root', name: seg.name, value: seg.total });
+            Object.values(seg.categories).forEach(cat => {
+                data.push({ id: cat.id, parent: seg.id, name: cat.name, value: cat.total });
+                Object.values(cat.tags).forEach(tag => {
+                    data.push({ id: tag.id, parent: cat.id, name: tag.name, value: tag.total });
+                });
+            });
+        });
+
+        Highcharts.chart('sunburst-chart', {
+            colors: gradientColors,
+            series: [{
+                type: 'sunburst',
+                data: data,
+                allowDrillToNode: true,
+                cursor: 'pointer',
+                dataLabels: { format: '{point.name}', filter: { property: 'innerArcLength', operator: '>', value: 16 } },
+                levels: [
+                    { level: 1, levelIsConstant: false, dataLabels: { rotationMode: 'parallel' } },
+                    { level: 2, colorByPoint: true },
+                    { level: 3, colorVariation: { key: 'brightness', to: -0.5 } }
+                ]
+            }],
+            title: { text: 'Segments, Categories and Tags' },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+        });
     }
 
     function renderSegments(segments){
