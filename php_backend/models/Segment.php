@@ -44,9 +44,9 @@ class Segment {
     }
 
     /**
-     * Assign a category to a segment.
+     * Assign a category to a segment. Pass null to remove the category from any segment.
      */
-    public static function assignCategory(int $segmentId, int $categoryId): void {
+    public static function assignCategory(?int $segmentId, int $categoryId): void {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE categories SET segment_id = :segment WHERE id = :category');
         $stmt->execute(['segment' => $segmentId, 'category' => $categoryId]);
