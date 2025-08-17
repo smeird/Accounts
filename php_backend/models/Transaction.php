@@ -106,9 +106,10 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`category_id` = :category AND t.`transfer_id` IS NULL'
@@ -125,9 +126,10 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`tag_id` = :tag AND t.`transfer_id` IS NULL'
@@ -144,9 +146,10 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`group_id` = :grp AND t.`transfer_id` IS NULL'
@@ -157,7 +160,7 @@ class Transaction {
     }
 
     /**
-     * Filter transactions by optional category, tag, group, text and date range.
+     * Filter transactions by optional category, tag, group, segment, text and date range.
      */
     public static function filter(?int $category = null, ?int $tag = null, ?int $group = null, ?int $segment = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
         if ($category === null && $tag === null && $group === null && $segment === null && $text === null && $start === null && $end === null) {
@@ -167,9 +170,12 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
+
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name, s.`name` AS segment_name '
+
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
@@ -190,7 +196,9 @@ class Transaction {
             $params['grp'] = $group;
         }
         if ($segment !== null) {
+
             $sql .= ' AND t.`segment_id` = :segment';
+
             $params['segment'] = $segment;
         }
         if ($text !== null && $text !== '') {
@@ -222,9 +230,10 @@ class Transaction {
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
@@ -246,9 +255,10 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`account_id` = :acc '
@@ -268,10 +278,11 @@ class Transaction {
              . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, t.`ofx_type`, '
              . 't.`ofx_id`, t.`bank_ofx_id`, '
              . 'a.`name` AS account_name, a.`sort_code`, a.`account_number`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `accounts` a ON t.`account_id` = a.`id` '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`id` = :id LIMIT 1';
@@ -469,7 +480,9 @@ class Transaction {
 
     /**
      * Retrieve total amounts by segment for a given month.
+
      * Returns segment name with totals by day and overall.
+
      */
     public static function getSegmentTotalsByMonth(int $month, int $year): array {
         $db = Database::getConnection();
@@ -484,9 +497,11 @@ class Transaction {
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`'
              . ' FROM `transactions` t'
+
              . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
              . ' WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year'
              . ' AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
 
@@ -580,7 +595,9 @@ class Transaction {
 
     /**
      * Retrieve total amounts by segment for a given year.
+
      * Returns segment name with totals by month and overall.
+
      */
     public static function getSegmentTotalsByYear(int $year): array {
         $db = Database::getConnection();
@@ -595,9 +612,11 @@ class Transaction {
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`'
              . ' FROM `transactions` t'
+
              . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
              . ' WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL'
              . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
 
@@ -698,7 +717,9 @@ class Transaction {
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`'
              . ' FROM `transactions` t'
+
              . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
+
              . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
@@ -715,9 +736,10 @@ class Transaction {
         $db = Database::getConnection();
 
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`';
 
@@ -730,6 +752,7 @@ class Transaction {
                 . ' OR t.`date` LIKE :val'
                 . ' OR t.`ofx_id` LIKE :val'
                 . ' OR c.`name` LIKE :val'
+                . ' OR s.`name` LIKE :val'
                 . ' OR tg.`name` LIKE :val'
                 . ' OR g.`name` LIKE :val)';
             $params['val'] = '%' . $value . '%';
@@ -738,6 +761,7 @@ class Transaction {
                 $conditions[] = '(t.`id` = :num'
                     . ' OR t.`account_id` = :num'
                     . ' OR t.`category_id` = :num'
+                    . ' OR c.`segment_id` = :num'
                     . ' OR t.`tag_id` = :num'
                     . ' OR t.`group_id` = :num'
                     . ' OR t.`amount` = :num)';

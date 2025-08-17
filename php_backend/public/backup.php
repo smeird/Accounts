@@ -7,7 +7,8 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 
 // Determine which parts are being backed up so the filename can reflect them
-$allParts = ['categories','tags','groups','transactions','budgets'];
+// Include segments so they can be exported and restored
+$allParts = ['categories','tags','groups','transactions','budgets','segments'];
 $parts = isset($_GET['parts']) && $_GET['parts'] !== ''
     ? array_intersect($allParts, explode(',', $_GET['parts']))
     : $allParts;
@@ -33,7 +34,8 @@ try {
     $data['users'] = $getAll('SELECT id, username, password FROM users ORDER BY id');
     $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts ORDER BY id');
     if (in_array('categories', $parts)) {
-        $data['categories'] = $getAll('SELECT id, name, description FROM categories ORDER BY id');
+        // Include segment references with categories
+        $data['categories'] = $getAll('SELECT id, segment_id, name, description FROM categories ORDER BY id');
     }
     if (in_array('tags', $parts)) {
         $data['tags'] = $getAll('SELECT id, name, keyword, description FROM tags ORDER BY id');
@@ -43,6 +45,9 @@ try {
     }
     if (in_array('groups', $parts)) {
         $data['groups'] = $getAll('SELECT id, name, description FROM transaction_groups ORDER BY id');
+    }
+    if (in_array('segments', $parts)) {
+        $data['segments'] = $getAll('SELECT id, name, description FROM segments ORDER BY id');
     }
     if (in_array('transactions', $parts)) {
         $data['transactions'] = $getAll('SELECT id, account_id, date, amount, description, memo, category_id, tag_id, group_id, transfer_id, ofx_id, bank_ofx_id FROM transactions ORDER BY id');

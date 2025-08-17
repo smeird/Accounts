@@ -1,4 +1,5 @@
 <?php
+
 // Model for retrieving transaction segments.
 require_once __DIR__ . '/../Database.php';
 
@@ -10,6 +11,7 @@ class Segment {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT `id`, `name`, `description` FROM `segments`');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     }
 }
 ?>
