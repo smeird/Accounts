@@ -23,6 +23,7 @@
                 <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
                 <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
+                <label class="block">Segment: <select id="segment" class="border p-2 rounded w-full" data-help="Filter by segment"></select></label>
                 <label class="block">Text: <input type="text" id="text" class="border p-2 rounded w-full" data-help="Filter by description text"></label>
                 <label class="block">Start Date: <input type="date" id="start" class="border p-2 rounded w-full" data-help="Start date for report"></label>
                 <label class="block">End Date: <input type="date" id="end" class="border p-2 rounded w-full" data-help="End date for report"></label>
@@ -49,17 +50,20 @@
 
     // Load filter options for categories, tags and groups
     async function loadOptions() {
-        const [catRes, tagRes, grpRes] = await Promise.all([
+        const [catRes, tagRes, grpRes, segRes] = await Promise.all([
             fetch('../php_backend/public/categories.php'),
             fetch('../php_backend/public/tags.php'),
-            fetch('../php_backend/public/groups.php')
+            fetch('../php_backend/public/groups.php'),
+            fetch('../php_backend/public/segments.php')
         ]);
         const categories = await catRes.json();
         const tags = await tagRes.json();
         const groups = await grpRes.json();
+        const segments = await segRes.json();
         const catSelect = document.getElementById('category');
         const tagSelect = document.getElementById('tag');
         const groupSelect = document.getElementById('group');
+        const segmentSelect = document.getElementById('segment');
         catSelect.innerHTML = '<option value="">All</option>';
         categories.forEach(c => {
             const opt = document.createElement('option');
@@ -80,6 +84,13 @@
             opt.value = g.id;
             opt.textContent = g.name;
             groupSelect.appendChild(opt);
+        });
+        segmentSelect.innerHTML = '<option value="">All</option>';
+        segments.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            segmentSelect.appendChild(opt);
         });
     }
 
@@ -102,6 +113,7 @@
         const category = document.getElementById('category').value;
         const tag = document.getElementById('tag').value;
         const group = document.getElementById('group').value;
+        const segment = document.getElementById('segment').value;
         const text = document.getElementById('text').value;
         const start = document.getElementById('start').value;
         const end = document.getElementById('end').value;
@@ -109,6 +121,7 @@
         if (category) params.append('category', category);
         if (tag) params.append('tag', tag);
         if (group) params.append('group', group);
+        if (segment) params.append('segment', segment);
         if (text) params.append('text', text);
         if (start) params.append('start', start);
         if (end) params.append('end', end);
@@ -129,6 +142,7 @@
                             { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
                             { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-indigo-200 text-indigo-800') },
                             { title: 'Group', field: 'group_name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
+                            { title: 'Segment', field: 'segment_name', formatter: badgeFormatter('bg-yellow-200 text-yellow-800') },
                             { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: function(values) { var total = 0; values.forEach(function(value) { total += parseFloat(value) || 0; }); return total; }, bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
                         ]
                     });
@@ -161,6 +175,7 @@
             category: document.getElementById('category').value,
             tag: document.getElementById('tag').value,
             group: document.getElementById('group').value,
+            segment: document.getElementById('segment').value,
             text: document.getElementById('text').value,
             start: document.getElementById('start').value,
             end: document.getElementById('end').value
@@ -179,6 +194,7 @@
         document.getElementById('category').value = r.category || '';
         document.getElementById('tag').value = r.tag || '';
         document.getElementById('group').value = r.group || '';
+        document.getElementById('segment').value = r.segment || '';
         document.getElementById('text').value = r.text || '';
         document.getElementById('start').value = r.start || '';
         document.getElementById('end').value = r.end || '';

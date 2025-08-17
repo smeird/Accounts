@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Graphs</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
@@ -23,12 +24,19 @@
             <div class="bg-white p-6 rounded shadow"><div id="pie-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="tag-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="scatter-chart" style="height:400px"></div></div>
+            <div class="bg-white p-6 rounded shadow space-y-4">
+                <h2 class="text-xl font-semibold">Segment Totals</h2>
+                <div id="segment-table"></div>
+                <div id="segment-chart" style="height:400px"></div>
+            </div>
         </main>
     </div>
 
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
     <script>
 
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
@@ -147,7 +155,40 @@
                 series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]), colorByPoint: true }]
 
             });
+
+            if (yearly.segments) {
+                renderSegments(yearly.segments);
+            }
         }).catch(err => console.error('Graph data load failed', err));
+    }
+
+    function renderSegments(segments){
+        const tableEl = document.getElementById('segment-table');
+        tableEl.innerHTML = '';
+        tailwindTabulator(tableEl, {
+            data: segments,
+            layout: 'fitDataStretch',
+            columns: [
+                { title: 'Name', field: 'name', formatter: function(cell){
+                    const value = cell.getValue();
+                    const badge = createBadge(value, 'bg-yellow-200 text-yellow-800');
+                    const link = document.createElement('a');
+                    link.href = `search.html?value=${encodeURIComponent(value)}`;
+                    link.appendChild(badge);
+                    return link;
+                } },
+                { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
+            ]
+        });
+        Highcharts.chart('segment-chart', {
+            colors: gradientColors,
+            chart: { type: 'column' },
+            title: { text: 'Segment Totals' },
+            xAxis: { categories: segments.map(s => s.name) },
+            yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
+            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+            series: [{ name: 'Total', data: segments.map(s => parseFloat(s.total)), colorByPoint: true }]
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {

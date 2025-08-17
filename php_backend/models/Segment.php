@@ -1,9 +1,12 @@
 <?php
+
 // Model handling segment records and their category mappings.
+
 require_once __DIR__ . '/../Database.php';
 
 class Segment {
     /**
+
      * Insert a new segment and return its ID.
      */
     public static function create(string $name, ?string $description = null): int {
@@ -75,6 +78,7 @@ class Segment {
             $db->rollBack();
             throw $e;
         }
+
     }
 }
 ?>
