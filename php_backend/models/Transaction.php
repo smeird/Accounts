@@ -170,12 +170,15 @@ class Transaction {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
-             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
+
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name, s.`name` AS segment_name '
+
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'WHERE t.`transfer_id` IS NULL'
              . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
 
@@ -193,7 +196,9 @@ class Transaction {
             $params['grp'] = $group;
         }
         if ($segment !== null) {
-            $sql .= ' AND c.`segment_id` = :segment';
+
+            $sql .= ' AND t.`segment_id` = :segment';
+
             $params['segment'] = $segment;
         }
         if ($text !== null && $text !== '') {
@@ -475,7 +480,9 @@ class Transaction {
 
     /**
      * Retrieve total amounts by segment for a given month.
-     * Returns segment name with positive and negative totals ordered by total descending.
+
+     * Returns segment name with totals by day and overall.
+
      */
     public static function getSegmentTotalsByMonth(int $month, int $year): array {
         $db = Database::getConnection();
@@ -490,9 +497,11 @@ class Transaction {
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`'
              . ' FROM `transactions` t'
-             . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
-             . ' LEFT JOIN `segments` s ON c.`segment_id` = s.`id`'
-             . ' WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+
+             . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
+             . ' WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year'
+             . ' AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
 
@@ -586,7 +595,9 @@ class Transaction {
 
     /**
      * Retrieve total amounts by segment for a given year.
-     * Returns segment name with positive and negative totals ordered by total descending.
+
+     * Returns segment name with totals by month and overall.
+
      */
     public static function getSegmentTotalsByYear(int $year): array {
         $db = Database::getConnection();
@@ -601,9 +612,11 @@ class Transaction {
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`'
              . ' FROM `transactions` t'
-             . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
-             . ' LEFT JOIN `segments` s ON c.`segment_id` = s.`id`'
-             . ' WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+
+             . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
+             . ' WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL'
+             . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
 
@@ -704,8 +717,9 @@ class Transaction {
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`'
              . ' FROM `transactions` t'
-             . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
-             . ' LEFT JOIN `segments` s ON c.`segment_id` = s.`id`'
+
+             . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
+
              . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
