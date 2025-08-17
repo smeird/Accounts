@@ -248,8 +248,11 @@ class Transaction {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, t.`ofx_type`, '
+             . 't.`ofx_id`, t.`bank_ofx_id`, '
+             . 'a.`name` AS account_name, a.`sort_code`, a.`account_number`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
+             . 'LEFT JOIN `accounts` a ON t.`account_id` = a.`id` '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '

@@ -74,15 +74,19 @@
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
+                <p><strong>Transaction ID:</strong> ${tx.id}</p>
+                <p><strong>Account:</strong> ${tx.account_name || ''}</p>
+                <p><strong>Sort Code:</strong> ${tx.sort_code || ''}</p>
+                <p><strong>Account Number:</strong> ${tx.account_number || ''}</p>
                 <p><strong>Date:</strong> ${tx.date}</p>
                 <p><strong>Description:</strong> ${tx.description}</p>
                 <p><strong>Memo:</strong> ${tx.memo || ''}</p>
                 <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
                 <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
-
-                <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals</span>' : 'No'}</p>
-
-                ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : ''}
+                ${tx.ofx_id ? `<p><strong>OFX ID:</strong> ${tx.ofx_id}</p>` : ''}
+                ${tx.bank_ofx_id ? `<p><strong>Bank OFX ID:</strong> ${tx.bank_ofx_id}</p>` : ''}
+                <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</p>
+                ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : '<p><strong>Category:</strong> None</p>'}
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
@@ -91,6 +95,7 @@
             container.appendChild(card);
             const tagInput = form.querySelector('#tag');
             const groupSel = form.querySelector('#group');
+            tagInput.value = tx.tag_name || '';
             const blankGrp = document.createElement('option');
             blankGrp.value = '';
             blankGrp.textContent = '-- None --';
