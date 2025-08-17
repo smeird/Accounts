@@ -180,41 +180,64 @@
             }
         });
 
-        const segments = {};
-        yearly.categories.forEach(c => {
+
+        const data = [{ id: 'root', name: 'Total' }];
+        const segmentIds = {};
+
+        (yearly.segments || []).forEach(s => {
+            if (!s.name) return;
+            const segId = 'seg_' + makeId(s.name);
+            segmentIds[s.name] = segId;
+            data.push({ id: segId, parent: 'root', name: s.name });
+        });
+
+        const categoryTotals = {};
+        (yearly.categories || []).forEach(c => {
             if (!c.name) return;
-
             const segName = categoryMap[c.name] || 'Not Segmented';
-            const segId = 'seg_' + makeId(segName);
-            if (!segments[segName]) segments[segName] = { id: segId, name: segName, total: 0, categories: {} };
-            segments[segName].total += parseFloat(c.total);
+            let segId = segmentIds[segName];
+            if (!segId) {
+                segId = 'seg_' + makeId(segName);
+                segmentIds[segName] = segId;
+                data.push({ id: segId, parent: 'root', name: segName });
+            }
             const catId = 'cat_' + makeId(c.name);
-            segments[segName].categories[c.name] = { id: catId, name: c.name, total: parseFloat(c.total), tags: {} };
+            data.push({ id: catId, parent: segId, name: c.name });
+            categoryTotals[c.name] = { id: catId, total: parseFloat(c.total) };
         });
 
-        yearly.tags.forEach(t => {
-
+        const tagSums = {};
+        (yearly.tags || []).forEach(t => {
             if (!t.name || !t.category) return;
-
-            const catName = t.category;
-            const segName = categoryMap[catName] || 'Not Segmented';
-            const segId = 'seg_' + makeId(segName);
-            if (!segments[segName]) segments[segName] = { id: segId, name: segName, total: 0, categories: {} };
-            const catId = 'cat_' + makeId(catName);
-            if (!segments[segName].categories[catName]) segments[segName].categories[catName] = { id: catId, name: catName, total: 0, tags: {} };
-            const tagId = 'tag_' + makeId(t.name) + '_' + makeId(catName);
-            segments[segName].categories[catName].tags[t.name] = { id: tagId, name: t.name, total: parseFloat(t.total) };
+            const catInfo = categoryTotals[t.category];
+            let catId;
+            if (catInfo) {
+                catId = catInfo.id;
+            } else {
+                const segName = categoryMap[t.category] || 'Not Segmented';
+                let segId = segmentIds[segName];
+                if (!segId) {
+                    segId = 'seg_' + makeId(segName);
+                    segmentIds[segName] = segId;
+                    data.push({ id: segId, parent: 'root', name: segName });
+                }
+                catId = 'cat_' + makeId(t.category);
+                data.push({ id: catId, parent: segId, name: t.category });
+                categoryTotals[t.category] = { id: catId, total: 0 };
+            }
+            const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
+            const value = parseFloat(t.total);
+            data.push({ id: tagId, parent: catId, name: t.name, value });
+            tagSums[catId] = (tagSums[catId] || 0) + value;
         });
 
-        const data = [{ id: 'root', parent: '', name: 'Total' }];
-        Object.values(segments).forEach(seg => {
-            data.push({ id: seg.id, parent: 'root', name: seg.name, value: seg.total });
-            Object.values(seg.categories).forEach(cat => {
-                data.push({ id: cat.id, parent: seg.id, name: cat.name, value: cat.total });
-                Object.values(cat.tags).forEach(tag => {
-                    data.push({ id: tag.id, parent: cat.id, name: tag.name, value: tag.total });
-                });
-            });
+        Object.values(categoryTotals).forEach(ct => {
+            const tagged = tagSums[ct.id] || 0;
+            const diff = ct.total - tagged;
+            if (Math.abs(diff) > 0.01) {
+                data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
+            }
+
         });
 
         Highcharts.chart('sunburst-chart', {
