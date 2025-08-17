@@ -159,19 +159,20 @@ class Transaction {
     /**
      * Filter transactions by optional category, tag, group, text and date range.
      */
-    public static function filter(?int $category = null, ?int $tag = null, ?int $group = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
-        if ($category === null && $tag === null && $group === null && $text === null && $start === null && $end === null) {
+    public static function filter(?int $category = null, ?int $tag = null, ?int $group = null, ?int $segment = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
+        if ($category === null && $tag === null && $group === null && $segment === null && $text === null && $start === null && $end === null) {
             return [];
         }
 
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
-             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name, s.`name` AS segment_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'WHERE t.`transfer_id` IS NULL'
              . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
 
@@ -187,6 +188,10 @@ class Transaction {
         if ($group !== null) {
             $sql .= ' AND t.`group_id` = :grp';
             $params['grp'] = $group;
+        }
+        if ($segment !== null) {
+            $sql .= ' AND t.`segment_id` = :segment';
+            $params['segment'] = $segment;
         }
         if ($text !== null && $text !== '') {
             $sql .= ' AND (t.`description` LIKE :txt OR t.`memo` LIKE :txt)';
@@ -463,6 +468,34 @@ class Transaction {
     }
 
     /**
+     * Retrieve total amounts by segment for a given month.
+     * Returns segment name with totals by day and overall.
+     */
+    public static function getSegmentTotalsByMonth(int $month, int $year): array {
+        $db = Database::getConnection();
+
+        $dayCases = [];
+        for ($d = 1; $d <= 31; $d++) {
+            $dayCases[] = "SUM(CASE WHEN DAY(t.`date`) = $d THEN t.`amount` ELSE 0 END) AS `$d`";
+        }
+
+        $ignore = Tag::getIgnoreId();
+        $sql = 'SELECT COALESCE(s.`name`, \'Not Segmented\') AS `name`, '
+             . implode(', ', $dayCases)
+             . ', SUM(t.`amount`) AS `total`'
+             . ' FROM `transactions` t'
+             . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
+             . ' WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year'
+             . ' AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+             . ' GROUP BY `name`'
+             . ' ORDER BY `total` DESC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
 
      * Retrieve total amounts by tag for a given year.
      * Returns tag name with totals including both positive and negative values ordered by total descending.
@@ -546,6 +579,34 @@ class Transaction {
     }
 
     /**
+     * Retrieve total amounts by segment for a given year.
+     * Returns segment name with totals by month and overall.
+     */
+    public static function getSegmentTotalsByYear(int $year): array {
+        $db = Database::getConnection();
+
+        $monthCases = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthCases[] = "SUM(CASE WHEN MONTH(t.`date`) = $m THEN t.`amount` ELSE 0 END) AS `$m`";
+        }
+
+        $ignore = Tag::getIgnoreId();
+        $sql = 'SELECT COALESCE(s.`name`, \'Not Segmented\') AS `name`, '
+             . implode(', ', $monthCases)
+             . ', SUM(t.`amount`) AS `total`'
+             . ' FROM `transactions` t'
+             . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
+             . ' WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL'
+             . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+             . ' GROUP BY `name`'
+             . ' ORDER BY `total` DESC';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['year' => $year, 'ignore' => $ignore]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Retrieve tag totals across multiple years.
      */
     public static function getTagTotalsByYears(array $years): array {
@@ -613,6 +674,31 @@ class Transaction {
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`'
+             . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
+             . ' GROUP BY `name`'
+             . ' ORDER BY `total` DESC';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieve segment totals across multiple years.
+     */
+    public static function getSegmentTotalsByYears(array $years): array {
+        if (empty($years)) { return []; }
+        $db = Database::getConnection();
+        $yearCases = [];
+        foreach ($years as $y) {
+            $y = (int)$y;
+            $yearCases[] = "SUM(CASE WHEN YEAR(t.`date`) = $y THEN t.`amount` ELSE 0 END) AS `$y`";
+        }
+        $ignore = Tag::getIgnoreId();
+        $sql = 'SELECT COALESCE(s.`name`, \'Not Segmented\') AS `name`, '
+             . implode(', ', $yearCases)
+             . ', SUM(t.`amount`) AS `total`'
+             . ' FROM `transactions` t'
+             . ' LEFT JOIN `segments` s ON t.`segment_id` = s.`id`'
              . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
              . ' GROUP BY `name`'
              . ' ORDER BY `total` DESC';
