@@ -11,7 +11,7 @@ window.fetch = (input, init = {}) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Apply 20% opacity to all page elements
-  document.documentElement.style.opacity = '0.2';
+  document.documentElement.style.opacity = '0.8';
   // Apply consistent hover styling across the site
   const hoverStyle = document.createElement('style');
   hoverStyle.textContent = `
