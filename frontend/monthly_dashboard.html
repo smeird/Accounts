@@ -55,6 +55,10 @@
                 <div id="category-tag-outgoings" style="height:400px"></div>
             </div>
 
+            <h2 class="text-xl font-semibold mt-6 mb-2">Segment Totals</h2>
+            <div id="segments-table" class="mt-2"></div>
+            <div id="segments-chart" class="mt-4" style="height:400px"></div>
+
             <h2 class="text-xl font-semibold mt-6 mb-2">Group Totals</h2>
             <div id="groups-table" class="mt-2"></div>
             <div id="groups-chart" class="mt-4" style="height:400px"></div>
@@ -202,6 +206,8 @@
                 buildTable('categories-table', data.categories, days, 'bg-green-200 text-green-800');
                 buildChart('categories-chart', 'Category Totals', data.categories);
                 buildDonutCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
+                buildTable('segments-table', data.segments, days, 'bg-yellow-200 text-yellow-800');
+                buildChart('segments-chart', 'Segment Totals', data.segments);
                 buildTable('groups-table', data.groups, days, 'bg-purple-200 text-purple-800');
                 buildChart('groups-chart', 'Group Totals', data.groups);
             });

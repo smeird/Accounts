@@ -291,7 +291,7 @@ function loadTransactions() {
         table = tailwindTabulator('#transactions-grid', {
             data: data,
             layout: 'fitDataStretch',
-            searchFields: ['date','description','memo','category_name','tag_name','amount'],
+            searchFields: ['date','description','memo','category_name','tag_name','segment_name','amount'],
             columns: [
                 { title: 'Date', field: 'date' },
                 { title: 'Description', field: 'description', formatter: function(cell) {
@@ -356,6 +356,19 @@ function loadTransactions() {
                             const name = groupValues[newId] || '';
                             cell.getRow().update({ group_name: name });
                         });
+                    }
+                },
+                {
+                    title: 'Segment',
+                    field: 'segment_name',
+                    formatter: function(cell){
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const badge = createBadge(value, 'bg-yellow-200 text-yellow-800');
+                        const link = document.createElement('a');
+                        link.href = `search.html?value=${encodeURIComponent(value)}`;
+                        link.appendChild(badge);
+                        return link;
                     }
                 },
                 { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }

@@ -1,4 +1,5 @@
 <?php
+
 // API endpoint for managing segments and their category assignments.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Segment.php';
@@ -106,5 +107,6 @@ try {
     Log::write('Segment error: ' . $e->getMessage(), 'ERROR');
     echo json_encode(['error' => 'Server error']);
 }
+
 
 ?>

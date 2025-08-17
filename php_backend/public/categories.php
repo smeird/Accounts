@@ -29,12 +29,13 @@ try {
             case 'create':
                 $name = trim($data['name'] ?? '');
                 $description = $data['description'] ?? null;
+                $segmentId = isset($data['segment_id']) ? (int)$data['segment_id'] : null;
                 if ($name === '') {
                     http_response_code(400);
                     echo json_encode(['error' => 'Name required']);
                     return;
                 }
-                $id = Category::create($name, $description);
+                $id = Category::create($name, $description, $segmentId);
                 Log::write("Created category $name");
                 echo json_encode(['id' => $id]);
                 break;
@@ -90,12 +91,13 @@ try {
         $id = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
+        $segmentId = isset($data['segment_id']) ? (int)$data['segment_id'] : null;
         if ($id <= 0 || $name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'ID and name required']);
             return;
         }
-        Category::update($id, $name, $description);
+        Category::update($id, $name, $description, $segmentId);
         Log::write("Updated category $id");
         echo json_encode(['status' => 'ok']);
     } else {
