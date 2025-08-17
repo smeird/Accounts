@@ -11,11 +11,13 @@ try {
     $tags = Transaction::getTagTotalsByYears($years);
     $categories = Transaction::getCategoryTotalsByYears($years);
     $groups = Transaction::getGroupTotalsByYears($years);
+    $segments = Transaction::getSegmentTotalsByYears($years);
     echo json_encode([
         'years' => $years,
         'tags' => $tags,
         'categories' => $categories,
-        'groups' => $groups
+        'groups' => $groups,
+        'segments' => $segments
     ]);
 } catch (Exception $e) {
     http_response_code(500);
