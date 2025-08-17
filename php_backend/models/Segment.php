@@ -80,20 +80,5 @@ class Segment {
         }
 
     }
-
-    /**
-     * Apply segment IDs to transactions based on their category's segment.
-     * Returns the number of transactions updated.
-     */
-    public static function applyToTransactions(): int {
-        $db = Database::getConnection();
-        $sql = 'UPDATE transactions t '
-             . 'LEFT JOIN categories c ON t.category_id = c.id '
-             . 'SET t.segment_id = c.segment_id '
-             . 'WHERE NOT (t.segment_id <=> c.segment_id)';
-        $stmt = $db->prepare($sql);
-        $stmt->execute();
-        return $stmt->rowCount();
-    }
 }
 ?>
