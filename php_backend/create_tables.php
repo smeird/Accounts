@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS segment_categories;
 DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS accounts;
@@ -60,6 +61,16 @@ CREATE TABLE IF NOT EXISTS budgets (
     UNIQUE KEY unique_budget (category_id, month, year),
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
+
+
+CREATE TABLE IF NOT EXISTS segment_categories (
+    segment_id INT NOT NULL,
+    category_id INT NOT NULL,
+    PRIMARY KEY (segment_id, category_id),
+    FOREIGN KEY (segment_id) REFERENCES segments(id),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
 
 CREATE TABLE IF NOT EXISTS tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -264,6 +275,8 @@ if ($result->fetchColumn() == 0) {
 
     $segStmt = $db->prepare('INSERT INTO segments (name, description) VALUES (:name, :description)');
     $catStmt = $db->prepare('INSERT INTO categories (name, description, segment_id) VALUES (:name, :description, :segment_id)');
+    $linkStmt = $db->prepare('INSERT INTO segment_categories (segment_id, category_id) VALUES (:segment_id, :category_id)');
+
 
     foreach ($defaultSegments as $seg) {
         $segStmt->execute(['name' => $seg['name'], 'description' => null]);
@@ -274,6 +287,13 @@ if ($result->fetchColumn() == 0) {
                 'description' => $cat['description'],
                 'segment_id' => $segmentId
             ]);
+
+            $categoryId = (int)$db->lastInsertId();
+            $linkStmt->execute([
+                'segment_id' => $segmentId,
+                'category_id' => $categoryId
+            ]);
+
         }
     }
 }

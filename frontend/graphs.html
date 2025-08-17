@@ -37,7 +37,9 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
+
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
@@ -169,6 +171,7 @@
     }
 
     function renderSunburst(yearly, categories){
+
         const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
         const categoryMap = {};
         categories.forEach(c => {
@@ -176,6 +179,7 @@
                 categoryMap[c.name] = c.segment_name || 'Not Segmented';
             }
         });
+
 
         const data = [{ id: 'root', name: 'Total' }];
         const segmentIds = {};
@@ -233,6 +237,7 @@
             if (Math.abs(diff) > 0.01) {
                 data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
             }
+
         });
 
         Highcharts.chart('sunburst-chart', {
