@@ -15,6 +15,7 @@ DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS budgets;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS accounts;
 SQL;
 $db->exec($dropSql);
@@ -36,10 +37,18 @@ CREATE TABLE IF NOT EXISTS accounts (
     ledger_balance_date DATE DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS segments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL,
+    segment_id INT DEFAULT NULL,
+    FOREIGN KEY (segment_id) REFERENCES segments(id)
 );
 
 CREATE TABLE IF NOT EXISTS budgets (
@@ -123,6 +132,23 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `categories` LIKE 'description'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `categories` ADD COLUMN `description` TEXT DEFAULT NULL");
+}
+
+// Ensure segments table exists
+$result = $db->query("SHOW TABLES LIKE 'segments'");
+if ($result->rowCount() === 0) {
+    $db->exec("CREATE TABLE `segments` (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT DEFAULT NULL
+    )");
+}
+
+// Ensure segment_id column exists in categories
+$result = $db->query("SHOW COLUMNS FROM `categories` LIKE 'segment_id'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `categories` ADD COLUMN `segment_id` INT DEFAULT NULL");
+    $db->exec("ALTER TABLE `categories` ADD FOREIGN KEY (`segment_id`) REFERENCES `segments`(`id`)");
 }
 
 // Ensure description column exists in transaction_groups
