@@ -4,7 +4,10 @@
     <div class="flex items-center space-x-4">
       <img src="../favicon.svg" alt="Finance Manager Logo" class="h-8 w-8">
       <button id="menu-toggle" class="md:hidden bg-indigo-700 p-2 rounded"><i class="fa-solid fa-bars"></i></button>
-      <div class="font-bold text-lg">Personal Finance Manager</div>
+      <div class="font-bold text-lg flex items-center">
+        <span>Personal Finance Manager</span>
+        <span id="release-number" class="ml-2 bg-indigo-700 text-white text-[0.675rem] px-2 py-0.5 rounded">v0.0.0</span>
+      </div>
     </div>
     <div id="topbar-right" class="flex items-center space-x-4 transition-transform duration-300">
       <form id="topbar-search" action="search.html" method="get" class="flex">

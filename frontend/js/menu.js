@@ -148,6 +148,19 @@ document.addEventListener('DOMContentLoaded', () => {
           })
           .catch(err => console.error('Latest statement load failed', err));
       }
+
+      const releaseEl = document.getElementById('release-number');
+      if (releaseEl) {
+        fetch('../php_backend/public/version.php')
+          .then(r => r.json())
+          .then(v => {
+            const version = v.version || 'unknown';
+            releaseEl.textContent = `v${version}`;
+          })
+          .catch(() => {
+            releaseEl.textContent = 'v?';
+          });
+      }
     })
     .catch(err => console.error('Top bar load failed', err));
 
