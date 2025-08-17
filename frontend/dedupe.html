@@ -17,11 +17,16 @@
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Duplicate Transactions</h1>
             <p class="mb-4">Remove unwanted duplicate entries to keep your records accurate.</p>
-            <div class="mb-4 space-x-2">
-                <button id="refresh" class="bg-indigo-600 text-white px-3 py-1 rounded">Refresh</button>
-                <button id="dedupe-all" class="bg-red-600 text-white px-3 py-1 rounded">Dedupe All</button>
+            <div class="bg-white p-6 rounded shadow">
+                <div class="mb-4 space-x-2">
+                    <button id="refresh" class="bg-indigo-600 text-white px-3 py-1 rounded"><i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh</button>
+                    <button id="dedupe-all" class="bg-red-600 text-white px-3 py-1 rounded"><i class="fa-solid fa-broom mr-1"></i>Dedupe All</button>
+                </div>
+                <div id="progress-container" class="hidden w-full bg-gray-200 h-2 rounded mb-4">
+                    <div id="progress-bar" class="h-2 bg-indigo-600 rounded" style="width:0%"></div>
+                </div>
+                <div id="dupe-table"></div>
             </div>
-            <div id="dupe-table"></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -30,25 +35,56 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
     let table = null;
+    let progressInterval;
+
+    function startProgress(){
+        const container = document.getElementById('progress-container');
+        const bar = document.getElementById('progress-bar');
+        container.classList.remove('hidden');
+        bar.style.width = '0%';
+        let width = 0;
+        progressInterval = setInterval(() => {
+            width += 10;
+            if(width >= 90){
+                width = 90;
+                clearInterval(progressInterval);
+            }
+            bar.style.width = width + '%';
+        }, 100);
+    }
+
+    function finishProgress(){
+        const container = document.getElementById('progress-container');
+        const bar = document.getElementById('progress-bar');
+        clearInterval(progressInterval);
+        bar.style.width = '100%';
+        setTimeout(() => container.classList.add('hidden'), 300);
+    }
+
     async function loadDupes(){
-        const resp = await fetch('../php_backend/public/dedupe_transactions.php');
-        const data = await resp.json();
-        if(table){
-            table.setData(data);
-            return;
+        startProgress();
+        try {
+            const resp = await fetch('../php_backend/public/dedupe_transactions.php');
+            const data = await resp.json();
+            if(table){
+                table.setData(data);
+            } else {
+                table = tailwindTabulator(document.getElementById('dupe-table'), {
+                    data: data,
+                    layout: 'fitDataStretch',
+                    columns: [
+                        { title: 'Account', field: 'account' },
+                        { title: 'Date', field: 'date' },
+                        { title: 'Description', field: 'description' },
+                        { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                        { title: 'Count', field: 'count', hozAlign: 'right' },
+                        { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-trash"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
+                    ]
+                });
+            }
+        } finally {
+            finishProgress();
         }
-        table = tailwindTabulator(document.getElementById('dupe-table'), {
-            data: data,
-            layout: 'fitDataStretch',
-            columns: [
-                { title: 'Account', field: 'account' },
-                { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description' },
-                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
-                { title: 'Count', field: 'count', hozAlign: 'right' },
-                { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-trash"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
-            ]
-        });
     }
 
     async function dedupe(ids){
@@ -76,6 +112,7 @@
 
     loadDupes();
     </script>
+    <script src="js/page_help.js"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>
