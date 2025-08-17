@@ -74,19 +74,21 @@
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
-                <p><strong>Transaction ID:</strong> ${tx.id}</p>
-                <p><strong>Account:</strong> ${tx.account_name || ''}</p>
-                <p><strong>Sort Code:</strong> ${tx.sort_code || ''}</p>
-                <p><strong>Account Number:</strong> ${tx.account_number || ''}</p>
-                <p><strong>Date:</strong> ${tx.date}</p>
-                <p><strong>Description:</strong> ${tx.description}</p>
-                <p><strong>Memo:</strong> ${tx.memo || ''}</p>
-                <p><strong>Amount:</strong> £${parseFloat(tx.amount).toFixed(2)}</p>
-                <p><strong>OFX Type:</strong> ${tx.ofx_type || ''}</p>
-                ${tx.ofx_id ? `<p><strong>OFX ID:</strong> ${tx.ofx_id}</p>` : ''}
-                ${tx.bank_ofx_id ? `<p><strong>Bank OFX ID:</strong> ${tx.bank_ofx_id}</p>` : ''}
-                <p><strong>Transfer:</strong> ${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</p>
-                ${tx.category_name ? '<p><strong>Category:</strong> ' + tx.category_name + '</p>' : '<p><strong>Category:</strong> None</p>'}
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex"><dt class="font-semibold w-40">Transaction ID</dt><dd>${tx.id}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Account</dt><dd>${tx.account_name || ''}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Sort Code</dt><dd>${tx.sort_code || ''}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Account Number</dt><dd>${tx.account_number || ''}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Date</dt><dd>${tx.date}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Description</dt><dd>${tx.description}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Memo</dt><dd>${tx.memo || ''}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Amount</dt><dd>£${parseFloat(tx.amount).toFixed(2)}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">OFX Type</dt><dd>${tx.ofx_type || ''}</dd></div>
+                    ${tx.ofx_id ? `<div class="flex"><dt class="font-semibold w-40">OFX ID</dt><dd>${tx.ofx_id}</dd></div>` : ''}
+                    ${tx.bank_ofx_id ? `<div class="flex"><dt class="font-semibold w-40">Bank OFX ID</dt><dd>${tx.bank_ofx_id}</dd></div>` : ''}
+                    <div class="flex"><dt class="font-semibold w-40">Transfer</dt><dd>${tx.transfer_id ? '<span class="text-blue-600"><i class="fa-solid fa-right-left mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Category</dt><dd>${tx.category_name || 'None'}</dd></div>
+                </dl>
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
