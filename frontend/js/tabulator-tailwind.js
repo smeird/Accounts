@@ -52,6 +52,7 @@ function tailwindTabulator(element, options) {
     options = options || {};
 
     const enableSearch = options.simpleSearch !== false;
+    const searchFields = options.searchFields;
 
     // Allow rowClick handler to be bound after table creation
     const rowClickHandler = options.rowClick;
@@ -104,13 +105,14 @@ function tailwindTabulator(element, options) {
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         searchInput.addEventListener('input', function() {
             if (typeof table.search === 'function') {
-                table.search(this.value);
+                table.search(this.value, searchFields);
             } else {
                 const query = this.value.toLowerCase();
                 table.setFilter(function(data) {
-                    return Object.values(data).some(v =>
-                        v && v.toString().toLowerCase().includes(query)
-                    );
+                    return Object.entries(data).some(([field, v]) => {
+                        if (searchFields && !searchFields.includes(field)) return false;
+                        return v && v.toString().toLowerCase().includes(query);
+                    });
                 });
             }
         });
