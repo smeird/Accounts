@@ -54,15 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.head.appendChild(link);
     }
 
-    // Load Roboto font for a lighter appearance
-    if (!document.getElementById('roboto-font')) {
+    // Load monospaced font suitable for financial records
+    if (!document.getElementById('roboto-mono-font')) {
       const fontLink = document.createElement('link');
-      fontLink.id = 'roboto-font';
+      fontLink.id = 'roboto-mono-font';
       fontLink.rel = 'stylesheet';
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;500&display=swap';
       document.head.appendChild(fontLink);
     }
-    document.body.style.fontFamily = 'Roboto, sans-serif';
+    document.body.style.fontFamily = 'Roboto Mono, monospace';
     document.body.style.fontWeight = '300';
 
     fetch('menu.html')
