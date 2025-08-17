@@ -22,11 +22,13 @@ while ($repoDir !== '/' && !is_dir($repoDir . '/.git')) {
 }
 
 if (!is_dir($repoDir . '/.git')) {
+
     Log::write('Git repository not found starting at ' . $rootDir, 'ERROR');
     echo json_encode([
         'success' => false,
         'output' => 'Git repository not found',
         'cwd' => $rootDir,
+
     ]);
     exit;
 }
@@ -62,16 +64,20 @@ $remoteStatus = 0;
 exec($gitCmd . ' remote 2>&1', $remoteList, $remoteStatus);
 $remoteOutput = trim(implode("\n", $remoteList));
 if ($remoteStatus !== 0) {
+
     Log::write('Git remote check failed in ' . $rootDir . ': ' . $remoteOutput, 'ERROR');
     echo json_encode([
         'success' => false,
         'output' => $remoteOutput,
         'cwd' => $rootDir,
+
     ]);
     exit;
 }
 if ($remoteOutput === '') {
+
     Log::write('No git remote configured in ' . $rootDir, 'ERROR');
+
     echo json_encode([
         'success' => false,
         'output' => 'No git remote configured',

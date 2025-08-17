@@ -2,6 +2,7 @@
 // Returns running balance history for a single account starting from latest bank balance.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Account.php';
+require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../Database.php';
 
 header('Content-Type: application/json');
@@ -23,8 +24,9 @@ try {
     if ($account['ledger_balance_date']) {
         $history[] = ['date' => $account['ledger_balance_date'], 'balance' => $balance];
     }
-    $stmt = $db->prepare('SELECT date, amount FROM transactions WHERE account_id = :id ORDER BY date DESC, id DESC');
-    $stmt->execute(['id' => $id]);
+    $ignore = Tag::getIgnoreId();
+    $stmt = $db->prepare('SELECT date, amount FROM transactions WHERE account_id = :id AND (tag_id IS NULL OR tag_id != :ignore) ORDER BY date DESC, id DESC');
+    $stmt->execute(['id' => $id, 'ignore' => $ignore]);
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $balance -= (float)$row['amount'];
         $history[] = ['date' => $row['date'], 'balance' => $balance];

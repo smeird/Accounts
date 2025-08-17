@@ -77,6 +77,28 @@ class Tag {
     }
 
     /**
+     * Look up a tag's id by its exact name.
+     */
+    public static function getIdByName(string $name): ?int {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT `id` FROM `tags` WHERE `name` = :name LIMIT 1');
+        $stmt->execute(['name' => $name]);
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int)$id : null;
+    }
+
+    /**
+     * Return the id for the IGNORE tag, creating it if missing.
+     */
+    public static function getIgnoreId(): int {
+        $id = self::getIdByName('IGNORE');
+        if ($id === null) {
+            $id = self::create('IGNORE', 'IGNORE', 'Ignored transactions');
+        }
+        return $id;
+    }
+
+    /**
      * Set a tag's keyword if it is currently blank.
      */
     public static function setKeywordIfMissing(int $tagId, string $keyword): void {
