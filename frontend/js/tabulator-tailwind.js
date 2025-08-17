@@ -76,10 +76,18 @@ function tailwindTabulator(element, options) {
 
     if (enableSearch) {
         const tableEl = typeof element === 'string' ? document.querySelector(element) : element;
+
+        // Remove any existing search input inserted by a previous
+        // table initialisation to avoid duplicate fields.
+        const existing = tableEl.previousElementSibling;
+        if (existing && existing.classList.contains('tabulator-search')) {
+            existing.remove();
+        }
+
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.placeholder = 'Search';
-        searchInput.className = 'mb-2 p-2 border rounded w-full';
+        searchInput.className = 'tabulator-search mb-2 p-2 border rounded w-full';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         searchInput.addEventListener('input', function() {
             if (typeof table.search === 'function') {
