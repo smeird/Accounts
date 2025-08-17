@@ -86,6 +86,20 @@ document.addEventListener('DOMContentLoaded', () => {
             heading.before(crumb);
           }
         }
+        // Display counter for untagged transactions in menu
+        fetch('../php_backend/public/untagged_transactions.php')
+          .then(r => r.json())
+          .then(rows => {
+            const total = rows.reduce((sum, row) => sum + Number(row.count || 0), 0);
+            if (total > 10) {
+              const counter = menu.querySelector('#missing-tags-count');
+              if (counter) {
+                counter.textContent = total;
+                counter.classList.remove('hidden');
+              }
+            }
+          })
+          .catch(err => console.error('Untagged count load failed', err));
       })
       .catch(err => console.error('Menu load failed', err));
   }
