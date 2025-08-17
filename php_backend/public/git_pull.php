@@ -32,17 +32,26 @@ $rootDir = $repoDir;
 
 
 // Git expects a HOME environment variable even when no global configuration is
-// required. Point it at the repository root to satisfy this requirement.
-putenv('HOME=' . $rootDir);
-$_SERVER['HOME'] = $rootDir;
+// required. Point it at a temporary directory so `git config --global` has a
+// safe place to write to and doesn't pollute the repository.
+$homeDir = sys_get_temp_dir();
+putenv('HOME=' . $homeDir);
+$_SERVER['HOME'] = $homeDir;
 
+// Mark the repository as a safe directory if it has not already been whitelisted
+// to avoid "dubious ownership" errors when running commands.
+$safeCheck = [];
+$safeStatus = 0;
+exec('git config --global --get safe.directory ' . escapeshellarg($rootDir) . ' 2>&1', $safeCheck, $safeStatus);
+if ($safeStatus !== 0) {
+    exec('git config --global --add safe.directory ' . escapeshellarg($rootDir) . ' 2>&1');
+}
 
 $output = [];
 $returnVar = 0;
 
-// Prepare a git command that treats the repository directory as safe without
-// relying on global configuration that requires the HOME environment variable.
-$gitCmd = 'git -C ' . escapeshellarg($rootDir) . ' -c safe.directory=' . escapeshellarg($rootDir);
+// Prepare a git command rooted at the repository.
+$gitCmd = 'git -C ' . escapeshellarg($rootDir);
 
 // Ensure a remote is configured before attempting to pull.
 $remoteList = [];
