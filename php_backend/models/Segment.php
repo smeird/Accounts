@@ -1,4 +1,5 @@
 <?php
+
 // Model managing segments and their category associations.
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/Tag.php';
@@ -6,6 +7,7 @@ require_once __DIR__ . '/Tag.php';
 class Segment {
     /**
      * Create a new segment and return its ID.
+
      */
     public static function create(string $name, ?string $description = null): int {
         $db = Database::getConnection();
@@ -15,7 +17,9 @@ class Segment {
     }
 
     /**
+
      * Update an existing segment's name and description.
+
      */
     public static function update(int $id, string $name, ?string $description = null): void {
         $db = Database::getConnection();
@@ -24,6 +28,7 @@ class Segment {
     }
 
     /**
+
      * Delete a segment and remove any category links.
      */
     public static function delete(int $id): bool {
@@ -47,16 +52,19 @@ class Segment {
      * Return all segments with their associated categories.
      *
      * @return array
+
      */
     public static function allWithCategories(): array {
         $db = Database::getConnection();
         $sql = 'SELECT s.id AS segment_id, s.name AS segment_name, s.description AS segment_description, '
+
              . 'c.id AS category_id, c.name AS category_name '
              . 'FROM segments s '
              . 'LEFT JOIN category_segments cs ON s.id = cs.segment_id '
              . 'LEFT JOIN categories c ON cs.category_id = c.id '
              . 'ORDER BY s.id';
         $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
         $segments = [];
         foreach ($rows as $row) {
             $id = (int)$row['segment_id'];
@@ -71,7 +79,9 @@ class Segment {
             if ($row['category_id'] !== null) {
                 $segments[$id]['categories'][] = [
                     'id' => (int)$row['category_id'],
+
                     'name' => $row['category_name']
+
                 ];
             }
         }
@@ -79,6 +89,7 @@ class Segment {
     }
 
     /**
+
      * Calculate total transaction amounts for each segment.
      *
      * @return array{id:int,name:string,total:float}[]
@@ -103,6 +114,7 @@ class Segment {
             $row['total'] = (float)$row['total'];
         }
         return $rows;
+
     }
 }
 ?>

@@ -12,7 +12,8 @@ $db = Database::getConnection();
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, keyword TEXT, description TEXT);');
-$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
+$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);');
+$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE category_segments (category_id INTEGER, segment_id INTEGER);');
@@ -80,13 +81,17 @@ $txTag = $db->query('SELECT tag_id FROM transactions WHERE id = 1')->fetchColumn
 assertEqual($tagId, (int)$txTag, 'Transaction tagged correctly');
 
 // --- Category tests ---
-$catId = Category::create('Essentials', 'Essential spend');
+$db->exec("INSERT INTO segments (name) VALUES ('Living')");
+$segmentId = (int)$db->lastInsertId();
+$catId = Category::create('Essentials', 'Essential spend', $segmentId);
 $db->exec("INSERT INTO category_tags (category_id, tag_id) VALUES ($catId, $tagId)");
 $cats = Category::allWithTags();
 assertEqual('Essentials', $cats[0]['name'] ?? null, 'Category retrieved with tag');
 assertEqual($tagId, $cats[0]['tags'][0]['id'] ?? null, 'Category has associated tag');
+assertEqual($segmentId, $cats[0]['segment_id'] ?? null, 'Category segment id stored');
+assertEqual('Living', $cats[0]['segment_name'] ?? null, 'Category segment name retrieved');
 
-Category::update($catId, 'Essentials Updated', 'Updated desc');
+Category::update($catId, 'Essentials Updated', 'Updated desc', $segmentId);
 $cats = Category::allWithTags();
 assertEqual('Essentials Updated', $cats[0]['name'] ?? null, 'Category updated');
 
