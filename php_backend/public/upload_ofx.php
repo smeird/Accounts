@@ -121,10 +121,7 @@ try {
         $account = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($account) {
             $accountId = (int)$account['id'];
-            if ($accountName && $account['name'] !== $accountName) {
-                $upd = $db->prepare('UPDATE accounts SET name = :name WHERE id = :id');
-                $upd->execute(['name' => $accountName, 'id' => $accountId]);
-            }
+            // Preserve existing account names – do not overwrite with OFX-provided names
         } else {
             $accountId = Account::create($accountName, $sortCode, $accountNumber);
         }
