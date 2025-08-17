@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
+require_once __DIR__ . '/../models/Segment.php';
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
@@ -27,12 +28,18 @@ try {
         $categorised = CategoryTag::applyToAllTransactions();
         Log::write("Manual categorisation applied to $categorised transactions");
         $response['categorised'] = $categorised;
-    } elseif ($action === 'both') {
+    } elseif ($action === 'segments') {
+        $segmented = Segment::applyToTransactions();
+        Log::write("Manual segment assignment applied to $segmented transactions");
+        $response['segmented'] = $segmented;
+    } elseif ($action === 'all' || $action === 'both') {
         $tagged = Tag::applyToAllTransactions();
         $categorised = CategoryTag::applyToAllTransactions();
-        Log::write("Manual tagging applied to $tagged transactions; categorised $categorised transactions");
+        $segmented = Segment::applyToTransactions();
+        Log::write("Manual tagging applied to $tagged transactions; categorised $categorised transactions; segment assignment applied to $segmented transactions");
         $response['tagged'] = $tagged;
         $response['categorised'] = $categorised;
+        $response['segmented'] = $segmented;
     } else {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid action']);

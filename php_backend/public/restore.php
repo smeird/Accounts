@@ -80,6 +80,7 @@ try {
     if (isset($data['transactions'])) $db->exec('TRUNCATE TABLE transactions');
     if (isset($data['tags'])) $db->exec('TRUNCATE TABLE tags');
     if (isset($data['categories'])) $db->exec('TRUNCATE TABLE categories');
+    if (isset($data['segments'])) $db->exec('TRUNCATE TABLE segments');
     if (isset($data['groups'])) $db->exec('TRUNCATE TABLE transaction_groups');
     if (isset($data['budgets'])) $db->exec('TRUNCATE TABLE budgets');
     if (isset($data['accounts'])) $db->exec('TRUNCATE TABLE accounts');
@@ -107,10 +108,30 @@ try {
         }
     }
 
+    // Import segments first so categories can reference them
+    $segmentMap = [];
+    if (isset($data['segments'])) {
+        $stmtSeg = $db->prepare('INSERT INTO segments (name, description) VALUES (:name, :description)');
+        foreach ($data['segments'] as $row) {
+            $stmtSeg->execute(['name' => $row['name'], 'description' => $row['description'] ?? null]);
+            $segmentMap[$row['id']] = (int)$db->lastInsertId();
+        }
+    }
+
     if (isset($data['categories'])) {
-        $stmtCat = $db->prepare('INSERT INTO categories (id, name, description) VALUES (:id, :name, :description)');
+        $stmtCat = $db->prepare('INSERT INTO categories (id, segment_id, name, description) VALUES (:id, :segment_id, :name, :description)');
         foreach ($data['categories'] as $row) {
-            $stmtCat->execute(['id' => $row['id'], 'name' => $row['name'], 'description' => $row['description'] ?? null]);
+            $segmentId = null;
+            if (isset($row['segment_id'])) {
+                $oldSeg = $row['segment_id'];
+                $segmentId = $segmentMap[$oldSeg] ?? null;
+            }
+            $stmtCat->execute([
+                'id' => $row['id'],
+                'segment_id' => $segmentId,
+                'name' => $row['name'],
+                'description' => $row['description'] ?? null
+            ]);
         }
     }
 

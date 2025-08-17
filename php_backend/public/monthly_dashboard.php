@@ -1,5 +1,5 @@
 <?php
-// API endpoint returning monthly totals for tags, categories, groups and income/outgoings.
+// API endpoint returning monthly totals for segments, tags, categories, groups and income/outgoings.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
@@ -11,12 +11,14 @@ $month = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
 
 try {
     $totals = Transaction::getMonthlyTotals($month, $year);
+    $segments = Transaction::getSegmentTotalsByMonth($month, $year);
     $tags = Transaction::getTagTotalsByMonth($month, $year);
     $categories = Transaction::getCategoryTotalsByMonth($month, $year);
     $groups = Transaction::getGroupTotalsByMonth($month, $year);
     $segments = Transaction::getSegmentTotalsByMonth($month, $year);
     echo json_encode([
         'totals' => $totals,
+        'segments' => $segments,
         'tags' => $tags,
         'categories' => $categories,
         'groups' => $groups,

@@ -14,7 +14,10 @@ DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS segment_categories;
+DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS accounts;
 SQL;
 $db->exec($dropSql);
@@ -36,10 +39,18 @@ CREATE TABLE IF NOT EXISTS accounts (
     ledger_balance_date DATE DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS segments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL,
+    segment_id INT DEFAULT NULL,
+    FOREIGN KEY (segment_id) REFERENCES segments(id)
 );
 
 CREATE TABLE IF NOT EXISTS budgets (
@@ -49,6 +60,20 @@ CREATE TABLE IF NOT EXISTS budgets (
     year INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     UNIQUE KEY unique_budget (category_id, month, year),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS segment_categories (
+    segment_id INT NOT NULL,
+    category_id INT NOT NULL,
+    PRIMARY KEY (segment_id, category_id),
+    FOREIGN KEY (segment_id) REFERENCES segments(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
@@ -125,6 +150,23 @@ if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `categories` ADD COLUMN `description` TEXT DEFAULT NULL");
 }
 
+// Ensure segments table exists
+$result = $db->query("SHOW TABLES LIKE 'segments'");
+if ($result->rowCount() === 0) {
+    $db->exec("CREATE TABLE `segments` (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT DEFAULT NULL
+    )");
+}
+
+// Ensure segment_id column exists in categories
+$result = $db->query("SHOW COLUMNS FROM `categories` LIKE 'segment_id'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `categories` ADD COLUMN `segment_id` INT DEFAULT NULL");
+    $db->exec("ALTER TABLE `categories` ADD FOREIGN KEY (`segment_id`) REFERENCES `segments`(`id`)");
+}
+
 // Ensure description column exists in transaction_groups
 $result = $db->query("SHOW COLUMNS FROM `transaction_groups` LIKE 'description'");
 if ($result->rowCount() === 0) {
@@ -182,6 +224,71 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'ledger_balance_date'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance_date` DATE DEFAULT NULL");
+}
+
+// Seed default segments and categories on a fresh database
+$result = $db->query('SELECT COUNT(*) FROM segments');
+if ($result->fetchColumn() == 0) {
+    $defaultSegments = [
+        [
+            'name' => 'Fixed Commitments',
+            'categories' => [
+                ['name' => 'Housing & Utilities', 'description' => 'mortgage, rent, energy, water, council tax'],
+                ['name' => 'Insurance & Protection', 'description' => 'home, car, health, life'],
+                ['name' => 'Debt Obligations', 'description' => 'loans, credit repayments'],
+                ['name' => 'Transport – Fixed', 'description' => 'car finance, season tickets, road tax'],
+                ['name' => 'Essential Services', 'description' => 'broadband, mobile, TV licence'],
+            ]
+        ],
+        [
+            'name' => 'Semi-Flexible Essentials',
+            'categories' => [
+                ['name' => 'Food & Groceries', 'description' => 'supermarkets, essential shopping'],
+                ['name' => 'Healthcare', 'description' => 'pharmacy, prescriptions, dental, opticians'],
+                ['name' => 'Transport – Variable', 'description' => 'fuel, ad-hoc travel, taxis, parking'],
+                ['name' => 'Education & Childcare', 'description' => 'school fees, childcare, training'],
+            ]
+        ],
+        [
+            'name' => 'Discretionary / Adjustable',
+            'categories' => [
+                ['name' => 'Leisure & Entertainment', 'description' => 'restaurants, cinema, streaming'],
+                ['name' => 'Shopping & Lifestyle', 'description' => 'clothing, personal care, electronics'],
+                ['name' => 'Travel & Holidays', 'description' => 'flights, hotels, excursions'],
+                ['name' => 'Subscriptions & Memberships', 'description' => 'gyms, clubs, media, apps'],
+                ['name' => 'Gifts & Celebrations', 'description' => 'birthdays, Christmas, special occasions'],
+            ]
+        ],
+        [
+            'name' => 'Future-Facing',
+            'categories' => [
+                ['name' => 'Savings & Investments', 'description' => 'ISAs, pensions, investments'],
+                ['name' => 'Charity & Donations', 'description' => 'regular giving, one-off donations'],
+                ['name' => 'Miscellaneous / Uncategorised', 'description' => 'catch-all, to be refined later'],
+            ]
+        ]
+    ];
+
+    $segStmt = $db->prepare('INSERT INTO segments (name, description) VALUES (:name, :description)');
+    $catStmt = $db->prepare('INSERT INTO categories (name, description, segment_id) VALUES (:name, :description, :segment_id)');
+    $linkStmt = $db->prepare('INSERT INTO segment_categories (segment_id, category_id) VALUES (:segment_id, :category_id)');
+
+    foreach ($defaultSegments as $seg) {
+        $segStmt->execute(['name' => $seg['name'], 'description' => null]);
+        $segmentId = (int)$db->lastInsertId();
+        foreach ($seg['categories'] as $cat) {
+            $catStmt->execute([
+                'name' => $cat['name'],
+                'description' => $cat['description'],
+                'segment_id' => $segmentId
+            ]);
+            $categoryId = (int)$db->lastInsertId();
+            $linkStmt->execute([
+                'segment_id' => $segmentId,
+                'category_id' => $categoryId
+            ]);
+        }
+    }
 }
 
 echo "Database tables created.\n";
