@@ -1,6 +1,7 @@
 <?php
 // Runs 'git pull' to update the application to the latest version.
 require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');
 // Determine the repository root. Start from the web server's document root if
 // available, but walk up the directory tree until a `.git` folder is found so
@@ -21,9 +22,13 @@ while ($repoDir !== '/' && !is_dir($repoDir . '/.git')) {
 }
 
 if (!is_dir($repoDir . '/.git')) {
+
+    Log::write('Git repository not found starting at ' . $rootDir, 'ERROR');
     echo json_encode([
         'success' => false,
-        'output' => 'Git repository not found'
+        'output' => 'Git repository not found',
+        'cwd' => $rootDir,
+
     ]);
     exit;
 }
@@ -59,22 +64,32 @@ $remoteStatus = 0;
 exec($gitCmd . ' remote 2>&1', $remoteList, $remoteStatus);
 $remoteOutput = trim(implode("\n", $remoteList));
 if ($remoteStatus !== 0) {
+
+    Log::write('Git remote check failed in ' . $rootDir . ': ' . $remoteOutput, 'ERROR');
     echo json_encode([
         'success' => false,
-        'output' => $remoteOutput
+        'output' => $remoteOutput,
+        'cwd' => $rootDir,
+
     ]);
     exit;
 }
 if ($remoteOutput === '') {
+
+    Log::write('No git remote configured in ' . $rootDir, 'ERROR');
+
     echo json_encode([
         'success' => false,
-        'output' => 'No git remote configured'
+        'output' => 'No git remote configured',
+        'cwd' => $rootDir,
     ]);
     exit;
 }
 exec($gitCmd . ' pull 2>&1', $output, $returnVar);
+Log::write('git pull run in ' . $rootDir . ': ' . trim(implode("\n", $output)), $returnVar === 0 ? 'INFO' : 'ERROR');
 
 echo json_encode([
     'success' => $returnVar === 0,
-    'output' => trim(implode("\n", $output))
+    'output' => trim(implode("\n", $output)),
+    'cwd' => $rootDir,
 ]);
