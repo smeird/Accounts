@@ -12,12 +12,10 @@ $db = Database::getConnection();
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, keyword TEXT, description TEXT);');
-$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);');
+$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
-$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
-$db->exec('CREATE TABLE category_segments (category_id INTEGER, segment_id INTEGER);');
-$db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER);');
+$db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, segment_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER);');
 $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, amount REAL);');
 
@@ -106,6 +104,7 @@ $budCount = $db->query('SELECT COUNT(*) FROM budgets')->fetchColumn();
 assertEqual(0, (int)$budCount, 'Budgets removed with category');
 
 // --- Segment tests ---
+$db->exec('DELETE FROM segments');
 $catId = Category::create('Food', 'Groceries');
 $segId = Segment::create('Living', 'Living costs');
 Segment::assignCategory($segId, $catId);
@@ -128,7 +127,7 @@ assertEqual(-20.0, (float)$totals[0]['total'], 'Segment totals reflect transacti
 Segment::delete($segId);
 $segCount = $db->query('SELECT COUNT(*) FROM segments')->fetchColumn();
 assertEqual(0, (int)$segCount, 'Segment deleted');
-$relCount = $db->query('SELECT COUNT(*) FROM category_segments')->fetchColumn();
+$relCount = $db->query('SELECT COUNT(*) FROM categories WHERE segment_id IS NOT NULL')->fetchColumn();
 assertEqual(0, (int)$relCount, 'Category-segment relation removed');
 
 // Output results and set exit code
