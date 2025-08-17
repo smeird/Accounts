@@ -90,6 +90,9 @@
             card.appendChild(form);
             container.appendChild(card);
             const tagInput = form.querySelector('#tag');
+            if (tx.tag_name) {
+                tagInput.parentElement.classList.add('hidden');
+            }
             const groupSel = form.querySelector('#group');
             const blankGrp = document.createElement('option');
             blankGrp.value = '';
