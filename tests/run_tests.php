@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../php_backend/models/User.php';
 require_once __DIR__ . '/../php_backend/models/Tag.php';
 require_once __DIR__ . '/../php_backend/models/Category.php';
+require_once __DIR__ . '/../php_backend/models/Transaction.php';
+require_once __DIR__ . '/../php_backend/models/Segment.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -12,7 +14,10 @@ $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TE
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, keyword TEXT, description TEXT);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
-$db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, account_id INTEGER, tag_id INTEGER, category_id INTEGER);');
+$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
+$db->exec('CREATE TABLE category_segments (category_id INTEGER, segment_id INTEGER);');
+$db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER);');
+$db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, amount REAL);');
 
 $results = [];
@@ -94,6 +99,32 @@ $txCat = $db->query('SELECT category_id FROM transactions WHERE id = 1')->fetchC
 assertEqual(null, $txCat, 'Transaction category cleared');
 $budCount = $db->query('SELECT COUNT(*) FROM budgets')->fetchColumn();
 assertEqual(0, (int)$budCount, 'Budgets removed with category');
+
+// --- Segment tests ---
+$catId = Category::create('Food', 'Groceries');
+$segId = Segment::create('Living', 'Living costs');
+Segment::assignCategory($segId, $catId);
+$segs = Segment::allWithCategories();
+assertEqual('Living', $segs[0]['name'] ?? null, 'Segment retrieved with category');
+assertEqual($catId, $segs[0]['categories'][0]['id'] ?? null, 'Segment linked to category');
+
+Segment::update($segId, 'Living Updated', 'Updated desc');
+$segs = Segment::allWithCategories();
+assertEqual('Living Updated', $segs[0]['name'] ?? null, 'Segment updated');
+
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id) VALUES (1, '2024-07-01', -20, 'Grocery run', $catId)");
+$filtered = Transaction::filter($catId);
+assertEqual(1, count($filtered), 'Transaction::filter returns one result for category');
+assertEqual('Grocery run', $filtered[0]['description'] ?? null, 'Filtered transaction matches description');
+
+$totals = Segment::totals();
+assertEqual(-20.0, (float)$totals[0]['total'], 'Segment totals reflect transaction amount');
+
+Segment::delete($segId);
+$segCount = $db->query('SELECT COUNT(*) FROM segments')->fetchColumn();
+assertEqual(0, (int)$segCount, 'Segment deleted');
+$relCount = $db->query('SELECT COUNT(*) FROM category_segments')->fetchColumn();
+assertEqual(0, (int)$relCount, 'Category-segment relation removed');
 
 // Output results and set exit code
 $failed = false;
