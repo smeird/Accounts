@@ -121,3 +121,33 @@ php tests/run_tests.php
 ```
 
 
+
+## Automated Deployment
+
+This project uses GitHub Actions to trigger deployments. On pushes to the `master` branch, the workflow sends a request to your deployment server:
+
+```
+curl https://your.web.server.com/automated_deployment.php
+```
+
+Create `.github/workflows/deploy.yml` with:
+
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [ master ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger automated deployment
+        run: curl https://your.web.server.com/automated_deployment.php
+```
+
+On the server, `automated_deployment.php` should pull the latest code:
+
+```
+<?php
+shell_exec('cd /var/www/myproject && git pull');
+```
