@@ -21,15 +21,16 @@ if (!$apiKey) {
 }
 
 $db = Database::getConnection();
-$txns = $db->query('SELECT id, description, amount FROM transactions WHERE tag_id IS NULL LIMIT 20')->fetchAll(PDO::FETCH_ASSOC);
+// Identify the most common untagged transactions by description and memo
+$txns = $db->query('SELECT MIN(id) AS id, description, memo, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL GROUP BY description, memo ORDER BY cnt DESC LIMIT 20')->fetchAll(PDO::FETCH_ASSOC);
 if (!$txns) {
     echo json_encode(['processed' => 0, 'tokens' => 0]);
     exit;
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
-
-$prompt = "You are a financial assistant. For each transaction provide a short tag, a concise keyword to match similar transactions, a brief description for the tag and one of the provided categories. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"keyword\":\"keyword text\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
+$txnMap = [];
+$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
 
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
@@ -37,7 +38,9 @@ foreach ($categories as $c) {
 }
 $prompt .= "\nTransactions:\n";
 foreach ($txns as $t) {
-    $prompt .= "{$t['id']}: {$t['description']} ({$t['amount']})\n";
+    $txnMap[$t['id']] = $t;
+    $memo = $t['memo'] !== null && $t['memo'] !== '' ? " | {$t['memo']}" : '';
+    $prompt .= "{$t['id']}: {$t['description']}{$memo} ({$t['amount']})\n";
 }
 
 $payload = [
@@ -93,24 +96,22 @@ foreach ($suggestions as $s) {
     $txId = $s['id'] ?? null;
     $tagName = $s['tag'] ?? null;
     $catName = $s['category'] ?? null;
-
-    $keyword = $s['keyword'] ?? null;
-    $description = $s['description'] ?? null;
+    $tagDesc = $s['description'] ?? null;
 
     if (!$txId || !$tagName || !$catName) continue;
 
+    $txn = $txnMap[$txId] ?? null;
+    if (!$txn) continue;
+    $keyword = substr($txn['description'], 0, 100);
+
     $tagId = Tag::getIdByName($tagName);
     if ($tagId === null) {
-
-        $tagId = Tag::create($tagName, $keyword, $description);
+        $tagId = Tag::create($tagName, $keyword, $tagDesc);
     } else {
-        if ($keyword) {
-            Tag::setKeywordIfMissing($tagId, $keyword);
+        Tag::setKeywordIfMissing($tagId, $keyword);
+        if ($tagDesc) {
+            Tag::setDescriptionIfMissing($tagId, $tagDesc);
         }
-        if ($description) {
-            Tag::setDescriptionIfMissing($tagId, $description);
-        }
-
     }
 
     $stmt = $db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
@@ -124,9 +125,9 @@ foreach ($suggestions as $s) {
         // Tag may already be assigned; ignore
     }
 
-    $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE id = :id');
-    $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'id' => $txId]);
-    $processed++;
+    $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL');
+    $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
+    $processed += $upd->rowCount();
 }
 
 Log::write("AI tagged $processed transactions using $usage tokens");
