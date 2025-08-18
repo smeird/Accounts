@@ -10,7 +10,7 @@ try {
     $ignore = Tag::getIgnoreId();
     $db = Database::getConnection();
     $sql = 'SELECT t.id, t.date, t.amount, t.description, a.name AS account_name '
-         . 'FROM transactions t JOIN accounts a ON t.account_id = a.id '
+         . 'FROM transactions t LEFT JOIN accounts a ON t.account_id = a.id '
          . 'WHERE t.tag_id = :ignore ORDER BY t.date DESC, t.id DESC';
     $stmt = $db->prepare($sql);
     $stmt->execute(['ignore' => $ignore]);
