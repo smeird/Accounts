@@ -59,8 +59,14 @@ try {
     }
     if ($tagId !== null || $tagName) {
         if (!$tagId && $tagName) {
-            $tagId = Tag::create($tagName, $description);
-            Log::write("Created tag $tagName");
+            $existing = Tag::getIdByName($tagName);
+            if ($existing === null) {
+                $tagId = Tag::create($tagName, $description);
+                Log::write("Created tag $tagName");
+            } else {
+                $tagId = $existing;
+                Tag::setKeyword((int)$tagId, $description);
+            }
         } else {
             Tag::setKeyword((int)$tagId, $description);
         }
