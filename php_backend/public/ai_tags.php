@@ -28,7 +28,9 @@ if (!$txns) {
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
+
 $prompt = "You are a financial assistant. For each transaction provide a short tag, a concise keyword to match similar transactions, a brief description for the tag and one of the provided categories. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"keyword\":\"keyword text\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
+
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
     $prompt .= "- {$c['name']}\n";
@@ -68,6 +70,7 @@ $data = json_decode($response, true);
 $content = $data['choices'][0]['message']['content'] ?? '';
 $usage = $data['usage']['total_tokens'] ?? 0;
 
+
 // Strip Markdown code fences if present
 $content = trim($content);
 if (substr($content, 0, 3) === '```') {
@@ -75,6 +78,7 @@ if (substr($content, 0, 3) === '```') {
     $content = preg_replace('/```\s*$/', '', $content);
     $content = trim($content);
 }
+
 
 $suggestions = json_decode($content, true);
 if (!is_array($suggestions)) {
@@ -89,12 +93,15 @@ foreach ($suggestions as $s) {
     $txId = $s['id'] ?? null;
     $tagName = $s['tag'] ?? null;
     $catName = $s['category'] ?? null;
+
     $keyword = $s['keyword'] ?? null;
     $description = $s['description'] ?? null;
+
     if (!$txId || !$tagName || !$catName) continue;
 
     $tagId = Tag::getIdByName($tagName);
     if ($tagId === null) {
+
         $tagId = Tag::create($tagName, $keyword, $description);
     } else {
         if ($keyword) {
@@ -103,6 +110,7 @@ foreach ($suggestions as $s) {
         if ($description) {
             Tag::setDescriptionIfMissing($tagId, $description);
         }
+
     }
 
     $stmt = $db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
