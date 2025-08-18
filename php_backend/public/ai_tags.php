@@ -28,7 +28,9 @@ if (!$txns) {
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
-$prompt = "You are a financial assistant. Assign a short tag and one of the provided categories to each transaction. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"category\":\"category name\"}.\n\n";
+
+$prompt = "You are a financial assistant. For each transaction provide a short tag, a concise keyword to match similar transactions, a brief description for the tag and one of the provided categories. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"keyword\":\"keyword text\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
+
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
     $prompt .= "- {$c['name']}\n";
@@ -91,11 +93,24 @@ foreach ($suggestions as $s) {
     $txId = $s['id'] ?? null;
     $tagName = $s['tag'] ?? null;
     $catName = $s['category'] ?? null;
+
+    $keyword = $s['keyword'] ?? null;
+    $description = $s['description'] ?? null;
+
     if (!$txId || !$tagName || !$catName) continue;
 
     $tagId = Tag::getIdByName($tagName);
     if ($tagId === null) {
-        $tagId = Tag::create($tagName);
+
+        $tagId = Tag::create($tagName, $keyword, $description);
+    } else {
+        if ($keyword) {
+            Tag::setKeywordIfMissing($tagId, $keyword);
+        }
+        if ($description) {
+            Tag::setDescriptionIfMissing($tagId, $description);
+        }
+
     }
 
     $stmt = $db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
