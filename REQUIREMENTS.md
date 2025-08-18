@@ -14,7 +14,6 @@ This document outlines expected functionality for each section of the finance ma
 
 ## Home Page
 - Display welcome message and application version
-- Provide an update button with console output
 - Present quick feature highlights
 
 ## Monthly Statement
