@@ -44,7 +44,7 @@ foreach ($txns as $t) {
 }
 
 $payload = [
-    'model' => 'gpt-4o-mini',
+    'model' => 'gpt-5-nano',
     'messages' => [
         ['role' => 'system', 'content' => 'You label bank transactions. Use JSON.'],
         ['role' => 'user', 'content' => $prompt]
