@@ -1,7 +1,7 @@
 <?php
 // Exports selected data as JSON. Allows selecting categories, tags, groups,
-// transactions, and budgets via the `parts` query parameter. User and account
-// information is always included so a full backup can be restored.
+// segments, transactions, and budgets via the `parts` query parameter. User
+// and account information is always included so a full backup can be restored.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';

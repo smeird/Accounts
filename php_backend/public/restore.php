@@ -1,6 +1,7 @@
 <?php
 
-// Restores users, accounts, categories, tags, groups, transactions, and budgets from an uploaded gzipped JSON backup.
+// Restores users, accounts, segments, categories, tags, groups,
+// transactions, and budgets from an uploaded gzipped JSON backup.
 
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
