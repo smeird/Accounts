@@ -246,7 +246,13 @@
                 data: data,
                 allowDrillToNode: true,
                 cursor: 'pointer',
-                dataLabels: { format: '{point.name}', filter: { property: 'innerArcLength', operator: '>', value: 16 } },
+                dataLabels: {
+                    formatter: function(){
+                        const sum = this.point.node && this.point.node.sum;
+                        return sum ? `${this.point.name}: £${Highcharts.numberFormat(sum, 2)}` : this.point.name;
+                    },
+                    filter: { property: 'innerArcLength', operator: '>', value: 16 }
+                },
                 levels: [
                     { level: 1, levelIsConstant: false, dataLabels: { rotationMode: 'parallel' } },
                     { level: 2, colorByPoint: true },
