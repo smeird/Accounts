@@ -162,10 +162,9 @@
 
             });
 
-            renderSunburst(yearly, categories);
-
-            if (yearly.segments) {
-                renderSegments(yearly.segments);
+            const segmentTotals = renderSunburst(yearly, categories);
+            if (segmentTotals.length) {
+                renderSegments(segmentTotals);
             }
         }).catch(err => console.error('Graph data load failed', err));
     }
@@ -180,18 +179,11 @@
             }
         });
 
-
         const data = [{ id: 'root', name: 'Total' }];
         const segmentIds = {};
-
-        (yearly.segments || []).forEach(s => {
-            if (!s.name) return;
-            const segId = 'seg_' + makeId(s.name);
-            segmentIds[s.name] = segId;
-            data.push({ id: segId, parent: 'root', name: s.name });
-        });
-
+        const segmentTotals = {};
         const categoryTotals = {};
+
         (yearly.categories || []).forEach(c => {
             if (!c.name) return;
             const segName = categoryMap[c.name] || 'Not Segmented';
@@ -203,13 +195,15 @@
             }
             const catId = 'cat_' + makeId(c.name);
             data.push({ id: catId, parent: segId, name: c.name });
-            categoryTotals[c.name] = { id: catId, total: parseFloat(c.total) };
+            const total = Math.abs(parseFloat(c.total));
+            categoryTotals[c.name] = { id: catId, total, segment: segName, fromYearly: true };
+            segmentTotals[segName] = (segmentTotals[segName] || 0) + total;
         });
 
         const tagSums = {};
         (yearly.tags || []).forEach(t => {
             if (!t.name || !t.category) return;
-            const catInfo = categoryTotals[t.category];
+            let catInfo = categoryTotals[t.category];
             let catId;
             if (catInfo) {
                 catId = catInfo.id;
@@ -223,12 +217,16 @@
                 }
                 catId = 'cat_' + makeId(t.category);
                 data.push({ id: catId, parent: segId, name: t.category });
-                categoryTotals[t.category] = { id: catId, total: 0 };
+                catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false };
             }
             const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
-            const value = parseFloat(t.total);
+            const value = Math.abs(parseFloat(t.total));
             data.push({ id: tagId, parent: catId, name: t.name, value });
             tagSums[catId] = (tagSums[catId] || 0) + value;
+            if (!catInfo.fromYearly) {
+                catInfo.total += value;
+                segmentTotals[catInfo.segment] = (segmentTotals[catInfo.segment] || 0) + value;
+            }
         });
 
         Object.values(categoryTotals).forEach(ct => {
@@ -237,8 +235,22 @@
             if (Math.abs(diff) > 0.01) {
                 data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
             }
-
         });
+
+        if (yearly.segments) {
+            const check = {};
+            yearly.segments.forEach(s => {
+                if (s.name) {
+                    check[s.name] = Math.abs(parseFloat(s.total));
+                }
+            });
+            Object.entries(segmentTotals).forEach(([name, total]) => {
+                const reported = check[name] || 0;
+                if (Math.abs(reported - total) > 0.01) {
+                    console.warn(`Segment total mismatch for ${name}: expected ${reported} calculated ${total}`);
+                }
+            });
+        }
 
         Highcharts.chart('sunburst-chart', {
             series: [{
@@ -269,6 +281,8 @@
                 }
             }
         });
+
+        return Object.entries(segmentTotals).map(([name, total]) => ({ name, total }));
     }
 
     function renderSegments(segments){

@@ -102,13 +102,17 @@ foreach ($suggestions as $s) {
 
     $txn = $txnMap[$txId] ?? null;
     if (!$txn) continue;
+
     $keyword = $txn['description'];
+
 
     $tagId = Tag::getIdByName($tagName);
     if ($tagId === null) {
         $tagId = Tag::create($tagName, $keyword, $tagDesc);
     } else {
+
         Tag::setKeyword($tagId, $keyword);
+
         if ($tagDesc) {
             Tag::setDescriptionIfMissing($tagId, $tagDesc);
         }
