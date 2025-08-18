@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AI Tags</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">AI Tags</h1>
+        <p class="mb-4">Configure OpenAI and automatically tag transactions.</p>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-2">OpenAI Token</h2>
+            <div class="flex space-x-2">
+                <input type="text" id="token" class="border p-2 rounded flex-1" data-help="Your OpenAI API token">
+                <button id="save-token" class="bg-indigo-600 text-white px-4 py-2 rounded">Save Token</button>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-2">Generate Tags</h2>
+            <p class="mb-4">Use AI to suggest tags and categories for untagged transactions.</p>
+            <button id="run" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-robot mr-1"></i>Run AI Tagging</button>
+            <div id="result" class="mt-4"></div>
+        </section>
+    </main>
+</div>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+<script>
+async function loadToken(){
+    const res = await fetch('../php_backend/public/ai_token.php');
+    const data = await res.json();
+    if (data.token) document.getElementById('token').value = data.token;
+}
+
+document.getElementById('save-token').addEventListener('click', async () => {
+    const token = document.getElementById('token').value.trim();
+    await fetch('../php_backend/public/ai_token.php', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({token})
+    });
+    showMessage('Token saved');
+});
+
+document.getElementById('run').addEventListener('click', async () => {
+    const res = await fetch('../php_backend/public/ai_tags.php', {method: 'POST'});
+    const data = await res.json();
+    if (data.error) {
+        document.getElementById('result').textContent = data.error;
+        showMessage('AI tagging failed', 'error');
+    } else {
+        document.getElementById('result').textContent = `Tagged ${data.processed} transactions using ${data.tokens} tokens.`;
+        showMessage('AI tagging complete');
+    }
+});
+
+loadToken();
+</script>
+<script src="js/page_help.js"></script>
+</body>
+</html>
