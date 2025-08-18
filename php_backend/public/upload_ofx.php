@@ -203,14 +203,15 @@ try {
             $amountStr = number_format($amount, 2, '.', '');
 
             // Normalise textual fields so minor formatting differences
-            // don't generate new IDs for the same transaction
+            // don't generate new IDs for the same transaction. Ignore memo
+            // text to avoid duplicates when OFX files provide varying notes
+            // for the same entry.
             $normalise = function (string $text): string {
                 $text = strtoupper(trim($text));
                 return preg_replace('/\s+/', ' ', $text);
             };
             $normDesc = $normalise($desc);
-            $normMemo = $memo === null ? '' : $normalise($memo);
-            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc . $normMemo);
+            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
 
 
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
