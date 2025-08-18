@@ -248,8 +248,8 @@
                 cursor: 'pointer',
                 dataLabels: {
                     formatter: function(){
-                        const sum = this.point.node && this.point.node.sum;
-                        return sum ? `${this.point.name}: £${Highcharts.numberFormat(sum, 2)}` : this.point.name;
+                        const sum = (this.point.node && this.point.node.childrenTotal) || this.point.value;
+                        return sum !== undefined ? `${this.point.name}: £${Highcharts.numberFormat(sum, 2)}` : this.point.name;
                     },
                     filter: { property: 'innerArcLength', operator: '>', value: 16 }
                 },
@@ -260,7 +260,12 @@
                 ]
             }],
             title: { text: 'Segments, Categories and Tags' },
-            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+            tooltip: {
+                pointFormatter: function(){
+                    const sum = (this.node && this.node.childrenTotal) || this.value;
+                    return '£' + Highcharts.numberFormat(sum, 2);
+                }
+            }
         });
     }
 
