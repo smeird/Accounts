@@ -68,6 +68,7 @@ $data = json_decode($response, true);
 $content = $data['choices'][0]['message']['content'] ?? '';
 $usage = $data['usage']['total_tokens'] ?? 0;
 
+
 // Strip Markdown code fences if present
 $content = trim($content);
 if (substr($content, 0, 3) === '```') {
@@ -75,6 +76,7 @@ if (substr($content, 0, 3) === '```') {
     $content = preg_replace('/```\s*$/', '', $content);
     $content = trim($content);
 }
+
 
 $suggestions = json_decode($content, true);
 if (!is_array($suggestions)) {
