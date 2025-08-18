@@ -21,6 +21,7 @@
                 <button id="tagging-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-tags mr-1"></i>Run Tagging</button>
                 <button id="categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-list mr-1"></i>Apply Categories</button>
                 <button id="segments-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-layer-group mr-1"></i>Apply Segments</button>
+                <button id="clear-btn" class="bg-red-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-eraser mr-1"></i>Clear Tags/Categories/Segments</button>
             </div>
             <div id="progress-container" class="w-full bg-gray-200 h-2 mt-4 rounded hidden">
                 <div id="progress-bar" class="h-full bg-indigo-600 w-0"></div>
@@ -56,6 +57,8 @@
                 showMessage(`Categorised ${data.categorised} transactions`);
             } else if(action === 'segments') {
                 showMessage(`Assigned segments to ${data.segmented} transactions`);
+            } else if(action === 'clear') {
+                showMessage(`Cleared tags from ${data.cleared_tags} transactions, categories from ${data.cleared_categories}, segments from ${data.cleared_segments}`);
             }
         } finally {
             clearInterval(interval);
@@ -69,6 +72,7 @@
     document.getElementById('tagging-btn').addEventListener('click', ()=>run('tagging'));
     document.getElementById('categories-btn').addEventListener('click', ()=>run('categories'));
     document.getElementById('segments-btn').addEventListener('click', ()=>run('segments'));
+    document.getElementById('clear-btn').addEventListener('click', ()=>run('clear'));
     </script>
     <script src="js/overlay.js"></script>
 </body>
