@@ -19,7 +19,8 @@
             <label for="year-select" class="block">Year:
                 <select id="year-select" class="border p-2 rounded w-full"></select>
             </label>
-            <div class="bg-white p-6 rounded shadow"><div id="sunburst-chart" style="height:600px"></div></div>
+            <div class="bg-white p-6 rounded shadow"><div id="income-sunburst-chart" style="height:600px"></div></div>
+            <div class="bg-white p-6 rounded shadow"><div id="outgoing-sunburst-chart" style="height:600px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="monthly-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="cumulative-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="pie-chart" style="height:400px"></div></div>
@@ -162,14 +163,25 @@
 
             });
 
-            const segmentTotals = renderSunburst(yearly, categories);
+            const incomeYearly = {
+                segments: yearly.segments.filter(s => parseFloat(s.total) > 0),
+                categories: yearly.categories.filter(c => parseFloat(c.total) > 0),
+                tags: yearly.tags.filter(t => parseFloat(t.total) > 0)
+            };
+            const outgoingYearly = {
+                segments: yearly.segments.filter(s => parseFloat(s.total) < 0),
+                categories: yearly.categories.filter(c => parseFloat(c.total) < 0),
+                tags: yearly.tags.filter(t => parseFloat(t.total) < 0)
+            };
+            const segmentTotals = renderSunburst(outgoingYearly, categories, 'outgoing-sunburst-chart', 'Outgoing Segments, Categories and Tags');
+            renderSunburst(incomeYearly, categories, 'income-sunburst-chart', 'Income Segments, Categories and Tags');
             if (segmentTotals.length) {
                 renderSegments(segmentTotals);
             }
         }).catch(err => console.error('Graph data load failed', err));
     }
 
-    function renderSunburst(yearly, categories){
+    function renderSunburst(yearly, categories, chartId, chartTitle){
 
         const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
         const categoryMap = {};
@@ -252,7 +264,7 @@
             });
         }
 
-        Highcharts.chart('sunburst-chart', {
+        Highcharts.chart(chartId, {
             series: [{
                 type: 'sunburst',
                 data: data,
@@ -273,7 +285,7 @@
                     { level: 3, colorVariation: { key: 'brightness', to: -0.8 } }
                 ]
             }],
-            title: { text: 'Segments, Categories and Tags' },
+            title: { text: chartTitle },
             tooltip: {
                 pointFormatter: function(){
                     const sum = (this.node && this.node.childrenTotal) || this.value;
