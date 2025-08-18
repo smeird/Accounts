@@ -117,6 +117,24 @@ class Tag {
     }
 
     /**
+     * Set a tag's description if it is currently blank.
+     */
+    public static function setDescriptionIfMissing(int $tagId, string $description): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `tags` SET `description` = :descr WHERE `id` = :id AND (`description` IS NULL OR `description` = "")');
+        $stmt->execute(['descr' => $description, 'id' => $tagId]);
+    }
+
+    /**
+     * Forcefully set a tag's description, overwriting any existing value.
+     */
+    public static function setDescription(int $tagId, string $description): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `tags` SET `description` = :descr WHERE `id` = :id');
+        $stmt->execute(['descr' => $description, 'id' => $tagId]);
+    }
+
+    /**
      * Apply tag keywords to untagged transactions for a given account.
      * Returns the number of transactions updated.
      */
