@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>AI Tags</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
 <div class="flex min-h-screen">
@@ -53,14 +54,29 @@ document.getElementById('save-token').addEventListener('click', async () => {
 });
 
 document.getElementById('run').addEventListener('click', async () => {
-    const res = await fetch('../php_backend/public/ai_tags.php', {method: 'POST'});
-    const data = await res.json();
-    if (data.error) {
-        document.getElementById('result').textContent = data.error;
+    const resultEl = document.getElementById('result');
+    const btn = document.getElementById('run');
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    resultEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Submitting to AI...';
+    showMessage('AI tagging started');
+    try {
+        const res = await fetch('../php_backend/public/ai_tags.php', {method: 'POST'});
+        resultEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Awaiting AI response...';
+        const data = await res.json();
+        if (data.error) {
+            resultEl.textContent = data.error;
+            showMessage('AI tagging failed', 'error');
+        } else {
+            resultEl.textContent = `Tagged ${data.processed} transactions using ${data.tokens} tokens.`;
+            showMessage('AI tagging complete');
+        }
+    } catch (e) {
+        resultEl.textContent = 'Request failed';
         showMessage('AI tagging failed', 'error');
-    } else {
-        document.getElementById('result').textContent = `Tagged ${data.processed} transactions using ${data.tokens} tokens.`;
-        showMessage('AI tagging complete');
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
 });
 
