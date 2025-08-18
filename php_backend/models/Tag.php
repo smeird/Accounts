@@ -63,6 +63,17 @@ class Tag {
     }
 
     /**
+     * Clear tag references from all transactions.
+     * Returns the number of rows affected.
+     */
+    public static function clearFromTransactions(): int {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = NULL WHERE `tag_id` IS NOT NULL');
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    /**
      * Find a tag whose keyword appears in the provided text.
      */
     public static function findMatch(string $text): ?int {

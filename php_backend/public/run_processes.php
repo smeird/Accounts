@@ -32,6 +32,14 @@ try {
         $segmented = Segment::applyToTransactions();
         Log::write("Manual segment assignment applied to $segmented transactions");
         $response['segmented'] = $segmented;
+    } elseif ($action === 'clear') {
+        $clearedTags = Tag::clearFromTransactions();
+        $clearedCategories = CategoryTag::clearFromTransactions();
+        $clearedSegments = Segment::clearFromTransactions();
+        Log::write("Cleared tags from $clearedTags transactions; categories from $clearedCategories transactions; segments from $clearedSegments transactions");
+        $response['cleared_tags'] = $clearedTags;
+        $response['cleared_categories'] = $clearedCategories;
+        $response['cleared_segments'] = $clearedSegments;
     } elseif ($action === 'all' || $action === 'both') {
         $tagged = Tag::applyToAllTransactions();
         $categorised = CategoryTag::applyToAllTransactions();

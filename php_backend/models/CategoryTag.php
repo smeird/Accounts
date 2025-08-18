@@ -50,6 +50,17 @@ class CategoryTag {
     }
 
     /**
+     * Clear category assignments from all transactions.
+     * Returns the number of rows affected.
+     */
+    public static function clearFromTransactions(): int {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE transactions SET category_id = NULL WHERE category_id IS NOT NULL');
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    /**
      * Apply category IDs to transactions for a specific account based on their tag.
      * Transactions are updated whenever their tag implies a different category,
      * ensuring changes in tagging are reflected in categorisation.

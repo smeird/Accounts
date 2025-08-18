@@ -110,6 +110,17 @@ class Segment {
     }
 
     /**
+     * Clear segment assignments from all transactions.
+     * Returns the number of rows affected.
+     */
+    public static function clearFromTransactions(): int {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE transactions SET segment_id = NULL WHERE segment_id IS NOT NULL');
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    /**
      * Return totals grouped by segment.
      */
     public static function totals(): array {
