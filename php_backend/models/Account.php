@@ -1,6 +1,7 @@
 <?php
 // Model for account records stored in the database.
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/Tag.php';
 
 class Account {
     /**
@@ -18,15 +19,18 @@ class Account {
      */
     public static function getSummaries(): array {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT a.`id`, a.`name`, a.`sort_code`, a.`account_number`, COUNT(t.`id`) AS `transactions`, '
              . 'COALESCE(a.`ledger_balance`, 0) AS `balance`, '
              . 'MAX(t.`date`) AS `last_transaction`, '
              . 'CASE WHEN a.`sort_code` IS NULL OR a.`sort_code` = "" THEN 1 ELSE 0 END AS `is_credit_card` '
              . 'FROM `accounts` a '
              . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
+             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
              . 'GROUP BY a.`id`, a.`name`, a.`sort_code`, a.`account_number`, a.`ledger_balance` '
              . 'ORDER BY a.`name`';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
