@@ -45,16 +45,21 @@ class Transaction {
             }
         }
 
-        // Fallback duplicate check on core fields when no OFX identifiers are available
+        // Fallback duplicate check on core fields when no OFX identifiers are available.
+        // Ignore memo differences and normalise description to prevent near-identical duplicates.
 
-        $coreCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount AND `description` = :description AND COALESCE(`memo`, "") = COALESCE(:memo, "") LIMIT 1');
+        $coreCheck = $db->prepare(
+            'SELECT id FROM `transactions` '
+            . 'WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount '
+            . 'AND UPPER(TRIM(`description`)) = UPPER(TRIM(:description)) '
+            . 'LIMIT 1'
+        );
 
         $coreCheck->execute([
             'account' => $account,
             'date' => $date,
             'amount' => $amount,
-            'description' => $description,
-            'memo' => $memo
+            'description' => $description
         ]);
         if ($row = $coreCheck->fetch(PDO::FETCH_ASSOC)) {
             return (int)$row['id'];

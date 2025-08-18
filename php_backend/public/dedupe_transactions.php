@@ -13,12 +13,10 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT GROUP_CONCAT(t.id) AS ids, COUNT(*) AS count, a.name AS account, '
-
-             . 't.date, t.amount, MIN(t.description) AS description '
+             . 't.date, t.amount, MIN(TRIM(t.description)) AS description '
              . 'FROM transactions t JOIN accounts a ON t.account_id = a.id '
              . 'WHERE (t.tag_id IS NULL OR t.tag_id != :ignore) '
-             . 'GROUP BY t.account_id, t.date, t.amount, UPPER(TRIM(t.description)), UPPER(TRIM(COALESCE(t.memo, ""))) '
-
+             . 'GROUP BY t.account_id, t.date, t.amount, UPPER(TRIM(t.description)) '
              . 'HAVING COUNT(*) > 1';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);
