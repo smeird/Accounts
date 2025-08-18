@@ -49,7 +49,7 @@ $payload = [
         ['role' => 'system', 'content' => 'You label bank transactions. Use JSON.'],
         ['role' => 'user', 'content' => $prompt]
     ],
-    'temperature' => 0.2,
+    'temperature' => 1,
 ];
 
 $ch = curl_init('https://api.openai.com/v1/chat/completions');
