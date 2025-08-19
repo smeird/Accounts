@@ -24,7 +24,8 @@
             <div class="bg-white p-6 rounded shadow"><div id="monthly-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="cumulative-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="pie-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="tag-chart" style="height:400px"></div></div>
+            <div class="bg-white p-6 rounded shadow"><div id="income-tag-chart" style="height:400px"></div></div>
+            <div class="bg-white p-6 rounded shadow"><div id="outgoing-tag-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow"><div id="scatter-chart" style="height:400px"></div></div>
             <div class="bg-white p-6 rounded shadow space-y-4">
                 <h2 class="text-xl font-semibold">Segment Totals</h2>
@@ -123,25 +124,41 @@
                 series: [{ name: 'Categories', data: catData }]
             });
 
-            const tagNames = yearly.tags.map(t => t.name);
-            const tagTotals = yearly.tags.map(t => parseFloat(t.total));
-            Highcharts.chart('tag-chart', {
+            const incomeTags = yearly.tags.filter(t => parseFloat(t.total) > 0);
+            const outgoingTags = yearly.tags.filter(t => parseFloat(t.total) < 0);
+
+            Highcharts.chart('income-tag-chart', {
                 colors: gradientColors,
                 chart: {
                     type: 'bar',
-
                     options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
-
                 },
-                title: { text: 'Tag Totals' },
-                xAxis: { categories: tagNames },
+                title: { text: 'Income Tag Totals' },
+                xAxis: { categories: incomeTags.map(t => t.name) },
                 yAxis: {
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
                 tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { bar: { depth: 40 } },
-                series: [{ name: 'Total', data: tagTotals, colorByPoint: true }]
+                series: [{ name: 'Total', data: incomeTags.map(t => parseFloat(t.total)), colorByPoint: true }]
+            });
+
+            Highcharts.chart('outgoing-tag-chart', {
+                colors: gradientColors,
+                chart: {
+                    type: 'bar',
+                    options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
+                },
+                title: { text: 'Outgoing Tag Totals' },
+                xAxis: { categories: outgoingTags.map(t => t.name) },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                plotOptions: { bar: { depth: 40 } },
+                series: [{ name: 'Total', data: outgoingTags.map(t => Math.abs(parseFloat(t.total))), colorByPoint: true }]
             });
 
             Highcharts.chart('scatter-chart', {
