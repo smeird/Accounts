@@ -730,9 +730,9 @@ class Transaction {
 
     /**
      * Search transactions across fields.
-     * Supports partial matches for text fields and exact matches for numeric fields.
+     * Supports partial matches for text fields and numeric range searches for the amount field.
      */
-    public static function search(?string $value, ?float $amount = null): array {
+    public static function search(?string $value, ?float $minAmount = null, ?float $maxAmount = null): array {
         $db = Database::getConnection();
 
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
@@ -769,9 +769,16 @@ class Transaction {
             }
         }
 
-        if ($amount !== null) {
-            $conditions[] = 't.`amount` = :amount';
-            $params['amount'] = $amount;
+        if ($minAmount !== null && $maxAmount !== null) {
+            $conditions[] = 't.`amount` BETWEEN :min_amount AND :max_amount';
+            $params['min_amount'] = $minAmount;
+            $params['max_amount'] = $maxAmount;
+        } elseif ($minAmount !== null) {
+            $conditions[] = 't.`amount` >= :min_amount';
+            $params['min_amount'] = $minAmount;
+        } elseif ($maxAmount !== null) {
+            $conditions[] = 't.`amount` <= :max_amount';
+            $params['max_amount'] = $maxAmount;
         }
 
         $ignore = Tag::getIgnoreId();
