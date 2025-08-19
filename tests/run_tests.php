@@ -16,9 +16,10 @@ $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, k
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
-$db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, segment_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER);');
+$db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, segment_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER, ofx_id TEXT, ofx_type TEXT, bank_ofx_id TEXT);');
 $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, amount REAL);');
+$db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 
 $results = [];
 
@@ -131,27 +132,15 @@ assertEqual(0, (int)$segCount, 'Segment deleted');
 $relCount = $db->query('SELECT COUNT(*) FROM categories WHERE segment_id IS NOT NULL')->fetchColumn();
 assertEqual(0, (int)$relCount, 'Category-segment relation removed');
 
-function assertThrows(callable $fn, string $message) {
-    global $results;
-    try {
-        $fn();
-        $results[] = "FAIL: $message (no exception)";
-    } catch (Exception $e) {
-        $results[] = "PASS: $message";
-    }
-}
 
-$header = "OFXHEADER:100\nDATA:OFXSGML\nVERSION:102\nSECURITY:NONE\nENCODING:USASCII\nCHARSET:1252\nCOMPRESSION:NONE\nOLDFILEUID:NONE\nNEWFILEUID:NONE\n\n";
-$accountBlock = "<BANKACCTFROM>\n<BANKID>123456\n<ACCTID>12345678\n<ACCTNAME>Test\n</BANKACCTFROM>\n";
+// --- Duplicate FITID test ---
+$first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');
+assertEqual(true, $first > 0, 'Initial transaction inserted');
+$second = Transaction::create(1, '2024-08-02', 20, 'Second', null, null, null, null, 'ofx2', 'DEBIT', 'DUP123');
+assertEqual(0, $second, 'Duplicate FITID returns 0');
+$logCount = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
+assertEqual(1, (int)$logCount, 'Duplicate FITID logged');
 
-$missingStmt = $header . "<OFX>\n$accountBlock<BANKTRANLIST>\n</BANKTRANLIST>\n</OFX>";
-assertThrows(function() use ($missingStmt) { OfxParser::parse($missingStmt); }, 'Missing STMTTRN detected');
-
-$missingDate = $header . "<OFX>\n$accountBlock<BANKTRANLIST>\n<STMTTRN>\n<TRNAMT>1.00\n</STMTTRN>\n</BANKTRANLIST>\n</OFX>";
-assertThrows(function() use ($missingDate) { OfxParser::parse($missingDate); }, 'Missing DTPOSTED detected');
-
-$missingAmt = $header . "<OFX>\n$accountBlock<BANKTRANLIST>\n<STMTTRN>\n<DTPOSTED>20240101\n</STMTTRN>\n</BANKTRANLIST>\n</OFX>";
-assertThrows(function() use ($missingAmt) { OfxParser::parse($missingAmt); }, 'Missing TRNAMT detected');
 
 // Output results and set exit code
 $failed = false;

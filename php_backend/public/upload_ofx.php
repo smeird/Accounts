@@ -100,6 +100,7 @@ try {
         }
 
         $inserted = 0;
+        $duplicates = [];
 
         foreach ($matches[1] as $block) {
             if (preg_match('/<DTPOSTED>([^<]+)/i', $block, $m)) {
@@ -163,22 +164,27 @@ try {
             };
             $normDesc = $normalise($desc);
 
-            // Include optional REFNUM and CHECKNUM plus a hash of the raw block
-            $blockHash = sha1($block);
-            $components = [$accountId, $date, $amountStr, $normDesc, $blockHash];
-            if ($ref !== '') { $components[] = $ref; }
-            if ($chk !== '') { $components[] = $chk; }
-            $syntheticId = sha1(implode('|', $components));
 
-            Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
+            $createdId = Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
+            if ($createdId === 0) {
+                if ($bankId !== null) {
+                    $duplicates[] = $bankId;
+                }
+                continue;
+            }
+
             $inserted++;
         }
 
         $tagged = Tag::applyToAccountTransactions($accountId);
         $categorised = CategoryTag::applyToAccountTransactions($accountId);
 
-        $messages[] = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
-        Log::write("Inserted $inserted transactions for account $accountName; tagged $tagged transactions; categorised $categorised transactions");
+        $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
+        if (!empty($duplicates)) {
+            $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
+        }
+        $messages[] = $msg;
+        Log::write($msg);
     }
 
     echo implode("\n", $messages);
