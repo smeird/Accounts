@@ -195,7 +195,7 @@ fetch('../php_backend/public/transaction_months.php')
         loadTransactions();
     });
 
-function loadTransactions() {
+function loadTransactions(retry = false) {
     const month = parseInt(monthSelect.value);
     const year = parseInt(yearSelect.value);
     const untaggedParam = untaggedOnly.checked ? '&untagged=1' : '';
@@ -212,6 +212,12 @@ function loadTransactions() {
         fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json()),
         fetch('../php_backend/public/transactions.php?month=' + prevMonth + '&year=' + prevYear + untaggedParam).then(r => r.json())
     ]).then(([recurringSet, totalBalance, groups, data, prevData]) => {
+        // If no untagged transactions exist, automatically show all
+        if (untaggedOnly.checked && data.length === 0 && !retry) {
+            untaggedOnly.checked = false;
+            loadTransactions(true);
+            return;
+        }
         const groupValues = { '': 'None' };
         groups.forEach(g => groupValues[g.id] = g.name);
 
