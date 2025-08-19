@@ -236,6 +236,40 @@ if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance_date` DATE DEFAULT NULL");
 }
 
+// Backfill synthetic OFX IDs using the extended scheme
+$txs = $db->query('SELECT id, account_id, date, amount, description, memo, ofx_id FROM transactions');
+$upd = $db->prepare('UPDATE transactions SET ofx_id = :oid WHERE id = :id');
+while ($row = $txs->fetch(PDO::FETCH_ASSOC)) {
+    $amountStr = number_format((float)$row['amount'], 2, '.', '');
+    $normalise = function (string $text): string {
+        $text = strtoupper(trim($text));
+        return preg_replace('/\s+/', ' ', $text);
+    };
+    $normDesc = $normalise($row['description']);
+    $ref = '';
+    $chk = '';
+    if (!empty($row['memo'])) {
+        if (preg_match('/Ref:([^\s]+)/i', $row['memo'], $m)) {
+            $ref = substr(trim($m[1]), 0, 32);
+        }
+        if (preg_match('/Chk:([^\s]+)/i', $row['memo'], $m)) {
+            $chk = substr(trim($m[1]), 0, 20);
+        }
+    }
+    // Legacy transactions lack raw STMTTRN blocks, so include an empty placeholder
+    $components = [$row['account_id'], $row['date'], $amountStr, $normDesc, ''];
+    if ($ref !== '') { $components[] = $ref; }
+    if ($chk !== '') { $components[] = $chk; }
+    $ofxId = sha1(implode('|', $components));
+    if ($row['ofx_id'] !== $ofxId) {
+        try {
+            $upd->execute(['oid' => $ofxId, 'id' => $row['id']]);
+        } catch (PDOException $e) {
+            // Ignore duplicates
+        }
+    }
+}
+
 // Seed default segments and categories on a fresh database
 $result = $db->query('SELECT COUNT(*) FROM segments');
 if ($result->fetchColumn() == 0) {

@@ -55,6 +55,13 @@ The importer normalises line endings, strips control characters and converts
 character encoding to UTF-8, falling back to iconv when the mbstring extension
 is unavailable.
 
+To guard against duplicate imports, each transaction receives a synthetic
+identifier derived from the account ID, date, amount and a normalised
+description. When present, reference numbers (`<REFNUM>`), cheque numbers
+(`<CHECKNUM>`) and a hash of the raw `<STMTTRN>` block are appended to the
+hash input. This composite value greatly reduces the chance of collisions when
+banks reuse identifiers or vary memo text.
+
 
 ## Running a Local Server
 

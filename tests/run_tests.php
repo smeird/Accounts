@@ -4,6 +4,7 @@ require_once __DIR__ . '/../php_backend/models/Tag.php';
 require_once __DIR__ . '/../php_backend/models/Category.php';
 require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
+require_once __DIR__ . '/../php_backend/OfxParser.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -131,6 +132,7 @@ assertEqual(0, (int)$segCount, 'Segment deleted');
 $relCount = $db->query('SELECT COUNT(*) FROM categories WHERE segment_id IS NOT NULL')->fetchColumn();
 assertEqual(0, (int)$relCount, 'Category-segment relation removed');
 
+
 // --- Duplicate FITID test ---
 $first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');
 assertEqual(true, $first > 0, 'Initial transaction inserted');
@@ -138,6 +140,7 @@ $second = Transaction::create(1, '2024-08-02', 20, 'Second', null, null, null, n
 assertEqual(0, $second, 'Duplicate FITID returns 0');
 $logCount = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
 assertEqual(1, (int)$logCount, 'Duplicate FITID logged');
+
 
 // Output results and set exit code
 $failed = false;
