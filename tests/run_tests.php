@@ -137,7 +137,9 @@ assertEqual(0, (int)$relCount, 'Category-segment relation removed');
 $first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');
 assertEqual(true, $first > 0, 'Initial transaction inserted');
 $second = Transaction::create(1, '2024-08-02', 20, 'Second', null, null, null, null, 'ofx2', 'DEBIT', 'DUP123');
-assertEqual(0, $second, 'Duplicate FITID returns 0');
+assertEqual(true, $second > 0, 'Duplicate FITID inserted with suffix');
+$secondFitid = $db->query('SELECT bank_ofx_id FROM transactions WHERE id = ' . $second)->fetchColumn();
+assertEqual('DUP123-1', $secondFitid, 'Duplicate FITID suffixed uniquely');
 $logCount = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
 assertEqual(1, (int)$logCount, 'Duplicate FITID logged');
 

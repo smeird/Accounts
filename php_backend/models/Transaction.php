@@ -27,15 +27,21 @@ class Transaction {
 
         // Secondary duplicate check using bank-provided FITID with date and amount
         if ($bank_ofx_id !== null) {
-            $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` = :boid LIMIT 1');
+            // Find any existing FITIDs that match or share the base identifier
+            $dupCheck = $db->prepare('SELECT bank_ofx_id FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` LIKE :boid');
             $dupCheck->execute([
                 'account' => $account,
-                'boid' => $bank_ofx_id
+                'boid' => $bank_ofx_id . '%'
             ]);
-            $dup = $dupCheck->fetch(PDO::FETCH_ASSOC);
-            if ($dup) {
+            $existing = $dupCheck->fetchAll(PDO::FETCH_COLUMN);
+            if (in_array($bank_ofx_id, $existing, true)) {
+                // Log the duplicate and append a numeric suffix to ensure uniqueness
                 Log::write("Duplicate FITID $bank_ofx_id for account $account", 'WARNING');
-                return 0; // signal duplicate to caller
+                $suffix = 1;
+                while (in_array($bank_ofx_id . '-' . $suffix, $existing, true)) {
+                    $suffix++;
+                }
+                $bank_ofx_id .= '-' . $suffix;
             }
         }
 
