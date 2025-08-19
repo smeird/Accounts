@@ -65,10 +65,12 @@
             layout: 'fitDataStretch',
             columns: [
                 { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description' },
-                { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
-                { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
-                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'From Account', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
+                { title: 'From Amount', field: 'from_amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'From Description', field: 'from_description' },
+                { title: 'To Account', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
+                { title: 'To Amount', field: 'to_amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'To Description', field: 'to_description' },
                 { title: 'Mark', formatter: function(){ return '<button class="bg-green-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-check"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); markTransfers([[r.from_id, r.to_id]]); } }
             ]
         });
@@ -102,10 +104,12 @@
             layout: 'fitDataStretch',
             columns: [
                 { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description' },
-                { title: 'From', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
-                { title: 'To', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
-                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'From Account', field: 'from_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.from_id}">${cell.getValue()}</a>`; } },
+                { title: 'From Amount', field: 'from_amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'From Description', field: 'from_description' },
+                { title: 'To Account', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
+                { title: 'To Amount', field: 'to_amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
+                { title: 'To Description', field: 'to_description' },
                 { title: 'Undo', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-rotate-left"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); unmarkTransfers([r.from_id]); } }
             ]
         });
