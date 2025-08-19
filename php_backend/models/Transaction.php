@@ -800,10 +800,10 @@ class Transaction {
     public static function getTransfers(): array {
         $db = Database::getConnection();
         $sql = 'SELECT t.`id`, t.`account_id`, a.`name` AS account_name, t.`date`, '
-             . 't.`amount`, t.`description`, t.`transfer_id`
-             FROM `transactions` t '
-             . 'JOIN `accounts` a ON t.`account_id` = a.`id`
-             WHERE t.`transfer_id` IS NOT NULL '
+             . 't.`amount`, t.`description`, t.`transfer_id` '
+             . 'FROM `transactions` t '
+             . 'JOIN `accounts` a ON t.`account_id` = a.`id` '
+             . 'WHERE t.`transfer_id` IS NOT NULL '
              . 'ORDER BY t.`transfer_id`, t.`id`';
         $stmt = $db->query($sql);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -823,14 +823,16 @@ class Transaction {
                 $from = $pair[0]['amount'] < 0 ? $pair[0] : $pair[1];
                 $to   = $pair[0]['amount'] < 0 ? $pair[1] : $pair[0];
                 $result[] = [
-                    'transfer_id' => (int)$tid,
-                    'date' => $from['date'],
-                    'description' => $from['description'],
-                    'amount' => abs((float)$from['amount']),
-                    'from_id' => (int)$from['id'],
-                    'from_account' => $from['account_name'],
-                    'to_id' => (int)$to['id'],
-                    'to_account' => $to['account_name']
+                    'transfer_id'      => (int)$tid,
+                    'date'             => $from['date'],
+                    'from_id'          => (int)$from['id'],
+                    'from_account'     => $from['account_name'],
+                    'from_amount'      => (float)$from['amount'],
+                    'from_description' => $from['description'],
+                    'to_id'            => (int)$to['id'],
+                    'to_account'       => $to['account_name'],
+                    'to_amount'        => (float)$to['amount'],
+                    'to_description'   => $to['description']
                 ];
             }
         }
@@ -860,18 +862,20 @@ class Transaction {
      * Matches items on the same date with opposite amounts where neither side
      * has a transfer_id.
      *
-     * @return array<int, array{date:string, description:string, amount:float, from_id:int, from_account:string, to_id:int, to_account:string}>
+     * @return array<int, array{date:string, from_id:int, from_account:string, from_amount:float, from_description:string,
+     *                          to_id:int, to_account:string, to_amount:float, to_description:string}>
      */
     public static function getTransferCandidates(): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT t1.id AS id1, t1.amount AS amt1, a1.name AS acc1, '
-             . 't2.id AS id2, t2.amount AS amt2, a2.name AS acc2, '
-             . 't1.date, t1.description '
+        $sql = 'SELECT t1.id AS id1, t1.amount AS amt1, t1.description AS desc1, a1.name AS acc1, '
+             . 't2.id AS id2, t2.amount AS amt2, t2.description AS desc2, a2.name AS acc2, '
+             . 't1.date '
              . 'FROM `transactions` t1 '
              . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
              . 'AND t1.`amount` = -t2.`amount` '
              . 'AND t1.`id` < t2.`id` '
+             . 'AND t1.`account_id` != t2.`account_id` '
              . 'JOIN `accounts` a1 ON t1.`account_id` = a1.`id` '
              . 'JOIN `accounts` a2 ON t2.`account_id` = a2.`id` '
              . 'WHERE t1.`transfer_id` IS NULL '
@@ -886,24 +890,32 @@ class Transaction {
             if ((float)$row['amt1'] < 0) {
                 $fromId = (int)$row['id1'];
                 $fromAcc = $row['acc1'];
+                $fromAmt = (float)$row['amt1'];
+                $fromDesc = $row['desc1'];
                 $toId = (int)$row['id2'];
                 $toAcc = $row['acc2'];
-                $amount = abs((float)$row['amt1']);
+                $toAmt = (float)$row['amt2'];
+                $toDesc = $row['desc2'];
             } else {
                 $fromId = (int)$row['id2'];
                 $fromAcc = $row['acc2'];
+                $fromAmt = (float)$row['amt2'];
+                $fromDesc = $row['desc2'];
                 $toId = (int)$row['id1'];
                 $toAcc = $row['acc1'];
-                $amount = abs((float)$row['amt2']);
+                $toAmt = (float)$row['amt1'];
+                $toDesc = $row['desc1'];
             }
             $result[] = [
                 'date' => $row['date'],
-                'description' => $row['description'],
-                'amount' => $amount,
                 'from_id' => $fromId,
                 'from_account' => $fromAcc,
+                'from_amount' => $fromAmt,
+                'from_description' => $fromDesc,
                 'to_id' => $toId,
-                'to_account' => $toAcc
+                'to_account' => $toAcc,
+                'to_amount' => $toAmt,
+                'to_description' => $toDesc
             ];
         }
         return $result;
@@ -971,14 +983,20 @@ class Transaction {
      */
     public static function assistTransfers(): int {
         $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t1.id AS id1, t2.id AS id2 '
              . 'FROM `transactions` t1 '
              . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
              . 'AND t1.`amount` = -t2.`amount` '
              . 'AND t1.`id` < t2.`id` '
+             . 'AND t1.`account_id` != t2.`account_id` '
              . 'WHERE t1.`transfer_id` IS NULL '
-             . 'AND t2.`transfer_id` IS NULL';
-        $pairs = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+             . 'AND t2.`transfer_id` IS NULL '
+             . 'AND (t1.`tag_id` IS NULL OR t1.`tag_id` != :ignore) '
+             . 'AND (t2.`tag_id` IS NULL OR t2.`tag_id` != :ignore)';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['ignore' => $ignore]);
+        $pairs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $count = 0;
         foreach ($pairs as $p) {
             if (self::linkTransfer((int)$p['id1'], (int)$p['id2'])) {

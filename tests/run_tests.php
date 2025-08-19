@@ -12,6 +12,7 @@ $db = Database::getConnection();
 
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
+$db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, keyword TEXT, description TEXT);');
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER);');
@@ -142,6 +143,20 @@ $secondFitid = $db->query('SELECT bank_ofx_id FROM transactions WHERE id = ' . $
 assertEqual('DUP123-1', $secondFitid, 'Duplicate FITID suffixed uniquely');
 $logCount = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
 assertEqual(1, (int)$logCount, 'Duplicate FITID logged');
+
+// --- Transfer detection and linking ---
+$db->exec("INSERT INTO accounts (name) VALUES ('Checking'), ('Savings')");
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-01', -50, 'Transfer out'), (2, '2024-09-01', 50, 'Transfer in')");
+$candidates = Transaction::getTransferCandidates();
+assertEqual(1, count($candidates), 'Transfer candidate detected');
+assertEqual('Checking', $candidates[0]['from_account'] ?? null, 'Candidate from account matches');
+assertEqual('Savings', $candidates[0]['to_account'] ?? null, 'Candidate to account matches');
+Transaction::linkTransfer($candidates[0]['from_id'], $candidates[0]['to_id']);
+$linked = Transaction::getTransfers();
+assertEqual(1, count($linked), 'Linked transfer returned');
+assertEqual(-50.0, (float)$linked[0]['from_amount'], 'Linked from amount stored');
+$candidatesAfter = Transaction::getTransferCandidates();
+assertEqual(0, count($candidatesAfter), 'No candidates after linking');
 
 
 // Output results and set exit code
