@@ -2,6 +2,7 @@
 // Model representing financial transactions and related queries.
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/Tag.php';
+require_once __DIR__ . '/Log.php';
 
 class Transaction {
     /**
@@ -33,15 +34,8 @@ class Transaction {
             ]);
             $dup = $dupCheck->fetch(PDO::FETCH_ASSOC);
             if ($dup) {
-                $upd = $db->prepare('UPDATE `transactions` SET `description` = :description, `memo` = :memo, `ofx_id` = :ofx_id, `ofx_type` = :ofx_type WHERE `id` = :id');
-                $upd->execute([
-                    'description' => $description,
-                    'memo' => $memo,
-                    'ofx_id' => $ofx_id,
-                    'ofx_type' => $ofx_type,
-                    'id' => $dup['id']
-                ]);
-                return (int)$dup['id'];
+                Log::write("Duplicate FITID $bank_ofx_id for account $account", 'WARNING');
+                return 0; // signal duplicate to caller
             }
         }
 

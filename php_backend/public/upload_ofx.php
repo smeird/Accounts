@@ -143,6 +143,7 @@ try {
         }
 
         $inserted = 0;
+        $duplicates = [];
         foreach ($matches[1] as $block) {
             if (preg_match('/<DTPOSTED>([^<]+)/i', $block, $m)) {
                 $dateStr = substr(trim($m[1]), 0, 8); // YYYYMMDD
@@ -213,16 +214,25 @@ try {
             $normDesc = $normalise($desc);
             $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
 
-
-            Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
+            $createdId = Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
+            if ($createdId === 0) {
+                if ($bankId !== null) {
+                    $duplicates[] = $bankId;
+                }
+                continue;
+            }
             $inserted++;
         }
 
         $tagged = Tag::applyToAccountTransactions($accountId);
         $categorised = CategoryTag::applyToAccountTransactions($accountId);
 
-        $messages[] = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
-        Log::write("Inserted $inserted transactions for account $accountName; tagged $tagged transactions; categorised $categorised transactions");
+        $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
+        if (!empty($duplicates)) {
+            $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
+        }
+        $messages[] = $msg;
+        Log::write($msg);
     }
 
     echo implode("\n", $messages);
