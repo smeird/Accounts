@@ -100,16 +100,46 @@ try {
         }
 
         $inserted = 0;
-        foreach ($parsed['transactions'] as $txn) {
-            $amount = $txn['amount'];
-            $date = $txn['date'];
-            $desc = $txn['desc'] ?? '';
-            $memo = $txn['memo'] ?? '';
-            $type = $txn['type'];
-            $bankId = $txn['bank_id'] ?: null;
 
-            if ($txn['ref']) {
-                $ref = substr($txn['ref'], 0, 32);
+        foreach ($matches[1] as $block) {
+            if (preg_match('/<DTPOSTED>([^<]+)/i', $block, $m)) {
+                $dateStr = substr(trim($m[1]), 0, 8); // YYYYMMDD
+                $dt = DateTime::createFromFormat('Ymd', $dateStr);
+                if (!$dt || $dt->format('Ymd') !== $dateStr) {
+                    Log::write('Invalid date ' . $dateStr . ' in ' . $files['name'][$i], 'ERROR');
+                    continue; // skip invalid entry
+                }
+                $date = $dt->format('Y-m-d');
+            } else {
+                Log::write('Missing DTPOSTED in transaction block', 'ERROR');
+                continue; // skip invalid entry
+            }
+            if (!preg_match('/<TRNAMT>([^<]+)/i', $block, $am)) {
+                Log::write('Missing TRNAMT in transaction block', 'ERROR');
+                continue;
+            }
+            $amount = (float)trim($am[1]);
+            $desc = '';
+            $memo = '';
+            $type = null;
+            if (preg_match('/<NAME>([^<]+)/i', $block, $dm)) {
+                $desc = trim($dm[1]);
+            }
+            if (preg_match('/<MEMO>([^<]+)/i', $block, $mm)) {
+                $memo = trim($mm[1]);
+                if ($desc === '') {
+                    $desc = $memo;
+                }
+            }
+            if (preg_match('/<TRNTYPE>([^<]+)/i', $block, $tm)) {
+                $type = strtoupper(trim($tm[1]));
+            }
+            // Optional reference and cheque numbers with character limits
+            $ref = '';
+            $chk = '';
+            if (preg_match('/<REFNUM>([^<]+)/i', $block, $rm)) {
+                $ref = substr(trim($rm[1]), 0, 32);
+
                 $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
             }
             if ($txn['check']) {
@@ -123,13 +153,22 @@ try {
             $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
             $type = $type === null ? null : $substr($type, 0, 50);
 
+
+            // Generate synthetic ID incorporating optional reference data
+
             $amountStr = number_format($amount, 2, '.', '');
             $normalise = function (string $text): string {
                 $text = strtoupper(trim($text));
                 return preg_replace('/\s+/', ' ', $text);
             };
             $normDesc = $normalise($desc);
-            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
+
+            // Include optional REFNUM and CHECKNUM plus a hash of the raw block
+            $blockHash = sha1($block);
+            $components = [$accountId, $date, $amountStr, $normDesc, $blockHash];
+            if ($ref !== '') { $components[] = $ref; }
+            if ($chk !== '') { $components[] = $chk; }
+            $syntheticId = sha1(implode('|', $components));
 
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
             $inserted++;
