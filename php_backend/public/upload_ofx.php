@@ -177,6 +177,8 @@ try {
                 $type = strtoupper(trim($tm[1]));
             }
             // Optional reference and cheque numbers with character limits
+            $ref = '';
+            $chk = '';
             if (preg_match('/<REFNUM>([^<]+)/i', $block, $rm)) {
                 $ref = substr(trim($rm[1]), 0, 32);
                 $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
@@ -199,7 +201,7 @@ try {
             $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
             $type = $type === null ? null : $substr($type, 0, 50);
 
-            // Generate synthetic ID to replace unreliable bank FITIDs
+            // Generate synthetic ID incorporating optional reference data
             $amountStr = number_format($amount, 2, '.', '');
 
             // Normalise textual fields so minor formatting differences
@@ -211,7 +213,13 @@ try {
                 return preg_replace('/\s+/', ' ', $text);
             };
             $normDesc = $normalise($desc);
-            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
+
+            // Include optional REFNUM and CHECKNUM plus a hash of the raw block
+            $blockHash = sha1($block);
+            $components = [$accountId, $date, $amountStr, $normDesc, $blockHash];
+            if ($ref !== '') { $components[] = $ref; }
+            if ($chk !== '') { $components[] = $chk; }
+            $syntheticId = sha1(implode('|', $components));
 
 
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
