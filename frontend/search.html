@@ -21,7 +21,8 @@
             <p class="mb-4">Find specific transactions using keywords and view the results below. Quick searches help you jump straight to the entries you need.</p>
             <form id="search-form" class="space-y-4">
                 <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
-                <input type="number" step="0.01" id="amount" placeholder="Amount (£)" class="border p-2 rounded w-full" data-help="Exact amount to match">
+                <input type="number" step="0.01" id="min-amount" placeholder="Min Amount (£)" class="border p-2 rounded w-full" data-help="Minimum amount to match">
+                <input type="number" step="0.01" id="max-amount" placeholder="Max Amount (£)" class="border p-2 rounded w-full" data-help="Maximum amount to match">
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Search</button>
             </form>
             <div id="results-grid" class="mt-4"></div>
@@ -51,10 +52,12 @@
 
     function runSearch(){
         const term = document.getElementById('term').value;
-        const amount = document.getElementById('amount').value;
+        const minAmount = document.getElementById('min-amount').value;
+        const maxAmount = document.getElementById('max-amount').value;
         const params = new URLSearchParams();
         if (term) params.append('value', term);
-        if (amount) params.append('amount', amount);
+        if (minAmount) params.append('min_amount', minAmount);
+        if (maxAmount) params.append('max_amount', maxAmount);
         fetch('../php_backend/public/search_transactions.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
@@ -104,7 +107,13 @@
                         let categories = [];
                         let values = [];
                         let chartTitle = term ? `Spending for "${escapeHtml(term)}"` : 'Search Results Spending';
-                        if (amount) chartTitle += ` of £${parseFloat(amount).toFixed(2)}`;
+                        if (minAmount && maxAmount) {
+                            chartTitle += ` between £${parseFloat(minAmount).toFixed(2)} and £${parseFloat(maxAmount).toFixed(2)}`;
+                        } else if (minAmount) {
+                            chartTitle += ` from £${parseFloat(minAmount).toFixed(2)}`;
+                        } else if (maxAmount) {
+                            chartTitle += ` up to £${parseFloat(maxAmount).toFixed(2)}`;
+                        }
                         let chartSubtitle = '';
 
                         if (diffDays > 1095) {
@@ -181,8 +190,12 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialValue = urlParams.get('value');
-    if (initialValue) {
-        document.getElementById('term').value = initialValue;
+    const initialMin = urlParams.get('min_amount');
+    const initialMax = urlParams.get('max_amount');
+    if (initialValue) document.getElementById('term').value = initialValue;
+    if (initialMin) document.getElementById('min-amount').value = initialMin;
+    if (initialMax) document.getElementById('max-amount').value = initialMax;
+    if (initialValue || initialMin || initialMax) {
         runSearch();
     }
     </script>

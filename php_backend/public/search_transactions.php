@@ -8,15 +8,25 @@ header('Content-Type: application/json');
 
 $value = $_GET['value'] ?? '';
 $amount = isset($_GET['amount']) ? $_GET['amount'] : null;
+$min = isset($_GET['min_amount']) ? $_GET['min_amount'] : null;
+$max = isset($_GET['max_amount']) ? $_GET['max_amount'] : null;
 
-if ($value === '' && $amount === null) {
+if ($amount !== null) {
+    $min = $max = $amount;
+}
+
+if ($value === '' && $min === null && $max === null) {
     http_response_code(400);
-    echo json_encode(['error' => 'Search value or amount is required']);
+    echo json_encode(['error' => 'Search value or amount range is required']);
     exit;
 }
 
 try {
-    $results = Transaction::search($value, $amount !== null ? (float)$amount : null);
+    $results = Transaction::search(
+        $value,
+        $min !== null ? (float)$min : null,
+        $max !== null ? (float)$max : null
+    );
     $total = 0.0;
     foreach ($results as $row) {
         if ($row['transfer_id'] === null) {
