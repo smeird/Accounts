@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../OfxParser.php';
 
 try {
     if (!isset($_FILES['ofx_files'])) {
@@ -71,49 +72,18 @@ try {
 
         }
 
-        // Extract account identifiers
-        $sortCode = null;
-        $accountNumber = null;
-        $accountName = 'Default';
-        if (preg_match('/<BANKACCTFROM>(.*?)<\/BANKACCTFROM>/is', $ofxData, $m)) {
-            $block = $m[1];
-            if (preg_match('/<BANKID>([^<]+)/i', $block, $sm)) {
-                $sortCode = trim($sm[1]);
-            }
-            if (preg_match('/<ACCTID>([^<]+)/i', $block, $am)) {
-                $accountNumber = trim($am[1]);
-            }
-            if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
-                $accountName = trim($nm[1]);
-            }
-        } elseif (preg_match('/<CCACCTFROM>(.*?)<\/CCACCTFROM>/is', $ofxData, $m)) {
-            $block = $m[1];
-            if (preg_match('/<ACCTID>([^<]+)/i', $block, $am)) {
-                $accountNumber = trim($am[1]);
-            }
-            if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
-                $accountName = trim($nm[1]);
-            }
-        } elseif (preg_match('/<ACCTFROM>(.*?)<\/ACCTFROM>/is', $ofxData, $m)) {
-            // Some credit card OFX files use ACCTFROM without the CC prefix
-            $block = $m[1];
-            if (preg_match('/<BANKID>([^<]+)/i', $block, $sm)) {
-                $sortCode = trim($sm[1]);
-            }
-            if (preg_match('/<ACCTID>([^<]+)/i', $block, $am)) {
-                $accountNumber = trim($am[1]);
-            }
-            if (preg_match('/<ACCTNAME>([^<]+)/i', $block, $nm)) {
-                $accountName = trim($nm[1]);
-            }
-        }
-
-        if ($accountNumber === null) {
-            $msg = "Missing account number in " . $files['name'][$i] . ".";
+        try {
+            $parsed = OfxParser::parse($ofxData);
+        } catch (Exception $e) {
+            $msg = 'Error parsing ' . $files['name'][$i] . ': ' . $e->getMessage();
             $messages[] = $msg;
             Log::write($msg, 'ERROR');
             continue;
         }
+
+        $sortCode = $parsed['account']['sort_code'];
+        $accountNumber = $parsed['account']['number'];
+        $accountName = $parsed['account']['name'];
 
         $db = Database::getConnection();
         $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND ((:sort IS NULL AND sort_code IS NULL) OR sort_code = :sort) LIMIT 1');
@@ -121,77 +91,31 @@ try {
         $account = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($account) {
             $accountId = (int)$account['id'];
-            // Preserve existing account names – do not overwrite with OFX-provided names
         } else {
             $accountId = Account::create($accountName, $sortCode, $accountNumber);
         }
 
-        // Update stored ledger balance if available
-        if (preg_match('/<LEDGERBAL>.*?<BALAMT>([^<]+).*?<DTASOF>([^<]+)/is', $ofxData, $balMatch)) {
-            $bal = (float)trim($balMatch[1]);
-            $balDateStr = substr(trim($balMatch[2]), 0, 8);
-            $balDate = date('Y-m-d', strtotime($balDateStr));
-            Account::updateLedgerBalance($accountId, $bal, $balDate);
-        }
-
-        preg_match_all('/<STMTTRN>(.*?)<\/STMTTRN>/is', $ofxData, $matches);
-        if (empty($matches[1])) {
-            $msg = 'No transactions found in ' . $files['name'][$i] . '.';
-            $messages[] = $msg;
-            Log::write($msg, 'ERROR');
-            continue;
+        if ($parsed['ledger']) {
+            Account::updateLedgerBalance($accountId, $parsed['ledger']['balance'], $parsed['ledger']['date']);
         }
 
         $inserted = 0;
-        foreach ($matches[1] as $block) {
-            if (preg_match('/<DTPOSTED>([^<]+)/i', $block, $m)) {
-                $dateStr = substr(trim($m[1]), 0, 8); // YYYYMMDD
-                $dt = DateTime::createFromFormat('Ymd', $dateStr);
-                if (!$dt || $dt->format('Ymd') !== $dateStr) {
-                    Log::write('Invalid date ' . $dateStr . ' in ' . $files['name'][$i], 'ERROR');
-                    continue; // skip invalid entry
-                }
-                $date = $dt->format('Y-m-d');
-            } else {
-                Log::write('Missing DTPOSTED in transaction block', 'ERROR');
-                continue; // skip invalid entry
-            }
-            if (!preg_match('/<TRNAMT>([^<]+)/i', $block, $am)) {
-                Log::write('Missing TRNAMT in transaction block', 'ERROR');
-                continue;
-            }
-            $amount = (float)trim($am[1]);
-            $desc = '';
-            $memo = '';
-            $type = null;
-            if (preg_match('/<NAME>([^<]+)/i', $block, $dm)) {
-                $desc = trim($dm[1]);
-            }
-            if (preg_match('/<MEMO>([^<]+)/i', $block, $mm)) {
-                $memo = trim($mm[1]);
-                if ($desc === '') {
-                    $desc = $memo;
-                }
-            }
-            if (preg_match('/<TRNTYPE>([^<]+)/i', $block, $tm)) {
-                $type = strtoupper(trim($tm[1]));
-            }
-            // Optional reference and cheque numbers with character limits
-            if (preg_match('/<REFNUM>([^<]+)/i', $block, $rm)) {
-                $ref = substr(trim($rm[1]), 0, 32);
+        foreach ($parsed['transactions'] as $txn) {
+            $amount = $txn['amount'];
+            $date = $txn['date'];
+            $desc = $txn['desc'] ?? '';
+            $memo = $txn['memo'] ?? '';
+            $type = $txn['type'];
+            $bankId = $txn['bank_id'] ?: null;
+
+            if ($txn['ref']) {
+                $ref = substr($txn['ref'], 0, 32);
                 $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
             }
-            if (preg_match('/<CHECKNUM>([^<]+)/i', $block, $cm)) {
-                $chk = substr(trim($cm[1]), 0, 20);
+            if ($txn['check']) {
+                $chk = substr($txn['check'], 0, 20);
                 $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
             }
-
-            $bankId = null;
-            if (preg_match('/<FITID>([^<]+)/i', $block, $om)) {
-                $bankId = trim($om[1]);
-            }
-
-            // Enforce database field limits to avoid import failures
 
             $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
             $desc = $substr($desc, 0, 255);
@@ -199,20 +123,13 @@ try {
             $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
             $type = $type === null ? null : $substr($type, 0, 50);
 
-            // Generate synthetic ID to replace unreliable bank FITIDs
             $amountStr = number_format($amount, 2, '.', '');
-
-            // Normalise textual fields so minor formatting differences
-            // don't generate new IDs for the same transaction. Ignore memo
-            // text to avoid duplicates when OFX files provide varying notes
-            // for the same entry.
             $normalise = function (string $text): string {
                 $text = strtoupper(trim($text));
                 return preg_replace('/\s+/', ' ', $text);
             };
             $normDesc = $normalise($desc);
             $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
-
 
             Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
             $inserted++;

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../php_backend/models/Tag.php';
 require_once __DIR__ . '/../php_backend/models/Category.php';
 require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
+require_once __DIR__ . '/../php_backend/OfxParser.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -129,6 +130,28 @@ $segCount = $db->query('SELECT COUNT(*) FROM segments')->fetchColumn();
 assertEqual(0, (int)$segCount, 'Segment deleted');
 $relCount = $db->query('SELECT COUNT(*) FROM categories WHERE segment_id IS NOT NULL')->fetchColumn();
 assertEqual(0, (int)$relCount, 'Category-segment relation removed');
+
+function assertThrows(callable $fn, string $message) {
+    global $results;
+    try {
+        $fn();
+        $results[] = "FAIL: $message (no exception)";
+    } catch (Exception $e) {
+        $results[] = "PASS: $message";
+    }
+}
+
+$header = "OFXHEADER:100\nDATA:OFXSGML\nVERSION:102\nSECURITY:NONE\nENCODING:USASCII\nCHARSET:1252\nCOMPRESSION:NONE\nOLDFILEUID:NONE\nNEWFILEUID:NONE\n\n";
+$accountBlock = "<BANKACCTFROM>\n<BANKID>123456\n<ACCTID>12345678\n<ACCTNAME>Test\n</BANKACCTFROM>\n";
+
+$missingStmt = $header . "<OFX>\n$accountBlock<BANKTRANLIST>\n</BANKTRANLIST>\n</OFX>";
+assertThrows(function() use ($missingStmt) { OfxParser::parse($missingStmt); }, 'Missing STMTTRN detected');
+
+$missingDate = $header . "<OFX>\n$accountBlock<BANKTRANLIST>\n<STMTTRN>\n<TRNAMT>1.00\n</STMTTRN>\n</BANKTRANLIST>\n</OFX>";
+assertThrows(function() use ($missingDate) { OfxParser::parse($missingDate); }, 'Missing DTPOSTED detected');
+
+$missingAmt = $header . "<OFX>\n$accountBlock<BANKTRANLIST>\n<STMTTRN>\n<DTPOSTED>20240101\n</STMTTRN>\n</BANKTRANLIST>\n</OFX>";
+assertThrows(function() use ($missingAmt) { OfxParser::parse($missingAmt); }, 'Missing TRNAMT detected');
 
 // Output results and set exit code
 $failed = false;
