@@ -275,12 +275,13 @@
                         const sum = (this.point.node && this.point.node.childrenTotal) || this.point.value;
                         return sum !== undefined ? `${this.point.name}: £${Highcharts.numberFormat(sum, 2)}` : this.point.name;
                     },
-                    filter: { property: 'innerArcLength', operator: '>', value: 16 }
+                    filter: { property: 'innerArcLength', operator: '>', value: 8 },
+                    style: { fontWeight: 'normal' }
                 },
                 // Display a clear hierarchy with segments in the centre
                 // followed by categories and tags on the outer rings
                 levels: [
-                    { level: 1, colorByPoint: true, dataLabels: { rotationMode: 'parallel' } },
+                    { level: 1, colorByPoint: true, dataLabels: { rotationMode: 'parallel', style: { fontWeight: 'normal' } } },
                     { level: 2, colorVariation: { key: 'brightness', to: -0.5 } },
                     { level: 3, colorVariation: { key: 'brightness', to: -0.8 } }
                 ]
