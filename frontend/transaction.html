@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Transaction Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Icons use favicon.svg; external icon library removed -->
+    <!-- Font Awesome icons loaded via menu.js -->
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
@@ -47,7 +47,7 @@
             const tagBtn = document.createElement('button');
             tagBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.tag_name ? 'bg-green-600' : 'bg-gray-400'}`;
             tagBtn.innerHTML = `
-                <img src="../favicon.svg" class="w-8 h-8" alt="">
+                <i class="fas fa-tag w-8 h-8"></i>
                 <span class="ml-4 flex-1 text-right">${tx.tag_name || 'No tag'}</span>
             `;
             icons.appendChild(tagBtn);
@@ -55,7 +55,7 @@
             const catBtn = document.createElement('button');
             catBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.category_name ? 'bg-blue-600' : 'bg-gray-400'}`;
             catBtn.innerHTML = `
-                <img src="../favicon.svg" class="w-8 h-8" alt="">
+                <i class="fas fa-folder-open w-8 h-8"></i>
                 <span class="ml-4 flex-1 text-right">${tx.category_name || 'No category'}</span>
             `;
             icons.appendChild(catBtn);
@@ -63,7 +63,7 @@
             const groupBtn = document.createElement('button');
             groupBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.group_name ? 'bg-purple-600' : 'bg-gray-400'}`;
             groupBtn.innerHTML = `
-                <img src="../favicon.svg" class="w-8 h-8" alt="">
+                <i class="fas fa-layer-group w-8 h-8"></i>
                 <span class="ml-4 flex-1 text-right">${tx.group_name || 'No group'}</span>
             `;
             icons.appendChild(groupBtn);
@@ -86,7 +86,7 @@
                     <div class="flex"><dt class="font-semibold w-40">OFX Type</dt><dd>${tx.ofx_type || ''}</dd></div>
                     ${tx.ofx_id ? `<div class="flex"><dt class="font-semibold w-40">OFX ID</dt><dd>${tx.ofx_id}</dd></div>` : ''}
                     ${tx.bank_ofx_id ? `<div class="flex"><dt class="font-semibold w-40">Bank OFX ID</dt><dd>${tx.bank_ofx_id}</dd></div>` : ''}
-                    <div class="flex"><dt class="font-semibold w-40">Transfer</dt><dd>${tx.transfer_id ? '<span class="text-blue-600"><img src="../favicon.svg" class="inline w-4 h-4 mr-1" alt="">Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</dd></div>
+                    <div class="flex"><dt class="font-semibold w-40">Transfer</dt><dd>${tx.transfer_id ? '<span class="text-blue-600"><i class="fas fa-right-left inline w-4 h-4 mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</dd></div>
                     <div class="flex"><dt class="font-semibold w-40">Category</dt><dd>${tx.category_name || 'None'}</dd></div>
                 </dl>
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
