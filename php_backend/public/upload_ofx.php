@@ -86,8 +86,18 @@ try {
         $accountName = $parsed['account']['name'];
 
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND ((:sort IS NULL AND sort_code IS NULL) OR sort_code = :sort) LIMIT 1');
-        $stmt->execute(['num' => $accountNumber, 'sort' => $sortCode]);
+        // Match existing accounts using account number and sort code. When the
+        // sort code is null (credit cards) prepared statements can behave
+        // unpredictably if we rely on ":sort IS NULL" checks. Build the query
+        // dynamically to ensure NULL is handled correctly and credit card
+        // accounts are not mistaken for existing bank accounts.
+        if ($sortCode === null) {
+            $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code IS NULL LIMIT 1');
+            $stmt->execute(['num' => $accountNumber]);
+        } else {
+            $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code = :sort LIMIT 1');
+            $stmt->execute(['num' => $accountNumber, 'sort' => $sortCode]);
+        }
         $account = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($account) {
             $accountId = (int)$account['id'];
