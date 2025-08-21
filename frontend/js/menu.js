@@ -74,6 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        // Enable collapsible sections with animated height transition
+        menu.querySelectorAll('.group').forEach(section => {
+          const header = section.querySelector('h3');
+          const list = section.querySelector('ul');
+          if (header && list) {
+            header.addEventListener('click', () => {
+              const expanded = list.style.maxHeight && list.style.maxHeight !== '0px';
+              list.style.maxHeight = expanded ? '0px' : `${list.scrollHeight}px`;
+            });
+          }
+        });
         // Hide menu after clicking a link on mobile
         menu.querySelectorAll('a').forEach(a =>
           a.addEventListener('click', () => menu.classList.add('hidden'))
