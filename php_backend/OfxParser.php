@@ -10,6 +10,8 @@ use Ofx\Transaction as OfxTransaction;
 
 class OfxParser {
 
+    private const MAX_AMOUNT = 1000000000; // clamp extremely large values
+
     public static function parse(string $data, bool $strict = false): array {
         $warnings = [];
 
@@ -53,31 +55,51 @@ class OfxParser {
 
         $profile = self::loadProfile($xml);
 
-        $statement = self::getStatement($xml);
+        $statements = self::getStatements($xml);
+        $parsed = [];
+        foreach ($statements as $statement) {
+            $warnings = [];
+            $currency = self::normaliseCurrency((string)($statement->CURDEF ?? ''));
 
-        $currency = self::normaliseCurrency((string)($statement->CURDEF ?? ''));
+            // BANKTRANLIST boundaries for date validation
+            $bankTranList = $statement->xpath('.//BANKTRANLIST');
+            $dtStart = null;
+            $dtEnd = null;
+            if ($bankTranList) {
+                $dtStart = self::parseDate((string)$bankTranList[0]->DTSTART, $warnings, self::line($bankTranList[0]->DTSTART ?? null), $strict);
+                $dtEnd = self::parseDate((string)$bankTranList[0]->DTEND, $warnings, self::line($bankTranList[0]->DTEND ?? null), $strict);
+            }
 
-        // BANKTRANLIST boundaries for date validation
-        $bankTranList = $statement->xpath('.//BANKTRANLIST');
-        $dtStart = null;
-        $dtEnd = null;
-        if ($bankTranList) {
-            $dtStart = self::parseDate((string)$bankTranList[0]->DTSTART, $warnings, self::line($bankTranList[0]->DTSTART ?? null), $strict);
-            $dtEnd = self::parseDate((string)$bankTranList[0]->DTEND, $warnings, self::line($bankTranList[0]->DTEND ?? null), $strict);
+            $account = self::parseAccount($statement, $warnings, $strict, $currency);
+            $ledger = self::parseLedger($statement, $warnings, $strict, $currency);
+            $transactions = self::parseTransactions($statement, $dtStart, $dtEnd, $warnings, $strict);
+
+            $parsed[] = [
+                'account' => $account,
+                'ledger' => $ledger,
+                'transactions' => $transactions,
+                'warnings' => $warnings,
+            ];
         }
 
-        $account = self::parseAccount($statement, $warnings, $strict, $currency);
-        $ledger = self::parseLedger($statement, $warnings, $strict, $currency);
-        $transactions = self::parseTransactions($statement, $dtStart, $dtEnd, $warnings, $strict);
+        return $parsed;
 
+    }
 
-        return [
-            'account' => $account,
-            'ledger' => $ledger,
-            'transactions' => $transactions,
-            'warnings' => $warnings,
-        ];
-
+    private static function getStatements(SimpleXMLElement $xml): array {
+        $stmts = [];
+        $bank = $xml->xpath('//STMTRS');
+        $card = $xml->xpath('//CCSTMTRS');
+        if ($bank) {
+            $stmts = array_merge($stmts, $bank);
+        }
+        if ($card) {
+            $stmts = array_merge($stmts, $card);
+        }
+        if (empty($stmts)) {
+            throw new Exception('Missing STMTRS');
+        }
+        return $stmts;
     }
 
     private static function closeTags(string $data): string {

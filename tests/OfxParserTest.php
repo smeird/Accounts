@@ -57,7 +57,7 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx, false);
+        $parsed = OfxParser::parse($ofx, false)[0];
         $this->assertSame('UNKNOWN', $parsed['transactions'][0]->type);
         $this->assertArrayHasKey('UNKNOWN', $parsed['transactions'][0]->extensions);
         $this->assertNotEmpty($parsed['warnings']);
@@ -118,7 +118,7 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx);
+        $parsed = OfxParser::parse($ofx)[0];
 
         $this->assertNotEmpty($parsed['warnings']);
     }
@@ -149,7 +149,7 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx);
+        $parsed = OfxParser::parse($ofx)[0];
 
         $this->assertSame('1900-01-01', $parsed['transactions'][0]->date);
         $this->assertSame('2100-12-31', $parsed['transactions'][1]->date);
