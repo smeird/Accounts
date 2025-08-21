@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../Totp.php';
 require_once __DIR__ . '/../models/Log.php';
+
 require_once __DIR__ . '/../Database.php';
+
 
 ini_set('session.cookie_secure', '1');
 session_start();
@@ -14,6 +16,7 @@ if ($username === '') {
     echo json_encode(['error' => 'Username required']);
     exit;
 }
+
 try {
     $db = Database::getConnection();
     $stmt = $db->prepare('SELECT secret FROM totp_secrets WHERE username = :username');
@@ -30,6 +33,7 @@ try {
     echo json_encode(['error' => 'Server error']);
     exit;
 }
+
 
 $otpauth = Totp::getOtpAuthUri($username, $secret);
 echo json_encode(['secret' => $secret, 'otpauth' => $otpauth]);

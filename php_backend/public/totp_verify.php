@@ -3,6 +3,7 @@ require_once __DIR__ . '/../Totp.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../Database.php';
 
+
 ini_set('session.cookie_secure', '1');
 session_start();
 header('Content-Type: application/json');
@@ -15,6 +16,7 @@ if ($username === '' || trim($token) === '') {
     echo json_encode(['verified' => false, 'error' => 'Missing fields']);
     exit;
 }
+
 try {
     $db = Database::getConnection();
     $stmt = $db->prepare('SELECT secret FROM totp_secrets WHERE username = :username');
@@ -27,6 +29,7 @@ try {
 }
 
 if (!$secret) {
+
     Log::write("2FA verify unknown user '$username'", 'ERROR');
     echo json_encode(['verified' => false, 'error' => 'Unknown user']);
     exit;
