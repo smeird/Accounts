@@ -1,5 +1,13 @@
 <?php
 // Parses OFX data using SimpleXML and validates required elements.
+require_once __DIR__ . '/Account.php';
+require_once __DIR__ . '/Ledger.php';
+require_once __DIR__ . '/Transaction.php';
+
+use Ofx\Account as OfxAccount;
+use Ofx\Ledger as OfxLedger;
+use Ofx\Transaction as OfxTransaction;
+
 class OfxParser {
     public static function parse(string $data): array {
         $pos = strpos($data, '<OFX');
@@ -43,10 +51,7 @@ class OfxParser {
             $balAmt = trim((string)$ledgerNode[0]->BALAMT);
             $dtAsOf = substr(trim((string)$ledgerNode[0]->DTASOF), 0, 8);
             if ($balAmt !== '' && $dtAsOf !== '') {
-                $ledger = [
-                    'balance' => (float)$balAmt,
-                    'date' => date('Y-m-d', strtotime($dtAsOf))
-                ];
+                $ledger = new OfxLedger((float)$balAmt, date('Y-m-d', strtotime($dtAsOf)));
             }
         }
         // Transactions
@@ -65,19 +70,19 @@ class OfxParser {
             if (!$dt || $dt->format('Ymd') !== $dateStr) {
                 throw new Exception('Invalid DTPOSTED value');
             }
-            $transactions[] = [
-                'date' => $dt->format('Y-m-d'),
-                'amount' => (float)$amountStr,
-                'desc' => (string)$trn->NAME,
-                'memo' => (string)$trn->MEMO,
-                'type' => $trn->TRNTYPE ? strtoupper((string)$trn->TRNTYPE) : null,
-                'ref' => (string)$trn->REFNUM,
-                'check' => (string)$trn->CHECKNUM,
-                'bank_id' => (string)$trn->FITID,
-            ];
+            $transactions[] = new OfxTransaction(
+                $dt->format('Y-m-d'),
+                (float)$amountStr,
+                (string)$trn->NAME,
+                (string)$trn->MEMO,
+                $trn->TRNTYPE ? strtoupper((string)$trn->TRNTYPE) : null,
+                (string)$trn->REFNUM,
+                (string)$trn->CHECKNUM,
+                (string)$trn->FITID
+            );
         }
         return [
-            'account' => ['sort_code' => $sortCode, 'number' => $accountNumber, 'name' => $accountName],
+            'account' => new OfxAccount($sortCode, $accountNumber, $accountName),
             'ledger' => $ledger,
             'transactions' => $transactions,
         ];

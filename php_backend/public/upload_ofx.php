@@ -81,9 +81,9 @@ try {
             continue;
         }
 
-        $sortCode = $parsed['account']['sort_code'];
-        $accountNumber = $parsed['account']['number'];
-        $accountName = $parsed['account']['name'];
+        $sortCode = $parsed['account']->sortCode;
+        $accountNumber = $parsed['account']->number;
+        $accountName = $parsed['account']->name;
 
         $db = Database::getConnection();
         // Match existing accounts using account number and sort code. When the
@@ -106,26 +106,26 @@ try {
         }
 
         if ($parsed['ledger']) {
-            Account::updateLedgerBalance($accountId, $parsed['ledger']['balance'], $parsed['ledger']['date']);
+            Account::updateLedgerBalance($accountId, $parsed['ledger']->balance, $parsed['ledger']->date);
         }
 
         $inserted = 0;
         $duplicates = [];
 
         foreach ($parsed['transactions'] as $txn) {
-            $amount = $txn['amount'];
-            $date = $txn['date'];
-            $desc = $txn['desc'] ?? '';
-            $memo = $txn['memo'] ?? '';
-            $type = $txn['type'];
-            $bankId = $txn['bank_id'] ?: null;
+            $amount = $txn->amount;
+            $date = $txn->date;
+            $desc = $txn->desc;
+            $memo = $txn->memo;
+            $type = $txn->type;
+            $bankId = $txn->bankId ? $txn->bankId : null;
 
-            if ($txn['ref']) {
-                $ref = substr($txn['ref'], 0, 32);
+            if ($txn->ref) {
+                $ref = substr($txn->ref, 0, 32);
                 $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
             }
-            if ($txn['check']) {
-                $chk = substr($txn['check'], 0, 20);
+            if ($txn->check) {
+                $chk = substr($txn->check, 0, 20);
                 $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
             }
 
