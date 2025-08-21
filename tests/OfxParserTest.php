@@ -23,8 +23,8 @@ class OfxParserTest extends TestCase
 </OFX>
 OFX;
         $parsed = OfxParser::parse($ofx);
-        $this->assertSame('12345678', $parsed['account']['number']);
-        $this->assertSame('123456', $parsed['account']['sort_code']);
-        $this->assertSame('Main', $parsed['account']['name']);
+        $this->assertSame('12345678', $parsed['account']->number);
+        $this->assertSame('123456', $parsed['account']->sortCode);
+        $this->assertSame('Main', $parsed['account']->name);
     }
 }
