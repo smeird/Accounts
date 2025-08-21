@@ -54,11 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>User Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
         button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
         a { transition: color 0.2s ease; }
         a:hover { color: #4f46e5; }
@@ -99,7 +101,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" id="gen-username" value="<?= htmlspecialchars($username) ?>">
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode mr-2"></i>Generate QR</button>
             </form>
+
             <div id="qr" class="mt-4 mx-auto"></div>
+
             <form id="verify-form" class="space-y-4">
                 <input type="hidden" id="ver-username" value="<?= htmlspecialchars($username) ?>">
                 <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
@@ -114,7 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="frontend/js/keyboard_hints.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <script src="frontend/js/2fa.js"></script>
 </body>
 </html>
