@@ -9,6 +9,7 @@ use Ofx\Ledger as OfxLedger;
 use Ofx\Transaction as OfxTransaction;
 
 class OfxParser {
+    private const MAX_AMOUNT = 999999999999.99;
     public static function parse(string $data): array {
         // Normalise line endings and attempt to decode using a tolerant charset
         $data = str_replace(["\r\n", "\r"], "\n", $data);
@@ -84,8 +85,9 @@ class OfxParser {
         }
 
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
+        $currency = self::normaliseCurrency((string)$stmt->CURDEF);
 
-        return new OfxAccount($sortCode, $accountNumber, $accountName);
+        return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
     }
 
     private static function parseLedger(SimpleXMLElement $stmt): ?OfxLedger {
@@ -93,8 +95,9 @@ class OfxParser {
         if ($ledgerNode) {
             $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
             $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF);
+            $currency = self::normaliseCurrency((string)$ledgerNode[0]->CURDEF ?: (string)$stmt->CURDEF);
             if ($balAmt !== null && $dtAsOf !== null) {
-                return new OfxLedger($balAmt, $dtAsOf);
+                return new OfxLedger($balAmt, $dtAsOf, $currency);
             }
         }
         return null;
@@ -131,12 +134,47 @@ class OfxParser {
         if ($value === '') {
             return null;
         }
-        // Remove commas, spaces and stray symbols
-        $value = preg_replace('/[^0-9\-\.]/', '', $value);
+        $value = str_replace([',', ' '], '', $value);
+        $neg = false;
+        if (preg_match('/^\((.*)\)$/', $value, $m)) {
+            $neg = true;
+            $value = $m[1];
+        } elseif (substr($value, -1) === '-') {
+            $neg = true;
+            $value = substr($value, 0, -1);
+        }
+        $value = preg_replace('/[^0-9\.-]/', '', $value);
         if ($value === '' || !is_numeric($value)) {
             return null;
         }
-        return (float)$value;
+        $num = (float)$value;
+        if ($neg) {
+            $num = -abs($num);
+        }
+        if ($num > self::MAX_AMOUNT) {
+            $num = self::MAX_AMOUNT;
+        } elseif ($num < -self::MAX_AMOUNT) {
+            $num = -self::MAX_AMOUNT;
+        }
+        return $num;
+    }
+
+    private static function normaliseCurrency(?string $code): string {
+        $code = strtoupper(preg_replace('/[^A-Z]/', '', $code ?? ''));
+        if ($code === '') {
+            return 'GBP';
+        }
+        $map = [
+            'UKL' => 'GBP',
+            'GBR' => 'GBP',
+        ];
+        if (isset($map[$code])) {
+            return $map[$code];
+        }
+        if (preg_match('/^[A-Z]{3}$/', $code)) {
+            return $code;
+        }
+        return 'GBP';
     }
 
     private static function parseDate(string $value): ?string {
