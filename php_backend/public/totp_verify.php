@@ -7,8 +7,8 @@ header('Content-Type: application/json');
 $input = json_decode(file_get_contents('php://input'), true);
 $username = $input['username'] ?? ($_SESSION['username'] ?? '');
 
-$token = $input['token'] ?? '';
-if ($username === '' || $token === '') {
+$token = isset($input['token']) ? (string)$input['token'] : '';
+if ($username === '' || trim($token) === '') {
     echo json_encode(['verified' => false, 'error' => 'Missing fields']);
     exit;
 }

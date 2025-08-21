@@ -9,7 +9,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Backup & Restore</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-1P4Wf2M1yGvdfq3NzfIgVVP8341/ySfWaSrtwE0NtP28s8Qd8VVS6I5aOQSXgjOaX4nHCqB6f+GO6zkRgLpmMQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Icons reuse favicon.svg, no external icon library needed -->
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
@@ -32,17 +32,17 @@
                     <label class="block"><input type="checkbox" name="parts" value="budgets" class="mr-2">Budgets</label>
 
                 </div>
-                <button id="download-backup" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-download mr-2"></i>Download Backup</button>
+                <button id="download-backup" class="bg-indigo-600 text-white px-4 py-2 rounded"><img src="../favicon.svg" class="inline w-4 h-4 mr-2" alt="">Download Backup</button>
 
                 <p class="mt-4">Export all transactions to a single OFX file.</p>
-                <button id="download-ofx" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-file-export mr-2"></i>Download OFX</button>
+                <button id="download-ofx" class="bg-indigo-600 text-white px-4 py-2 rounded"><img src="../favicon.svg" class="inline w-4 h-4 mr-2" alt="">Download OFX</button>
             </section>
             <section class="bg-white p-6 rounded shadow space-y-4">
                 <h2 class="text-xl font-semibold">Restore Backup</h2>
                 <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags, groups, segments, or budgets.</p>
                 <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="file" id="backup-file" name="backup_file" accept="application/gzip,application/json" required data-help="Choose a previously downloaded compressed backup file">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-upload mr-2"></i>Restore</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><img src="../favicon.svg" class="inline w-4 h-4 mr-2" alt="">Restore</button>
                 </form>
             </section>
         </main>
