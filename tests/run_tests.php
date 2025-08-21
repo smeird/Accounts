@@ -54,6 +54,17 @@ $parsedMasked = OfxParser::parse($maskedOfx);
 assertEqual('552213******8609', $parsedMasked['account']->number, 'Masked account numbers retain placeholder digits');
 
 
+// OFX streams without newlines between tags should still parse all transactions
+$compactOfx = <<<OFX
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS>
+<BANKACCTFROM><BANKID>1<ACCTID>2</BANKACCTFROM>
+<BANKTRANLIST><STMTTRN><DTPOSTED>20240101<TRNAMT>-1<FITID>1<NAME>A</STMTTRN><STMTTRN><DTPOSTED>20240102<TRNAMT>-2<FITID>2<NAME>B</STMTTRN></BANKTRANLIST>
+</STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
+OFX;
+$parsedCompact = OfxParser::parse($compactOfx);
+assertEqual(2, count($parsedCompact['transactions']), 'Parser handles tags without newlines');
+
+
 // Test user creation and retrieval
 $userId = User::create('alice', 'secret');
 assertEqual(1, $userId, 'User ID starts at 1');
