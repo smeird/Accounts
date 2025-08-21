@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- Page for setting up and verifying two-factor authentication -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Two-Factor Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white" data-api-base="../php_backend/public">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+            <div class="flex items-center mb-4">
+                <h1 class="text-2xl font-semibold flex-1 text-indigo-700"><i class="fas fa-shield-alt mr-2"></i>Two-Factor Authentication</h1>
+                <button id="help-btn" class="text-indigo-600 accent"><i class="fas fa-circle-info"></i></button>
+            </div>
+            <p class="mb-4">Set up TOTP-based authentication and verify your one-time codes.</p>
+
+            <div class="bg-white p-6 rounded shadow mb-6">
+                <h2 class="text-xl mb-4">Setup</h2>
+                <form id="generate-form" class="space-y-4">
+                    <input id="gen-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode mr-2"></i>Generate QR</button>
+                </form>
+                <div id="qr" class="mt-4 mx-auto"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded shadow">
+                <h2 class="text-xl mb-4">Verify</h2>
+                <form id="verify-form" class="space-y-4">
+                    <input id="ver-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
+                    <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-check mr-2"></i>Verify</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="js/2fa.js"></script>
+</body>
+</html>
