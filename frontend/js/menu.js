@@ -177,6 +177,18 @@ document.addEventListener('DOMContentLoaded', () => {
             releaseEl.textContent = 'v?';
           });
       }
+
+      const userEl = document.getElementById('current-user');
+      if (userEl) {
+        fetch('../php_backend/public/current_user.php')
+          .then(r => (r.ok ? r.json() : Promise.reject()))
+          .then(u => {
+            userEl.textContent = u.username || 'Guest';
+          })
+          .catch(() => {
+            userEl.textContent = 'Guest';
+          });
+      }
     })
     .catch(err => console.error('Top bar load failed', err));
 
