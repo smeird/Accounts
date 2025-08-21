@@ -6,14 +6,16 @@ class Totp {
         return self::base32Encode(random_bytes($length));
     }
 
-    public static function getQrCodeUrl($username, $secret) {
+
+    public static function getOtpAuthUri($username, $secret) {
         $issuer = 'Accounts';
-        $otpauth = sprintf('otpauth://totp/%s?secret=%s&issuer=%s',
+        return sprintf('otpauth://totp/%s?secret=%s&issuer=%s',
+
             rawurlencode($username),
             $secret,
             rawurlencode($issuer)
         );
-        return 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=' . urlencode($otpauth);
+
     }
 
     public static function verifyCode($secret, $code, $window = 1) {

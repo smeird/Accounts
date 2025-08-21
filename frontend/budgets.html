@@ -30,12 +30,14 @@
         </section>
         <section class="bg-white p-6 rounded shadow">
             <h2 class="text-xl font-semibold mb-4">AI Budgeting</h2>
+
             <p class="mb-4">Send your savings goal and the last 12 months of category totals to the AI to propose next month's budgets and provide a brief explanation.</p>
             <form id="ai-form" class="md:flex md:space-x-4 space-y-4 md:space-y-0">
                 <label class="block">Savings Goal (£)<br><input type="number" step="0.01" id="goal" class="border p-2 rounded" data-help="Monthly amount you want to save. The AI uses this plus a year of history to set budgets."></label>
                 <button id="ai-run" type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded self-end"><i class="fa-solid fa-robot mr-1"></i>Generate Budgets</button>
             </form>
             <div id="ai-result" class="mt-4"></div>
+
         </section>
         <section>
             <h2 class="text-xl font-semibold mb-4">Current Budgets</h2>
@@ -132,6 +134,7 @@ document.getElementById('ai-form').addEventListener('submit',async e=>{
     e.preventDefault();
     const [year,month]=monthInput.value.split('-');
     const goal=document.getElementById('goal').value;
+
     const resultEl=document.getElementById('ai-result');
     const btn=document.getElementById('ai-run');
     btn.disabled=true;
@@ -161,6 +164,7 @@ document.getElementById('ai-form').addEventListener('submit',async e=>{
     }finally{
         btn.disabled=false;
         btn.classList.remove('opacity-50','cursor-not-allowed');
+
     }
 });
 

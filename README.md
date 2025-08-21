@@ -8,7 +8,9 @@ A basic login page is available at the project root (`index.php`). Users are sto
 
 ### Two-Factor Authentication (TOTP)
 
-Two PHP endpoints under `php_backend/public` handle TOTP setup and verification and a third removes secrets. `totp_generate.php` issues a per-user secret and returns a QR code URL, `totp_verify.php` validates submitted codes, and `totp_disable.php` deletes an existing secret. The login page prompts for a code when a secret exists, and you can manage or disable 2FA from `users.php` or open `frontend/2fa.html` to scan the QR code with your authenticator and confirm the one-time codes it generates.
+
+Two PHP endpoints under `php_backend/public` handle TOTP setup and verification and a third removes secrets. `totp_generate.php` issues a per-user secret and returns an otpauth URI, `totp_verify.php` validates submitted codes, and `totp_disable.php` deletes an existing secret. The QR code is rendered client-side using `qrcode` to produce an SVG. The login page prompts for a code when a secret exists, and you can manage or disable 2FA from `users.php` or open `frontend/2fa.html` to scan the QR code with your authenticator and confirm the one-time codes it generates.
+
 
 ## Specifications
 
@@ -21,7 +23,9 @@ Two PHP endpoints under `php_backend/public` handle TOTP setup and verification 
 
 - Form inputs may include a `data-help` attribute to show popover guidance.
 - Transactions identified as transfers are flagged and ignored in totals.
+
 - The budgets page offers AI budgeting that sends a year of category totals and your savings goal to the OpenAI API to propose next month's limits and returns a short explanation of the allocations.
+
 - The interface is responsive. Each page includes a viewport meta tag and uses Tailwind's responsive utilities so the site works
   on mobile devices. The navigation menu collapses to a toggle button on small screens.
 
