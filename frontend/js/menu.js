@@ -12,7 +12,15 @@ window.fetch = (input, init = {}) => {
 document.addEventListener('DOMContentLoaded', () => {
   const applyIconColor = (root = document) => {
     root.querySelectorAll('i').forEach(icon => {
-      if (!icon.closest('header')) {
+      if (icon.closest('header')) return;
+      const parent = icon.closest('button, a');
+      const parentClasses = parent ? Array.from(parent.classList) : [];
+      const coloredBg = parentClasses.some(c => c.startsWith('bg-') && c !== 'bg-white');
+      const hasColor = Array.from(icon.classList).some(c => c.startsWith('text-'));
+      if (coloredBg) {
+        icon.classList.forEach(c => { if (c.startsWith('text-')) icon.classList.remove(c); });
+        icon.classList.add('text-white');
+      } else if (!hasColor) {
         icon.classList.add('text-indigo-600');
       }
     });
