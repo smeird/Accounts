@@ -19,7 +19,13 @@ class OfxParser {
         if (!$acctNode || trim((string)$acctNode[0]->ACCTID) === '') {
             throw new Exception('Missing account number');
         }
+        // Credit card statements may include a BANKID that is not a real
+        // sort code. Identify CCACCTFROM nodes explicitly and ignore any
+        // BANKID so the account is treated as a credit card when imported.
         $sortCode = trim((string)$acctNode[0]->BANKID) ?: null;
+        if (strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
+            $sortCode = null;
+        }
         $accountNumber = trim((string)$acctNode[0]->ACCTID);
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
         // Ledger balance
