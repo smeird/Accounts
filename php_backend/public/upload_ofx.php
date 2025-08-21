@@ -111,6 +111,7 @@ try {
 
         $inserted = 0;
         $duplicates = [];
+        $fileLedger = [];
 
         foreach ($parsed['transactions'] as $txn) {
             $amount = $txn->amount;
@@ -141,7 +142,23 @@ try {
                 return preg_replace('/\s+/', ' ', $text);
             };
             $normDesc = $normalise($desc);
-            $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
+            $baseHash = sha1($accountId . $date . $amountStr . $normDesc);
+
+            if ($bankId === null || $bankId === '') {
+                $bankId = $baseHash;
+            }
+
+            $idKey = $bankId;
+            if (isset($fileLedger[$idKey])) {
+                $prev = $fileLedger[$idKey];
+                if ($prev['amount'] != $amount || $prev['date'] !== $date || $prev['desc'] !== $desc || $prev['memo'] !== ($memo ?? '')) {
+                    Log::write("FITID $idKey conflict within file", 'WARNING');
+                }
+                continue;
+            }
+            $fileLedger[$idKey] = ['amount' => $amount, 'date' => $date, 'desc' => $desc, 'memo' => $memo ?? ''];
+
+            $syntheticId = $baseHash;
 
             $createdId = Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
             if ($createdId === 0) {
