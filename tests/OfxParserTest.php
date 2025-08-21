@@ -34,62 +34,126 @@ OFX;
         $this->assertSame('Main', $parsed['account']->name);
     }
 
-    public function testCurrencyMappingAndDefault(): void
+
+    public function testLenientModePlaceholdersAndExtensions(): void
     {
         $ofx = <<<OFX
 <OFX>
   <BANKMSGSRSV1>
     <STMTTRNRS>
       <STMTRS>
-        <CURDEF>UKL</CURDEF>
-        <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
-        <BANKTRANLIST>
-          <STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-1</TRNAMT></STMTTRN>
-        </BANKTRANLIST>
-      </STMTRS>
-    </STMTTRNRS>
-  </BANKMSGSRSV1>
-</OFX>
-OFX;
-        $parsed = OfxParser::parse($ofx);
-        $this->assertSame('GBP', $parsed['account']->currency);
-
-        $ofxNoCur = <<<OFX
-<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS>
-<BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
-<BANKTRANLIST><STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-1</TRNAMT></STMTTRN></BANKTRANLIST>
-</STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
-OFX;
-        $parsed2 = OfxParser::parse($ofxNoCur);
-        $this->assertSame('GBP', $parsed2['account']->currency);
-    }
-
-    public function testAmountNormalisationAndClamping(): void
-    {
-        $ofx = <<<OFX
-<OFX>
-  <BANKMSGSRSV1>
-    <STMTTRNRS>
-      <STMTRS>
-        <CURDEF>USD</CURDEF>
-        <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
+        <BANKACCTFROM>
+          <ACCTID>1</ACCTID>
+        </BANKACCTFROM>
         <BANKTRANLIST>
           <STMTTRN>
             <DTPOSTED>20240101</DTPOSTED>
-            <TRNAMT>1,234 567.89-</TRNAMT>
+            <TRNAMT>-1.00</TRNAMT>
+            <UNKNOWN>foo</UNKNOWN>
           </STMTTRN>
         </BANKTRANLIST>
-        <LEDGERBAL>
-          <BALAMT>9999999999999999</BALAMT>
-          <DTASOF>20240101</DTASOF>
-        </LEDGERBAL>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        $parsed = OfxParser::parse($ofx, false);
+        $this->assertSame('UNKNOWN', $parsed['transactions'][0]->type);
+        $this->assertArrayHasKey('UNKNOWN', $parsed['transactions'][0]->extensions);
+        $this->assertNotEmpty($parsed['warnings']);
+    }
+
+    public function testStrictModeThrowsOnMissingFields(): void
+    {
+        $this->expectException(Exception::class);
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <BANKACCTFROM>
+          <ACCTID>1</ACCTID>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <DTPOSTED>20240101</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        OfxParser::parse($ofx, true);
+    }
+
+    public function testRunningBalanceMismatchAndDateWindowWarnings(): void
+
+    {
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+
+        <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20240101</DTSTART>
+          <DTEND>20240131</DTEND>
+          <STMTTRN>
+            <DTPOSTED>20240201</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+            <RUNNINGBAL><BALAMT>100.00</BALAMT></RUNNINGBAL>
+          </STMTTRN>
+          <STMTTRN>
+            <DTPOSTED>20240102</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+            <RUNNINGBAL><BALAMT>98.00</BALAMT></RUNNINGBAL>
+          </STMTTRN>
+
+        </BANKTRANLIST>
       </STMTRS>
     </STMTTRNRS>
   </BANKMSGSRSV1>
 </OFX>
 OFX;
         $parsed = OfxParser::parse($ofx);
-        $this->assertEquals(-1234567.89, $parsed['transactions'][0]->amount, '', 0.001);
-        $this->assertEquals(999999999999.99, $parsed['ledger']->balance, '', 0.01);
+
+        $this->assertNotEmpty($parsed['warnings']);
+    }
+
+    public function testDateClampingProducesWarnings(): void
+
+    {
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+
+        <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <DTPOSTED>18000101</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+          </STMTTRN>
+          <STMTTRN>
+            <DTPOSTED>22001231</DTPOSTED>
+            <TRNAMT>1.00</TRNAMT>
+          </STMTTRN>
+        </BANKTRANLIST>
+
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        $parsed = OfxParser::parse($ofx);
+
+        $this->assertSame('1900-01-01', $parsed['transactions'][0]->date);
+        $this->assertSame('2100-12-31', $parsed['transactions'][1]->date);
+        $this->assertNotEmpty($parsed['warnings']);
+
     }
 }

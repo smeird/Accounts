@@ -9,48 +9,10 @@ use Ofx\Ledger as OfxLedger;
 use Ofx\Transaction as OfxTransaction;
 
 class OfxParser {
-    private const MAX_AMOUNT = 999999999999.99;
-    public static function parse(string $data): array {
-        $data = self::prepare($data);
 
-        libxml_use_internal_errors(true);
-        $reader = new XMLReader();
-        if (!$reader->XML($data, null, LIBXML_NOERROR | LIBXML_NOWARNING)) {
-            throw new Exception('Failed to initialise XML reader');
-        }
+    public static function parse(string $data, bool $strict = false): array {
+        $warnings = [];
 
-        $statements = [];
-        while ($reader->read()) {
-            if ($reader->nodeType === XMLReader::ELEMENT && ($reader->name === 'STMTTRNRS' || $reader->name === 'CCSTMTTRNRS')) {
-                $outer = $reader->readOuterXML();
-                if ($outer === '') {
-                    continue;
-                }
-                $stmtXml = simplexml_load_string($outer, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING);
-                if (!$stmtXml) {
-                    continue;
-                }
-                $stmts = $stmtXml->xpath('STMTRS | CCSTMTRS');
-                if (!$stmts) {
-                    continue;
-                }
-                $stmt = $stmts[0];
-                $statements[] = [
-                    'account' => self::parseAccount($stmt),
-                    'ledger' => self::parseLedger($stmt),
-                    'transactions' => self::parseTransactions($stmt),
-                ];
-            }
-        }
-
-        if (!$statements) {
-            throw new Exception('Missing statement');
-        }
-
-        return $statements;
-    }
-
-    private static function prepare(string $data): string {
         // Normalise line endings and attempt to decode using a tolerant charset
         $data = str_replace(["\r\n", "\r"], "\n", $data);
         $data = @iconv('UTF-8', 'UTF-8//IGNORE', $data);
@@ -80,7 +42,11 @@ class OfxParser {
 
 
         libxml_use_internal_errors(true);
-        $xml = simplexml_load_string($data, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $opts = LIBXML_NOERROR | LIBXML_NOWARNING;
+        if (defined('LIBXML_BIGLINES')) {
+            $opts |= LIBXML_BIGLINES;
+        }
+        $xml = simplexml_load_string($data, 'SimpleXMLElement', $opts);
         if (!$xml) {
             throw new Exception('Failed to parse OFX');
         }
@@ -88,14 +54,27 @@ class OfxParser {
         $profile = self::loadProfile($xml);
 
         $statement = self::getStatement($xml);
-        $account = self::parseAccount($statement);
-        $ledger = self::parseLedger($statement);
-        $transactions = self::parseTransactions($statement, $profile);
+
+
+        // BANKTRANLIST boundaries for date validation
+        $bankTranList = $statement->xpath('.//BANKTRANLIST');
+        $dtStart = null;
+        $dtEnd = null;
+        if ($bankTranList) {
+            $dtStart = self::parseDate((string)$bankTranList[0]->DTSTART, $warnings, self::line($bankTranList[0]->DTSTART ?? null), $strict);
+            $dtEnd = self::parseDate((string)$bankTranList[0]->DTEND, $warnings, self::line($bankTranList[0]->DTEND ?? null), $strict);
+        }
+
+        $account = self::parseAccount($statement, $warnings, $strict);
+        $ledger = self::parseLedger($statement, $warnings, $strict);
+        $transactions = self::parseTransactions($statement, $dtStart, $dtEnd, $warnings, $strict);
+
 
         return [
             'account' => $account,
             'ledger' => $ledger,
             'transactions' => $transactions,
+            'warnings' => $warnings,
         ];
 
     }
@@ -145,7 +124,7 @@ class OfxParser {
         return $out;
     }
 
-    private static function parseAccount(SimpleXMLElement $stmt): OfxAccount {
+    private static function parseAccount(SimpleXMLElement $stmt, array &$warnings, bool $strict): OfxAccount {
         $acctNode = $stmt->xpath('.//BANKACCTFROM | .//CCACCTFROM | .//ACCTFROM');
         $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
         // Some providers mask account numbers (e.g. 552213******8609). Remove any
@@ -154,29 +133,35 @@ class OfxParser {
         $accountNumber = preg_replace('/[^A-Za-z0-9*]/', '', $rawAcctId);
 
         if ($accountNumber === '') {
-            throw new Exception('Missing account number');
+            if ($strict) {
+                throw new Exception('Missing account number');
+            }
+            self::log($warnings, 'Missing account number, using placeholder', self::line($acctNode[0] ?? $stmt));
+            $accountNumber = '00000000';
         }
 
         // Credit card statements may include a BANKID that is not a real sort code.
         // Identify CCACCTFROM nodes explicitly and ignore any BANKID so the account
         // is treated as a credit card when imported.
-        $sortCode = trim((string)$acctNode[0]->BANKID) ?: null;
-        if (strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
+        $sortCode = $acctNode ? trim((string)$acctNode[0]->BANKID) ?: null : null;
+        if ($acctNode && strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
             $sortCode = null;
         }
 
-        $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
-        $currency = self::normaliseCurrency((string)$stmt->CURDEF);
+
+        $accountName = $acctNode ? trim((string)$acctNode[0]->ACCTNAME) ?: 'Default' : 'Default';
+
 
         return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
     }
 
-    private static function parseLedger(SimpleXMLElement $stmt): ?OfxLedger {
+    private static function parseLedger(SimpleXMLElement $stmt, array &$warnings, bool $strict): ?OfxLedger {
         $ledgerNode = $stmt->xpath('.//LEDGERBAL');
         if ($ledgerNode) {
             $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
-            $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF);
-            $currency = self::normaliseCurrency((string)$ledgerNode[0]->CURDEF ?: (string)$stmt->CURDEF);
+
+            $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF, $warnings, self::line($ledgerNode[0]->DTASOF ?? null), $strict);
+
             if ($balAmt !== null && $dtAsOf !== null) {
                 return new OfxLedger($balAmt, $dtAsOf, $currency);
             }
@@ -184,30 +169,97 @@ class OfxParser {
         return null;
     }
 
-    private static function parseTransactions(SimpleXMLElement $stmt, array $profile): array {
+
+    private static function parseTransactions(SimpleXMLElement $stmt, ?string $dtStart, ?string $dtEnd, array &$warnings, bool $strict): array {
+
         $stmtTrns = $stmt->xpath('.//STMTTRN');
         if (!$stmtTrns) {
             throw new Exception('Missing STMTTRN');
         }
         $transactions = [];
+        $running = null;
         foreach ($stmtTrns as $trn) {
-            $dt = self::parseDate((string)$trn->DTPOSTED);
+            $line = self::line($trn);
+            $raw = trim($trn->asXML());
+            $dt = self::parseDate((string)$trn->DTPOSTED, $warnings, self::line($trn->DTPOSTED ?? null), $strict);
             $amt = self::normaliseAmount((string)$trn->TRNAMT);
             if ($dt === null || $amt === null) {
-                throw new Exception('Missing DTPOSTED or TRNAMT');
+                $msg = 'Missing DTPOSTED or TRNAMT';
+                if ($strict) {
+                    throw new Exception($msg);
+                }
+                self::log($warnings, $msg, $line, $raw);
+                continue;
             }
-            $memo = self::applyFieldProfile('MEMO', (string)$trn->MEMO, $profile);
-            $ref = self::applyFieldProfile('REFNUM', (string)$trn->REFNUM, $profile);
-            $check = self::applyFieldProfile('CHECKNUM', (string)$trn->CHECKNUM, $profile);
+            if (($dtStart && $dt < $dtStart) || ($dtEnd && $dt > $dtEnd)) {
+                $msg = 'DTPOSTED outside BANKTRANLIST window';
+                if ($strict) {
+                    throw new Exception($msg);
+                }
+                self::log($warnings, $msg, $line, $raw);
+            }
+
+            $trnType = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
+            $memo = trim((string)$trn->MEMO);
+            if ($trnType === null) {
+                if ($strict) {
+                    throw new Exception('Missing TRNTYPE');
+                }
+                self::log($warnings, 'Missing TRNTYPE, using UNKNOWN', $line, $raw);
+                $trnType = 'UNKNOWN';
+            }
+            if ($memo === '') {
+                if ($strict) {
+                    throw new Exception('Missing MEMO');
+                }
+                self::log($warnings, 'Missing MEMO, using placeholder', $line, $raw);
+                $memo = 'N/A';
+            }
+
+            // Check running balance if provided
+            if ($trn->RUNNINGBAL && $trn->RUNNINGBAL->BALAMT) {
+                $bal = self::normaliseAmount((string)$trn->RUNNINGBAL->BALAMT);
+                if ($bal !== null) {
+                    if ($running !== null) {
+                        $expected = $running + $amt;
+                        if (abs($expected - $bal) > 0.01) {
+                            $msg = 'Running balance mismatch';
+                            if ($strict) {
+                                throw new Exception($msg);
+                            }
+                            self::log($warnings, $msg, $line, $raw);
+                        }
+                    }
+                    $running = $bal;
+                }
+            } elseif ($running !== null) {
+                $running += $amt;
+            } else {
+                $running = $amt;
+            }
+
+            // Capture unknown tags
+            $extensions = [];
+            foreach ($trn->children() as $child) {
+                $name = strtoupper($child->getName());
+                if (!in_array($name, ['DTPOSTED','TRNAMT','NAME','MEMO','TRNTYPE','REFNUM','CHECKNUM','FITID','RUNNINGBAL'])) {
+                    $extensions[$name] = trim((string)$child);
+                }
+            }
+
             $transactions[] = new OfxTransaction(
                 $dt,
                 $amt,
                 trim((string)$trn->NAME),
                 $memo,
-                $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null,
-                $ref,
-                $check,
-                trim((string)$trn->FITID)
+
+                $trnType,
+                trim((string)$trn->REFNUM),
+                trim((string)$trn->CHECKNUM),
+                trim((string)$trn->FITID),
+                $raw,
+                $extensions
+
             );
         }
         return $transactions;
@@ -298,18 +350,26 @@ class OfxParser {
         return 'GBP';
     }
 
-    private static function parseDate(string $value): ?string {
+    private static function parseDate(string $value, array &$warnings, ?int $line = null, bool $strict = false): ?string {
         $value = trim($value);
         if ($value === '') {
             return null;
         }
         // Capture YYYYMMDD and optional time + timezone
         if (!preg_match('/^(\d{4})(\d{2})(\d{2})(\d{0,6})(?:\[([^\]]+)\]|([+-]\d{4}))?/', $value, $m)) {
+            if ($strict) {
+                throw new Exception('Invalid date format');
+            }
+            self::log($warnings, 'Invalid date format', $line, $value);
             return null;
         }
         $time = str_pad($m[4] ?? '', 6, '0');
         $dt = DateTime::createFromFormat('YmdHis', $m[1] . $m[2] . $m[3] . $time, new DateTimeZone('UTC'));
         if (!$dt) {
+            if ($strict) {
+                throw new Exception('Failed to parse date');
+            }
+            self::log($warnings, 'Failed to parse date', $line, $value);
             return null;
         }
         // Apply timezone offset if present (e.g. +0100 or -0500)
@@ -323,7 +383,34 @@ class OfxParser {
                 $dt->modify((-1 * $sign * $mins) . ' minutes');
             }
         }
+        $year = (int)$dt->format('Y');
+        if ($year < 1900) {
+            self::log($warnings, 'Date before 1900 clamped', $line, $value);
+            $dt = new DateTime('1900-01-01', new DateTimeZone('UTC'));
+        } elseif ($year > 2100) {
+            self::log($warnings, 'Date after 2100 clamped', $line, $value);
+            $dt = new DateTime('2100-12-31', new DateTimeZone('UTC'));
+        }
         return $dt->format('Y-m-d');
+    }
+
+    private static function line($node): ?int {
+        if (!$node) {
+            return null;
+        }
+        try {
+            return dom_import_simplexml($node)->getLineNo();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    private static function log(array &$warnings, string $msg, ?int $line, string $context = ''): void {
+        $prefix = $line ? 'Line ' . $line . ': ' : '';
+        if ($context !== '') {
+            $msg .= ' (' . substr($context, 0, 120) . ')';
+        }
+        $warnings[] = $prefix . $msg;
     }
 }
 ?>
