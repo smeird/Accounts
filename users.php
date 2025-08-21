@@ -101,7 +101,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" id="gen-username" value="<?= htmlspecialchars($username) ?>">
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode mr-2"></i>Generate QR</button>
             </form>
-            <img id="qr" class="mt-4 mx-auto" alt="QR code">
+
+            <div id="qr" class="mt-4 mx-auto"></div>
+
             <form id="verify-form" class="space-y-4">
                 <input type="hidden" id="ver-username" value="<?= htmlspecialchars($username) ?>">
                 <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
@@ -116,6 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="frontend/js/keyboard_hints.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
     <script src="frontend/js/2fa.js"></script>
 </body>
 </html>

@@ -16,6 +16,8 @@ $users = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 $secret = $users[$username] ?? Totp::generateSecret();
 $users[$username] = $secret;
 file_put_contents($file, json_encode($users, JSON_PRETTY_PRINT));
-$qr = Totp::getQrCodeUrl($username, $secret);
-echo json_encode(['secret' => $secret, 'qr' => $qr]);
+
+$otpauth = Totp::getOtpAuthUri($username, $secret);
+echo json_encode(['secret' => $secret, 'otpauth' => $otpauth]);
+
 ?>

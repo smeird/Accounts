@@ -38,7 +38,9 @@
                     <input id="gen-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode mr-2"></i>Generate QR</button>
                 </form>
-                <img id="qr" class="mt-4 mx-auto" alt="QR code">
+
+                <div id="qr" class="mt-4 mx-auto"></div>
+
             </div>
 
             <div class="bg-white p-6 rounded shadow">
@@ -54,6 +56,9 @@
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
     <script src="js/2fa.js"></script>
 </body>
 </html>
