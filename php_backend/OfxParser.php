@@ -22,39 +22,58 @@ class OfxParser {
         if (!$xml) {
             throw new Exception('Failed to parse OFX');
         }
-        // Account details
+
+        $account = self::parseAccount($xml);
+        $ledger = self::parseLedger($xml);
+        $transactions = self::parseTransactions($xml);
+
+        return [
+            'account' => $account,
+            'ledger' => $ledger,
+            'transactions' => $transactions,
+        ];
+    }
+
+    private static function parseAccount(SimpleXMLElement $xml): array {
         $acctNode = $xml->xpath('//BANKACCTFROM | //CCACCTFROM | //ACCTFROM');
         $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
-        // Some providers mask account numbers (e.g. 552213******8609). Remove
-
-        // any characters except alphanumerics and asterisks so masked IDs are
-        // stored consistently without losing placeholder digits.
+        // Some providers mask account numbers (e.g. 552213******8609). Remove any
+        // characters except alphanumerics and asterisks so masked IDs are stored
+        // consistently without losing placeholder digits.
         $accountNumber = preg_replace('/[^A-Za-z0-9*]/', '', $rawAcctId);
 
         if ($accountNumber === '') {
             throw new Exception('Missing account number');
         }
-        // Credit card statements may include a BANKID that is not a real
-        // sort code. Identify CCACCTFROM nodes explicitly and ignore any
-        // BANKID so the account is treated as a credit card when imported.
+
+        // Credit card statements may include a BANKID that is not a real sort code.
+        // Identify CCACCTFROM nodes explicitly and ignore any BANKID so the account
+        // is treated as a credit card when imported.
         $sortCode = trim((string)$acctNode[0]->BANKID) ?: null;
         if (strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
             $sortCode = null;
         }
 
-
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
-        // Ledger balance
-        $ledger = null;
+
+        return ['sort_code' => $sortCode, 'number' => $accountNumber, 'name' => $accountName];
+    }
+
+    private static function parseLedger(SimpleXMLElement $xml) {
         $ledgerNode = $xml->xpath('//LEDGERBAL');
         if ($ledgerNode) {
             $balAmt = trim((string)$ledgerNode[0]->BALAMT);
             $dtAsOf = substr(trim((string)$ledgerNode[0]->DTASOF), 0, 8);
             if ($balAmt !== '' && $dtAsOf !== '') {
+
                 $ledger = new OfxLedger((float)$balAmt, date('Y-m-d', strtotime($dtAsOf)));
+
             }
         }
-        // Transactions
+        return null;
+    }
+
+    private static function parseTransactions(SimpleXMLElement $xml): array {
         $stmtTrns = $xml->xpath('//STMTTRN');
         if (!$stmtTrns) {
             throw new Exception('Missing STMTTRN');
@@ -81,11 +100,13 @@ class OfxParser {
                 (string)$trn->FITID
             );
         }
+
         return [
             'account' => new OfxAccount($sortCode, $accountNumber, $accountName),
             'ledger' => $ledger,
             'transactions' => $transactions,
         ];
+
     }
 }
 ?>
