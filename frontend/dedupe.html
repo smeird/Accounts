@@ -19,8 +19,8 @@
             <p class="mb-4">Remove unwanted duplicate entries to keep your records accurate.</p>
             <div class="bg-white p-6 rounded shadow">
                 <div class="mb-4 space-x-2">
-                    <button id="refresh" class="bg-indigo-600 text-white px-3 py-1 rounded"><i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh</button>
-                    <button id="dedupe-all" class="bg-red-600 text-white px-3 py-1 rounded"><i class="fa-solid fa-broom mr-1"></i>Dedupe All</button>
+                    <button id="refresh" class="bg-indigo-600 text-white px-3 py-1 rounded"><img src="../favicon.svg" class="inline w-4 h-4 mr-1" alt="">Refresh</button>
+                    <button id="dedupe-all" class="bg-red-600 text-white px-3 py-1 rounded"><img src="../favicon.svg" class="inline w-4 h-4 mr-1" alt="">Dedupe All</button>
                 </div>
                 <div id="progress-container" class="hidden w-full bg-gray-200 h-2 rounded mb-4">
                     <div id="progress-bar" class="h-2 bg-indigo-600 rounded" style="width:0%"></div>
@@ -78,7 +78,7 @@
                         { title: 'Description', field: 'description' },
                         { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
                         { title: 'Count', field: 'count', hozAlign: 'right' },
-                        { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fa-solid fa-trash"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
+                        { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><img src="../favicon.svg" class="w-4 h-4" alt=""></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
                     ]
                 });
             }

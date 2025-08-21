@@ -1,5 +1,4 @@
 // Provides a help overlay describing the purpose of the current page.
-// Loads Font Awesome for the help icon if it is not already available.
 const init = () => {
   const page = location.pathname.split('/').pop();
   const helpTexts = {
@@ -39,16 +38,8 @@ const init = () => {
   const helpText = helpTexts[page];
   if (!helpText) return;
 
-  if (!document.getElementById('fa-icons')) {
-    const link = document.createElement('link');
-    link.id = 'fa-icons';
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
-    document.head.appendChild(link);
-  }
-
   const btn = document.createElement('button');
-  btn.innerHTML = '<i class="fas fa-question"></i>';
+  btn.innerHTML = '<img src="../favicon.svg" class="w-6 h-6" alt="">';
   btn.className = 'fixed bottom-4 right-4 bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg';
 
   const overlay = document.createElement('div');

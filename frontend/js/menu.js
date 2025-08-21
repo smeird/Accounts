@@ -45,15 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
       'z-40'
     );
 
-    // Load Font Awesome for menu icons if not already loaded
-    if (!document.getElementById('fa-icons')) {
-      const link = document.createElement('link');
-      link.id = 'fa-icons';
-      link.rel = 'stylesheet';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
-      document.head.appendChild(link);
-    }
-
     // Load site fonts and apply them to headings, body text and accents
     if (!document.getElementById('app-fonts')) {
       const fontLink = document.createElement('link');

@@ -8,17 +8,17 @@ class Totp {
 
 
     public static function getOtpAuthUri($username, $secret) {
-        $issuer = 'Accounts';
-        return sprintf('otpauth://totp/%s?secret=%s&issuer=%s',
-
+        return sprintf('otpauth://totp/%s?secret=%s',
             rawurlencode($username),
-            $secret,
-            rawurlencode($issuer)
+            $secret
         );
-
     }
 
-    public static function verifyCode($secret, $code, $window = 1) {
+    public static function verifyCode($secret, $code, $window = 2) {
+        $code = preg_replace('/\s+/', '', $code);
+        if (!preg_match('/^\d{6}$/', $code)) {
+            return false;
+        }
         $key = self::base32Decode($secret);
         $time = floor(time() / 30);
         for ($i = -$window; $i <= $window; $i++) {

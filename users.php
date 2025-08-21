@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Use favicon.svg for inline icons instead of Font Awesome -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="bg-white p-4 rounded shadow space-y-4 mb-6">
             <form id="generate-form" class="space-y-4">
                 <input type="hidden" id="gen-username" value="<?= htmlspecialchars($username) ?>">
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode mr-2"></i>Generate QR</button>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><img src="favicon.svg" class="inline w-4 h-4 mr-2" alt="">Generate QR</button>
             </form>
 
             <div id="qr" class="mt-4 mx-auto"></div>
@@ -108,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" id="ver-username" value="<?= htmlspecialchars($username) ?>">
                 <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
                 <div class="flex space-x-2">
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-check mr-2"></i>Verify</button>
-                    <button id="disable-2fa" type="button" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded"><i class="fas fa-ban mr-2"></i>Disable</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded"><img src="favicon.svg" class="inline w-4 h-4 mr-2" alt="">Verify</button>
+                    <button id="disable-2fa" type="button" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded"><img src="favicon.svg" class="inline w-4 h-4 mr-2" alt="">Disable</button>
                 </div>
             </form>
         </div>
