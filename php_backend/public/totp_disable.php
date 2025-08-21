@@ -1,8 +1,12 @@
 <?php
 require_once __DIR__ . '/../Totp.php';
+
+ini_set('session.cookie_secure', '1');
+session_start();
 header('Content-Type: application/json');
 $input = json_decode(file_get_contents('php://input'), true);
-$username = $input['username'] ?? '';
+$username = $input['username'] ?? ($_SESSION['username'] ?? '');
+
 if ($username === '') {
     echo json_encode(['disabled' => false, 'error' => 'Username required']);
     exit;

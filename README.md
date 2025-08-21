@@ -21,7 +21,9 @@ Two PHP endpoints under `php_backend/public` handle TOTP setup and verification 
 
 - Form inputs may include a `data-help` attribute to show popover guidance.
 - Transactions identified as transfers are flagged and ignored in totals.
+
 - The budgets page offers AI budgeting that sends a year of category totals and your savings goal to the OpenAI API to propose next month's limits.
+
 - The interface is responsive. Each page includes a viewport meta tag and uses Tailwind's responsive utilities so the site works
   on mobile devices. The navigation menu collapses to a toggle button on small screens.
 

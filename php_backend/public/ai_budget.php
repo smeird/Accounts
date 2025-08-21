@@ -5,6 +5,7 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Budget.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/Log.php';
+
 require_once __DIR__ . '/../models/Setting.php';
 
 header('Content-Type: application/json');
@@ -14,10 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+
 $data = json_decode(file_get_contents('php://input'), true) ?? [];
 $goal = isset($data['goal']) ? (float)$data['goal'] : 0.0;
 $month = isset($data['month']) ? (int)$data['month'] : (int)date('n');
 $year = isset($data['year']) ? (int)$data['year'] : (int)date('Y');
+
 
 $apiKey = Setting::get('openai_api_token');
 if (!$apiKey) {
@@ -135,6 +138,7 @@ try {
 
     $budgets = Budget::getMonthly($month, $year);
     Log::write("AI budgets applied for $month/$year with goal $goal using $usage tokens");
+
     echo json_encode(['status' => 'ok', 'budgets' => $budgets]);
 } catch (Exception $e) {
     http_response_code(500);
