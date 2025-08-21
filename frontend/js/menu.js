@@ -10,8 +10,17 @@ window.fetch = (input, init = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  const applyIconColor = (root = document) => {
+    root.querySelectorAll('i').forEach(icon => {
+      if (!icon.closest('header')) {
+        icon.classList.add('text-indigo-600');
+      }
+    });
+  };
+
   // Apply 20% opacity to all page elements
   document.documentElement.style.opacity = '0.9';
+  applyIconColor();
   // Apply consistent hover styling across the site
   const hoverStyle = document.createElement('style');
   hoverStyle.textContent = `
@@ -30,6 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
     iconSvg.href = '/favicon.svg';
     iconSvg.sizes = 'any';
     document.head.appendChild(iconSvg);
+  }
+
+  // Load Font Awesome so pages can display contextual icons
+  if (!document.getElementById('fa-css')) {
+    const fa = document.createElement('link');
+    fa.id = 'fa-css';
+    fa.rel = 'stylesheet';
+    fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+    document.head.appendChild(fa);
   }
 
   const menu = document.getElementById('menu');
@@ -66,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        applyIconColor(menu);
         // Enable collapsible sections with animated height transition
         menu.querySelectorAll('.group').forEach(section => {
           const header = section.querySelector('h3');
@@ -119,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(resp => resp.text())
     .then(html => {
       document.body.insertAdjacentHTML('afterbegin', html);
+      applyIconColor();
 
       const content = document.querySelector('body > div.flex');
       if (content) {

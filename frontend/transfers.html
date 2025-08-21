@@ -21,8 +21,8 @@
                     Detected Transfers
 
                     <span class="space-x-2">
-                        <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><img src="../favicon.svg" class="inline w-4 h-4 mr-1" alt="">Assist</button>
-                        <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><img src="../favicon.svg" class="inline w-4 h-4 mr-1" alt="">Mark All</button>
+                        <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist</button>
+                        <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All</button>
                     </span>
 
                 </h1>
@@ -32,7 +32,7 @@
             <section>
                 <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
                     Marked Transfers
-                    <button id="undo-all" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><img src="../favicon.svg" class="inline w-4 h-4 mr-1" alt="">Undo All</button>
+                    <button id="undo-all" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-rotate-left inline w-4 h-4 mr-1"></i>Undo All</button>
                 </h2>
                 <div id="linked-table"></div>
             </section>
@@ -41,7 +41,7 @@
                 <form id="link-form" class="space-y-4">
                     <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
                     <input type="number" id="id2" placeholder="Second transaction ID" class="border p-2 rounded w-full" data-help="ID of the matching transaction">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><img src="../favicon.svg" class="inline w-4 h-4 mr-2" alt="">Link</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-link inline w-4 h-4 mr-2"></i>Link</button>
                 </form>
             </section>
         </main>
@@ -71,7 +71,7 @@
                 { title: 'To Account', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
                 { title: 'To Amount', field: 'to_amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
                 { title: 'To Description', field: 'to_description' },
-                { title: 'Mark', formatter: function(){ return '<button class="bg-green-600 text-white px-2 py-1 rounded text-sm"><img src="../favicon.svg" class="w-4 h-4" alt=""></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); markTransfers([[r.from_id, r.to_id]]); } }
+                { title: 'Mark', formatter: function(){ return '<button class="bg-green-600 text-white px-2 py-1 rounded text-sm"><i class="fas fa-check w-4 h-4"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); markTransfers([[r.from_id, r.to_id]]); } }
             ]
         });
     }
@@ -110,7 +110,7 @@
                 { title: 'To Account', field: 'to_account', formatter: function(cell){ const row = cell.getRow().getData(); return `<a href="transaction.html?id=${row.to_id}">${cell.getValue()}</a>`; } },
                 { title: 'To Amount', field: 'to_amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
                 { title: 'To Description', field: 'to_description' },
-                { title: 'Undo', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><img src="../favicon.svg" class="w-4 h-4" alt=""></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); unmarkTransfers([r.from_id]); } }
+                { title: 'Undo', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fas fa-rotate-left w-4 h-4"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); unmarkTransfers([r.from_id]); } }
             ]
         });
     }

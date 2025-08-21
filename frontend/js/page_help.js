@@ -39,7 +39,7 @@ const init = () => {
   if (!helpText) return;
 
   const btn = document.createElement('button');
-  btn.innerHTML = '<img src="../favicon.svg" class="w-6 h-6" alt="">';
+  btn.innerHTML = '<i class="fas fa-question w-6 h-6"></i>';
   btn.className = 'fixed bottom-4 right-4 bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg';
 
   const overlay = document.createElement('div');

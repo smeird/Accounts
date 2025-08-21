@@ -72,7 +72,7 @@
 
     const editBtn = document.createElement('button');
     editBtn.className = 'text-indigo-600';
-    editBtn.innerHTML = '<img src="../favicon.svg" class="w-4 h-4" alt="">';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
     editBtn.addEventListener('click', async () => {
       const name = prompt('Category Name', cat.name);
       if (name === null) return;
@@ -92,7 +92,7 @@
 
     const delBtn = document.createElement('button');
     delBtn.className = 'text-red-600';
-    delBtn.innerHTML = '<img src="../favicon.svg" class="w-4 h-4" alt="">';
+    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
     delBtn.addEventListener('click', async () => {
       if (!confirm('Delete this category?')) return;
       await fetch('../php_backend/public/categories.php', {
