@@ -1,0 +1,7 @@
+{
+  "fields": {
+    "CHECKNUM": { "max": 6, "regex": "/[^0-9]/" },
+    "REFNUM": { "max": 15, "uppercase": true },
+    "MEMO": { "max": 9 }
+  }
+}
