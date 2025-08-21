@@ -23,9 +23,10 @@ class OfxParser {
             throw new Exception('Failed to parse OFX');
         }
 
-        $account = self::parseAccount($xml);
-        $ledger = self::parseLedger($xml);
-        $transactions = self::parseTransactions($xml);
+        $statement = self::getStatement($xml);
+        $account = self::parseAccount($statement);
+        $ledger = self::parseLedger($statement);
+        $transactions = self::parseTransactions($statement);
 
         return [
             'account' => $account,
@@ -34,8 +35,16 @@ class OfxParser {
         ];
     }
 
-    private static function parseAccount(SimpleXMLElement $xml): OfxAccount {
-        $acctNode = $xml->xpath('//BANKACCTFROM | //CCACCTFROM | //ACCTFROM');
+    private static function getStatement(SimpleXMLElement $xml): SimpleXMLElement {
+        $stmts = $xml->xpath('(//BANKMSGSRSV1/STMTTRNRS/STMTRS | //CREDITCARDMSGSRSV1/CCSTMTTRNRS/CCSTMTRS)[1]');
+        if (!$stmts) {
+            throw new Exception('Missing statement');
+        }
+        return $stmts[0];
+    }
+
+    private static function parseAccount(SimpleXMLElement $stmt): OfxAccount {
+        $acctNode = $stmt->xpath('.//BANKACCTFROM | .//CCACCTFROM | .//ACCTFROM');
         $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
         // Some providers mask account numbers (e.g. 552213******8609). Remove any
         // characters except alphanumerics and asterisks so masked IDs are stored
@@ -59,8 +68,8 @@ class OfxParser {
         return new OfxAccount($sortCode, $accountNumber, $accountName);
     }
     
-    private static function parseLedger(SimpleXMLElement $xml): ?OfxLedger {
-        $ledgerNode = $xml->xpath('//LEDGERBAL');
+    private static function parseLedger(SimpleXMLElement $stmt): ?OfxLedger {
+        $ledgerNode = $stmt->xpath('.//LEDGERBAL');
         if ($ledgerNode) {
             $balAmt = trim((string)$ledgerNode[0]->BALAMT);
             $dtAsOf = substr(trim((string)$ledgerNode[0]->DTASOF), 0, 8);
@@ -71,8 +80,8 @@ class OfxParser {
         return null;
     }
 
-    private static function parseTransactions(SimpleXMLElement $xml): array {
-        $stmtTrns = $xml->xpath('//STMTTRN');
+    private static function parseTransactions(SimpleXMLElement $stmt): array {
+        $stmtTrns = $stmt->xpath('.//STMTTRN');
         if (!$stmtTrns) {
             throw new Exception('Missing STMTTRN');
         }

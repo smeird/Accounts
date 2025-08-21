@@ -39,8 +39,14 @@ assertEqual('sqlite', $db->getAttribute(PDO::ATTR_DRIVER_NAME), 'Database driver
 // Masked credit card numbers should have masking removed
 $maskedOfx = <<<OFX
 <OFX>
+<CREDITCARDMSGSRSV1>
+<CCSTMTTRNRS>
+<CCSTMTRS>
 <CCACCTFROM><ACCTID>552213******8609</ACCTID></CCACCTFROM>
 <BANKTRANLIST><STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-10.00</TRNAMT></STMTTRN></BANKTRANLIST>
+</CCSTMTRS>
+</CCSTMTTRNRS>
+</CREDITCARDMSGSRSV1>
 </OFX>
 OFX;
 $parsedMasked = OfxParser::parse($maskedOfx);
@@ -150,9 +156,9 @@ assertEqual(0, (int)$relCount, 'Category-segment relation removed');
 $first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');
 assertEqual(true, $first > 0, 'Initial transaction inserted');
 $second = Transaction::create(1, '2024-08-02', 20, 'Second', null, null, null, null, 'ofx2', 'DEBIT', 'DUP123');
-assertEqual(true, $second > 0, 'Duplicate FITID inserted with suffix');
-$secondFitid = $db->query('SELECT bank_ofx_id FROM transactions WHERE id = ' . $second)->fetchColumn();
-assertEqual('DUP123-1', $secondFitid, 'Duplicate FITID suffixed uniquely');
+assertEqual(0, $second, 'Duplicate FITID skipped');
+$count = $db->query('SELECT COUNT(*) FROM transactions WHERE bank_ofx_id IS NOT NULL')->fetchColumn();
+assertEqual(1, (int)$count, 'Only one transaction stored after duplicate FITID');
 $logCount = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
 assertEqual(1, (int)$logCount, 'Duplicate FITID logged');
 

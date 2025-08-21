@@ -9,17 +9,23 @@ class OfxParserTest extends TestCase
     {
         $ofx = <<<OFX
 <OFX>
-<BANKACCTFROM>
-<BANKID>123456</BANKID>
-<ACCTID>12345678</ACCTID>
-<ACCTNAME>Main</ACCTNAME>
-</BANKACCTFROM>
-<BANKTRANLIST>
-<STMTTRN>
-<DTPOSTED>20240101</DTPOSTED>
-<TRNAMT>-10.00</TRNAMT>
-</STMTTRN>
-</BANKTRANLIST>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <BANKACCTFROM>
+          <BANKID>123456</BANKID>
+          <ACCTID>12345678</ACCTID>
+          <ACCTNAME>Main</ACCTNAME>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <DTPOSTED>20240101</DTPOSTED>
+            <TRNAMT>-10.00</TRNAMT>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
 </OFX>
 OFX;
         $parsed = OfxParser::parse($ofx);

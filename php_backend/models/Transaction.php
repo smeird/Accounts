@@ -21,30 +21,22 @@ class Transaction {
         if ($ofx_id !== null) {
             $check = $db->prepare('SELECT id FROM `transactions` WHERE `ofx_id` = :oid LIMIT 1');
             $check->execute(['oid' => $ofx_id]);
-            $existing = $check->fetch(PDO::FETCH_ASSOC);
-            if ($existing) {
-                return (int)$existing['id'];
+            if ($check->fetch(PDO::FETCH_ASSOC)) {
+                return 0;
             }
         }
 
 
         // Secondary duplicate check using bank-provided FITID with date and amount
         if ($bank_ofx_id !== null) {
-            // Find any existing FITIDs that match or share the base identifier
-            $dupCheck = $db->prepare('SELECT bank_ofx_id FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` LIKE :boid');
+            $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` = :boid LIMIT 1');
             $dupCheck->execute([
                 'account' => $account,
-                'boid' => $bank_ofx_id . '%'
+                'boid' => $bank_ofx_id
             ]);
-            $existing = $dupCheck->fetchAll(PDO::FETCH_COLUMN);
-            if (in_array($bank_ofx_id, $existing, true)) {
-                // Log the duplicate and append a numeric suffix to ensure uniqueness
+            if ($dupCheck->fetch(PDO::FETCH_ASSOC)) {
                 Log::write("Duplicate FITID $bank_ofx_id for account $account", 'WARNING');
-                $suffix = 1;
-                while (in_array($bank_ofx_id . '-' . $suffix, $existing, true)) {
-                    $suffix++;
-                }
-                $bank_ofx_id .= '-' . $suffix;
+                return 0;
             }
         }
 
@@ -64,8 +56,8 @@ class Transaction {
             'amount' => $amount,
             'description' => $description
         ]);
-        if ($row = $coreCheck->fetch(PDO::FETCH_ASSOC)) {
-            return (int)$row['id'];
+        if ($coreCheck->fetch(PDO::FETCH_ASSOC)) {
+            return 0;
         }
 
 

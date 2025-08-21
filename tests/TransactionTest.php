@@ -27,9 +27,9 @@ class TransactionTest extends TestCase
     {
         $first = Transaction::create(1, '2024-08-01', 10.0, 'First', null, null, 0, null, null, 'DEBIT', 'DUP123');
         $second = Transaction::create(1, '2024-08-02', 20.0, 'Second', null, null, 0, null, null, 'DEBIT', 'DUP123');
-        $this->assertNotSame($first, $second);
-        $secondFitid = $this->db->query('SELECT bank_ofx_id FROM transactions WHERE id = ' . $second)->fetchColumn();
-        $this->assertSame('DUP123-1', $secondFitid);
+        $this->assertSame(0, $second);
+        $count = $this->db->query('SELECT COUNT(*) FROM transactions')->fetchColumn();
+        $this->assertSame(1, (int)$count);
         $logCount = $this->db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
         $this->assertSame(1, (int)$logCount);
     }
@@ -38,7 +38,7 @@ class TransactionTest extends TestCase
     {
         $first = Transaction::create(1, '2024-08-03', 30.0, 'Dup', null, null, 0);
         $second = Transaction::create(1, '2024-08-03', 30.0, 'Dup', null, null, 0);
-        $this->assertSame($first, $second);
+        $this->assertSame(0, $second);
         $count = $this->db->query("SELECT COUNT(*) FROM transactions WHERE description = 'Dup'")->fetchColumn();
         $this->assertSame(1, (int)$count);
     }
