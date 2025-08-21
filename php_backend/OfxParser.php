@@ -25,8 +25,17 @@ class OfxParser {
             return '<' . ($m[0][1] === '/' ? '/' : '') . strtoupper($m[1]) . $m[2] . '>';
         }, $data);
 
-        // Convert SGML-style tags (<TAG>value) to XML by closing tags on new lines.
-        $data = preg_replace("/<([^>\s]+)>([^<\n]+)\n/", "<$1>$2</$1>\n", $data);
+        // Convert SGML-style tags (<TAG>value) to XML by inserting a closing tag
+        // whenever a tag's value is followed by another tag or the end of the
+        // file. This also covers cases where tags appear consecutively without
+        // newlines, a format some banks use for compact OFX exports.
+        // Tags that already include an explicit closing tag (</TAG>) are left
+        // untouched to avoid double-closing.
+        $data = preg_replace(
+            '/<([^>\s]+)>([^<\n]+)(?!(?:\n)?<\/\1>)(?=(?:\n?<|$))/',
+            '<$1>$2</$1>',
+            $data
+        );
 
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($data, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING);
