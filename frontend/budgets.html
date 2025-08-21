@@ -27,6 +27,14 @@
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded self-end">Set Budget</button>
             </form>
         </section>
+        <section class="bg-white p-6 rounded shadow">
+            <h2 class="text-xl font-semibold mb-4">AI Budgeting</h2>
+            <p class="mb-4">Send your savings goal and the last 12 months of category totals to the AI to propose next month's budgets.</p>
+            <form id="ai-form" class="md:flex md:space-x-4 space-y-4 md:space-y-0">
+                <label class="block">Savings Goal (£)<br><input type="number" step="0.01" id="goal" class="border p-2 rounded" data-help="Monthly amount you want to save. The AI uses this plus a year of history to set budgets."></label>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded self-end">Generate Budgets</button>
+            </form>
+        </section>
         <section>
             <h2 class="text-xl font-semibold mb-4">Current Budgets</h2>
             <div id="budget-table"></div>
@@ -116,6 +124,25 @@ document.getElementById('budget-form').addEventListener('submit',async e=>{
     document.getElementById('amount').value='';
     loadBudgets();
     showMessage('Budget saved');
+});
+
+document.getElementById('ai-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const [year,month]=monthInput.value.split('-');
+    const goal=document.getElementById('goal').value;
+    const res=await fetch('../php_backend/public/ai_budget.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({goal:parseFloat(goal),month:parseInt(month),year:parseInt(year)})
+    });
+    const data=await res.json();
+    if(data.status==='ok'){
+        document.getElementById('goal').value='';
+        loadBudgets();
+        showMessage('AI budgets applied');
+    }else{
+        showMessage('AI budgeting failed','error');
+    }
 });
 
 loadCategories().then(loadBudgets);
