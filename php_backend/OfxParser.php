@@ -10,13 +10,24 @@ use Ofx\Transaction as OfxTransaction;
 
 class OfxParser {
     public static function parse(string $data): array {
-        $pos = strpos($data, '<OFX');
-        if ($pos === false) {
+        // Normalise line endings and attempt to decode using a tolerant charset
+        $data = str_replace(["\r\n", "\r"], "\n", $data);
+        $data = @iconv('UTF-8', 'UTF-8//IGNORE', $data);
+
+        // Remove any OFX headers and locate the root tag case-insensitively
+        if (($pos = stripos($data, '<OFX')) === false) {
             throw new Exception('Missing <OFX> root element');
         }
         $data = substr($data, $pos);
+
+        // Convert tags to upper-case so SimpleXML can be used case-insensitively
+        $data = preg_replace_callback('/<\/?([a-z0-9]+)([^>]*)>/i', function ($m) {
+            return '<' . ($m[0][1] === '/' ? '/' : '') . strtoupper($m[1]) . $m[2] . '>';
+        }, $data);
+
         // Convert SGML-style tags (<TAG>value) to XML by closing tags on new lines.
-        $data = preg_replace("/<([^>\s]+)>([^<\r\n]+)\r?\n/", "<$1>$2</$1>\n", $data);
+        $data = preg_replace("/<([^>\s]+)>([^<\n]+)\n/", "<$1>$2</$1>\n", $data);
+
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($data, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING);
         if (!$xml) {
@@ -67,14 +78,14 @@ class OfxParser {
 
         return new OfxAccount($sortCode, $accountNumber, $accountName);
     }
-    
+
     private static function parseLedger(SimpleXMLElement $stmt): ?OfxLedger {
         $ledgerNode = $stmt->xpath('.//LEDGERBAL');
         if ($ledgerNode) {
-            $balAmt = trim((string)$ledgerNode[0]->BALAMT);
-            $dtAsOf = substr(trim((string)$ledgerNode[0]->DTASOF), 0, 8);
-            if ($balAmt !== '' && $dtAsOf !== '') {
-                return new OfxLedger((float)$balAmt, date('Y-m-d', strtotime($dtAsOf)));
+            $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
+            $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF);
+            if ($balAmt !== null && $dtAsOf !== null) {
+                return new OfxLedger($balAmt, $dtAsOf);
             }
         }
         return null;
@@ -87,27 +98,64 @@ class OfxParser {
         }
         $transactions = [];
         foreach ($stmtTrns as $trn) {
-            $dateStr = substr(trim((string)$trn->DTPOSTED), 0, 8);
-            $amountStr = trim((string)$trn->TRNAMT);
-            if ($dateStr === '' || $amountStr === '') {
+            $dt = self::parseDate((string)$trn->DTPOSTED);
+            $amt = self::normaliseAmount((string)$trn->TRNAMT);
+            if ($dt === null || $amt === null) {
                 throw new Exception('Missing DTPOSTED or TRNAMT');
             }
-            $dt = DateTime::createFromFormat('Ymd', $dateStr);
-            if (!$dt || $dt->format('Ymd') !== $dateStr) {
-                throw new Exception('Invalid DTPOSTED value');
-            }
             $transactions[] = new OfxTransaction(
-                $dt->format('Y-m-d'),
-                (float)$amountStr,
-                (string)$trn->NAME,
-                (string)$trn->MEMO,
-                $trn->TRNTYPE ? strtoupper((string)$trn->TRNTYPE) : null,
-                (string)$trn->REFNUM,
-                (string)$trn->CHECKNUM,
-                (string)$trn->FITID
+                $dt,
+                $amt,
+                trim((string)$trn->NAME),
+                trim((string)$trn->MEMO),
+                $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null,
+                trim((string)$trn->REFNUM),
+                trim((string)$trn->CHECKNUM),
+                trim((string)$trn->FITID)
             );
         }
         return $transactions;
+    }
+
+    private static function normaliseAmount(string $value): ?float {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+        // Remove commas, spaces and stray symbols
+        $value = preg_replace('/[^0-9\-\.]/', '', $value);
+        if ($value === '' || !is_numeric($value)) {
+            return null;
+        }
+        return (float)$value;
+    }
+
+    private static function parseDate(string $value): ?string {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+        // Capture YYYYMMDD and optional time + timezone
+        if (!preg_match('/^(\d{4})(\d{2})(\d{2})(\d{0,6})(?:\[([^\]]+)\]|([+-]\d{4}))?/', $value, $m)) {
+            return null;
+        }
+        $time = str_pad($m[4] ?? '', 6, '0');
+        $dt = DateTime::createFromFormat('YmdHis', $m[1] . $m[2] . $m[3] . $time, new DateTimeZone('UTC'));
+        if (!$dt) {
+            return null;
+        }
+        // Apply timezone offset if present (e.g. +0100 or -0500)
+        if (!empty($m[6])) {
+            $offset = $m[6];
+            $sign = $offset[0] === '-' ? -1 : 1;
+            $hours = (int)substr($offset, 1, 2);
+            $mins = (int)substr($offset, 3, 2);
+            $dt->modify((-1 * $sign * $hours) . ' hours');
+            if ($mins) {
+                $dt->modify((-1 * $sign * $mins) . ' minutes');
+            }
+        }
+        return $dt->format('Y-m-d');
     }
 }
 ?>
