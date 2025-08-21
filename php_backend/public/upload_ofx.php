@@ -73,7 +73,7 @@ try {
         }
 
         try {
-            $parsed = OfxParser::parse($ofxData);
+            $statements = OfxParser::parse($ofxData);
         } catch (Exception $e) {
             $msg = 'Error parsing ' . $files['name'][$i] . ': ' . $e->getMessage();
             $messages[] = $msg;
@@ -81,54 +81,58 @@ try {
             continue;
         }
 
-        $sortCode = $parsed['account']->sortCode;
-        $accountNumber = $parsed['account']->number;
-        $accountName = $parsed['account']->name;
+        foreach ($statements as $parsed) {
+            $sortCode = $parsed['account']->sortCode;
+            $accountNumber = $parsed['account']->number;
+            $accountName = $parsed['account']->name;
 
-        $db = Database::getConnection();
-        // Match existing accounts using account number and sort code. When the
-        // sort code is null (credit cards) prepared statements can behave
-        // unpredictably if we rely on ":sort IS NULL" checks. Build the query
-        // dynamically to ensure NULL is handled correctly and credit card
-        // accounts are not mistaken for existing bank accounts.
-        if ($sortCode === null) {
-            $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code IS NULL LIMIT 1');
-            $stmt->execute(['num' => $accountNumber]);
-        } else {
-            $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code = :sort LIMIT 1');
-            $stmt->execute(['num' => $accountNumber, 'sort' => $sortCode]);
-        }
-        $account = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($account) {
-            $accountId = (int)$account['id'];
-        } else {
-            $accountId = Account::create($accountName, $sortCode, $accountNumber);
-        }
+            $db = Database::getConnection();
+            // Match existing accounts using account number and sort code. When the
+            // sort code is null (credit cards) prepared statements can behave
+            // unpredictably if we rely on ":sort IS NULL" checks. Build the query
+            // dynamically to ensure NULL is handled correctly and credit card
+            // accounts are not mistaken for existing bank accounts.
+            if ($sortCode === null) {
+                $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code IS NULL LIMIT 1');
+                $stmt->execute(['num' => $accountNumber]);
+            } else {
+                $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code = :sort LIMIT 1');
+                $stmt->execute(['num' => $accountNumber, 'sort' => $sortCode]);
+            }
+            $account = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($account) {
+                $accountId = (int)$account['id'];
+            } else {
+                $accountId = Account::create($accountName, $sortCode, $accountNumber);
+            }
 
-        if ($parsed['ledger']) {
-            Account::updateLedgerBalance($accountId, $parsed['ledger']->balance, $parsed['ledger']->date);
-        }
+            if ($parsed['ledger']) {
+                Account::updateLedgerBalance($accountId, $parsed['ledger']->balance, $parsed['ledger']->date);
+            }
+
 
         $inserted = 0;
         $duplicates = [];
         $fileLedger = [];
 
-        foreach ($parsed['transactions'] as $txn) {
-            $amount = $txn->amount;
-            $date = $txn->date;
-            $desc = $txn->desc;
-            $memo = $txn->memo;
-            $type = $txn->type;
-            $bankId = $txn->bankId ? $txn->bankId : null;
 
-            if ($txn->ref) {
-                $ref = substr($txn->ref, 0, 32);
-                $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
-            }
-            if ($txn->check) {
-                $chk = substr($txn->check, 0, 20);
-                $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
-            }
+            foreach ($parsed['transactions'] as $txn) {
+                $amount = $txn->amount;
+                $date = $txn->date;
+                $desc = $txn->desc;
+                $memo = $txn->memo;
+                $type = $txn->type;
+                $bankId = $txn->bankId ? $txn->bankId : null;
+
+                if ($txn->ref) {
+                    $ref = substr($txn->ref, 0, 32);
+                    $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
+                }
+                if ($txn->check) {
+                    $chk = substr($txn->check, 0, 20);
+                    $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
+                }
+
 
             $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
             $desc = $substr($desc, 0, 255);
@@ -164,22 +168,22 @@ try {
             if ($createdId === 0) {
                 if ($bankId !== null) {
                     $duplicates[] = $bankId;
+
                 }
-                continue;
+
+                $inserted++;
             }
 
-            $inserted++;
-        }
+            $tagged = Tag::applyToAccountTransactions($accountId);
+            $categorised = CategoryTag::applyToAccountTransactions($accountId);
 
-        $tagged = Tag::applyToAccountTransactions($accountId);
-        $categorised = CategoryTag::applyToAccountTransactions($accountId);
-
-        $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
-        if (!empty($duplicates)) {
-            $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
+            $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
+            if (!empty($duplicates)) {
+                $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
+            }
+            $messages[] = $msg;
+            Log::write($msg);
         }
-        $messages[] = $msg;
-        Log::write($msg);
     }
 
     echo implode("\n", $messages);

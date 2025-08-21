@@ -9,58 +9,121 @@ use Ofx\Ledger as OfxLedger;
 use Ofx\Transaction as OfxTransaction;
 
 class OfxParser {
+    private const MAX_AMOUNT = 999999999999.99;
     public static function parse(string $data): array {
+        $data = self::prepare($data);
+
+        libxml_use_internal_errors(true);
+        $reader = new XMLReader();
+        if (!$reader->XML($data, null, LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            throw new Exception('Failed to initialise XML reader');
+        }
+
+        $statements = [];
+        while ($reader->read()) {
+            if ($reader->nodeType === XMLReader::ELEMENT && ($reader->name === 'STMTTRNRS' || $reader->name === 'CCSTMTTRNRS')) {
+                $outer = $reader->readOuterXML();
+                if ($outer === '') {
+                    continue;
+                }
+                $stmtXml = simplexml_load_string($outer, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING);
+                if (!$stmtXml) {
+                    continue;
+                }
+                $stmts = $stmtXml->xpath('STMTRS | CCSTMTRS');
+                if (!$stmts) {
+                    continue;
+                }
+                $stmt = $stmts[0];
+                $statements[] = [
+                    'account' => self::parseAccount($stmt),
+                    'ledger' => self::parseLedger($stmt),
+                    'transactions' => self::parseTransactions($stmt),
+                ];
+            }
+        }
+
+        if (!$statements) {
+            throw new Exception('Missing statement');
+        }
+
+        return $statements;
+    }
+
+    private static function prepare(string $data): string {
         // Normalise line endings and attempt to decode using a tolerant charset
         $data = str_replace(["\r\n", "\r"], "\n", $data);
         $data = @iconv('UTF-8', 'UTF-8//IGNORE', $data);
 
-        // Remove any OFX headers and locate the root tag case-insensitively
-        if (($pos = stripos($data, '<OFX')) === false) {
+        // Detect OFX 1.x SGML headers or 2.x XML headers and strip them
+        if (preg_match('/^\s*OFXHEADER:/i', $data)) {
+            if (($pos = stripos($data, '<OFX')) !== false) {
+                $data = substr($data, $pos);
+            }
+        } else {
+            if (($pos = stripos($data, '<OFX')) !== false) {
+                $data = substr($data, $pos);
+            }
+        }
+
+        if (stripos($data, '<OFX') === false) {
             throw new Exception('Missing <OFX> root element');
         }
-        $data = substr($data, $pos);
 
-        // Convert tags to upper-case so SimpleXML can be used case-insensitively
+        // Convert tag names to upper-case for case-insensitive parsing
         $data = preg_replace_callback('/<\/?([a-z0-9]+)([^>]*)>/i', function ($m) {
             return '<' . ($m[0][1] === '/' ? '/' : '') . strtoupper($m[1]) . $m[2] . '>';
         }, $data);
 
-        // Convert SGML-style tags (<TAG>value) to XML by inserting a closing tag
-        // whenever a tag's value is followed by another tag or the end of the
-        // file. This also covers cases where tags appear consecutively without
-        // newlines, a format some banks use for compact OFX exports.
-        // Tags that already include an explicit closing tag (</TAG>) are left
-        // untouched to avoid double-closing.
-        $data = preg_replace(
-            '/<([^>\s]+)>([^<\n]+)(?!(?:\n)?<\/\1>)(?=(?:\n?<|$))/',
-            '<$1>$2</$1>',
-            $data
-        );
+        // Repair unbalanced SGML-style tags using a simple stack heuristic
+        $data = self::closeTags($data);
 
-        libxml_use_internal_errors(true);
-        $xml = simplexml_load_string($data, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING);
-        if (!$xml) {
-            throw new Exception('Failed to parse OFX');
-        }
-
-        $statement = self::getStatement($xml);
-        $account = self::parseAccount($statement);
-        $ledger = self::parseLedger($statement);
-        $transactions = self::parseTransactions($statement);
-
-        return [
-            'account' => $account,
-            'ledger' => $ledger,
-            'transactions' => $transactions,
-        ];
+        return $data;
     }
 
-    private static function getStatement(SimpleXMLElement $xml): SimpleXMLElement {
-        $stmts = $xml->xpath('(//BANKMSGSRSV1/STMTTRNRS/STMTRS | //CREDITCARDMSGSRSV1/CCSTMTTRNRS/CCSTMTRS)[1]');
-        if (!$stmts) {
-            throw new Exception('Missing statement');
+    private static function closeTags(string $data): string {
+        $parts = [];
+        preg_match_all('/<(\/)?([A-Za-z0-9]+)[^>]*>|[^<]+/', $data, $parts, PREG_SET_ORDER);
+        $stack = [];
+        $out = '';
+        $prevText = false;
+        foreach ($parts as $p) {
+            $token = $p[0];
+            if ($token[0] === '<') {
+                $isEnd = $p[1] === '/';
+                $name = strtoupper($p[2]);
+                if (!$isEnd) {
+                    if ($prevText && !empty($stack)) {
+                        $out .= '</' . array_pop($stack) . '>';
+                    }
+                    $out .= '<' . $name . '>';
+                    $stack[] = $name;
+                    $prevText = false;
+                } else {
+                    while (!empty($stack) && end($stack) !== $name) {
+                        $out .= '</' . array_pop($stack) . '>';
+                    }
+                    if (!empty($stack) && end($stack) === $name) {
+                        array_pop($stack);
+                        $out .= '</' . $name . '>';
+                    }
+                    $prevText = false;
+                }
+            } else {
+                if (!empty($stack)) {
+                    $out .= htmlspecialchars($token, ENT_NOQUOTES | ENT_XML1, 'UTF-8');
+                    $prevText = trim($token) !== '';
+                }
+            }
         }
-        return $stmts[0];
+
+        if ($prevText && !empty($stack)) {
+            $out .= '</' . array_pop($stack) . '>';
+        }
+        while (!empty($stack)) {
+            $out .= '</' . array_pop($stack) . '>';
+        }
+        return $out;
     }
 
     private static function parseAccount(SimpleXMLElement $stmt): OfxAccount {
@@ -84,8 +147,9 @@ class OfxParser {
         }
 
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
+        $currency = self::normaliseCurrency((string)$stmt->CURDEF);
 
-        return new OfxAccount($sortCode, $accountNumber, $accountName);
+        return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
     }
 
     private static function parseLedger(SimpleXMLElement $stmt): ?OfxLedger {
@@ -93,8 +157,9 @@ class OfxParser {
         if ($ledgerNode) {
             $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
             $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF);
+            $currency = self::normaliseCurrency((string)$ledgerNode[0]->CURDEF ?: (string)$stmt->CURDEF);
             if ($balAmt !== null && $dtAsOf !== null) {
-                return new OfxLedger($balAmt, $dtAsOf);
+                return new OfxLedger($balAmt, $dtAsOf, $currency);
             }
         }
         return null;
@@ -131,12 +196,47 @@ class OfxParser {
         if ($value === '') {
             return null;
         }
-        // Remove commas, spaces and stray symbols
-        $value = preg_replace('/[^0-9\-\.]/', '', $value);
+        $value = str_replace([',', ' '], '', $value);
+        $neg = false;
+        if (preg_match('/^\((.*)\)$/', $value, $m)) {
+            $neg = true;
+            $value = $m[1];
+        } elseif (substr($value, -1) === '-') {
+            $neg = true;
+            $value = substr($value, 0, -1);
+        }
+        $value = preg_replace('/[^0-9\.-]/', '', $value);
         if ($value === '' || !is_numeric($value)) {
             return null;
         }
-        return (float)$value;
+        $num = (float)$value;
+        if ($neg) {
+            $num = -abs($num);
+        }
+        if ($num > self::MAX_AMOUNT) {
+            $num = self::MAX_AMOUNT;
+        } elseif ($num < -self::MAX_AMOUNT) {
+            $num = -self::MAX_AMOUNT;
+        }
+        return $num;
+    }
+
+    private static function normaliseCurrency(?string $code): string {
+        $code = strtoupper(preg_replace('/[^A-Z]/', '', $code ?? ''));
+        if ($code === '') {
+            return 'GBP';
+        }
+        $map = [
+            'UKL' => 'GBP',
+            'GBR' => 'GBP',
+        ];
+        if (isset($map[$code])) {
+            return $map[$code];
+        }
+        if (preg_match('/^[A-Z]{3}$/', $code)) {
+            return $code;
+        }
+        return 'GBP';
     }
 
     private static function parseDate(string $value): ?string {
