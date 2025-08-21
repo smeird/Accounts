@@ -80,7 +80,9 @@ try {
     }
     $available = max($totalSpent - $goal, 0);
 
-    $prompt = "You are a financial assistant. Allocate budgets for next month so total spending is about £$available leaving £$goal for savings. Use the last 12 months of totals to respect fixed costs. Return JSON array with objects {\"id\":<category_id>,\"amount\":<budget>}\n\n";
+
+    $prompt = "You are a financial assistant. Allocate budgets for next month so total spending is about £$available leaving £$goal for savings. Use the last 12 months of totals to respect fixed costs. Return JSON object {\"budgets\":[{\"id\":<category_id>,\"amount\":<budget>}],\"summary\":\"short plain English explanation of the allocation avoiding listing every category\"}\n\n";
+
     foreach ($history as $h) {
         $prompt .= "{$h['id']} {$h['name']}: [" . implode(',', $h['totals']) . "]\n";
     }
@@ -88,7 +90,9 @@ try {
     $payload = [
         'model' => 'gpt-5-nano',
         'messages' => [
-            ['role' => 'system', 'content' => 'You create budgets in JSON.'],
+
+            ['role' => 'system', 'content' => 'You create budgets and explanations in JSON.'],
+
             ['role' => 'user', 'content' => $prompt]
         ],
         'temperature' => 1,
@@ -122,13 +126,18 @@ try {
         $content = trim($content);
     }
     $suggestions = json_decode($content, true);
-    if (!is_array($suggestions)) {
+
+    if (!is_array($suggestions) || !isset($suggestions['budgets']) || !is_array($suggestions['budgets'])) {
+
         http_response_code(500);
         Log::write('AI budget invalid response: ' . $content, 'ERROR');
         echo json_encode(['error' => 'Invalid AI response']);
         exit;
     }
-    foreach ($suggestions as $s) {
+
+    $summary = isset($suggestions['summary']) ? (string)$suggestions['summary'] : '';
+    foreach ($suggestions['budgets'] as $s) {
+
         $cid = (int)($s['id'] ?? 0);
         $amount = isset($s['amount']) ? (float)$s['amount'] : null;
         if ($cid > 0 && $amount !== null) {
@@ -139,7 +148,8 @@ try {
     $budgets = Budget::getMonthly($month, $year);
     Log::write("AI budgets applied for $month/$year with goal $goal using $usage tokens");
 
-    echo json_encode(['status' => 'ok', 'budgets' => $budgets]);
+    echo json_encode(['status' => 'ok', 'budgets' => $budgets, 'summary' => $summary]);
+
 } catch (Exception $e) {
     http_response_code(500);
     Log::write('AI budgeting error: ' . $e->getMessage(), 'ERROR');
