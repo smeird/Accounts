@@ -22,13 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   document.head.appendChild(hoverStyle);
 
-  // Ensure every page uses the shared favicon
+  // Ensure every page uses the shared SVG favicon
   if (!document.querySelector('link[rel="icon"]')) {
-    const icon = document.createElement('link');
-    icon.rel = 'icon';
-    icon.type = 'image/svg+xml';
-    icon.href = '../favicon.svg';
-    document.head.appendChild(icon);
+    const iconSvg = document.createElement('link');
+    iconSvg.rel = 'icon';
+    iconSvg.type = 'image/svg+xml';
+    iconSvg.href = '/favicon.svg';
+    iconSvg.sizes = 'any';
+    document.head.appendChild(iconSvg);
   }
 
   const menu = document.getElementById('menu');
