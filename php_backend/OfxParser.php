@@ -31,6 +31,9 @@ class OfxParser {
         if (strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
             $sortCode = null;
         }
+
+        $accountNumber = trim((string)$acctNode[0]->ACCTID);
+
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
         // Ledger balance
         $ledger = null;

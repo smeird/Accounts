@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
 
-    <!-- Use favicon.svg for inline icons instead of Font Awesome -->
+    <!-- Font Awesome icons loaded via frontend/js/menu.js -->
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-        <img src="favicon.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
+        <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">User Management</h1>
         <p class="mb-4">Add new users, update your password, or manage two-factor authentication from this page.</p>
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="bg-white p-4 rounded shadow space-y-4 mb-6">
             <form id="generate-form" class="space-y-4">
                 <input type="hidden" id="gen-username" value="<?= htmlspecialchars($username) ?>">
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><img src="favicon.svg" class="inline w-4 h-4 mr-2" alt="">Generate QR</button>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode inline w-4 h-4 mr-2"></i>Generate QR</button>
             </form>
 
             <div id="qr" class="mt-4 mx-auto"></div>
@@ -108,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" id="ver-username" value="<?= htmlspecialchars($username) ?>">
                 <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
                 <div class="flex space-x-2">
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded"><img src="favicon.svg" class="inline w-4 h-4 mr-2" alt="">Verify</button>
-                    <button id="disable-2fa" type="button" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded"><img src="favicon.svg" class="inline w-4 h-4 mr-2" alt="">Disable</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-check inline w-4 h-4 mr-2"></i>Verify</button>
+                    <button id="disable-2fa" type="button" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded"><i class="fas fa-ban inline w-4 h-4 mr-2"></i>Disable</button>
                 </div>
             </form>
         </div>
