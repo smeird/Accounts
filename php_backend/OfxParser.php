@@ -32,8 +32,6 @@ class OfxParser {
             $sortCode = null;
         }
 
-        $accountNumber = trim((string)$acctNode[0]->ACCTID);
-
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
         // Ledger balance
         $ledger = null;
