@@ -13,8 +13,10 @@ class Totp {
             $secret,
             rawurlencode($issuer)
         );
+
         // Encode pipe character in chld parameter to avoid 404 responses
         return 'https://chart.googleapis.com/chart?chs=200x200&chld=M%7C0&cht=qr&chl=' . urlencode($otpauth);
+
     }
 
     public static function verifyCode($secret, $code, $window = 1) {
