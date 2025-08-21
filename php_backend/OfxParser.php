@@ -55,6 +55,7 @@ class OfxParser {
 
         $statement = self::getStatement($xml);
 
+        $currency = self::normaliseCurrency((string)($statement->CURDEF ?? ''));
 
         // BANKTRANLIST boundaries for date validation
         $bankTranList = $statement->xpath('.//BANKTRANLIST');
@@ -65,8 +66,8 @@ class OfxParser {
             $dtEnd = self::parseDate((string)$bankTranList[0]->DTEND, $warnings, self::line($bankTranList[0]->DTEND ?? null), $strict);
         }
 
-        $account = self::parseAccount($statement, $warnings, $strict);
-        $ledger = self::parseLedger($statement, $warnings, $strict);
+        $account = self::parseAccount($statement, $warnings, $strict, $currency);
+        $ledger = self::parseLedger($statement, $warnings, $strict, $currency);
         $transactions = self::parseTransactions($statement, $dtStart, $dtEnd, $warnings, $strict);
 
 
@@ -124,7 +125,7 @@ class OfxParser {
         return $out;
     }
 
-    private static function parseAccount(SimpleXMLElement $stmt, array &$warnings, bool $strict): OfxAccount {
+    private static function parseAccount(SimpleXMLElement $stmt, array &$warnings, bool $strict, string $currency = 'GBP'): OfxAccount {
         $acctNode = $stmt->xpath('.//BANKACCTFROM | .//CCACCTFROM | .//ACCTFROM');
         $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
         // Some providers mask account numbers (e.g. 552213******8609). Remove any
@@ -155,7 +156,7 @@ class OfxParser {
         return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
     }
 
-    private static function parseLedger(SimpleXMLElement $stmt, array &$warnings, bool $strict): ?OfxLedger {
+    private static function parseLedger(SimpleXMLElement $stmt, array &$warnings, bool $strict, string $currency = 'GBP'): ?OfxLedger {
         $ledgerNode = $stmt->xpath('.//LEDGERBAL');
         if ($ledgerNode) {
             $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
