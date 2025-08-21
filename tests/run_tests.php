@@ -73,7 +73,7 @@ $profileOfx = <<<OFX
 <BANKTRANLIST><STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-1</TRNAMT><CHECKNUM>AB-12 34</CHECKNUM><REFNUM>ref-ABCDEFGHIJKLMNOPQRSTUVWXYZ</REFNUM><MEMO>Some memo that exceeds</MEMO><FITID>1</FITID></STMTTRN></BANKTRANLIST>
 </STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
 OFX;
-$parsedProfile = OfxParser::parse($profileOfx);
+$parsedProfile = OfxParser::parse($profileOfx)[0];
 $tx = $parsedProfile['transactions'][0];
 assertEqual('1234', $tx->check, 'Profile regex removes non-digits from CHECKNUM');
 assertEqual('REF-ABCDEFGHIJK', $tx->ref, 'Profile uppercases and truncates REFNUM');
