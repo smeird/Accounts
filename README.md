@@ -6,6 +6,9 @@ This repository now provides a simple PHP implementation for managing accounts a
 
 A basic login page is available at the project root (`index.php`). Users are stored in a `users` table. After logging in, visit `users.php` to add new users or change your password.
 
+### Two-Factor Authentication (TOTP)
+
+Two PHP endpoints under `php_backend/public` handle TOTP setup and verification and a third removes secrets. `totp_generate.php` issues a per-user secret and returns an otpauth URI, `totp_verify.php` validates submitted codes, and `totp_disable.php` deletes an existing secret. The QR code is rendered client-side using `qrcode` to produce an SVG. The login page prompts for a code when a secret exists, and you can manage or disable 2FA from `users.php` or open `frontend/2fa.html` to scan the QR code with your authenticator and confirm the one-time codes it generates.
 
 ## Specifications
 
