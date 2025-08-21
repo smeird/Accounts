@@ -12,7 +12,7 @@
 - Display monetary values with the pound symbol (£).
 - Style the frontend with Tailwind CSS. Wrap primary sections in white card components (`bg-white p-6 rounded shadow`).
 - Use Font Awesome for interface icons.
-- Headings should use bold Montserrat, body text should use Inter, and buttons or highlights should use light Source Sans Pro.
+- Headings should use bold Roboto, body text should use Inter, and buttons or highlights should use light Source Sans Pro.
 - Tabulator tables should apply Tailwind utility classes.
 - Provide popover help for form inputs using `data-help` attributes handled by `frontend/js/input_help.js`.
 - Ensure the site remains mobile-friendly: include `<meta name="viewport" content="width=device-width, initial-scale=1.0">` on

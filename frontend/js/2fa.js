@@ -1,7 +1,9 @@
 // Handles TOTP setup, verification, and disabling.
 document.addEventListener('DOMContentLoaded', () => {
   const apiBase = document.body.dataset.apiBase || '../php_backend/public';
+
   const qrEl = document.getElementById('qr');
+
   const genForm = document.getElementById('generate-form');
   const verifyForm = document.getElementById('verify-form');
   const helpBtn = document.getElementById('help-btn');
@@ -18,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ username })
         });
         const data = await res.json();
+
         if (data.otpauth && qrEl) {
           QRCode.toString(data.otpauth, { type: 'svg', width: 200 }, (err, svg) => {
             if (err) {
@@ -27,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             qrEl.innerHTML = svg;
             showMessage('Scan the QR code with your authenticator.');
           });
+
         } else {
           showMessage(data.error || 'Failed to generate secret', 'error');
         }
@@ -67,7 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json();
         if (data.disabled) {
+
           if (qrEl) qrEl.innerHTML = '';
+
           showMessage('2FA disabled', 'success');
         } else {
           showMessage(data.error || 'Failed to disable', 'error');

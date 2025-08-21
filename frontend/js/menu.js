@@ -59,13 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const fontLink = document.createElement('link');
       fontLink.id = 'app-fonts';
       fontLink.rel = 'stylesheet';
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
       document.head.appendChild(fontLink);
     }
     const fontStyle = document.createElement('style');
     fontStyle.textContent = `
       body { font-family: 'Inter', sans-serif; font-weight: 400; }
-      h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+      h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
       button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
     `;
     document.head.appendChild(fontStyle);
@@ -74,6 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        // Enable collapsible sections with animated height transition
+        menu.querySelectorAll('.group').forEach(section => {
+          const header = section.querySelector('h3');
+          const list = section.querySelector('ul');
+          if (header && list) {
+            header.addEventListener('click', () => {
+              const expanded = list.style.maxHeight && list.style.maxHeight !== '0px';
+              list.style.maxHeight = expanded ? '0px' : `${list.scrollHeight}px`;
+            });
+          }
+        });
         // Hide menu after clicking a link on mobile
         menu.querySelectorAll('a').forEach(a =>
           a.addEventListener('click', () => menu.classList.add('hidden'))

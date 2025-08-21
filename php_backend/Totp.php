@@ -6,13 +6,16 @@ class Totp {
         return self::base32Encode(random_bytes($length));
     }
 
+
     public static function getOtpAuthUri($username, $secret) {
         $issuer = 'Accounts';
         return sprintf('otpauth://totp/%s?secret=%s&issuer=%s',
+
             rawurlencode($username),
             $secret,
             rawurlencode($issuer)
         );
+
     }
 
     public static function verifyCode($secret, $code, $window = 1) {
