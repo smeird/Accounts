@@ -5,10 +5,12 @@ namespace Ofx;
 class Ledger {
     public $balance;
     public $date;
+    public $currency;
 
-    public function __construct($balance, $date) {
+    public function __construct($balance, $date, $currency = 'GBP') {
         $this->balance = (float)$balance;
         $this->date = $date;
+        $this->currency = $currency;
     }
 }
 ?>

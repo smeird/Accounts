@@ -49,7 +49,7 @@ $maskedOfx = <<<OFX
 </CREDITCARDMSGSRSV1>
 </OFX>
 OFX;
-$parsedMasked = OfxParser::parse($maskedOfx);
+$parsedMasked = OfxParser::parse($maskedOfx)[0];
 
 assertEqual('552213******8609', $parsedMasked['account']->number, 'Masked account numbers retain placeholder digits');
 
@@ -61,7 +61,7 @@ $compactOfx = <<<OFX
 <BANKTRANLIST><STMTTRN><DTPOSTED>20240101<TRNAMT>-1<FITID>1<NAME>A</STMTTRN><STMTTRN><DTPOSTED>20240102<TRNAMT>-2<FITID>2<NAME>B</STMTTRN></BANKTRANLIST>
 </STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
 OFX;
-$parsedCompact = OfxParser::parse($compactOfx);
+$parsedCompact = OfxParser::parse($compactOfx)[0];
 assertEqual(2, count($parsedCompact['transactions']), 'Parser handles tags without newlines');
 
 // Profile-based normalisation and field caps
@@ -185,7 +185,31 @@ assertEqual(0, $second, 'Duplicate FITID skipped');
 $count = $db->query('SELECT COUNT(*) FROM transactions WHERE bank_ofx_id IS NOT NULL')->fetchColumn();
 assertEqual(1, (int)$count, 'Only one transaction stored after duplicate FITID');
 $logCount = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
-assertEqual(1, (int)$logCount, 'Duplicate FITID logged');
+assertEqual(1, (int)$logCount, 'Duplicate FITID conflict logged');
+
+// Exact duplicate with same details should be skipped without logging
+$dupSame1 = Transaction::create(1, '2024-08-03', 30, 'Third', null, null, null, null, 'ofx3', 'DEBIT', 'SAME123');
+assertEqual(true, $dupSame1 > 0, 'Baseline transaction inserted');
+$dupSame2 = Transaction::create(1, '2024-08-03', 30, 'Third', null, null, null, null, 'ofx4', 'DEBIT', 'SAME123');
+assertEqual(0, $dupSame2, 'Exact duplicate FITID skipped');
+$logCountSame = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
+assertEqual(1, (int)$logCountSame, 'Exact duplicate not logged again');
+
+// Surrogate ID generation when FITID is missing
+$surrogate = sha1('1|2024-08-04|40|SURR');
+$sur1 = Transaction::create(1, '2024-08-04', 40, 'SURR', null, null, null, null, $surrogate, 'DEBIT', $surrogate);
+assertEqual(true, $sur1 > 0, 'Surrogate transaction inserted');
+$sur2 = Transaction::create(1, '2024-08-04', 40, 'SURR', null, null, null, null, $surrogate, 'DEBIT', $surrogate);
+assertEqual(0, $sur2, 'Surrogate ID prevents duplicate');
+
+// Pending vs posted duplicate collapse
+$pending = Transaction::create(1, '2024-08-05', 50, 'PendingTx', null, null, null, null, sha1('p1'), 'DEBIT', 'PEN1');
+assertEqual(true, $pending > 0, 'Pending transaction inserted');
+$posted = Transaction::create(1, '2024-08-06', 50, 'PendingTx', null, null, null, null, sha1('p2'), 'DEBIT', 'POS1');
+assertEqual(0, $posted, 'Pending vs posted duplicate collapsed');
+
+$finalLog = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
+assertEqual(1, (int)$finalLog, 'No extra warnings from exact duplicates or pending collapse');
 
 // --- Transfer detection and linking ---
 $db->exec("INSERT INTO accounts (name) VALUES ('Checking'), ('Savings')");
