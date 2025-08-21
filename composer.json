@@ -1,0 +1,10 @@
+{
+    "name": "accounts/app",
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    },
+    "autoload": {
+        "classmap": ["php_backend/"]
+    }
+}
