@@ -27,29 +27,35 @@ class Transaction {
         }
 
 
-        // Secondary duplicate check using bank-provided FITID with date and amount
+        // Secondary duplicate check using bank-provided FITID. Exact duplicates
+        // are silently skipped, but conflicting details are logged for review.
         if ($bank_ofx_id !== null) {
-            $dupCheck = $db->prepare('SELECT id FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` = :boid LIMIT 1');
+            $dupCheck = $db->prepare(
+                'SELECT id, date, amount, description, IFNULL(memo, "") AS memo '
+                . 'FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` = :boid LIMIT 1'
+            );
             $dupCheck->execute([
                 'account' => $account,
                 'boid' => $bank_ofx_id
             ]);
-            if ($dupCheck->fetch(PDO::FETCH_ASSOC)) {
-                Log::write("Duplicate FITID $bank_ofx_id for account $account", 'WARNING');
+            if ($row = $dupCheck->fetch(PDO::FETCH_ASSOC)) {
+                if ($row['date'] != $date || (float)$row['amount'] != $amount
+                    || strtoupper(trim($row['description'])) !== strtoupper(trim($description))
+                    || strtoupper(trim($row['memo'])) !== strtoupper(trim($memo ?? ''))) {
+                    Log::write("FITID $bank_ofx_id conflict for account $account", 'WARNING');
+                }
                 return 0;
             }
         }
 
         // Fallback duplicate check on core fields when no OFX identifiers are available.
         // Ignore memo differences and normalise description to prevent near-identical duplicates.
-
         $coreCheck = $db->prepare(
             'SELECT id FROM `transactions` '
             . 'WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount '
             . 'AND UPPER(TRIM(`description`)) = UPPER(TRIM(:description)) '
             . 'LIMIT 1'
         );
-
         $coreCheck->execute([
             'account' => $account,
             'date' => $date,
@@ -57,6 +63,27 @@ class Transaction {
             'description' => $description
         ]);
         if ($coreCheck->fetch(PDO::FETCH_ASSOC)) {
+            return 0;
+        }
+
+        // Collapse pending vs posted duplicates by checking for matching amount and
+        // description within a small date window.
+        $start = date('Y-m-d', strtotime($date . ' -3 days'));
+        $end   = date('Y-m-d', strtotime($date . ' +3 days'));
+        $nearCheck = $db->prepare(
+            'SELECT id FROM `transactions` '
+            . 'WHERE `account_id` = :account AND `amount` = :amount '
+            . 'AND UPPER(TRIM(`description`)) = UPPER(TRIM(:description)) '
+            . 'AND `date` BETWEEN :start AND :end LIMIT 1'
+        );
+        $nearCheck->execute([
+            'account' => $account,
+            'amount' => $amount,
+            'description' => $description,
+            'start' => $start,
+            'end' => $end
+        ]);
+        if ($nearCheck->fetch(PDO::FETCH_ASSOC)) {
             return 0;
         }
 

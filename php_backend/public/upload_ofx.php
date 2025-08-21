@@ -110,8 +110,11 @@ try {
                 Account::updateLedgerBalance($accountId, $parsed['ledger']->balance, $parsed['ledger']->date);
             }
 
-            $inserted = 0;
-            $duplicates = [];
+
+        $inserted = 0;
+        $duplicates = [];
+        $fileLedger = [];
+
 
             foreach ($parsed['transactions'] as $txn) {
                 $amount = $txn->amount;
@@ -130,26 +133,42 @@ try {
                     $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
                 }
 
-                $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
-                $desc = $substr($desc, 0, 255);
-                $memo = $memo === '' ? null : $substr($memo, 0, 255);
-                $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
-                $type = $type === null ? null : $substr($type, 0, 50);
 
-                $amountStr = number_format($amount, 2, '.', '');
-                $normalise = function (string $text): string {
-                    $text = strtoupper(trim($text));
-                    return preg_replace('/\s+/', ' ', $text);
-                };
-                $normDesc = $normalise($desc);
-                $syntheticId = sha1($accountId . $date . $amountStr . $normDesc);
+            $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
+            $desc = $substr($desc, 0, 255);
+            $memo = $memo === '' ? null : $substr($memo, 0, 255);
+            $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
+            $type = $type === null ? null : $substr($type, 0, 50);
 
-                $createdId = Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
-                if ($createdId === 0) {
-                    if ($bankId !== null) {
-                        $duplicates[] = $bankId;
-                    }
-                    continue;
+            $amountStr = number_format($amount, 2, '.', '');
+            $normalise = function (string $text): string {
+                $text = strtoupper(trim($text));
+                return preg_replace('/\s+/', ' ', $text);
+            };
+            $normDesc = $normalise($desc);
+            $baseHash = sha1($accountId . $date . $amountStr . $normDesc);
+
+            if ($bankId === null || $bankId === '') {
+                $bankId = $baseHash;
+            }
+
+            $idKey = $bankId;
+            if (isset($fileLedger[$idKey])) {
+                $prev = $fileLedger[$idKey];
+                if ($prev['amount'] != $amount || $prev['date'] !== $date || $prev['desc'] !== $desc || $prev['memo'] !== ($memo ?? '')) {
+                    Log::write("FITID $idKey conflict within file", 'WARNING');
+                }
+                continue;
+            }
+            $fileLedger[$idKey] = ['amount' => $amount, 'date' => $date, 'desc' => $desc, 'memo' => $memo ?? ''];
+
+            $syntheticId = $baseHash;
+
+            $createdId = Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
+            if ($createdId === 0) {
+                if ($bankId !== null) {
+                    $duplicates[] = $bankId;
+
                 }
 
                 $inserted++;
