@@ -34,7 +34,7 @@ class OfxParser {
         ];
     }
 
-    private static function parseAccount(SimpleXMLElement $xml): array {
+    private static function parseAccount(SimpleXMLElement $xml): OfxAccount {
         $acctNode = $xml->xpath('//BANKACCTFROM | //CCACCTFROM | //ACCTFROM');
         $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
         // Some providers mask account numbers (e.g. 552213******8609). Remove any
@@ -56,18 +56,16 @@ class OfxParser {
 
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
 
-        return ['sort_code' => $sortCode, 'number' => $accountNumber, 'name' => $accountName];
+        return new OfxAccount($sortCode, $accountNumber, $accountName);
     }
-
-    private static function parseLedger(SimpleXMLElement $xml) {
+    
+    private static function parseLedger(SimpleXMLElement $xml): ?OfxLedger {
         $ledgerNode = $xml->xpath('//LEDGERBAL');
         if ($ledgerNode) {
             $balAmt = trim((string)$ledgerNode[0]->BALAMT);
             $dtAsOf = substr(trim((string)$ledgerNode[0]->DTASOF), 0, 8);
             if ($balAmt !== '' && $dtAsOf !== '') {
-
-                $ledger = new OfxLedger((float)$balAmt, date('Y-m-d', strtotime($dtAsOf)));
-
+                return new OfxLedger((float)$balAmt, date('Y-m-d', strtotime($dtAsOf)));
             }
         }
         return null;
@@ -100,13 +98,7 @@ class OfxParser {
                 (string)$trn->FITID
             );
         }
-
-        return [
-            'account' => new OfxAccount($sortCode, $accountNumber, $accountName),
-            'ledger' => $ledger,
-            'transactions' => $transactions,
-        ];
-
+        return $transactions;
     }
 }
 ?>
