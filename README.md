@@ -70,6 +70,11 @@ description. When present, reference numbers (`<REFNUM>`), cheque numbers
 hash input. This composite value greatly reduces the chance of collisions when
 banks reuse identifiers or vary memo text.
 
+Institution-specific JSON profiles in `php_backend/profiles/` supply default
+behaviour and field caps. Profiles are selected using the `<FI>` `ORG` or
+`FID` value and can normalise `CHECKNUM`, `REFNUM` and `MEMO` fields or enforce
+length limits. A `default.json` profile is used when no matching file exists.
+
 
 ## Running a Local Server
 

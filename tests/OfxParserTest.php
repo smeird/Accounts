@@ -28,11 +28,12 @@ class OfxParserTest extends TestCase
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx);
+        $parsed = OfxParser::parse($ofx)[0];
         $this->assertSame('12345678', $parsed['account']->number);
         $this->assertSame('123456', $parsed['account']->sortCode);
         $this->assertSame('Main', $parsed['account']->name);
     }
+
 
     public function testLenientModePlaceholdersAndExtensions(): void
     {
@@ -88,12 +89,14 @@ OFX;
     }
 
     public function testRunningBalanceMismatchAndDateWindowWarnings(): void
+
     {
         $ofx = <<<OFX
 <OFX>
   <BANKMSGSRSV1>
     <STMTTRNRS>
       <STMTRS>
+
         <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
         <BANKTRANLIST>
           <DTSTART>20240101</DTSTART>
@@ -108,6 +111,7 @@ OFX;
             <TRNAMT>-1.00</TRNAMT>
             <RUNNINGBAL><BALAMT>98.00</BALAMT></RUNNINGBAL>
           </STMTTRN>
+
         </BANKTRANLIST>
       </STMTRS>
     </STMTTRNRS>
@@ -115,16 +119,19 @@ OFX;
 </OFX>
 OFX;
         $parsed = OfxParser::parse($ofx);
+
         $this->assertNotEmpty($parsed['warnings']);
     }
 
     public function testDateClampingProducesWarnings(): void
+
     {
         $ofx = <<<OFX
 <OFX>
   <BANKMSGSRSV1>
     <STMTTRNRS>
       <STMTRS>
+
         <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
         <BANKTRANLIST>
           <STMTTRN>
@@ -136,14 +143,17 @@ OFX;
             <TRNAMT>1.00</TRNAMT>
           </STMTTRN>
         </BANKTRANLIST>
+
       </STMTRS>
     </STMTTRNRS>
   </BANKMSGSRSV1>
 </OFX>
 OFX;
         $parsed = OfxParser::parse($ofx);
+
         $this->assertSame('1900-01-01', $parsed['transactions'][0]->date);
         $this->assertSame('2100-12-31', $parsed['transactions'][1]->date);
         $this->assertNotEmpty($parsed['warnings']);
+
     }
 }

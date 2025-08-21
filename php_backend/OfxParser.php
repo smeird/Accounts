@@ -9,34 +9,37 @@ use Ofx\Ledger as OfxLedger;
 use Ofx\Transaction as OfxTransaction;
 
 class OfxParser {
+
     public static function parse(string $data, bool $strict = false): array {
         $warnings = [];
+
         // Normalise line endings and attempt to decode using a tolerant charset
         $data = str_replace(["\r\n", "\r"], "\n", $data);
         $data = @iconv('UTF-8', 'UTF-8//IGNORE', $data);
 
-        // Remove any OFX headers and locate the root tag case-insensitively
-        if (($pos = stripos($data, '<OFX')) === false) {
+        // Detect OFX 1.x SGML headers or 2.x XML headers and strip them
+        if (preg_match('/^\s*OFXHEADER:/i', $data)) {
+            if (($pos = stripos($data, '<OFX')) !== false) {
+                $data = substr($data, $pos);
+            }
+        } else {
+            if (($pos = stripos($data, '<OFX')) !== false) {
+                $data = substr($data, $pos);
+            }
+        }
+
+        if (stripos($data, '<OFX') === false) {
             throw new Exception('Missing <OFX> root element');
         }
-        $data = substr($data, $pos);
 
-        // Convert tags to upper-case so SimpleXML can be used case-insensitively
+        // Convert tag names to upper-case for case-insensitive parsing
         $data = preg_replace_callback('/<\/?([a-z0-9]+)([^>]*)>/i', function ($m) {
             return '<' . ($m[0][1] === '/' ? '/' : '') . strtoupper($m[1]) . $m[2] . '>';
         }, $data);
 
-        // Convert SGML-style tags (<TAG>value) to XML by inserting a closing tag
-        // whenever a tag's value is followed by another tag or the end of the
-        // file. This also covers cases where tags appear consecutively without
-        // newlines, a format some banks use for compact OFX exports.
-        // Tags that already include an explicit closing tag (</TAG>) are left
-        // untouched to avoid double-closing.
-        $data = preg_replace(
-            '/<([^>\s]+)>([^<\n]+)(?!(?:\n)?<\/\1>)(?=(?:\n?<|$))/',
-            '<$1>$2</$1>',
-            $data
-        );
+        // Repair unbalanced SGML-style tags using a simple stack heuristic
+        $data = self::closeTags($data);
+
 
         libxml_use_internal_errors(true);
         $opts = LIBXML_NOERROR | LIBXML_NOWARNING;
@@ -48,7 +51,10 @@ class OfxParser {
             throw new Exception('Failed to parse OFX');
         }
 
+        $profile = self::loadProfile($xml);
+
         $statement = self::getStatement($xml);
+
 
         // BANKTRANLIST boundaries for date validation
         $bankTranList = $statement->xpath('.//BANKTRANLIST');
@@ -63,20 +69,59 @@ class OfxParser {
         $ledger = self::parseLedger($statement, $warnings, $strict);
         $transactions = self::parseTransactions($statement, $dtStart, $dtEnd, $warnings, $strict);
 
+
         return [
             'account' => $account,
             'ledger' => $ledger,
             'transactions' => $transactions,
             'warnings' => $warnings,
         ];
+
     }
 
-    private static function getStatement(SimpleXMLElement $xml): SimpleXMLElement {
-        $stmts = $xml->xpath('(//BANKMSGSRSV1/STMTTRNRS/STMTRS | //CREDITCARDMSGSRSV1/CCSTMTTRNRS/CCSTMTRS)[1]');
-        if (!$stmts) {
-            throw new Exception('Missing statement');
+    private static function closeTags(string $data): string {
+        $parts = [];
+        preg_match_all('/<(\/)?([A-Za-z0-9]+)[^>]*>|[^<]+/', $data, $parts, PREG_SET_ORDER);
+        $stack = [];
+        $out = '';
+        $prevText = false;
+        foreach ($parts as $p) {
+            $token = $p[0];
+            if ($token[0] === '<') {
+                $isEnd = $p[1] === '/';
+                $name = strtoupper($p[2]);
+                if (!$isEnd) {
+                    if ($prevText && !empty($stack)) {
+                        $out .= '</' . array_pop($stack) . '>';
+                    }
+                    $out .= '<' . $name . '>';
+                    $stack[] = $name;
+                    $prevText = false;
+                } else {
+                    while (!empty($stack) && end($stack) !== $name) {
+                        $out .= '</' . array_pop($stack) . '>';
+                    }
+                    if (!empty($stack) && end($stack) === $name) {
+                        array_pop($stack);
+                        $out .= '</' . $name . '>';
+                    }
+                    $prevText = false;
+                }
+            } else {
+                if (!empty($stack)) {
+                    $out .= htmlspecialchars($token, ENT_NOQUOTES | ENT_XML1, 'UTF-8');
+                    $prevText = trim($token) !== '';
+                }
+            }
         }
-        return $stmts[0];
+
+        if ($prevText && !empty($stack)) {
+            $out .= '</' . array_pop($stack) . '>';
+        }
+        while (!empty($stack)) {
+            $out .= '</' . array_pop($stack) . '>';
+        }
+        return $out;
     }
 
     private static function parseAccount(SimpleXMLElement $stmt, array &$warnings, bool $strict): OfxAccount {
@@ -103,24 +148,30 @@ class OfxParser {
             $sortCode = null;
         }
 
+
         $accountName = $acctNode ? trim((string)$acctNode[0]->ACCTNAME) ?: 'Default' : 'Default';
 
-        return new OfxAccount($sortCode, $accountNumber, $accountName);
+
+        return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
     }
 
     private static function parseLedger(SimpleXMLElement $stmt, array &$warnings, bool $strict): ?OfxLedger {
         $ledgerNode = $stmt->xpath('.//LEDGERBAL');
         if ($ledgerNode) {
             $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
+
             $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF, $warnings, self::line($ledgerNode[0]->DTASOF ?? null), $strict);
+
             if ($balAmt !== null && $dtAsOf !== null) {
-                return new OfxLedger($balAmt, $dtAsOf);
+                return new OfxLedger($balAmt, $dtAsOf, $currency);
             }
         }
         return null;
     }
 
+
     private static function parseTransactions(SimpleXMLElement $stmt, ?string $dtStart, ?string $dtEnd, array &$warnings, bool $strict): array {
+
         $stmtTrns = $stmt->xpath('.//STMTTRN');
         if (!$stmtTrns) {
             throw new Exception('Missing STMTTRN');
@@ -201,15 +252,54 @@ class OfxParser {
                 $amt,
                 trim((string)$trn->NAME),
                 $memo,
+
                 $trnType,
                 trim((string)$trn->REFNUM),
                 trim((string)$trn->CHECKNUM),
                 trim((string)$trn->FITID),
                 $raw,
                 $extensions
+
             );
         }
         return $transactions;
+    }
+
+    private static function loadProfile(SimpleXMLElement $xml): array {
+        $fi = $xml->xpath('(//SIGNONMSGSRSV1/SONRS/FI)[1]');
+        $id = '';
+        if ($fi) {
+            $id = strtolower(trim((string)($fi[0]->FID ?: $fi[0]->ORG)));
+        }
+        $dir = __DIR__ . '/profiles';
+        $file = $dir . '/' . ($id !== '' ? $id : 'default') . '.json';
+        if (!is_file($file)) {
+            $file = $dir . '/default.json';
+        }
+        $cfg = [];
+        if (is_file($file)) {
+            $json = file_get_contents($file);
+            $cfg = json_decode($json, true) ?: [];
+        }
+        return $cfg;
+    }
+
+    private static function applyFieldProfile(string $field, string $value, array $profile): string {
+        $cfg = $profile['fields'][$field] ?? [];
+        $value = preg_replace('/\s+/', ' ', trim($value));
+        if ($value === '') {
+            return $value;
+        }
+        if (!empty($cfg['regex'])) {
+            $value = preg_replace($cfg['regex'], '', $value);
+        }
+        if (!empty($cfg['uppercase'])) {
+            $value = strtoupper($value);
+        }
+        if (!empty($cfg['max'])) {
+            $value = substr($value, 0, (int)$cfg['max']);
+        }
+        return $value;
     }
 
     private static function normaliseAmount(string $value): ?float {
@@ -217,12 +307,47 @@ class OfxParser {
         if ($value === '') {
             return null;
         }
-        // Remove commas, spaces and stray symbols
-        $value = preg_replace('/[^0-9\-\.]/', '', $value);
+        $value = str_replace([',', ' '], '', $value);
+        $neg = false;
+        if (preg_match('/^\((.*)\)$/', $value, $m)) {
+            $neg = true;
+            $value = $m[1];
+        } elseif (substr($value, -1) === '-') {
+            $neg = true;
+            $value = substr($value, 0, -1);
+        }
+        $value = preg_replace('/[^0-9\.-]/', '', $value);
         if ($value === '' || !is_numeric($value)) {
             return null;
         }
-        return (float)$value;
+        $num = (float)$value;
+        if ($neg) {
+            $num = -abs($num);
+        }
+        if ($num > self::MAX_AMOUNT) {
+            $num = self::MAX_AMOUNT;
+        } elseif ($num < -self::MAX_AMOUNT) {
+            $num = -self::MAX_AMOUNT;
+        }
+        return $num;
+    }
+
+    private static function normaliseCurrency(?string $code): string {
+        $code = strtoupper(preg_replace('/[^A-Z]/', '', $code ?? ''));
+        if ($code === '') {
+            return 'GBP';
+        }
+        $map = [
+            'UKL' => 'GBP',
+            'GBR' => 'GBP',
+        ];
+        if (isset($map[$code])) {
+            return $map[$code];
+        }
+        if (preg_match('/^[A-Z]{3}$/', $code)) {
+            return $code;
+        }
+        return 'GBP';
     }
 
     private static function parseDate(string $value, array &$warnings, ?int $line = null, bool $strict = false): ?string {
