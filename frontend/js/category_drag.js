@@ -43,7 +43,7 @@
   function createTagBadge(tag){
     const span = document.createElement('span');
     span.textContent = tag.name;
-    span.className = 'bg-indigo-200 text-indigo-800 px-2 py-1 rounded cursor-move w-full text-center';
+    span.className = 'bg-indigo-200 text-indigo-800 px-2 py-1 rounded cursor-move text-center';
     span.draggable = true;
     span.dataset.tagId = tag.id;
     span.addEventListener('dragstart', handleDragStart);
@@ -57,7 +57,7 @@
 
   function createCategoryCard(cat){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow w-64 flex-shrink-0';
+    card.className = 'bg-white p-4 rounded shadow w-full';
     card.dataset.categoryId = cat.id;
 
     const header = document.createElement('div');
@@ -115,7 +115,7 @@
     }
 
     const tagWrap = document.createElement('div');
-    tagWrap.className = 'min-h-[3rem] flex flex-col gap-2';
+    tagWrap.className = 'min-h-[3rem] flex flex-row flex-wrap gap-2';
     tagWrap.dataset.categoryId = cat.id;
     (cat.tags || []).forEach(t => tagWrap.appendChild(createTagBadge(t)));
     card.appendChild(tagWrap);
@@ -126,13 +126,13 @@
 
   function createUnassignedCard(tags){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow w-64 flex-shrink-0';
+    card.className = 'bg-white p-4 rounded shadow w-full';
     const title = document.createElement('h2');
     title.className = 'font-semibold mb-2';
     title.textContent = 'Unassigned Tags';
     card.appendChild(title);
     const tagWrap = document.createElement('div');
-    tagWrap.className = 'min-h-[3rem] flex flex-col gap-2';
+    tagWrap.className = 'min-h-[3rem] flex flex-row flex-wrap gap-2';
     tags.forEach(t => tagWrap.appendChild(createTagBadge(t)));
     card.appendChild(tagWrap);
     addDropHandlers(tagWrap);
