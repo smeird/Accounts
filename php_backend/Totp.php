@@ -2,8 +2,13 @@
 class Totp {
     private static $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-    public static function generateSecret($length = 16) {
-        return self::base32Encode(random_bytes($length));
+    public static function generateSecret($length = 32) {
+        $alphabet = self::$alphabet;
+        $secret = '';
+        for ($i = 0; $i < $length; $i++) {
+            $secret .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        }
+        return $secret;
     }
 
 
@@ -42,31 +47,24 @@ class Totp {
         return str_pad($value % 1000000, 6, '0', STR_PAD_LEFT);
     }
 
-    private static function base32Encode($data) {
-        $alphabet = self::$alphabet;
-        $binaryString = '';
-        foreach (str_split($data) as $char) {
-            $binaryString .= str_pad(decbin(ord($char)), 8, '0', STR_PAD_LEFT);
-        }
-        $chunks = str_split($binaryString, 5);
-        $result = '';
-        foreach ($chunks as $chunk) {
-            $chunk = str_pad($chunk, 5, '0', STR_PAD_RIGHT);
-            $result .= $alphabet[bindec($chunk)];
-        }
-        return $result;
-    }
-
     private static function base32Decode($b32) {
+        if ($b32 === '') {
+            return '';
+        }
         $alphabet = self::$alphabet;
         $b32 = strtoupper($b32);
-        $b32 = preg_replace('/[^A-Z2-7]/', '', $b32);
+        $b32 = preg_replace('/[^A-Z2-7=]/', '', $b32);
+        $padding = substr_count($b32, '=');
+        $b32 = str_replace('=', '', $b32);
         $binaryString = '';
         foreach (str_split($b32) as $char) {
             $index = strpos($alphabet, $char);
             if ($index !== false) {
                 $binaryString .= str_pad(decbin($index), 5, '0', STR_PAD_LEFT);
             }
+        }
+        if ($padding) {
+            $binaryString = substr($binaryString, 0, -$padding * 5);
         }
         $bytes = str_split($binaryString, 8);
         $result = '';

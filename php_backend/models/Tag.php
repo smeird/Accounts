@@ -110,6 +110,17 @@ class Tag {
     }
 
     /**
+     * Return the id for the interest charge tag, creating it if missing.
+     */
+    public static function getInterestChargeId(): int {
+        $id = self::getIdByName('interest charge');
+        if ($id === null) {
+            $id = self::create('interest charge', null, 'Interest charges');
+        }
+        return $id;
+    }
+
+    /**
      * Set a tag's keyword if it is currently blank.
      */
     public static function setKeywordIfMissing(int $tagId, string $keyword): void {
@@ -151,11 +162,14 @@ class Tag {
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `description` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL');
+        $stmt = $db->prepare('SELECT `id`, `description`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL');
         $stmt->execute(['acc' => $accountId]);
         $updated = 0;
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $tx) {
             $tagId = self::findMatch($tx['description']);
+            if ($tagId === null && $tx['ofx_type'] === 'INT') {
+                $tagId = self::getInterestChargeId();
+            }
             if ($tagId !== null) {
                 $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
                 $upd->execute(['tag' => $tagId, 'id' => $tx['id']]);

@@ -68,6 +68,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
@@ -80,7 +81,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
-        <img src="favicon.svg" alt="Finance Manager Logo" class="w-24 mx-auto mb-4">
+        <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1 text-center">AUTHENTICATION / <?= $needsToken ? 'TWO-FACTOR' : 'LOGIN' ?></div>
         <h1 class="text-2xl font-semibold mb-4 text-center text-indigo-700"><?= $needsToken ? 'Enter Code' : 'Login' ?></h1>
         <p class="mb-4 text-center">
