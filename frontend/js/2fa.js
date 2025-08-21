@@ -22,14 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (data.otpauth && qrEl) {
-          QRCode.toString(data.otpauth, { type: 'svg', width: 200 }, (err, svg) => {
-            if (err) {
-              showMessage('Failed to generate QR code', 'error');
-              return;
-            }
-            qrEl.innerHTML = svg;
-            showMessage('Scan the QR code with your authenticator.');
+          qrEl.innerHTML = '';
+          new QRCode(qrEl, {
+            text: data.otpauth,
+            width: 200,
+            height: 200
           });
+          showMessage('Scan the QR code with your authenticator.');
 
         } else {
           showMessage(data.error || 'Failed to generate secret', 'error');
