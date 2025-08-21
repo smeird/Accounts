@@ -36,6 +36,16 @@ function assertEqual($expected, $actual, string $message) {
 // Database driver should be sqlite
 assertEqual('sqlite', $db->getAttribute(PDO::ATTR_DRIVER_NAME), 'Database driver is sqlite');
 
+// Masked credit card numbers should have masking removed
+$maskedOfx = <<<OFX
+<OFX>
+<CCACCTFROM><ACCTID>552213******8609</ACCTID></CCACCTFROM>
+<BANKTRANLIST><STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-10.00</TRNAMT></STMTTRN></BANKTRANLIST>
+</OFX>
+OFX;
+$parsedMasked = OfxParser::parse($maskedOfx);
+assertEqual('552213******8609', $parsedMasked['account']['number'], 'Masked account numbers retain placeholder digits');
+
 // Test user creation and retrieval
 $userId = User::create('alice', 'secret');
 assertEqual(1, $userId, 'User ID starts at 1');
