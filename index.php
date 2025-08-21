@@ -6,9 +6,9 @@ require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
 require_once __DIR__ . '/php_backend/Totp.php';
+require_once __DIR__ . '/php_backend/Database.php';
 
-$totpFile = __DIR__ . '/php_backend/totp_secrets.json';
-$totpUsers = file_exists($totpFile) ? json_decode(file_get_contents($totpFile), true) : [];
+$db = Database::getConnection();
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,7 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Verify TOTP token
         $token = $_POST['token'] ?? '';
         $username = $_SESSION['pending_username'] ?? '';
-        $secret = $totpUsers[$username] ?? null;
+        $secret = null;
+        if ($username !== '') {
+            $stmt = $db->prepare('SELECT secret FROM totp_secrets WHERE username = :username');
+            $stmt->execute(['username' => $username]);
+            $secret = $stmt->fetchColumn() ?: null;
+        }
         if ($secret && Totp::verifyCode($secret, $token)) {
             $_SESSION['user_id'] = (int)$_SESSION['pending_user_id'];
             $_SESSION['username'] = $username;
@@ -35,7 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $reason = '';
         $userId = User::verify($username, $password, $reason);
         if ($userId !== null) {
-            if (isset($totpUsers[$username])) {
+            $stmt = $db->prepare('SELECT 1 FROM totp_secrets WHERE username = :username');
+            $stmt->execute(['username' => $username]);
+            if ($stmt->fetchColumn()) {
                 // Require 2FA token
                 $_SESSION['pending_user_id'] = $userId;
                 $_SESSION['pending_username'] = $username;

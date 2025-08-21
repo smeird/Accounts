@@ -5,6 +5,7 @@ session_start();
 require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/Totp.php';
+require_once __DIR__ . '/php_backend/Database.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
@@ -12,9 +13,13 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $username = $_SESSION['username'] ?? '';
-$totpFile = __DIR__ . '/php_backend/totp_secrets.json';
-$totpUsers = file_exists($totpFile) ? json_decode(file_get_contents($totpFile), true) : [];
-$has2fa = $username !== '' && isset($totpUsers[$username]);
+$db = Database::getConnection();
+$has2fa = false;
+if ($username !== '') {
+    $stmt = $db->prepare('SELECT 1 FROM totp_secrets WHERE username = :username');
+    $stmt->execute(['username' => $username]);
+    $has2fa = (bool)$stmt->fetchColumn();
+}
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
