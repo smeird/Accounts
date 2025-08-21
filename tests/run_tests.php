@@ -49,7 +49,7 @@ $maskedOfx = <<<OFX
 </CREDITCARDMSGSRSV1>
 </OFX>
 OFX;
-$parsedMasked = OfxParser::parse($maskedOfx);
+$parsedMasked = OfxParser::parse($maskedOfx)[0];
 
 assertEqual('552213******8609', $parsedMasked['account']->number, 'Masked account numbers retain placeholder digits');
 
@@ -61,7 +61,7 @@ $compactOfx = <<<OFX
 <BANKTRANLIST><STMTTRN><DTPOSTED>20240101<TRNAMT>-1<FITID>1<NAME>A</STMTTRN><STMTTRN><DTPOSTED>20240102<TRNAMT>-2<FITID>2<NAME>B</STMTTRN></BANKTRANLIST>
 </STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
 OFX;
-$parsedCompact = OfxParser::parse($compactOfx);
+$parsedCompact = OfxParser::parse($compactOfx)[0];
 assertEqual(2, count($parsedCompact['transactions']), 'Parser handles tags without newlines');
 
 

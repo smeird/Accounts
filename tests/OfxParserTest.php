@@ -28,7 +28,7 @@ class OfxParserTest extends TestCase
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx);
+        $parsed = OfxParser::parse($ofx)[0];
         $this->assertSame('12345678', $parsed['account']->number);
         $this->assertSame('123456', $parsed['account']->sortCode);
         $this->assertSame('Main', $parsed['account']->name);
