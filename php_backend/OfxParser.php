@@ -39,7 +39,11 @@ class OfxParser {
         );
 
         libxml_use_internal_errors(true);
-        $xml = simplexml_load_string($data, 'SimpleXMLElement', LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_BIGLINES);
+        $opts = LIBXML_NOERROR | LIBXML_NOWARNING;
+        if (defined('LIBXML_BIGLINES')) {
+            $opts |= LIBXML_BIGLINES;
+        }
+        $xml = simplexml_load_string($data, 'SimpleXMLElement', $opts);
         if (!$xml) {
             throw new Exception('Failed to parse OFX');
         }

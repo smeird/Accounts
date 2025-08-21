@@ -86,4 +86,64 @@ OFX;
 OFX;
         OfxParser::parse($ofx, true);
     }
+
+    public function testRunningBalanceMismatchAndDateWindowWarnings(): void
+    {
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20240101</DTSTART>
+          <DTEND>20240131</DTEND>
+          <STMTTRN>
+            <DTPOSTED>20240201</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+            <RUNNINGBAL><BALAMT>100.00</BALAMT></RUNNINGBAL>
+          </STMTTRN>
+          <STMTTRN>
+            <DTPOSTED>20240102</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+            <RUNNINGBAL><BALAMT>98.00</BALAMT></RUNNINGBAL>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        $parsed = OfxParser::parse($ofx);
+        $this->assertNotEmpty($parsed['warnings']);
+    }
+
+    public function testDateClampingProducesWarnings(): void
+    {
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <BANKACCTFROM><ACCTID>1</ACCTID></BANKACCTFROM>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <DTPOSTED>18000101</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+          </STMTTRN>
+          <STMTTRN>
+            <DTPOSTED>22001231</DTPOSTED>
+            <TRNAMT>1.00</TRNAMT>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        $parsed = OfxParser::parse($ofx);
+        $this->assertSame('1900-01-01', $parsed['transactions'][0]->date);
+        $this->assertSame('2100-12-31', $parsed['transactions'][1]->date);
+        $this->assertNotEmpty($parsed['warnings']);
+    }
 }
