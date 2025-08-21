@@ -16,7 +16,12 @@ class OfxParser {
         }
         // Account details
         $acctNode = $xml->xpath('//BANKACCTFROM | //CCACCTFROM | //ACCTFROM');
-        if (!$acctNode || trim((string)$acctNode[0]->ACCTID) === '') {
+        $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
+        // Some providers mask account numbers (e.g. 552213******8609). Remove
+        // any non-alphanumeric characters so the stored value can be matched
+        // consistently.
+        $accountNumber = preg_replace('/[^A-Za-z0-9]/', '', $rawAcctId);
+        if ($accountNumber === '') {
             throw new Exception('Missing account number');
         }
         // Credit card statements may include a BANKID that is not a real
@@ -26,7 +31,9 @@ class OfxParser {
         if (strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
             $sortCode = null;
         }
+
         $accountNumber = trim((string)$acctNode[0]->ACCTID);
+
         $accountName = trim((string)$acctNode[0]->ACCTNAME) ?: 'Default';
         // Ledger balance
         $ledger = null;
