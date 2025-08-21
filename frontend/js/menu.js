@@ -32,6 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(iconSvg);
   }
 
+  // Load Font Awesome so pages can display contextual icons
+  if (!document.getElementById('fa-css')) {
+    const fa = document.createElement('link');
+    fa.id = 'fa-css';
+    fa.rel = 'stylesheet';
+    fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+    document.head.appendChild(fa);
+  }
+
   const menu = document.getElementById('menu');
   if (menu) {
     // Add responsive classes so the navigation can toggle on small screens
