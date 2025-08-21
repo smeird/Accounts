@@ -43,10 +43,12 @@ class OfxParser {
             throw new Exception('Failed to parse OFX');
         }
 
+        $profile = self::loadProfile($xml);
+
         $statement = self::getStatement($xml);
         $account = self::parseAccount($statement);
         $ledger = self::parseLedger($statement);
-        $transactions = self::parseTransactions($statement);
+        $transactions = self::parseTransactions($statement, $profile);
 
         return [
             'account' => $account,
@@ -100,7 +102,7 @@ class OfxParser {
         return null;
     }
 
-    private static function parseTransactions(SimpleXMLElement $stmt): array {
+    private static function parseTransactions(SimpleXMLElement $stmt, array $profile): array {
         $stmtTrns = $stmt->xpath('.//STMTTRN');
         if (!$stmtTrns) {
             throw new Exception('Missing STMTTRN');
@@ -112,18 +114,58 @@ class OfxParser {
             if ($dt === null || $amt === null) {
                 throw new Exception('Missing DTPOSTED or TRNAMT');
             }
+            $memo = self::applyFieldProfile('MEMO', (string)$trn->MEMO, $profile);
+            $ref = self::applyFieldProfile('REFNUM', (string)$trn->REFNUM, $profile);
+            $check = self::applyFieldProfile('CHECKNUM', (string)$trn->CHECKNUM, $profile);
             $transactions[] = new OfxTransaction(
                 $dt,
                 $amt,
                 trim((string)$trn->NAME),
-                trim((string)$trn->MEMO),
+                $memo,
                 $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null,
-                trim((string)$trn->REFNUM),
-                trim((string)$trn->CHECKNUM),
+                $ref,
+                $check,
                 trim((string)$trn->FITID)
             );
         }
         return $transactions;
+    }
+
+    private static function loadProfile(SimpleXMLElement $xml): array {
+        $fi = $xml->xpath('(//SIGNONMSGSRSV1/SONRS/FI)[1]');
+        $id = '';
+        if ($fi) {
+            $id = strtolower(trim((string)($fi[0]->FID ?: $fi[0]->ORG)));
+        }
+        $dir = __DIR__ . '/profiles';
+        $file = $dir . '/' . ($id !== '' ? $id : 'default') . '.json';
+        if (!is_file($file)) {
+            $file = $dir . '/default.json';
+        }
+        $cfg = [];
+        if (is_file($file)) {
+            $json = file_get_contents($file);
+            $cfg = json_decode($json, true) ?: [];
+        }
+        return $cfg;
+    }
+
+    private static function applyFieldProfile(string $field, string $value, array $profile): string {
+        $cfg = $profile['fields'][$field] ?? [];
+        $value = preg_replace('/\s+/', ' ', trim($value));
+        if ($value === '') {
+            return $value;
+        }
+        if (!empty($cfg['regex'])) {
+            $value = preg_replace($cfg['regex'], '', $value);
+        }
+        if (!empty($cfg['uppercase'])) {
+            $value = strtoupper($value);
+        }
+        if (!empty($cfg['max'])) {
+            $value = substr($value, 0, (int)$cfg['max']);
+        }
+        return $value;
     }
 
     private static function normaliseAmount(string $value): ?float {

@@ -64,6 +64,20 @@ OFX;
 $parsedCompact = OfxParser::parse($compactOfx);
 assertEqual(2, count($parsedCompact['transactions']), 'Parser handles tags without newlines');
 
+// Profile-based normalisation and field caps
+$profileOfx = <<<OFX
+<OFX>
+<SIGNONMSGSRSV1><SONRS><FI><ORG>TESTBANK</ORG></FI></SONRS></SIGNONMSGSRSV1>
+<BANKMSGSRSV1><STMTTRNRS><STMTRS>
+<BANKACCTFROM><BANKID>1</BANKID><ACCTID>2</ACCTID></BANKACCTFROM>
+<BANKTRANLIST><STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-1</TRNAMT><CHECKNUM>AB-12 34</CHECKNUM><REFNUM>ref-ABCDEFGHIJKLMNOPQRSTUVWXYZ</REFNUM><MEMO>Some memo that exceeds</MEMO><FITID>1</FITID></STMTTRN></BANKTRANLIST>
+</STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
+OFX;
+$parsedProfile = OfxParser::parse($profileOfx);
+$tx = $parsedProfile['transactions'][0];
+assertEqual('1234', $tx->check, 'Profile regex removes non-digits from CHECKNUM');
+assertEqual('REF-ABCDEFGHIJK', $tx->ref, 'Profile uppercases and truncates REFNUM');
+assertEqual('Some memo', $tx->memo, 'Profile enforces MEMO length cap');
 
 // Test user creation and retrieval
 $userId = User::create('alice', 'secret');
