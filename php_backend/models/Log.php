@@ -75,5 +75,3 @@ class Log {
 
 Log::registerHandlers();
 
-?>
-
