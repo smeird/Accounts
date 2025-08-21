@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../Totp.php';
+require_once __DIR__ . '/../models/Log.php';
 
 ini_set('session.cookie_secure', '1');
 session_start();
@@ -8,6 +9,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $username = $input['username'] ?? ($_SESSION['username'] ?? '');
 
 if ($username === '') {
+    Log::write('2FA generate missing username', 'ERROR');
     echo json_encode(['error' => 'Username required']);
     exit;
 }
@@ -16,6 +18,7 @@ $users = file_exists($file) ? json_decode(file_get_contents($file), true) : [];
 $secret = $users[$username] ?? Totp::generateSecret();
 $users[$username] = $secret;
 file_put_contents($file, json_encode($users, JSON_PRETTY_PRINT));
+Log::write("Generated 2FA secret for '$username'");
 
 $otpauth = Totp::getOtpAuthUri($username, $secret);
 echo json_encode(['secret' => $secret, 'otpauth' => $otpauth]);
