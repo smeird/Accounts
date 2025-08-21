@@ -45,7 +45,7 @@ $maskedOfx = <<<OFX
 OFX;
 $parsedMasked = OfxParser::parse($maskedOfx);
 
-assertEqual('552213******8609', $parsedMasked['account']['number'], 'Masked account numbers retain placeholder digits');
+assertEqual('552213******8609', $parsedMasked['account']->number, 'Masked account numbers retain placeholder digits');
 
 
 // Test user creation and retrieval
