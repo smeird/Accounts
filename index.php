@@ -63,7 +63,8 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Login</title>
+    <meta name="application-name" content="Finance Manager">
+    <title>Finance Manager Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
@@ -89,19 +90,19 @@ $needsToken = isset($_SESSION['pending_user_id']);
             <p class="mb-4 text-red-500 text-center"><?= htmlspecialchars($error) ?></p>
         <?php endif; ?>
         <?php if ($needsToken): ?>
-            <form method="post" class="space-y-4">
+            <form method="post" id="token-form" class="space-y-4">
                 <label class="block">Code:
-                    <input type="text" name="token" class="mt-1 w-full border p-2 rounded" data-help="Enter your 6-digit code">
+                    <input type="text" name="token" autocomplete="one-time-code" class="mt-1 w-full border p-2 rounded" data-help="Enter your 6-digit code">
                 </label>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded">Verify</button>
             </form>
         <?php else: ?>
-            <form method="post" class="space-y-4">
+            <form method="post" id="login-form" name="login-form" autocomplete="on" class="space-y-4">
                 <label class="block">Username:
-                    <input type="text" name="username" class="mt-1 w-full border p-2 rounded" data-help="Enter your username">
+                    <input type="text" name="username" autocomplete="username" class="mt-1 w-full border p-2 rounded" data-help="Enter your username">
                 </label>
                 <label class="block">Password:
-                    <input type="password" name="password" class="mt-1 w-full border p-2 rounded" data-help="Enter your password">
+                    <input type="password" name="password" autocomplete="current-password" class="mt-1 w-full border p-2 rounded" data-help="Enter your password">
                 </label>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded">Login</button>
             </form>
