@@ -87,6 +87,36 @@ OFX;
         $this->assertSame(TransactionType::DEBIT, $parsed['transactions'][0]->type);
     }
 
+    public function testTransactionLineAndOffsetCaptured(): void
+    {
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <DTPOSTED>20240101</DTPOSTED>
+            <TRNAMT>-1.00</TRNAMT>
+          </STMTTRN>
+          <STMTTRN>
+            <DTPOSTED>20240102</DTPOSTED>
+            <TRNAMT>-2.00</TRNAMT>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        $transactions = OfxParser::parse($ofx)[0]['transactions'];
+        $this->assertSame(6, $transactions[0]->line);
+        $this->assertSame(strpos($ofx, '<STMTTRN>'), $transactions[0]->offset);
+        $secondPos = strpos($ofx, '<STMTTRN>', $transactions[0]->offset + 1);
+        $this->assertSame(10, $transactions[1]->line);
+        $this->assertSame($secondPos, $transactions[1]->offset);
+    }
+
     public function testStrictModeThrowsOnMissingFields(): void
     {
         $this->expectException(Exception::class);
