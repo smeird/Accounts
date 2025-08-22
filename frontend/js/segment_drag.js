@@ -57,8 +57,8 @@
 
     const header = document.createElement('div');
     header.className = 'flex justify-between items-center mb-2';
-    const title = document.createElement('h2');
-    title.className = 'font-semibold';
+    const title = document.createElement('span');
+    title.className = 'inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-200 text-yellow-800';
     title.textContent = seg.name;
     header.appendChild(title);
 
