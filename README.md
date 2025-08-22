@@ -165,7 +165,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger automated deployment
-        run: curl https://newaccounts.smeird.com/automated_deployment.php
+        run: curl https://your.web.server.com/automated_deployment.php
 ```
 
 
