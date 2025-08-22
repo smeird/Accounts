@@ -29,7 +29,7 @@
             <div id="categories-chart" class="mt-4" style="height:400px"></div>
 
             <h2 class="text-xl font-semibold mt-6 mb-2">Category & Tag Breakdown</h2>
-            <div id="category-tag-donuts" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="category-tag-sunburst" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div id="category-tag-income" style="height:400px"></div>
                 <div id="category-tag-outgoings" style="height:400px"></div>
             </div>
@@ -47,6 +47,7 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/sunburst.js"></script>
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
     // Format totals with currency and colour
@@ -111,51 +112,49 @@
         });
     }
 
-    // Build nested donut charts for categories and tags across all years
-    function buildDonutCharts(incomeId, outgoingsId, categories, tags){
+    // Build sunburst charts for categories and tags across all years
+    function buildSunburstCharts(incomeId, outgoingsId, categories, tags){
 
         const colors = Highcharts.getOptions().colors;
 
-        // Assemble chart data for either income or outgoing values
+        // Create hierarchical data for either income or outgoing values
         function createData(isIncome){
-            const categoryData = [];
-            const tagData = [];
+            const data = [{ id: 'root', parent: '', name: '' }];
             let colorIndex = 0;
             categories.forEach(c => {
                 const total = parseFloat(c.total);
                 if ((isIncome && total > 0) || (!isIncome && total < 0)) {
                     const color = colors[colorIndex % colors.length];
                     colorIndex++;
-                    categoryData.push({ name: c.name, y: Math.abs(total), color });
+                    const catId = c.name;
+                    data.push({ id: catId, parent: 'root', name: c.name, value: Math.abs(total), color });
                     tags.filter(t => t.category === c.name && ((isIncome && parseFloat(t.total) > 0) || (!isIncome && parseFloat(t.total) < 0))).forEach(t => {
-                        tagData.push({
+                        data.push({
                             name: t.name,
-                            y: Math.abs(parseFloat(t.total)),
+                            parent: catId,
+                            value: Math.abs(parseFloat(t.total)),
                             color: Highcharts.color(color).brighten(0.1).get()
                         });
                     });
                 }
             });
-            return { categoryData, tagData };
+            return data;
         }
 
-        // Render a donut chart into a container
+        // Render a sunburst chart into a container
         function render(id, title, data){
             Highcharts.chart(id, {
-                chart: { type: 'pie' },
                 title: { text: title },
-                tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
-                plotOptions: {
-                    pie: {
-                        dataLabels: {
-                            formatter: function(){ return this.point.name + ': £' + Highcharts.numberFormat(this.y, 2); }
-                        }
-                    }
-                },
-                series: [
-                    { name: 'Categories', data: data.categoryData, size: '60%', dataLabels: { distance: -30 } },
-                    { name: 'Tags', data: data.tagData, size: '80%', innerSize: '60%' }
-                ]
+                series: [{
+                    type: 'sunburst',
+                    data: data,
+                    allowDrillToNode: true,
+                    cursor: 'pointer',
+                    dataLabels: { format: '{point.name}: £{point.value:.2f}' }
+                }],
+                tooltip: {
+                    pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); }
+                }
             });
         }
 
@@ -173,7 +172,7 @@
                 buildChart('tags-chart', 'Tag Totals', data.tags);
                 buildTable('categories-table', data.categories, data.years, 'bg-green-200 text-green-800');
                 buildChart('categories-chart', 'Category Totals', data.categories);
-                buildDonutCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
+                buildSunburstCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
                 buildTable('segments-table', data.segments, data.years, 'bg-yellow-200 text-yellow-800');
                 buildChart('segments-chart', 'Segment Totals', data.segments);
                 buildTable('groups-table', data.groups, data.years, 'bg-purple-200 text-purple-800');
