@@ -75,7 +75,7 @@
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { column: { stacking: 'normal', depth: 40 } },
                 series: categorySeries
             });
@@ -106,7 +106,7 @@
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { column: { stacking: 'normal', depth: 40 } },
                 series: categoryCumulative
             });
@@ -119,7 +119,7 @@
 
                 },
                 title: { text: 'Category Breakdown' },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { pie: { depth: 35 } },
                 series: [{ name: 'Categories', data: catData }]
             });
@@ -139,7 +139,7 @@
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { bar: { depth: 40 } },
                 series: [{ name: 'Total', data: incomeTags.map(t => parseFloat(t.total)), colorByPoint: true }]
             });
@@ -156,7 +156,7 @@
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
-                tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
                 plotOptions: { bar: { depth: 40 } },
                 series: [{ name: 'Total', data: outgoingTags.map(t => Math.abs(parseFloat(t.total))), colorByPoint: true }]
             });
@@ -174,7 +174,7 @@
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
-                tooltip: { pointFormatter: function(){ return this.category + ': £' + Highcharts.numberFormat(this.y, 2); } },
+                tooltip: { pointFormatter: function(){ return this.series.name + ' - ' + this.category + ': £' + Highcharts.numberFormat(this.y, 2); } },
 
                 series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]), colorByPoint: true }]
 
@@ -307,7 +307,7 @@
             tooltip: {
                 pointFormatter: function(){
                     const sum = (this.node && this.node.childrenTotal) || this.value;
-                    return '£' + Highcharts.numberFormat(sum, 2);
+                    return this.series.name + ': £' + Highcharts.numberFormat(sum, 2);
                 }
             }
         });
@@ -339,7 +339,7 @@
             title: { text: 'Segment Totals' },
             xAxis: { categories: segments.map(s => s.name) },
             yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-            tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+            tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
             series: [{ name: 'Total', data: segments.map(s => parseFloat(s.total)), colorByPoint: true }]
         });
     }

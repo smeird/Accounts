@@ -110,7 +110,7 @@
                 },
                 tooltip: {
                     pointFormatter: function(){
-                        return '£' + Highcharts.numberFormat(this.y, 2);
+                        return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2);
                     }
                 },
                 series: [{

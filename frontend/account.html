@@ -68,7 +68,7 @@
                     title: { text: 'Balance Over Time' },
                     xAxis: { categories: dates },
                     yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-                    tooltip: { pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.y, 2); } },
+                    tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
                     series: [{ name: 'Balance', data: balances, colorByPoint: true }]
                 });
             });
