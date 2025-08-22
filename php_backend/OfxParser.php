@@ -33,7 +33,7 @@ class OfxParser {
         'OTHER' => TransactionType::OTHER,
     ];
 
-    private const MAX_AMOUNT = 1000000000; // clamp extremely large values
+    const MAX_AMOUNT = 1000000000; // clamp extremely large values
 
     public static function parse(string $data, bool $strict = false): array {
         $warnings = [];

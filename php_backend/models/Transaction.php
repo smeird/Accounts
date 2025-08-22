@@ -5,6 +5,12 @@ require_once __DIR__ . '/Tag.php';
 require_once __DIR__ . '/Log.php';
 
 class Transaction {
+    const DESC_MAX_LENGTH = 255;
+    const MEMO_MAX_LENGTH = 255;
+    const ID_MAX_LENGTH = 255;
+    const TYPE_MAX_LENGTH = 50;
+    const REF_MAX_LENGTH = 32;
+    const CHECK_MAX_LENGTH = 20;
     /**
      * Insert a new transaction and attempt to auto-tag and link transfers.
      */
@@ -16,6 +22,13 @@ class Transaction {
             }
         }
         $db = Database::getConnection();
+
+        $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
+        $description = $substr($description, 0, self::DESC_MAX_LENGTH);
+        $memo = $memo === null ? null : $substr($memo, 0, self::MEMO_MAX_LENGTH);
+        $ofx_id = $ofx_id === null ? null : $substr($ofx_id, 0, self::ID_MAX_LENGTH);
+        $ofx_type = $ofx_type === null ? null : $substr($ofx_type, 0, self::TYPE_MAX_LENGTH);
+        $bank_ofx_id = $bank_ofx_id === null ? null : $substr($bank_ofx_id, 0, self::ID_MAX_LENGTH);
 
         // avoid duplicate inserts when an OFX id already exists
         if ($ofx_id !== null) {

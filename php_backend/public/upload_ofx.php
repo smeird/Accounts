@@ -128,20 +128,20 @@ try {
                 $bankId = $txn->bankId ? $txn->bankId : null;
 
                 if ($txn->ref) {
-                    $ref = substr($txn->ref, 0, 32);
+                    $ref = substr($txn->ref, 0, Transaction::REF_MAX_LENGTH);
                     $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
                 }
                 if ($txn->check) {
-                    $chk = substr($txn->check, 0, 20);
+                    $chk = substr($txn->check, 0, Transaction::CHECK_MAX_LENGTH);
                     $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
                 }
 
 
             $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
-            $desc = $substr($desc, 0, 255);
-            $memo = $memo === '' ? null : $substr($memo, 0, 255);
-            $bankId = $bankId === null ? null : $substr($bankId, 0, 255);
-            $type = $type === null ? null : $substr($type, 0, 50);
+            $desc = $substr($desc, 0, Transaction::DESC_MAX_LENGTH);
+            $memo = $memo === '' ? null : $substr($memo, 0, Transaction::MEMO_MAX_LENGTH);
+            $bankId = $bankId === null ? null : $substr($bankId, 0, Transaction::ID_MAX_LENGTH);
+            $type = $type === null ? null : $substr($type, 0, Transaction::TYPE_MAX_LENGTH);
 
             $amountStr = number_format($amount, 2, '.', '');
             $normalise = function (string $text): string {
@@ -186,11 +186,13 @@ try {
             }
             $messages[] = $msg;
             Log::write($msg);
-        }
-    }
+          }
+      }
+  }
 
-    echo implode("\n", $messages);
-} catch (Exception $e) {
+  echo implode("\n", $messages);
+}
+catch (Exception $e) {
     http_response_code(500);
     $msg = 'Error: ' . $e->getMessage();
     Log::write($msg, 'ERROR');
