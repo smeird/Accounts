@@ -40,36 +40,29 @@
             const card = document.createElement('div');
             card.className = 'relative bg-white p-6 rounded shadow';
 
-            const icons = document.createElement('div');
+            function createBadge(text, colorClasses) {
+                const span = document.createElement('span');
+                span.textContent = text;
+                span.className = `inline-block px-2 py-1 text-xs font-semibold rounded ${colorClasses}`;
+                return span;
+            }
 
-            icons.className = 'absolute top-2 right-2 flex flex-col space-y-2 items-end';
+            const badges = document.createElement('div');
+            badges.className = 'absolute top-2 right-2 flex flex-col space-y-2 items-end';
 
-            const tagBtn = document.createElement('button');
-            tagBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.tag_name ? 'bg-green-600' : 'bg-gray-400'}`;
-            tagBtn.innerHTML = `
-                <i class="fas fa-tag w-8 h-8"></i>
-                <span class="ml-4 flex-1 text-right">${tx.tag_name || 'No tag'}</span>
-            `;
-            icons.appendChild(tagBtn);
+            function addBadge(value, color) {
+                if (!value) return;
+                const link = document.createElement('a');
+                link.href = `search.html?value=${encodeURIComponent(value)}`;
+                link.appendChild(createBadge(value, color));
+                badges.appendChild(link);
+            }
 
-            const catBtn = document.createElement('button');
-            catBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.category_name ? 'bg-blue-600' : 'bg-gray-400'}`;
-            catBtn.innerHTML = `
-                <i class="fas fa-folder-open w-8 h-8"></i>
-                <span class="ml-4 flex-1 text-right">${tx.category_name || 'No category'}</span>
-            `;
-            icons.appendChild(catBtn);
+            addBadge(tx.tag_name, 'bg-indigo-200 text-indigo-800');
+            addBadge(tx.category_name, 'bg-green-200 text-green-800');
+            addBadge(tx.segment_name, 'bg-yellow-200 text-yellow-800');
 
-            const groupBtn = document.createElement('button');
-            groupBtn.className = `flex items-center justify-between w-48 px-4 py-2 rounded text-white ${tx.group_name ? 'bg-purple-600' : 'bg-gray-400'}`;
-            groupBtn.innerHTML = `
-                <i class="fas fa-layer-group w-8 h-8"></i>
-                <span class="ml-4 flex-1 text-right">${tx.group_name || 'No group'}</span>
-            `;
-            icons.appendChild(groupBtn);
-
-
-            card.appendChild(icons);
+            card.appendChild(badges);
 
             const form = document.createElement('form');
             form.className = 'space-y-4';
