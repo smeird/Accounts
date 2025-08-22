@@ -9,6 +9,7 @@ require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../OfxParser.php';
 
+use Ofx\TransactionType;
 try {
     if (!isset($_FILES['ofx_files'])) {
         http_response_code(400);
@@ -123,7 +124,7 @@ try {
                 $date = $txn->date;
                 $desc = $txn->desc;
                 $memo = $txn->memo;
-                $type = $txn->type;
+                $type = $txn->type instanceof TransactionType ? $txn->type->value : (string)$txn->type;
                 $bankId = $txn->bankId ? $txn->bankId : null;
 
                 if ($txn->ref) {
