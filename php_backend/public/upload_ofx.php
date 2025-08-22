@@ -189,7 +189,8 @@ try {
         // Summarise the results for this account
         $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
         if (!empty($duplicates)) {
-            $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
+            $count = count($duplicates);
+            $msg .= " Skipped $count duplicate transaction" . ($count === 1 ? '' : 's') . '.';
         }
         $messages[] = $msg;
         Log::write($msg);
