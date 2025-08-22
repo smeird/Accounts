@@ -173,22 +173,26 @@ try {
             if ($createdId === 0) {
                 if ($bankId !== null) {
                     $duplicates[] = $bankId;
-
                 }
-
                 $inserted++;
             }
+        }
 
+        // Apply tags and categories after processing all transactions for the account
+        // Only run if new transactions were inserted to avoid unnecessary work
+        $tagged = $categorised = 0;
+        if ($inserted > 0) {
             $tagged = Tag::applyToAccountTransactions($accountId);
             $categorised = CategoryTag::applyToAccountTransactions($accountId);
+        }
 
-            $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
-            if (!empty($duplicates)) {
-                $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
-            }
-            $messages[] = $msg;
-            Log::write($msg);
-          }
+        // Summarise the results for this account
+        $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
+        if (!empty($duplicates)) {
+            $msg .= " Skipped duplicates with FITID(s): " . implode(', ', $duplicates) . '.';
+        }
+        $messages[] = $msg;
+        Log::write($msg);
       }
   }
 
