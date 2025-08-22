@@ -88,7 +88,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow">
-        <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
+        <img src="favicon.svg" alt="Finance Manager logo" class="h-24 w-24 mb-4 block mx-auto" />
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1 text-center">AUTHENTICATION / <?= $needsToken ? 'TWO-FACTOR' : 'LOGIN' ?></div>
         <h1 class="text-2xl font-semibold mb-4 text-center text-indigo-700"><?= $needsToken ? 'Enter Code' : 'Login' ?></h1>
         <p class="mb-4 text-center">
