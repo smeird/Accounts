@@ -38,7 +38,7 @@
   function createCategoryCard(cat){
     const div = document.createElement('div');
     div.textContent = cat.name;
-    div.className = 'bg-blue-200 text-blue-800 px-2 py-1 rounded cursor-move w-full text-center';
+    div.className = 'inline-block px-2 py-1 text-xs font-semibold rounded bg-green-200 text-green-800 cursor-move';
     div.draggable = true;
     div.dataset.categoryId = cat.id;
     div.addEventListener('dragstart', handleDragStart);
@@ -110,7 +110,7 @@
     }
 
     const catWrap = document.createElement('div');
-    catWrap.className = 'min-h-[3rem] flex flex-col gap-2';
+    catWrap.className = 'min-h-[3rem] flex flex-col gap-2 items-start';
     catWrap.dataset.segmentId = seg.id;
     (seg.categories || []).forEach(c => catWrap.appendChild(createCategoryCard(c)));
     card.appendChild(catWrap);
@@ -127,7 +127,7 @@
     title.textContent = 'Unassigned Categories';
     card.appendChild(title);
     const wrap = document.createElement('div');
-    wrap.className = 'min-h-[3rem] flex flex-col gap-2';
+    wrap.className = 'min-h-[3rem] flex flex-col gap-2 items-start';
     categories.forEach(c => wrap.appendChild(createCategoryCard(c)));
     card.appendChild(wrap);
     addDropHandlers(wrap);
