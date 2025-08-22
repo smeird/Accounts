@@ -64,7 +64,8 @@
     card.dataset.categoryId = cat.id;
 
     const nameCol = document.createElement('div');
-    nameCol.className = 'w-1/4 flex items-center gap-2';
+    // Shrink name column so the name and actions take up less horizontal space
+    nameCol.className = 'w-[10%] flex items-center gap-2';
 
     const title = document.createElement('h2');
     title.className = 'font-semibold';
@@ -112,7 +113,8 @@
     card.appendChild(nameCol);
 
     const descCol = document.createElement('div');
-    descCol.className = 'w-1/3 text-sm text-gray-600';
+    // Allocate only 20% of the row to the description column
+    descCol.className = 'w-[20%] text-sm text-gray-600';
     descCol.textContent = cat.description || '';
     card.appendChild(descCol);
 
