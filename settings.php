@@ -14,11 +14,13 @@ $message = '';
 $openai = Setting::get('openai_api_token') ?? '';
 $batch = Setting::get('ai_tag_batch_size') ?? '20';
 $retention = Setting::get('log_retention_days') ?? '30';
+$timeout = Setting::get('session_timeout_minutes') ?? '0';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
     $batch = trim($_POST['ai_tag_batch_size'] ?? '');
     $retention = trim($_POST['log_retention_days'] ?? '');
+    $timeout = trim($_POST['session_timeout_minutes'] ?? '');
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -28,6 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($retention !== '') {
         Setting::set('log_retention_days', $retention);
         Log::write('Updated log retention days');
+    }
+    if ($timeout !== '') {
+        Setting::set('session_timeout_minutes', $timeout);
+        Log::write('Updated session timeout minutes');
     }
     $message = 'Settings updated.';
 }
@@ -73,6 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </label>
             <label class="block">Log Retention Days:
                 <input type="number" name="log_retention_days" value="<?= htmlspecialchars($retention) ?>" class="border p-2 rounded w-full" data-help="Automatically prune logs older than this many days">
+            </label>
+            <label class="block">Auto-Logout Minutes:
+                <input type="number" name="session_timeout_minutes" value="<?= htmlspecialchars($timeout) ?>" class="border p-2 rounded w-full" data-help="Minutes of inactivity before automatic logout">
             </label>
             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
