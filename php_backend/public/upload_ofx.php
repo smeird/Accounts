@@ -125,7 +125,8 @@ try {
                 $date = $txn->date;
                 $desc = $txn->desc;
                 $memo = $txn->memo;
-                $type = $txn->type instanceof TransactionType ? $txn->type->value : (string)$txn->type;
+                // TransactionType is represented by string constants; cast to string if present
+                $type = $txn->type === null ? null : (string)$txn->type;
                 $bankId = $txn->bankId ? $txn->bankId : null;
 
                 if ($txn->ref) {
