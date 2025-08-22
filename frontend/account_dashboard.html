@@ -35,6 +35,12 @@
 
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    function waterfallTooltip(){
+        const name = this.point.name || this.category;
+        const change = this.y;
+        const total = this.point.stackY;
+        return `<b>${name}</b><br/>Change: £${Highcharts.numberFormat(change, 2)}<br/>Total: £${Highcharts.numberFormat(total, 2)}`;
+    }
     // Format balance cells with currency and positive/negative colouring
     function balanceFormatter(cell){
         const value = cell.getValue();
@@ -108,11 +114,7 @@
                         }
                     }
                 },
-                tooltip: {
-                    pointFormatter: function(){
-                        return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2);
-                    }
-                },
+                tooltip: { pointFormatter: waterfallTooltip },
                 series: [{
                     type: 'waterfall',
                     name: 'Balance',

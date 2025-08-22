@@ -57,6 +57,15 @@
 <script>
 // Format a number as currency with a pound symbol
 function formatCurrency(value){return '£'+parseFloat(value).toFixed(2);}
+function budgetTooltip(){
+    const category = this.category;
+    if(this.series.name==='Spent'){
+        const budget = this.series.chart.series[0].data[this.point.index].y;
+        const pct = budget ? (this.y / budget * 100) : 0;
+        return `<b>${category}</b><br/>Spent: £${Highcharts.numberFormat(this.y,2)} (${Highcharts.numberFormat(pct,1)}% of budget)`;
+    }
+    return `<b>${category}</b><br/>Budget: £${Highcharts.numberFormat(this.y,2)}`;
+}
 let budgetTable;
 const monthInput=document.getElementById('month');
 monthInput.value=new Date().toISOString().slice(0,7);
@@ -106,6 +115,7 @@ async function loadBudgets(){
         title:{text:''},
         xAxis:{categories:data.map(b=>b.category)},
         yAxis:{title:{text:'£'}},
+        tooltip:{ pointFormatter: budgetTooltip },
         series:[
             {name:'Budget',data:data.map(b=>parseFloat(b.amount))},
             {name:'Spent',data:data.map(b=>parseFloat(b.spent))}

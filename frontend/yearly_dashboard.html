@@ -54,6 +54,17 @@
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    function columnTooltip(){
+        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
+        const pct = total ? (this.y / total * 100) : 0;
+        return `<b>${this.series.name}</b><br/>${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}% of total)`;
+    }
+    function sunburstTooltip(){
+        const sum = (this.node && this.node.childrenTotal) || this.value;
+        const total = this.series.points[0].node.childrenTotal;
+        const pct = total ? (sum / total * 100) : 0;
+        return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(sum, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
+    }
     // Format totals with currency and colour coding
     function totalFormatter(cell){
         const value = cell.getValue();
@@ -111,7 +122,7 @@
             title: { text: title },
             xAxis: { categories: data.map(d => d.name) },
             yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-            tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
+            tooltip: { pointFormatter: columnTooltip },
             series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)), colorByPoint: true }]
         });
     }
@@ -156,9 +167,7 @@
                     cursor: 'pointer',
                     dataLabels: { format: '{point.name}: £{point.value:.2f}' }
                 }],
-                tooltip: {
-                    pointFormatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); }
-                }
+                tooltip: { pointFormatter: sunburstTooltip }
             });
         }
 

@@ -43,6 +43,11 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    function columnTooltip(){
+        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
+        const pct = total ? (this.y / total * 100) : 0;
+        return `<b>${this.series.name}</b><br/>${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}% of total)`;
+    }
     // Format totals with currency and highlight positive/negative values
     function totalFormatter(cell){
         const value = cell.getValue();
@@ -126,7 +131,7 @@
             title: { text: title },
             xAxis: { categories: data.map(d => d.name) },
             yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value,2); } } },
-            tooltip: { pointFormatter: function(){ return this.series.name + ': £' + Highcharts.numberFormat(this.y, 2); } },
+            tooltip: { pointFormatter: columnTooltip },
             series: [{ name: 'Total', data: data.map(d => parseFloat(d.total)), colorByPoint: true }]
         });
     }

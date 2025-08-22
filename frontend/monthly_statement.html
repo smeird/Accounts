@@ -429,7 +429,8 @@ function buildDonutChart(spendings, prevSpendings){
             pointFormatter: function(){
                 const change = this.change;
                 const sign = change >= 0 ? '+' : '-';
-                return `<b>${this.series.name}: ${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.y, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}`;
+                const share = Highcharts.numberFormat(this.percentage, 1);
+                return `<b>${this.series.name}: ${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.y, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}<br/>Share: ${share}%`;
             }
         },
         series: [{ data }]
