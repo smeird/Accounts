@@ -35,6 +35,25 @@ class OfxParser {
 
     const MAX_AMOUNT = 1000000000; // clamp extremely large values
 
+    private const PROFILE_DEFAULT = [
+        'currency' => null,
+        'fields' => [
+            'CHECKNUM' => ['regex' => '/[^0-9]/'],
+            'REFNUM' => ['uppercase' => true, 'max_length' => 15],
+            'MEMO' => ['max_length' => 10],
+            'ACCTID' => ['regex' => '/[^A-Za-z0-9*]/'],
+            'BANKID' => ['regex' => '/[^A-Za-z0-9]/'],
+            'ACCTNAME' => ['max_length' => 32],
+            'NAME' => ['max_length' => 32],
+            'FITID' => ['max_length' => 32],
+        ],
+    ];
+
+    private const PROFILES = [
+        // Example profile; extend as required for other institutions
+        'TESTBANK' => [],
+    ];
+
     public static function parse(string $data, bool $strict = false): array {
         $overallCounts = [];
 
@@ -65,6 +84,12 @@ class OfxParser {
         // Repair unbalanced SGML-style tags using a simple stack heuristic
         $data = self::closeTags($data);
 
+        // Detect institution profile from ORG tag if present
+        $org = null;
+        if (preg_match('/<ORG>([^<]+)<\/ORG>/i', $data, $m)) {
+            $org = strtoupper(trim($m[1]));
+        }
+        $profile = self::getProfile($org);
 
         libxml_use_internal_errors(true);
         $opts = LIBXML_NOERROR | LIBXML_NOWARNING;
@@ -84,7 +109,7 @@ class OfxParser {
             if ($reader->nodeType === XMLReader::ELEMENT &&
                 ($reader->name === 'STMTRS' || $reader->name === 'CCSTMTRS')) {
                 $hasStatement = true;
-                $stmt = self::parseStatement($reader, $strict, $data, $offset);
+                $stmt = self::parseStatement($reader, $strict, $data, $offset, $profile);
                 $statements[] = $stmt;
                 foreach ($stmt['warningCounts'] as $cat => $count) {
                     $overallCounts[$cat] = ($overallCounts[$cat] ?? 0) + $count;
@@ -104,10 +129,10 @@ class OfxParser {
 
     }
 
-    private static function parseStatement(XMLReader $reader, bool $strict, string $data, int &$offset): array {
+    private static function parseStatement(XMLReader $reader, bool $strict, string $data, int &$offset, array $profile): array {
         $warnings = [];
         $warningCounts = [];
-        $currency = 'GBP';
+        $currency = $profile['currency'] ?? 'GBP';
         $account = null;
         $ledger = null;
         $transactions = [];
@@ -120,7 +145,10 @@ class OfxParser {
             if ($reader->nodeType === XMLReader::ELEMENT) {
                 switch ($reader->name) {
                     case 'CURDEF':
-                        $currency = self::normaliseCurrency(trim($reader->readString()));
+                        $cur = self::normaliseCurrency(trim($reader->readString()));
+                        if (empty($profile['currency'])) {
+                            $currency = $cur;
+                        }
                         break;
                     case 'BANKACCTFROM':
                     case 'CCACCTFROM':
@@ -128,7 +156,7 @@ class OfxParser {
                         $xml = $reader->readOuterXML();
                         $node = @simplexml_load_string($xml);
                         if ($node) {
-                            $account = self::parseAccountNode($node, $warnings, $warningCounts, $strict, $currency);
+                            $account = self::parseAccountNode($node, $warnings, $warningCounts, $strict, $currency, $profile);
                         }
                         break;
                     case 'LEDGERBAL':
@@ -157,7 +185,7 @@ class OfxParser {
                                       $xml = $reader->readOuterXML();
                                       $trn = @simplexml_load_string($xml);
                                       if ($trn) {
-                                          $tx = self::parseTransaction($trn, $dtStart, $dtEnd, $warnings, $warningCounts, $strict, $running, $line, $byte);
+                                          $tx = self::parseTransaction($trn, $dtStart, $dtEnd, $warnings, $warningCounts, $strict, $running, $profile, $line, $byte);
                                           if ($tx) {
                                               $transactions[] = $tx;
                                           }
@@ -182,7 +210,20 @@ class OfxParser {
                 throw new Exception($msg);
             }
             self::log($warnings, $warningCounts, $msg, null, '', 'structure');
+            $currency = $currency ?? 'GBP';
             $account = new OfxAccount(null, '00000000', 'Default', $currency);
+        }
+        $currency = $currency ?? 'GBP';
+
+        // Ensure currency override propagates
+        if ($account) {
+            $account->currency = $currency;
+        }
+        if ($ledger) {
+            $ledger->currency = $currency;
+        }
+        foreach ($transactions as $t) {
+            // Transactions don't store currency, but keep for future extension
         }
 
         return [
@@ -194,8 +235,9 @@ class OfxParser {
         ];
     }
 
-    private static function parseAccountNode(SimpleXMLElement $acctNode, array &$warnings, array &$warningCounts, bool $strict, string $currency): OfxAccount {
+    private static function parseAccountNode(SimpleXMLElement $acctNode, array &$warnings, array &$warningCounts, bool $strict, string $currency, array $profile): OfxAccount {
         $rawAcctId = trim((string)$acctNode->ACCTID);
+        $rawAcctId = self::applyFieldProfile($profile, 'ACCTID', $rawAcctId);
         $accountNumber = preg_replace('/[^A-Za-z0-9*]/', '', $rawAcctId);
         if ($accountNumber === '') {
             if ($strict) {
@@ -206,11 +248,15 @@ class OfxParser {
         }
 
         $sortCode = trim((string)$acctNode->BANKID) ?: null;
+        if ($sortCode !== null) {
+            $sortCode = self::applyFieldProfile($profile, 'BANKID', $sortCode);
+        }
         if (strtoupper($acctNode->getName()) === 'CCACCTFROM') {
             $sortCode = null;
         }
 
         $accountName = trim((string)$acctNode->ACCTNAME) ?: 'Default';
+        $accountName = self::applyFieldProfile($profile, 'ACCTNAME', $accountName);
 
         return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
     }
@@ -224,7 +270,7 @@ class OfxParser {
         return null;
     }
 
-    private static function parseTransaction(SimpleXMLElement $trn, ?string $dtStart, ?string $dtEnd, array &$warnings, array &$warningCounts, bool $strict, ?float &$running, ?int $line = null, ?int $byte = null): ?OfxTransaction {
+    private static function parseTransaction(SimpleXMLElement $trn, ?string $dtStart, ?string $dtEnd, array &$warnings, array &$warningCounts, bool $strict, ?float &$running, array $profile, ?int $line = null, ?int $byte = null): ?OfxTransaction {
         $raw = trim($trn->asXML());
         $dt = self::parseDate((string)$trn->DTPOSTED, $warnings, $warningCounts, self::line($trn->DTPOSTED) ?? $line, $strict);
         $amt = self::normaliseAmount((string)$trn->TRNAMT);
@@ -245,7 +291,7 @@ class OfxParser {
             }
 
         $trnTypeRaw = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
-        $memo = trim((string)$trn->MEMO);
+        $memo = self::applyFieldProfile($profile, 'MEMO', trim((string)$trn->MEMO));
         if ($trnTypeRaw === null) {
             if ($strict) {
                 throw new Exception('Missing TRNTYPE');
@@ -292,20 +338,52 @@ class OfxParser {
             }
         }
 
+        $name = self::applyFieldProfile($profile, 'NAME', trim((string)$trn->NAME));
+        $ref = self::applyFieldProfile($profile, 'REFNUM', trim((string)$trn->REFNUM));
+        $check = self::applyFieldProfile($profile, 'CHECKNUM', trim((string)$trn->CHECKNUM));
+        $fitid = self::applyFieldProfile($profile, 'FITID', trim((string)$trn->FITID));
+
         return new OfxTransaction(
             $dt,
             $amt,
-            trim((string)$trn->NAME),
+            $name,
             $memo,
             $trnType,
-            trim((string)$trn->REFNUM),
-            trim((string)$trn->CHECKNUM),
-            trim((string)$trn->FITID),
+            $ref,
+            $check,
+            $fitid,
             $raw,
             $extensions,
             $line,
             $byte
         );
+    }
+
+    private static function getProfile(?string $org): array {
+        $profile = self::PROFILE_DEFAULT;
+        if ($org && isset(self::PROFILES[$org])) {
+            $profile = array_replace_recursive($profile, self::PROFILES[$org]);
+        }
+        return $profile;
+    }
+
+    private static function applyFieldProfile(array $profile, string $field, string $value): string {
+        $value = trim($value);
+        $fieldProfile = $profile['fields'][$field] ?? null;
+        if (!$fieldProfile) {
+            return $value;
+        }
+        if (!empty($fieldProfile['regex'])) {
+            $value = preg_replace($fieldProfile['regex'], '', $value);
+        }
+        if (!empty($fieldProfile['uppercase'])) {
+            $value = strtoupper($value);
+        }
+        if (!empty($fieldProfile['max_length'])) {
+            $value = substr($value, 0, (int)$fieldProfile['max_length']);
+            $value = rtrim($value);
+        }
+        return $value;
     }
 
     private static function closeTags(string $data): string {
