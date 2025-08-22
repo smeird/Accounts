@@ -32,7 +32,7 @@ if (!$txns) {
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
 $txnMap = [];
-$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
+$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
 
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
