@@ -1,6 +1,7 @@
 <?php
 // Resets and creates all database tables used by the application.
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/models/Transaction.php';
 
 $db = Database::getConnection();
 
@@ -257,10 +258,10 @@ while ($row = $txs->fetch(PDO::FETCH_ASSOC)) {
     $chk = '';
     if (!empty($row['memo'])) {
         if (preg_match('/Ref:([^\s]+)/i', $row['memo'], $m)) {
-            $ref = substr(trim($m[1]), 0, 32);
+            $ref = substr(trim($m[1]), 0, Transaction::REF_MAX_LENGTH);
         }
         if (preg_match('/Chk:([^\s]+)/i', $row['memo'], $m)) {
-            $chk = substr(trim($m[1]), 0, 20);
+            $chk = substr(trim($m[1]), 0, Transaction::CHECK_MAX_LENGTH);
         }
     }
     // Legacy transactions lack raw STMTTRN blocks, so include an empty placeholder
