@@ -4,13 +4,21 @@ require_once __DIR__ . '/../Database.php';
 
 class Tag {
     /**
+     * Cached tag keywords to avoid repeated queries during bulk operations.
+     *
+     * @var array|null
+     */
+    private static $keywordCache = null;
+    /**
      * Create a new tag optionally with a keyword for auto tagging.
      */
     public static function create(string $name, ?string $keyword = null, ?string $description = null): int {
         $db = Database::getConnection();
         $stmt = $db->prepare('INSERT INTO `tags` (`name`, `keyword`, `description`) VALUES (:name, :keyword, :description)');
         $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description]);
-        return (int)$db->lastInsertId();
+        $id = (int)$db->lastInsertId();
+        self::$keywordCache = null; // clear cache so new tag is recognised
+        return $id;
     }
 
     /**
@@ -41,7 +49,9 @@ class Tag {
     public static function update(int $id, string $name, ?string $keyword = null, ?string $description = null): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword, `description` = :description WHERE `id` = :id');
-        return $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
+        $result = $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
+        self::$keywordCache = null; // keyword may have changed
+        return $result;
     }
 
     /**
@@ -59,7 +69,9 @@ class Tag {
 
         // delete the tag itself
         $stmt = $db->prepare('DELETE FROM `tags` WHERE `id` = :id');
-        return $stmt->execute(['id' => $id]);
+        $result = $stmt->execute(['id' => $id]);
+        self::$keywordCache = null; // tag removed
+        return $result;
     }
 
     /**
@@ -77,9 +89,12 @@ class Tag {
      * Find a tag whose keyword appears in the provided text.
      */
     public static function findMatch(string $text): ?int {
-        $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if (self::$keywordCache === null) {
+            $db = Database::getConnection();
+            $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');
+            self::$keywordCache = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        foreach (self::$keywordCache as $row) {
             if (stripos($text, $row['keyword']) !== false) {
                 return (int)$row['id'];
             }
@@ -127,6 +142,7 @@ class Tag {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id AND (`keyword` IS NULL OR `keyword` = "")');
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
+        self::$keywordCache = null;
     }
 
     /**
@@ -136,6 +152,7 @@ class Tag {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id');
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
+        self::$keywordCache = null;
     }
 
     /**
