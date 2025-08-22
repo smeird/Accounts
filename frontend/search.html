@@ -38,6 +38,11 @@
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    function columnTooltip(){
+        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
+        const pct = total ? (this.y / total * 100) : 0;
+        return `${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
+    }
     // Format a numeric value as pounds and pence
     function formatCurrency(value) {
         return '£' + parseFloat(value).toFixed(2);
@@ -172,7 +177,7 @@
                             yAxis: { title: { text: 'Amount (£)' } },
                             plotOptions: { column: { depth: 25 } },
                             series: [{ name: 'Spend', data: points, colorByPoint: true }],
-                            tooltip: { valuePrefix: '£', valueDecimals: 2 }
+                            tooltip: { pointFormatter: columnTooltip }
                         });
                     } else {
                         chartEl.innerHTML = '';

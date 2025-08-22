@@ -47,6 +47,11 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script>
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    function columnTooltip(){
+        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
+        const pct = total ? (this.y / total * 100) : 0;
+        return `${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
+    }
 
     // Load filter options for categories, tags and groups
     async function loadOptions() {
@@ -154,6 +159,7 @@
                         title: { text: 'Transaction Amounts' },
                         xAxis: { categories: categories, title: { text: 'Date' } },
                         yAxis: { title: { text: 'Amount' } },
+                        tooltip: { pointFormatter: columnTooltip },
                         series: [{ name: 'Amount', data: amounts, colorByPoint: true }]
                     });
                 } else {
