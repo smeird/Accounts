@@ -242,4 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const hintScript = document.createElement('script');
   hintScript.src = 'js/keyboard_hints.js';
   document.body.appendChild(hintScript);
+
+  const logoutScript = document.createElement('script');
+  logoutScript.src = 'js/auto_logout.js';
+  document.body.appendChild(logoutScript);
 });
