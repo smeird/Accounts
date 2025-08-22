@@ -74,9 +74,10 @@ try {
         }
 
         try {
-            $statements = OfxParser::parse($ofxData);
-            // OfxParser::parse now returns an array of statements
-            // so we iterate over each parsed account separately.
+            $result = OfxParser::parse($ofxData);
+            $statements = $result['statements'];
+            $warningCounts = $result['warningCounts'];
+            // Iterate over each parsed account separately.
         } catch (Exception $e) {
             $msg = 'Error parsing ' . $files['name'][$i] . ': ' . $e->getMessage();
             $messages[] = $msg;

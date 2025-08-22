@@ -49,7 +49,7 @@ $maskedOfx = <<<OFX
 </CREDITCARDMSGSRSV1>
 </OFX>
 OFX;
-$parsedMasked = OfxParser::parse($maskedOfx)[0];
+$parsedMasked = OfxParser::parse($maskedOfx)['statements'][0];
 
 assertEqual('552213******8609', $parsedMasked['account']->number, 'Masked account numbers retain placeholder digits');
 
@@ -61,7 +61,7 @@ $compactOfx = <<<OFX
 <BANKTRANLIST><STMTTRN><DTPOSTED>20240101<TRNAMT>-1<FITID>1<NAME>A</STMTTRN><STMTTRN><DTPOSTED>20240102<TRNAMT>-2<FITID>2<NAME>B</STMTTRN></BANKTRANLIST>
 </STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
 OFX;
-$parsedCompact = OfxParser::parse($compactOfx)[0];
+$parsedCompact = OfxParser::parse($compactOfx)['statements'][0];
 assertEqual(2, count($parsedCompact['transactions']), 'Parser handles tags without newlines');
 
 // Profile-based normalisation and field caps
@@ -73,7 +73,7 @@ $profileOfx = <<<OFX
 <BANKTRANLIST><STMTTRN><DTPOSTED>20240101</DTPOSTED><TRNAMT>-1</TRNAMT><CHECKNUM>AB-12 34</CHECKNUM><REFNUM>ref-ABCDEFGHIJKLMNOPQRSTUVWXYZ</REFNUM><MEMO>Some memo that exceeds</MEMO><FITID>1</FITID></STMTTRN></BANKTRANLIST>
 </STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
 OFX;
-$parsedProfile = OfxParser::parse($profileOfx)[0];
+$parsedProfile = OfxParser::parse($profileOfx)['statements'][0];
 $tx = $parsedProfile['transactions'][0];
 assertEqual('1234', $tx->check, 'Profile regex removes non-digits from CHECKNUM');
 assertEqual('REF-ABCDEFGHIJK', $tx->ref, 'Profile uppercases and truncates REFNUM');

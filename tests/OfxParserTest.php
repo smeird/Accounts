@@ -29,7 +29,7 @@ class OfxParserTest extends TestCase
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx)[0];
+        $parsed = OfxParser::parse($ofx)['statements'][0];
         $this->assertSame('12345678', $parsed['account']->number);
         $this->assertSame('123456', $parsed['account']->sortCode);
         $this->assertSame('Main', $parsed['account']->name);
@@ -58,10 +58,12 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx, false)[0];
+        $result = OfxParser::parse($ofx, false);
+        $parsed = $result['statements'][0];
         $this->assertSame(TransactionType::UNKNOWN, $parsed['transactions'][0]->type);
         $this->assertArrayHasKey('UNKNOWN', $parsed['transactions'][0]->extensions);
         $this->assertNotEmpty($parsed['warnings']);
+        $this->assertArrayHasKey('category', $parsed['warnings'][0]);
     }
 
     public function testTrnTypeMappedToEnum(): void
@@ -83,7 +85,7 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx)[0];
+        $parsed = OfxParser::parse($ofx)['statements'][0];
         $this->assertSame(TransactionType::DEBIT, $parsed['transactions'][0]->type);
     }
 
@@ -109,7 +111,7 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $transactions = OfxParser::parse($ofx)[0]['transactions'];
+        $transactions = OfxParser::parse($ofx)['statements'][0]['transactions'];
         $this->assertSame(6, $transactions[0]->line);
         $this->assertSame(strpos($ofx, '<STMTTRN>'), $transactions[0]->offset);
         $secondPos = strpos($ofx, '<STMTTRN>', $transactions[0]->offset + 1);
@@ -172,7 +174,8 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx)[0];
+        $result = OfxParser::parse($ofx);
+        $parsed = $result['statements'][0];
 
         $this->assertNotEmpty($parsed['warnings']);
     }
@@ -203,11 +206,13 @@ OFX;
   </BANKMSGSRSV1>
 </OFX>
 OFX;
-        $parsed = OfxParser::parse($ofx)[0];
+        $result = OfxParser::parse($ofx);
+        $parsed = $result['statements'][0];
 
         $this->assertSame('1900-01-01', $parsed['transactions'][0]->date);
         $this->assertSame('2100-12-31', $parsed['transactions'][1]->date);
         $this->assertNotEmpty($parsed['warnings']);
+        $this->assertArrayHasKey('date', $result['warningCounts']);
 
     }
 }
