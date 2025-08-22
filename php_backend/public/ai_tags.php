@@ -22,7 +22,9 @@ if (!$apiKey) {
 
 $db = Database::getConnection();
 // Identify the most common untagged transactions by description and memo
-$txns = $db->query('SELECT MIN(id) AS id, description, memo, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL GROUP BY description, memo ORDER BY cnt DESC LIMIT 100')->fetchAll(PDO::FETCH_ASSOC);
+$limit = (int)(Setting::get('ai_tag_batch_size') ?? 100);
+if ($limit <= 0) $limit = 100;
+$txns = $db->query('SELECT MIN(id) AS id, description, memo, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL GROUP BY description, memo ORDER BY cnt DESC LIMIT ' . $limit)->fetchAll(PDO::FETCH_ASSOC);
 if (!$txns) {
     echo json_encode(['processed' => 0, 'tokens' => 0]);
     exit;

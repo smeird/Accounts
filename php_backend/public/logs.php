@@ -2,11 +2,16 @@
 // API endpoint returning recent application log entries.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Log.php';
+require_once __DIR__ . '/../models/Setting.php';
 
 header('Content-Type: application/json');
 
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
-$days = isset($_GET['days']) ? (int)$_GET['days'] : null;
+$retention = Setting::get('log_retention_days');
+$days = isset($_GET['days']) ? (int)$_GET['days'] : ($retention !== null ? (int)$retention : null);
+if ($retention !== null) {
+    Log::prune((int)$retention);
+}
 
 if (isset($_GET['prune_days'])) {
     $prune = (int)$_GET['prune_days'];
