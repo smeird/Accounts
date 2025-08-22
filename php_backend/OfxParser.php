@@ -48,58 +48,220 @@ class OfxParser {
         if (defined('LIBXML_BIGLINES')) {
             $opts |= LIBXML_BIGLINES;
         }
-        $xml = simplexml_load_string($data, 'SimpleXMLElement', $opts);
-        if (!$xml) {
+
+        $reader = new XMLReader();
+        if (!$reader->XML($data, null, $opts)) {
             throw new Exception('Failed to parse OFX');
         }
 
-        $profile = self::loadProfile($xml);
-
-        $statements = self::getStatements($xml);
         $parsed = [];
-        foreach ($statements as $statement) {
-            $warnings = [];
-            $currency = self::normaliseCurrency((string)($statement->CURDEF ?? ''));
-
-            // BANKTRANLIST boundaries for date validation
-            $bankTranList = $statement->xpath('.//BANKTRANLIST');
-            $dtStart = null;
-            $dtEnd = null;
-            if ($bankTranList) {
-                $dtStart = self::parseDate((string)$bankTranList[0]->DTSTART, $warnings, self::line($bankTranList[0]->DTSTART ?? null), $strict);
-                $dtEnd = self::parseDate((string)$bankTranList[0]->DTEND, $warnings, self::line($bankTranList[0]->DTEND ?? null), $strict);
+        $hasStatement = false;
+        while ($reader->read()) {
+            if ($reader->nodeType === XMLReader::ELEMENT &&
+                ($reader->name === 'STMTRS' || $reader->name === 'CCSTMTRS')) {
+                $hasStatement = true;
+                $parsed[] = self::parseStatement($reader, $strict);
             }
-
-            $account = self::parseAccount($statement, $warnings, $strict, $currency);
-            $ledger = self::parseLedger($statement, $warnings, $strict, $currency);
-            $transactions = self::parseTransactions($statement, $dtStart, $dtEnd, $warnings, $strict);
-
-            $parsed[] = [
-                'account' => $account,
-                'ledger' => $ledger,
-                'transactions' => $transactions,
-                'warnings' => $warnings,
-            ];
         }
 
+        if (!$hasStatement) {
+            throw new Exception('Missing STMTRS');
+        }
+
+        $reader->close();
         return $parsed;
 
     }
 
-    private static function getStatements(SimpleXMLElement $xml): array {
-        $stmts = [];
-        $bank = $xml->xpath('//STMTRS');
-        $card = $xml->xpath('//CCSTMTRS');
-        if ($bank) {
-            $stmts = array_merge($stmts, $bank);
+    private static function parseStatement(XMLReader $reader, bool $strict): array {
+        $warnings = [];
+        $currency = 'GBP';
+        $account = null;
+        $ledger = null;
+        $transactions = [];
+        $dtStart = null;
+        $dtEnd = null;
+        $running = null;
+
+        $depth = $reader->depth;
+        while ($reader->read()) {
+            if ($reader->nodeType === XMLReader::ELEMENT) {
+                switch ($reader->name) {
+                    case 'CURDEF':
+                        $currency = self::normaliseCurrency(trim($reader->readString()));
+                        break;
+                    case 'BANKACCTFROM':
+                    case 'CCACCTFROM':
+                    case 'ACCTFROM':
+                        $xml = $reader->readOuterXML();
+                        $node = @simplexml_load_string($xml);
+                        if ($node) {
+                            $account = self::parseAccountNode($node, $warnings, $strict, $currency);
+                        }
+                        break;
+                    case 'LEDGERBAL':
+                        $xml = $reader->readOuterXML();
+                        $node = @simplexml_load_string($xml);
+                        if ($node) {
+                            $ledger = self::parseLedgerNode($node, $warnings, $strict, $currency);
+                        }
+                        break;
+                    case 'BANKTRANLIST':
+                        $btDepth = $reader->depth;
+                        while ($reader->read()) {
+                            if ($reader->nodeType === XMLReader::ELEMENT) {
+                                if ($reader->name === 'DTSTART') {
+                                    $dtStart = self::parseDate(trim($reader->readString()), $warnings, null, $strict);
+                                } elseif ($reader->name === 'DTEND') {
+                                    $dtEnd = self::parseDate(trim($reader->readString()), $warnings, null, $strict);
+                                } elseif ($reader->name === 'STMTTRN') {
+                                    $xml = $reader->readOuterXML();
+                                    $trn = @simplexml_load_string($xml);
+                                    if ($trn) {
+                                        $tx = self::parseTransaction($trn, $dtStart, $dtEnd, $warnings, $strict, $running);
+                                        if ($tx) {
+                                            $transactions[] = $tx;
+                                        }
+                                    }
+                                }
+                            } elseif ($reader->nodeType === XMLReader::END_ELEMENT &&
+                                $reader->depth === $btDepth && $reader->name === 'BANKTRANLIST') {
+                                break;
+                            }
+                        }
+                        break;
+                }
+            } elseif ($reader->nodeType === XMLReader::END_ELEMENT &&
+                $reader->depth === $depth && ($reader->name === 'STMTRS' || $reader->name === 'CCSTMTRS')) {
+                break;
+            }
         }
-        if ($card) {
-            $stmts = array_merge($stmts, $card);
+
+        if (!$account) {
+            $msg = 'Missing account number, using placeholder';
+            if ($strict) {
+                throw new Exception($msg);
+            }
+            self::log($warnings, $msg, null);
+            $account = new OfxAccount(null, '00000000', 'Default', $currency);
         }
-        if (empty($stmts)) {
-            throw new Exception('Missing STMTRS');
+
+        return [
+            'account' => $account,
+            'ledger' => $ledger,
+            'transactions' => $transactions,
+            'warnings' => $warnings,
+        ];
+    }
+
+    private static function parseAccountNode(SimpleXMLElement $acctNode, array &$warnings, bool $strict, string $currency): OfxAccount {
+        $rawAcctId = trim((string)$acctNode->ACCTID);
+        $accountNumber = preg_replace('/[^A-Za-z0-9*]/', '', $rawAcctId);
+        if ($accountNumber === '') {
+            if ($strict) {
+                throw new Exception('Missing account number');
+            }
+            self::log($warnings, 'Missing account number, using placeholder', null);
+            $accountNumber = '00000000';
         }
-        return $stmts;
+
+        $sortCode = trim((string)$acctNode->BANKID) ?: null;
+        if (strtoupper($acctNode->getName()) === 'CCACCTFROM') {
+            $sortCode = null;
+        }
+
+        $accountName = trim((string)$acctNode->ACCTNAME) ?: 'Default';
+
+        return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
+    }
+
+    private static function parseLedgerNode(SimpleXMLElement $ledgerNode, array &$warnings, bool $strict, string $currency): ?OfxLedger {
+        $balAmt = self::normaliseAmount((string)$ledgerNode->BALAMT);
+        $dtAsOf = self::parseDate((string)$ledgerNode->DTASOF, $warnings, null, $strict);
+        if ($balAmt !== null && $dtAsOf !== null) {
+            return new OfxLedger($balAmt, $dtAsOf, $currency);
+        }
+        return null;
+    }
+
+    private static function parseTransaction(SimpleXMLElement $trn, ?string $dtStart, ?string $dtEnd, array &$warnings, bool $strict, ?float &$running): ?OfxTransaction {
+        $raw = trim($trn->asXML());
+        $dt = self::parseDate((string)$trn->DTPOSTED, $warnings, null, $strict);
+        $amt = self::normaliseAmount((string)$trn->TRNAMT);
+        if ($dt === null || $amt === null) {
+            $msg = 'Missing DTPOSTED or TRNAMT';
+            if ($strict) {
+                throw new Exception($msg);
+            }
+            self::log($warnings, $msg, null, $raw);
+            return null;
+        }
+        if (($dtStart && $dt < $dtStart) || ($dtEnd && $dt > $dtEnd)) {
+            $msg = 'DTPOSTED outside BANKTRANLIST window';
+            if ($strict) {
+                throw new Exception($msg);
+            }
+            self::log($warnings, $msg, null, $raw);
+        }
+
+        $trnType = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
+        $memo = trim((string)$trn->MEMO);
+        if ($trnType === null) {
+            if ($strict) {
+                throw new Exception('Missing TRNTYPE');
+            }
+            self::log($warnings, 'Missing TRNTYPE, using UNKNOWN', null, $raw);
+            $trnType = 'UNKNOWN';
+        }
+        if ($memo === '') {
+            if ($strict) {
+                throw new Exception('Missing MEMO');
+            }
+            self::log($warnings, 'Missing MEMO, using placeholder', null, $raw);
+            $memo = 'N/A';
+        }
+
+        if ($trn->RUNNINGBAL && $trn->RUNNINGBAL->BALAMT) {
+            $bal = self::normaliseAmount((string)$trn->RUNNINGBAL->BALAMT);
+            if ($bal !== null) {
+                if ($running !== null) {
+                    $expected = $running + $amt;
+                    if (abs($expected - $bal) > 0.01) {
+                        $msg = 'Running balance mismatch';
+                        if ($strict) {
+                            throw new Exception($msg);
+                        }
+                        self::log($warnings, $msg, null, $raw);
+                    }
+                }
+                $running = $bal;
+            }
+        } elseif ($running !== null) {
+            $running += $amt;
+        } else {
+            $running = $amt;
+        }
+
+        $extensions = [];
+        foreach ($trn->children() as $child) {
+            $name = strtoupper($child->getName());
+            if (!in_array($name, ['DTPOSTED','TRNAMT','NAME','MEMO','TRNTYPE','REFNUM','CHECKNUM','FITID','RUNNINGBAL'])) {
+                $extensions[$name] = trim((string)$child);
+            }
+        }
+
+        return new OfxTransaction(
+            $dt,
+            $amt,
+            trim((string)$trn->NAME),
+            $memo,
+            $trnType,
+            trim((string)$trn->REFNUM),
+            trim((string)$trn->CHECKNUM),
+            trim((string)$trn->FITID),
+            $raw,
+            $extensions
+        );
     }
 
     private static function closeTags(string $data): string {
@@ -145,184 +307,6 @@ class OfxParser {
             $out .= '</' . array_pop($stack) . '>';
         }
         return $out;
-    }
-
-    private static function parseAccount(SimpleXMLElement $stmt, array &$warnings, bool $strict, string $currency = 'GBP'): OfxAccount {
-        $acctNode = $stmt->xpath('.//BANKACCTFROM | .//CCACCTFROM | .//ACCTFROM');
-        $rawAcctId = $acctNode ? trim((string)$acctNode[0]->ACCTID) : '';
-        // Some providers mask account numbers (e.g. 552213******8609). Remove any
-        // characters except alphanumerics and asterisks so masked IDs are stored
-        // consistently without losing placeholder digits.
-        $accountNumber = preg_replace('/[^A-Za-z0-9*]/', '', $rawAcctId);
-
-        if ($accountNumber === '') {
-            if ($strict) {
-                throw new Exception('Missing account number');
-            }
-            self::log($warnings, 'Missing account number, using placeholder', self::line($acctNode[0] ?? $stmt));
-            $accountNumber = '00000000';
-        }
-
-        // Credit card statements may include a BANKID that is not a real sort code.
-        // Identify CCACCTFROM nodes explicitly and ignore any BANKID so the account
-        // is treated as a credit card when imported.
-        $sortCode = $acctNode ? trim((string)$acctNode[0]->BANKID) ?: null : null;
-        if ($acctNode && strtoupper($acctNode[0]->getName()) === 'CCACCTFROM') {
-            $sortCode = null;
-        }
-
-
-        $accountName = $acctNode ? trim((string)$acctNode[0]->ACCTNAME) ?: 'Default' : 'Default';
-
-
-        return new OfxAccount($sortCode, $accountNumber, $accountName, $currency);
-    }
-
-    private static function parseLedger(SimpleXMLElement $stmt, array &$warnings, bool $strict, string $currency = 'GBP'): ?OfxLedger {
-        $ledgerNode = $stmt->xpath('.//LEDGERBAL');
-        if ($ledgerNode) {
-            $balAmt = self::normaliseAmount((string)$ledgerNode[0]->BALAMT);
-
-            $dtAsOf = self::parseDate((string)$ledgerNode[0]->DTASOF, $warnings, self::line($ledgerNode[0]->DTASOF ?? null), $strict);
-
-            if ($balAmt !== null && $dtAsOf !== null) {
-                return new OfxLedger($balAmt, $dtAsOf, $currency);
-            }
-        }
-        return null;
-    }
-
-
-    private static function parseTransactions(SimpleXMLElement $stmt, ?string $dtStart, ?string $dtEnd, array &$warnings, bool $strict): array {
-
-        $stmtTrns = $stmt->xpath('.//STMTTRN');
-        if (!$stmtTrns) {
-            throw new Exception('Missing STMTTRN');
-        }
-        $transactions = [];
-        $running = null;
-        foreach ($stmtTrns as $trn) {
-            $line = self::line($trn);
-            $raw = trim($trn->asXML());
-            $dt = self::parseDate((string)$trn->DTPOSTED, $warnings, self::line($trn->DTPOSTED ?? null), $strict);
-            $amt = self::normaliseAmount((string)$trn->TRNAMT);
-            if ($dt === null || $amt === null) {
-                $msg = 'Missing DTPOSTED or TRNAMT';
-                if ($strict) {
-                    throw new Exception($msg);
-                }
-                self::log($warnings, $msg, $line, $raw);
-                continue;
-            }
-            if (($dtStart && $dt < $dtStart) || ($dtEnd && $dt > $dtEnd)) {
-                $msg = 'DTPOSTED outside BANKTRANLIST window';
-                if ($strict) {
-                    throw new Exception($msg);
-                }
-                self::log($warnings, $msg, $line, $raw);
-            }
-
-            $trnType = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
-            $memo = trim((string)$trn->MEMO);
-            if ($trnType === null) {
-                if ($strict) {
-                    throw new Exception('Missing TRNTYPE');
-                }
-                self::log($warnings, 'Missing TRNTYPE, using UNKNOWN', $line, $raw);
-                $trnType = 'UNKNOWN';
-            }
-            if ($memo === '') {
-                if ($strict) {
-                    throw new Exception('Missing MEMO');
-                }
-                self::log($warnings, 'Missing MEMO, using placeholder', $line, $raw);
-                $memo = 'N/A';
-            }
-
-            // Check running balance if provided
-            if ($trn->RUNNINGBAL && $trn->RUNNINGBAL->BALAMT) {
-                $bal = self::normaliseAmount((string)$trn->RUNNINGBAL->BALAMT);
-                if ($bal !== null) {
-                    if ($running !== null) {
-                        $expected = $running + $amt;
-                        if (abs($expected - $bal) > 0.01) {
-                            $msg = 'Running balance mismatch';
-                            if ($strict) {
-                                throw new Exception($msg);
-                            }
-                            self::log($warnings, $msg, $line, $raw);
-                        }
-                    }
-                    $running = $bal;
-                }
-            } elseif ($running !== null) {
-                $running += $amt;
-            } else {
-                $running = $amt;
-            }
-
-            // Capture unknown tags
-            $extensions = [];
-            foreach ($trn->children() as $child) {
-                $name = strtoupper($child->getName());
-                if (!in_array($name, ['DTPOSTED','TRNAMT','NAME','MEMO','TRNTYPE','REFNUM','CHECKNUM','FITID','RUNNINGBAL'])) {
-                    $extensions[$name] = trim((string)$child);
-                }
-            }
-
-            $transactions[] = new OfxTransaction(
-                $dt,
-                $amt,
-                trim((string)$trn->NAME),
-                $memo,
-
-                $trnType,
-                trim((string)$trn->REFNUM),
-                trim((string)$trn->CHECKNUM),
-                trim((string)$trn->FITID),
-                $raw,
-                $extensions
-
-            );
-        }
-        return $transactions;
-    }
-
-    private static function loadProfile(SimpleXMLElement $xml): array {
-        $fi = $xml->xpath('(//SIGNONMSGSRSV1/SONRS/FI)[1]');
-        $id = '';
-        if ($fi) {
-            $id = strtolower(trim((string)($fi[0]->FID ?: $fi[0]->ORG)));
-        }
-        $dir = __DIR__ . '/profiles';
-        $file = $dir . '/' . ($id !== '' ? $id : 'default') . '.json';
-        if (!is_file($file)) {
-            $file = $dir . '/default.json';
-        }
-        $cfg = [];
-        if (is_file($file)) {
-            $json = file_get_contents($file);
-            $cfg = json_decode($json, true) ?: [];
-        }
-        return $cfg;
-    }
-
-    private static function applyFieldProfile(string $field, string $value, array $profile): string {
-        $cfg = $profile['fields'][$field] ?? [];
-        $value = preg_replace('/\s+/', ' ', trim($value));
-        if ($value === '') {
-            return $value;
-        }
-        if (!empty($cfg['regex'])) {
-            $value = preg_replace($cfg['regex'], '', $value);
-        }
-        if (!empty($cfg['uppercase'])) {
-            $value = strtoupper($value);
-        }
-        if (!empty($cfg['max'])) {
-            $value = substr($value, 0, (int)$cfg['max']);
-        }
-        return $value;
     }
 
     private static function normaliseAmount(string $value): ?float {
