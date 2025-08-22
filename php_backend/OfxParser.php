@@ -79,11 +79,12 @@ class OfxParser {
 
         $parsed = [];
         $hasStatement = false;
+        $offset = 0;
         while ($reader->read()) {
             if ($reader->nodeType === XMLReader::ELEMENT &&
                 ($reader->name === 'STMTRS' || $reader->name === 'CCSTMTRS')) {
                 $hasStatement = true;
-                $parsed[] = self::parseStatement($reader, $strict);
+                $parsed[] = self::parseStatement($reader, $strict, $data, $offset);
             }
         }
 
@@ -96,7 +97,7 @@ class OfxParser {
 
     }
 
-    private static function parseStatement(XMLReader $reader, bool $strict): array {
+    private static function parseStatement(XMLReader $reader, bool $strict, string $data, int &$offset): array {
         $warnings = [];
         $currency = 'GBP';
         $account = null;
@@ -137,16 +138,23 @@ class OfxParser {
                                     $dtStart = self::parseDate(trim($reader->readString()), $warnings, null, $strict);
                                 } elseif ($reader->name === 'DTEND') {
                                     $dtEnd = self::parseDate(trim($reader->readString()), $warnings, null, $strict);
-                                } elseif ($reader->name === 'STMTTRN') {
-                                    $xml = $reader->readOuterXML();
-                                    $trn = @simplexml_load_string($xml);
-                                    if ($trn) {
-                                        $tx = self::parseTransaction($trn, $dtStart, $dtEnd, $warnings, $strict, $running);
-                                        if ($tx) {
-                                            $transactions[] = $tx;
-                                        }
-                                    }
-                                }
+                                  } elseif ($reader->name === 'STMTTRN') {
+                                      $line = null;
+                                      $byte = null;
+                                      if (preg_match('/<STMTTRN[^>]*>/i', $data, $m, PREG_OFFSET_CAPTURE, $offset)) {
+                                          $byte = $m[0][1];
+                                          $line = substr_count($data, "\n", 0, $byte) + 1;
+                                          $offset = $byte + strlen($m[0][0]);
+                                      }
+                                      $xml = $reader->readOuterXML();
+                                      $trn = @simplexml_load_string($xml);
+                                      if ($trn) {
+                                          $tx = self::parseTransaction($trn, $dtStart, $dtEnd, $warnings, $strict, $running, $line, $byte);
+                                          if ($tx) {
+                                              $transactions[] = $tx;
+                                          }
+                                      }
+                                  }
                             } elseif ($reader->nodeType === XMLReader::END_ELEMENT &&
                                 $reader->depth === $btDepth && $reader->name === 'BANKTRANLIST') {
                                 break;
@@ -207,25 +215,25 @@ class OfxParser {
         return null;
     }
 
-    private static function parseTransaction(SimpleXMLElement $trn, ?string $dtStart, ?string $dtEnd, array &$warnings, bool $strict, ?float &$running): ?OfxTransaction {
+    private static function parseTransaction(SimpleXMLElement $trn, ?string $dtStart, ?string $dtEnd, array &$warnings, bool $strict, ?float &$running, ?int $line = null, ?int $byte = null): ?OfxTransaction {
         $raw = trim($trn->asXML());
-        $dt = self::parseDate((string)$trn->DTPOSTED, $warnings, null, $strict);
+        $dt = self::parseDate((string)$trn->DTPOSTED, $warnings, self::line($trn->DTPOSTED) ?? $line, $strict);
         $amt = self::normaliseAmount((string)$trn->TRNAMT);
         if ($dt === null || $amt === null) {
             $msg = 'Missing DTPOSTED or TRNAMT';
             if ($strict) {
                 throw new Exception($msg);
             }
-            self::log($warnings, $msg, null, $raw);
+            self::log($warnings, $msg, $line, $raw);
             return null;
         }
         if (($dtStart && $dt < $dtStart) || ($dtEnd && $dt > $dtEnd)) {
             $msg = 'DTPOSTED outside BANKTRANLIST window';
-            if ($strict) {
-                throw new Exception($msg);
+                if ($strict) {
+                    throw new Exception($msg);
+                }
+                self::log($warnings, $msg, $line, $raw);
             }
-            self::log($warnings, $msg, null, $raw);
-        }
 
         $trnTypeRaw = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
         $memo = trim((string)$trn->MEMO);
@@ -233,7 +241,7 @@ class OfxParser {
             if ($strict) {
                 throw new Exception('Missing TRNTYPE');
             }
-            self::log($warnings, 'Missing TRNTYPE, using UNKNOWN', null, $raw);
+            self::log($warnings, 'Missing TRNTYPE, using UNKNOWN', $line, $raw);
             $trnType = TransactionType::UNKNOWN;
         } else {
             $trnType = self::TRNTYPE_MAP[$trnTypeRaw] ?? TransactionType::UNKNOWN;
@@ -242,7 +250,7 @@ class OfxParser {
             if ($strict) {
                 throw new Exception('Missing MEMO');
             }
-            self::log($warnings, 'Missing MEMO, using placeholder', null, $raw);
+            self::log($warnings, 'Missing MEMO, using placeholder', $line, $raw);
             $memo = 'N/A';
         }
 
@@ -256,7 +264,7 @@ class OfxParser {
                         if ($strict) {
                             throw new Exception($msg);
                         }
-                        self::log($warnings, $msg, null, $raw);
+                        self::log($warnings, $msg, $line, $raw);
                     }
                 }
                 $running = $bal;
@@ -285,7 +293,9 @@ class OfxParser {
             trim((string)$trn->CHECKNUM),
             trim((string)$trn->FITID),
             $raw,
-            $extensions
+            $extensions,
+            $line,
+            $byte
         );
     }
 

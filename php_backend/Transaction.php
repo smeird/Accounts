@@ -13,8 +13,10 @@ class Transaction {
     public $bankId;
     public $raw;
     public $extensions;
+    public $line;
+    public $offset;
 
-    public function __construct($date, $amount, $desc = '', $memo = '', $type = null, $ref = '', $check = '', $bankId = '', $raw = '', array $extensions = []) {
+    public function __construct($date, $amount, $desc = '', $memo = '', $type = null, $ref = '', $check = '', $bankId = '', $raw = '', array $extensions = [], ?int $line = null, ?int $offset = null) {
         $this->date = $date;
         $this->amount = (float)$amount;
         $this->desc = $desc;
@@ -25,6 +27,8 @@ class Transaction {
         $this->bankId = $bankId;
         $this->raw = $raw;
         $this->extensions = $extensions;
+        $this->line = $line;
+        $this->offset = $offset;
     }
 }
 ?>
