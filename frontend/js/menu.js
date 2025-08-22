@@ -199,11 +199,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const userEl = document.getElementById('current-user');
+      const iconEl = document.getElementById('user-icon');
       if (userEl) {
         fetch('../php_backend/public/current_user.php')
           .then(r => (r.ok ? r.json() : Promise.reject()))
           .then(u => {
             userEl.textContent = u.username || 'Guest';
+            if (u.has2fa && iconEl) {
+              iconEl.classList.remove('fa-user');
+              iconEl.classList.add('fa-user-shield');
+            }
           })
           .catch(() => {
             userEl.textContent = 'Guest';
