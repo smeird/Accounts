@@ -3,12 +3,35 @@
 require_once __DIR__ . '/Account.php';
 require_once __DIR__ . '/Ledger.php';
 require_once __DIR__ . '/Transaction.php';
+require_once __DIR__ . '/TransactionType.php';
 
 use Ofx\Account as OfxAccount;
 use Ofx\Ledger as OfxLedger;
 use Ofx\Transaction as OfxTransaction;
+use Ofx\TransactionType;
 
 class OfxParser {
+
+    private const TRNTYPE_MAP = [
+        'CREDIT' => TransactionType::CREDIT,
+        'DEBIT' => TransactionType::DEBIT,
+        'INT' => TransactionType::INT,
+        'DIV' => TransactionType::DIV,
+        'FEE' => TransactionType::FEE,
+        'SRVCHG' => TransactionType::SRVCHG,
+        'DEP' => TransactionType::DEP,
+        'ATM' => TransactionType::ATM,
+        'POS' => TransactionType::POS,
+        'XFER' => TransactionType::XFER,
+        'CHECK' => TransactionType::CHECK,
+        'PAYMENT' => TransactionType::PAYMENT,
+        'CASH' => TransactionType::CASH,
+        'DIRECTDEP' => TransactionType::DIRECTDEP,
+        'DIRECTDEBIT' => TransactionType::DIRECTDEBIT,
+        'REPEATPMT' => TransactionType::REPEATPMT,
+        'HOLD' => TransactionType::HOLD,
+        'OTHER' => TransactionType::OTHER,
+    ];
 
     private const MAX_AMOUNT = 1000000000; // clamp extremely large values
 
@@ -204,14 +227,16 @@ class OfxParser {
             self::log($warnings, $msg, null, $raw);
         }
 
-        $trnType = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
+        $trnTypeRaw = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
         $memo = trim((string)$trn->MEMO);
-        if ($trnType === null) {
+        if ($trnTypeRaw === null) {
             if ($strict) {
                 throw new Exception('Missing TRNTYPE');
             }
             self::log($warnings, 'Missing TRNTYPE, using UNKNOWN', null, $raw);
-            $trnType = 'UNKNOWN';
+            $trnType = TransactionType::UNKNOWN;
+        } else {
+            $trnType = self::TRNTYPE_MAP[$trnTypeRaw] ?? TransactionType::UNKNOWN;
         }
         if ($memo === '') {
             if ($strict) {

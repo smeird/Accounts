@@ -2,6 +2,7 @@
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../php_backend/OfxParser.php';
+use Ofx\TransactionType;
 
 class OfxParserTest extends TestCase
 {
@@ -58,9 +59,32 @@ OFX;
 </OFX>
 OFX;
         $parsed = OfxParser::parse($ofx, false)[0];
-        $this->assertSame('UNKNOWN', $parsed['transactions'][0]->type);
+        $this->assertSame(TransactionType::UNKNOWN, $parsed['transactions'][0]->type);
         $this->assertArrayHasKey('UNKNOWN', $parsed['transactions'][0]->extensions);
         $this->assertNotEmpty($parsed['warnings']);
+    }
+
+    public function testTrnTypeMappedToEnum(): void
+    {
+        $ofx = <<<OFX
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <BANKTRANLIST>
+          <STMTTRN>
+            <DTPOSTED>20240101</DTPOSTED>
+            <TRNAMT>-10.00</TRNAMT>
+            <TRNTYPE>DEBIT</TRNTYPE>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+OFX;
+        $parsed = OfxParser::parse($ofx)[0];
+        $this->assertSame(TransactionType::DEBIT, $parsed['transactions'][0]->type);
     }
 
     public function testStrictModeThrowsOnMissingFields(): void
