@@ -43,7 +43,8 @@
   function createTagBadge(tag){
     const span = document.createElement('span');
     span.textContent = tag.name;
-    span.className = 'bg-indigo-200 text-indigo-800 px-2 py-1 rounded cursor-move text-center';
+    // Use the same styling as badges in tables for consistent appearance
+    span.className = 'inline-block px-2 py-1 text-xs font-semibold rounded bg-indigo-200 text-indigo-800 cursor-move';
     span.draggable = true;
     span.dataset.tagId = tag.id;
     span.addEventListener('dragstart', handleDragStart);
