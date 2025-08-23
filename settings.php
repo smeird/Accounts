@@ -19,7 +19,10 @@ $fontSettings = Setting::getFonts();
 $fontHeading = $fontSettings['heading'];
 $fontBody = $fontSettings['body'];
 $fontAccent = $fontSettings['accent'];
-$fontOptions = ['Roboto', 'Inter', 'Source Sans Pro', 'Montserrat', 'Open Sans', 'Lato'];
+$fontOptions = [
+    'Roboto', 'Inter', 'Source Sans Pro', 'Montserrat', 'Open Sans', 'Lato',
+    'Nunito', 'Poppins', 'Raleway', 'Work Sans', 'Quicksand'
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
