@@ -158,7 +158,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pagination: false,
         dataTree: true,
-        dataTreeStartExpanded: false
+        dataTreeStartExpanded: false,
+        cellClick: handleCellClick
+      });
+    }
+  }
+
+  function handleCellClick(e, cell) {
+    const field = cell.getField();
+    if (field === 'item') return;
+    const rowData = cell.getRow().getData();
+    const filters = {};
+    if (rowData.segment) filters.segment_name = rowData.segment;
+    if (rowData.category) filters.category_name = rowData.category;
+    if (rowData.tag) filters.tag_name = rowData.tag;
+    if (field !== 'Total') filters[currentKeyField] = field;
+
+    const rows = rawData.filter(r => {
+      if (filters.segment_name && r.segment_name !== filters.segment_name) return false;
+      if (filters.category_name && r.category_name !== filters.category_name) return false;
+      if (filters.tag_name && r.tag_name !== filters.tag_name) return false;
+      if (filters[currentKeyField] && r[currentKeyField] !== filters[currentKeyField]) return false;
+      return true;
+    });
+
+    if (detailTitle) detailTitle.textContent = `${rowData.item} - ${field}`;
+
+    if (detailCard) {
+      detailCard.classList.remove('hidden');
+      detailCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+
+    if (detailTable) {
+      detailTable.setData(rows);
+    } else {
+      detailTable = tailwindTabulator('#detail-table', {
+        data: rows,
+        layout: 'fitDataStretch',
+        pagination: false,
+        columns: [
+          { title: 'Date', field: 'date' },
+          { title: 'Description', field: 'description' },
+          {
+            title: 'Amount',
+            field: 'amount',
+            hozAlign: 'right',
+            formatter: 'money',
+            formatterParams: { symbol: '£', precision: 2 }
+          }
+        ]
       });
 
       table.on('cellClick', handleCellClick);
