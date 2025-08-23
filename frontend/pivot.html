@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- Interactive pivot table analysis -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pivot Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.webdatarocks.com/latest/webdatarocks.min.css" />
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Pivot Analysis</h1>
+            <p class="mb-4">Explore transactions using a flexible pivot table. Choose a year or analyse all recorded data.</p>
+            <section class="space-y-4">
+                <div class="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-4 md:space-y-0">
+                    <div class="flex flex-col">
+                        <label for="year-select" class="font-semibold">Year</label>
+                        <select id="year-select" class="border p-2 rounded" data-help="Select the year to analyse or view all years">
+                            <option value="all">All Years</option>
+                        </select>
+                    </div>
+                    <button id="refresh" class="bg-indigo-600 text-white px-4 py-2 rounded self-start md:self-auto"><i class="fas fa-rotate inline w-4 h-4 mr-2"></i>Refresh</button>
+                </div>
+                <div id="pivot-table" class="h-96"></div>
+            </section>
+        </main>
+    </div>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.toolbar.min.js"></script>
+    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.js"></script>
+    <script src="js/pivot.js"></script>
+</body>
+</html>
