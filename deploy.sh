@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/your-org/Accounts.git"
+REPO_URL="https://github.com/smeird/Accounts.git"
 
 for cmd in git php mysql; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
