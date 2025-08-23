@@ -3,6 +3,11 @@
 require_once __DIR__ . '/../Database.php';
 
 class Setting {
+    /** Default fonts used when none have been configured. */
+    private const DEFAULT_HEADING_FONT = 'Roboto';
+    private const DEFAULT_BODY_FONT = 'Inter';
+    private const DEFAULT_ACCENT_FONT = 'Source Sans Pro';
+
     /**
      * Retrieve a setting value by name.
      */
@@ -22,6 +27,19 @@ class Setting {
         $stmt = $db->prepare('INSERT INTO `settings` (`name`, `value`) VALUES (:name, :value)
             ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)');
         $stmt->execute(['name' => $name, 'value' => $value]);
+    }
+
+    /**
+     * Convenience accessor for the site's configured fonts with sensible defaults.
+     *
+     * @return array{heading: string, body: string, accent: string}
+     */
+    public static function getFonts(): array {
+        return [
+            'heading' => self::get('font_heading') ?? self::DEFAULT_HEADING_FONT,
+            'body'    => self::get('font_body') ?? self::DEFAULT_BODY_FONT,
+            'accent'  => self::get('font_accent') ?? self::DEFAULT_ACCENT_FONT,
+        ];
     }
 }
 ?>

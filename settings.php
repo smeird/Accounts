@@ -15,12 +15,23 @@ $openai = Setting::get('openai_api_token') ?? '';
 $batch = Setting::get('ai_tag_batch_size') ?? '20';
 $retention = Setting::get('log_retention_days') ?? '30';
 $timeout = Setting::get('session_timeout_minutes') ?? '0';
+$fontSettings = Setting::getFonts();
+$fontHeading = $fontSettings['heading'];
+$fontBody = $fontSettings['body'];
+$fontAccent = $fontSettings['accent'];
+$fontOptions = [
+    'Roboto', 'Inter', 'Source Sans Pro', 'Montserrat', 'Open Sans', 'Lato',
+    'Nunito', 'Poppins', 'Raleway', 'Work Sans', 'Quicksand'
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
     $batch = trim($_POST['ai_tag_batch_size'] ?? '');
     $retention = trim($_POST['log_retention_days'] ?? '');
     $timeout = trim($_POST['session_timeout_minutes'] ?? '');
+    $fontHeading = trim($_POST['font_heading'] ?? '');
+    $fontBody = trim($_POST['font_body'] ?? '');
+    $fontAccent = trim($_POST['font_accent'] ?? '');
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -34,6 +45,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($timeout !== '') {
         Setting::set('session_timeout_minutes', $timeout);
         Log::write('Updated session timeout minutes');
+    }
+    if ($fontHeading !== '') {
+        Setting::set('font_heading', $fontHeading);
+        Log::write('Updated heading font');
+    }
+    if ($fontBody !== '') {
+        Setting::set('font_body', $fontBody);
+        Log::write('Updated body font');
+    }
+    if ($fontAccent !== '') {
+        Setting::set('font_accent', $fontAccent);
+        Log::write('Updated accent font');
     }
     $message = 'Settings updated.';
 }
@@ -82,6 +105,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </label>
             <label class="block">Auto-Logout Minutes:
                 <input type="number" name="session_timeout_minutes" value="<?= htmlspecialchars($timeout) ?>" class="border p-2 rounded w-full" data-help="Minutes of inactivity before automatic logout">
+            </label>
+            <label class="block">Heading Font:
+                <select name="font_heading" class="border p-2 rounded w-full" data-help="Font used for headings">
+                    <?php foreach ($fontOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $fontHeading ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Body Font:
+                <select name="font_body" class="border p-2 rounded w-full" data-help="Font used for body text">
+                    <?php foreach ($fontOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $fontBody ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Accent Font:
+                <select name="font_accent" class="border p-2 rounded w-full" data-help="Font used for buttons and accents">
+                    <?php foreach ($fontOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $fontAccent ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </label>
             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
