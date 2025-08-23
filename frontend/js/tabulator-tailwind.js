@@ -92,7 +92,9 @@ function tailwindTabulator(element, options) {
     const accentFont = accentEl ? getComputedStyle(accentEl).fontFamily : bodyFont;
     const el = table.element;
     el.style.setProperty('--tabulator-font-family', bodyFont);
+
     el.style.fontFamily = bodyFont;
+
 
     if (rowClickHandler) {
         table.on('rowClick', rowClickHandler);
