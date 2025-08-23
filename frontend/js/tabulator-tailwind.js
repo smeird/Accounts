@@ -80,7 +80,9 @@ function tailwindTabulator(element, options) {
             cell.style.borderBottom = '0';
         });
     };
-    options.pagination = options.pagination || 'local';
+    if (options.pagination === undefined) {
+        options.pagination = 'local';
+    }
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
 
