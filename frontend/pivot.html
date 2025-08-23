@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pivot Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.webdatarocks.com/latest/webdatarocks.min.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
@@ -22,7 +24,12 @@
                             <option value="all">All Years</option>
                         </select>
                     </div>
-                    <button id="refresh" class="bg-indigo-600 text-white px-4 py-2 rounded self-start md:self-auto"><i class="fas fa-rotate inline w-4 h-4 mr-2"></i>Refresh</button>
+
+                    <div class="flex space-x-2">
+                        <button id="refresh" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-rotate inline w-4 h-4 mr-2"></i>Refresh</button>
+                        <button id="export" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fas fa-file-export inline w-4 h-4 mr-2"></i>Export CSV</button>
+                    </div>
+
                 </div>
                 <div id="pivot-table" class="h-96"></div>
             </section>
@@ -31,8 +38,10 @@
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.toolbar.min.js"></script>
-    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.js"></script>
+
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+
     <script src="js/pivot.js"></script>
 </body>
 </html>
