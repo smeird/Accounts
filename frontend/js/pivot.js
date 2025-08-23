@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportBtn = document.getElementById('export');
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   let table;
+  let rawData = [];
+  let detailTable;
+  let currentKeyField;
+
+  const detailCard = document.getElementById('detail-card');
+  const detailTitle = document.getElementById('detail-title');
+  const detailClose = document.getElementById('detail-close');
+  if (detailClose) detailClose.addEventListener('click', () => detailCard.classList.add('hidden'));
 
   // Populate year dropdown
   fetch('../php_backend/public/transaction_months.php')
@@ -46,13 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
           year: r.date.substring(0, 4),
           month: monthNames[new Date(r.date).getMonth()]
         }));
+        rawData = data;
         renderPivot(data, year);
       })
       .catch(() => showMessage('Failed to load data', 'error'));
   }
 
   function renderPivot(data, year) {
-    const keyField = year === 'all' ? 'year' : 'month';
+    currentKeyField = year === 'all' ? 'year' : 'month';
+    const keyField = currentKeyField;
 
     const segments = {};
     const grandTotals = {};
@@ -118,8 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    function buildRow(name, totals, children) {
-      const row = { item: name };
+    function buildRow(name, totals, children, meta = {}) {
+      const row = { item: name, ...meta };
       order.forEach(k => (row[k] = totals[k] || 0));
       row.Total = totals.Total || 0;
       if (children && children.length) row._children = children;
@@ -128,11 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tableData = Object.entries(segments).map(([segName, segObj]) => {
       const catRows = Object.entries(segObj.categories).map(([catName, catObj]) => {
-        const tagRows = Object.entries(catObj.tags).map(([tagName, tagObj]) => buildRow(tagName, tagObj.__totals));
-        return buildRow(catName, catObj.__totals, tagRows);
+        const tagRows = Object.entries(catObj.tags).map(([tagName, tagObj]) =>
+          buildRow(tagName, tagObj.__totals, null, { segment: segName, category: catName, tag: tagName })
+        );
+        return buildRow(catName, catObj.__totals, tagRows, { segment: segName, category: catName });
       });
-      return buildRow(segName, segObj.__totals, catRows);
-
+      return buildRow(segName, segObj.__totals, catRows, { segment: segName });
     });
 
     if (table) {
@@ -147,7 +158,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pagination: false,
         dataTree: true,
-        dataTreeStartExpanded: false
+        dataTreeStartExpanded: false,
+        cellClick: handleCellClick
+      });
+    }
+  }
+
+  function handleCellClick(e, cell) {
+    const field = cell.getField();
+    if (field === 'item') return;
+    const rowData = cell.getRow().getData();
+    const filters = {};
+    if (rowData.segment) filters.segment_name = rowData.segment;
+    if (rowData.category) filters.category_name = rowData.category;
+    if (rowData.tag) filters.tag_name = rowData.tag;
+    if (field !== 'Total') filters[currentKeyField] = field;
+
+    const rows = rawData.filter(r => {
+      if (filters.segment_name && r.segment_name !== filters.segment_name) return false;
+      if (filters.category_name && r.category_name !== filters.category_name) return false;
+      if (filters.tag_name && r.tag_name !== filters.tag_name) return false;
+      if (filters[currentKeyField] && r[currentKeyField] !== filters[currentKeyField]) return false;
+      return true;
+    });
+
+    if (detailTitle) detailTitle.textContent = `${rowData.item} - ${field}`;
+    if (detailCard) {
+      detailCard.classList.remove('hidden');
+      detailCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    if (detailTable) {
+      detailTable.setData(rows);
+    } else {
+      detailTable = tailwindTabulator('#detail-table', {
+        data: rows,
+        layout: 'fitDataStretch',
+        pagination: false,
+        columns: [
+          { title: 'Date', field: 'date' },
+          { title: 'Description', field: 'description' },
+          {
+            title: 'Amount',
+            field: 'amount',
+            hozAlign: 'right',
+            formatter: 'money',
+            formatterParams: { symbol: '£', precision: 2 }
+          }
+        ]
       });
     }
   }
