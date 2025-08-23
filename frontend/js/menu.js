@@ -73,20 +73,40 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     // Load site fonts and apply them to headings, body text and accents
-    if (!document.getElementById('app-fonts')) {
-      const fontLink = document.createElement('link');
+    let fontLink = document.getElementById('app-fonts');
+    if (!fontLink) {
+      fontLink = document.createElement('link');
       fontLink.id = 'app-fonts';
       fontLink.rel = 'stylesheet';
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
       document.head.appendChild(fontLink);
     }
     const fontStyle = document.createElement('style');
-    fontStyle.textContent = `
-      body { font-family: 'Inter', sans-serif; font-weight: 400; }
-      h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
-      button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
-    `;
     document.head.appendChild(fontStyle);
+
+    fetch('../php_backend/public/font_settings.php')
+      .then(r => r.json())
+      .then(f => {
+        const families = [
+          `family=${encodeURIComponent(f.heading)}:wght@700`,
+          `family=${encodeURIComponent(f.body)}:wght@400`,
+          `family=${encodeURIComponent(f.accent)}:wght@300`
+        ];
+        fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
+        fontStyle.textContent = `
+          body { font-family: '${f.body}', sans-serif; font-weight: 400; }
+          h1, h2, h3, h4, h5, h6 { font-family: '${f.heading}', sans-serif; font-weight: 700; }
+          button, .accent { font-family: '${f.accent}', sans-serif; font-weight: 300; }
+        `;
+      })
+      .catch(err => {
+        console.error('Font load failed', err);
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
+        fontStyle.textContent = `
+          body { font-family: 'Inter', sans-serif; font-weight: 400; }
+          h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
+          button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+        `;
+      });
 
     fetch('menu.html')
       .then(resp => resp.text())
