@@ -183,7 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (detailTitle) detailTitle.textContent = `${rowData.item} - ${field}`;
-    if (detailCard) detailCard.classList.remove('hidden');
+
+    if (detailCard) {
+      detailCard.classList.remove('hidden');
+      detailCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
 
     if (detailTable) {
       detailTable.setData(rows);
