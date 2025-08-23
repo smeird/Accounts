@@ -1,8 +1,10 @@
+
 // Render a pivot table with Tabulator and year filtering
 
 document.addEventListener('DOMContentLoaded', () => {
   const yearSelect = document.getElementById('year-select');
   const refreshBtn = document.getElementById('refresh');
+
   const exportBtn = document.getElementById('export');
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   let table;
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(r => r.json())
     .then(months => {
       const years = Array.from(new Set(months.map(m => m.year))).sort((a, b) => b - a);
+
       years.forEach(y => {
         const opt = document.createElement('option');
         opt.value = y;
@@ -20,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       loadData(yearSelect.value);
     })
+
     .catch(() => showMessage('Failed to load years', 'error'));
 
   refreshBtn.addEventListener('click', () => loadData(yearSelect.value));
@@ -30,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadData(year) {
     let url = '../php_backend/public/export_data.php';
     if (year !== 'all') {
+
       url += `?start=${year}-01-01&end=${year}-12-31`;
     }
     fetch(url)
@@ -37,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(rows => {
         const data = rows.map(r => ({
           ...r,
+
           year: r.date.substring(0, 4),
           month: monthNames[new Date(r.date).getMonth()]
         }));
@@ -47,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPivot(data, year) {
     const keyField = year === 'all' ? 'year' : 'month';
+
     const segments = {};
     const keys = new Set();
 
@@ -69,13 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const order = Array.from(keys).sort((a, b) => {
+
       if (keyField === 'month') {
         return monthNames.indexOf(a) - monthNames.indexOf(b);
       }
       return Number(a) - Number(b);
     });
 
+
     const columns = [{ title: 'Item', field: 'item', frozen: true }];
+
     order.forEach(name => {
       columns.push({
         title: name,
@@ -99,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bottomCalcFormatterParams: { symbol: '£', precision: 2 }
     });
 
+
     function buildRow(name, totals, children) {
       const row = { item: name };
       order.forEach(k => (row[k] = totals[k] || 0));
@@ -113,16 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return buildRow(catName, catObj.__totals, tagRows);
       });
       return buildRow(segName, segObj.__totals, catRows);
+
     });
 
     if (table) {
       table.setColumns(columns);
       table.setData(tableData);
+
     } else {
       table = tailwindTabulator('#pivot-table', {
         data: tableData,
         columns,
         layout: 'fitDataStretch',
+
         pagination: false,
         dataTree: true,
         dataTreeStartExpanded: false
@@ -130,4 +144,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
 
