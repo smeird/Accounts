@@ -55,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const keyField = year === 'all' ? 'year' : 'month';
 
     const segments = {};
+    const grandTotals = {};
+
     const keys = new Set();
 
     data.forEach(r => {
@@ -69,7 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!segments[seg].categories[cat]) segments[seg].categories[cat] = { __totals: {}, tags: {} };
       if (!segments[seg].categories[cat].tags[tag]) segments[seg].categories[cat].tags[tag] = { __totals: {} };
 
-      [segments[seg].__totals, segments[seg].categories[cat].__totals, segments[seg].categories[cat].tags[tag].__totals].forEach(totals => {
+
+      [grandTotals, segments[seg].__totals, segments[seg].categories[cat].__totals, segments[seg].categories[cat].tags[tag].__totals].forEach(totals => {
+
         totals[key] = (totals[key] || 0) + amount;
         totals.Total = (totals.Total || 0) + amount;
       });
@@ -93,7 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
         hozAlign: 'right',
         formatter: 'money',
         formatterParams: { symbol: '£', precision: 2 },
-        bottomCalc: 'sum',
+
+        bottomCalc: () => grandTotals[name] || 0,
+
         bottomCalcFormatter: 'money',
         bottomCalcFormatterParams: { symbol: '£', precision: 2 }
       });
@@ -104,7 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
       hozAlign: 'right',
       formatter: 'money',
       formatterParams: { symbol: '£', precision: 2 },
-      bottomCalc: 'sum',
+
+      bottomCalc: () => grandTotals.Total || 0,
+
       bottomCalcFormatter: 'money',
       bottomCalcFormatterParams: { symbol: '£', precision: 2 }
     });
