@@ -92,7 +92,9 @@ function tailwindTabulator(element, options) {
     const accentFont = accentEl ? getComputedStyle(accentEl).fontFamily : bodyFont;
     const el = table.element;
     el.style.setProperty('--tabulator-font-family', bodyFont);
-
+    el.style.setProperty('--tabulator-row-font-family', bodyFont);
+    el.style.setProperty('--tabulator-header-font-family', headingFont);
+    el.style.setProperty('--tabulator-header-font-weight', '700');
     el.style.fontFamily = bodyFont;
 
 
