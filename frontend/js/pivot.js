@@ -1,7 +1,6 @@
 
 // Render a pivot table with Tabulator and year filtering
 
-
 document.addEventListener('DOMContentLoaded', () => {
   const yearSelect = document.getElementById('year-select');
   const refreshBtn = document.getElementById('refresh');
@@ -54,25 +53,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPivot(data, year) {
     const keyField = year === 'all' ? 'year' : 'month';
-    const groups = {};
+
+    const segments = {};
+    const keys = new Set();
+
     data.forEach(r => {
+      const seg = r.segment_name || 'Unsegmented';
       const cat = r.category_name || 'Uncategorised';
+      const tag = r.tag_name || 'Untagged';
       const key = r[keyField];
-      if (!groups[cat]) groups[cat] = {};
-      groups[cat][key] = (groups[cat][key] || 0) + parseFloat(r.amount);
+      const amount = parseFloat(r.amount);
+      keys.add(key);
+
+      if (!segments[seg]) segments[seg] = { __totals: {}, categories: {} };
+      if (!segments[seg].categories[cat]) segments[seg].categories[cat] = { __totals: {}, tags: {} };
+      if (!segments[seg].categories[cat].tags[tag]) segments[seg].categories[cat].tags[tag] = { __totals: {} };
+
+      [segments[seg].__totals, segments[seg].categories[cat].__totals, segments[seg].categories[cat].tags[tag].__totals].forEach(totals => {
+        totals[key] = (totals[key] || 0) + amount;
+        totals.Total = (totals.Total || 0) + amount;
+      });
     });
 
-    const colSet = new Set();
-    Object.values(groups).forEach(obj => Object.keys(obj).forEach(k => colSet.add(k)));
+    const order = Array.from(keys).sort((a, b) => {
 
-    const order = Array.from(colSet).sort((a, b) => {
       if (keyField === 'month') {
         return monthNames.indexOf(a) - monthNames.indexOf(b);
       }
       return Number(a) - Number(b);
     });
 
-    const columns = [{ title: 'Category', field: 'category', frozen: true }];
+
+    const columns = [{ title: 'Item', field: 'item', frozen: true }];
+
     order.forEach(name => {
       columns.push({
         title: name,
@@ -96,29 +109,37 @@ document.addEventListener('DOMContentLoaded', () => {
       bottomCalcFormatterParams: { symbol: '£', precision: 2 }
     });
 
-    const tableData = Object.entries(groups).map(([category, vals]) => {
-      const row = { category };
-      let total = 0;
-      order.forEach(name => {
-        const v = vals[name] || 0;
-        row[name] = v;
-        total += v;
-      });
-      row.Total = total;
+
+    function buildRow(name, totals, children) {
+      const row = { item: name };
+      order.forEach(k => (row[k] = totals[k] || 0));
+      row.Total = totals.Total || 0;
+      if (children && children.length) row._children = children;
       return row;
+    }
+
+    const tableData = Object.entries(segments).map(([segName, segObj]) => {
+      const catRows = Object.entries(segObj.categories).map(([catName, catObj]) => {
+        const tagRows = Object.entries(catObj.tags).map(([tagName, tagObj]) => buildRow(tagName, tagObj.__totals));
+        return buildRow(catName, catObj.__totals, tagRows);
+      });
+      return buildRow(segName, segObj.__totals, catRows);
+
     });
 
     if (table) {
       table.setColumns(columns);
       table.setData(tableData);
-      const cols = table.getColumns();
-      if (cols.length) cols[0].freeze(true);
+
     } else {
       table = tailwindTabulator('#pivot-table', {
         data: tableData,
         columns,
         layout: 'fitDataStretch',
-        pagination: false
+
+        pagination: false,
+        dataTree: true,
+        dataTreeStartExpanded: false
       });
     }
   }
