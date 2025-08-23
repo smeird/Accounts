@@ -53,13 +53,13 @@ async function loadTags(){
             { title: 'Keyword', field: 'keyword' },
             { title: 'Description', field: 'description' },
             { title: 'Actions', formatter: function(cell){
-                const t = cell.getRow().getData();
                 const container = document.createElement('div');
                 const edit = document.createElement('button');
                 edit.innerHTML = '<i class="fas fa-edit w-4 h-4"></i>';
                 edit.setAttribute('aria-label','Edit');
                 edit.className = 'bg-indigo-600 text-white px-2 py-1 rounded mr-2';
                 edit.addEventListener('click', async () => {
+                    const t = cell.getRow().getData();
                     const name = prompt('Tag Name', t.name);
                     if (name === null) return;
                     const keyword = prompt('Keyword (for auto tagging)', t.keyword || '');
@@ -80,6 +80,7 @@ async function loadTags(){
                 del.className = 'bg-red-600 text-white px-2 py-1 rounded';
                 del.addEventListener('click', async () => {
                     if (!confirm('Delete this tag?')) return;
+                    const t = cell.getRow().getData();
                     await fetch('../php_backend/public/tags.php', {
                         method: 'DELETE',
                         headers: {'Content-Type':'application/json'},

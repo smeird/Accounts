@@ -45,7 +45,9 @@
             <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-tag-chart" style="height:400px"></div></div>
             <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" style="height:400px"></div></div>
             <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="network-graph" style="height:600px"></div></div>
+
             <div id="treegraph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="treegraph-chart" style="height:1200px"></div></div>
+
             <div id="segment-section" class="tab-content bg-white p-6 rounded shadow hidden space-y-4">
                 <h2 class="text-xl font-semibold">Segment Totals</h2>
                 <div id="segment-table"></div>
@@ -88,7 +90,9 @@
         return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(sum, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
     }
 
+
     function buildHierarchy(yearly, categories, includeTags = true){
+
         const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
         const categoryMap = {};
         categories.forEach(c => {
@@ -110,6 +114,7 @@
                 data.push({ id: segId, parent: 'root', name: segName });
             }
             const catId = 'cat_' + makeId(c.name);
+
             const total = Math.abs(parseFloat(c.total));
             const catNode = { id: catId, parent: segId, name: c.name };
             if (!includeTags) { catNode.value = total; }
@@ -154,6 +159,7 @@
                 }
             });
         }
+
         if (yearly.segments) {
             const check = {};
             yearly.segments.forEach(s => {
@@ -317,7 +323,9 @@
             const segmentTotals = renderSunburst(outgoingYearly, categories, 'outgoing-sunburst-chart', 'Outgoing Segments, Categories and Tags');
             renderSunburst(incomeYearly, categories, 'income-sunburst-chart', 'Income Segments, Categories and Tags');
             const allYearly = { segments: yearly.segments, categories: yearly.categories, tags: yearly.tags };
+
             const { data: hierarchyData } = buildHierarchy(allYearly, categories, false);
+
             renderHierarchyCharts(hierarchyData);
             if (segmentTotals.length) {
                 renderSegments(segmentTotals);
@@ -358,7 +366,9 @@
         const nodes = data.map(d => ({ id: d.id, name: d.name }));
         Highcharts.chart('network-graph', {
             chart: { type: 'networkgraph' },
+
             title: { text: 'Segment / Category Network' },
+
             series: [{
                 data: edges,
                 nodes: nodes,
@@ -366,16 +376,19 @@
             }]
         });
         Highcharts.chart('treegraph-chart', {
+
             chart: {
                 spacingBottom: 30,
                 marginRight: 120,
                 height: 1200
             },
             title: { text: 'Segment / Category Tree' },
+
             tooltip: { pointFormatter: sunburstTooltip },
             series: [{
                 type: 'treegraph',
                 data: data,
+
                 clip: false,
                 marker: {
                     symbol: 'circle',
@@ -422,6 +435,7 @@
                         radius: 4
                     }
                 }]
+
             }]
         });
     }
