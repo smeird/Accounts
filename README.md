@@ -5,7 +5,7 @@ This repository now provides a simple PHP implementation for managing accounts a
 ## Quick Deployment
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/your-org/Accounts/main/deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | bash
 ```
 
 The script clones the repository, sets up the database, and creates an initial user.
