@@ -45,7 +45,9 @@
             <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-tag-chart" style="height:400px"></div></div>
             <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" style="height:400px"></div></div>
             <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="network-graph" style="height:600px"></div></div>
-            <div id="treegraph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="treegraph-chart" style="height:600px"></div></div>
+
+            <div id="treegraph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="treegraph-chart" style="height:1200px"></div></div>
+
             <div id="segment-section" class="tab-content bg-white p-6 rounded shadow hidden space-y-4">
                 <h2 class="text-xl font-semibold">Segment Totals</h2>
                 <div id="segment-table"></div>
@@ -375,13 +377,65 @@
         });
         Highcharts.chart('treegraph-chart', {
 
+            chart: {
+                spacingBottom: 30,
+                marginRight: 120,
+                height: 1200
+            },
             title: { text: 'Segment / Category Tree' },
 
             tooltip: { pointFormatter: sunburstTooltip },
             series: [{
                 type: 'treegraph',
                 data: data,
-                dataLabels: { style: { textOutline: 'none' } }
+
+                clip: false,
+                marker: {
+                    symbol: 'circle',
+                    radius: 6,
+                    fillColor: '#ffffff',
+                    lineWidth: 3
+                },
+                dataLabels: {
+                    align: 'left',
+                    pointFormat: '{point.name}',
+                    style: {
+                        color: 'var(--highcharts-neutral-color-100, #000)',
+                        textOutline: '3px contrast',
+                        whiteSpace: 'nowrap'
+                    },
+                    x: 24,
+                    crop: false,
+                    overflow: 'none'
+                },
+                levels: [{
+                    level: 1,
+                    levelIsConstant: false
+                }, {
+                    level: 2,
+                    colorByPoint: true
+                }, {
+                    level: 3,
+                    colorVariation: {
+                        key: 'brightness',
+                        to: -0.5
+                    }
+                }, {
+                    level: 4,
+                    colorVariation: {
+                        key: 'brightness',
+                        to: 0.5
+                    }
+                }, {
+                    level: 6,
+                    dataLabels: {
+                        x: 10
+                    },
+                    marker: {
+                        radius: 4
+                    }
+                }]
+
             }]
         });
     }
