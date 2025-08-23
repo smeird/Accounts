@@ -13,21 +13,36 @@
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
         <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-8">
+        <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-4">
             <h1 class="text-2xl font-semibold text-indigo-700">Graphs</h1>
             <p class="mb-4">Explore a collection of charts that illustrate your income and spending patterns. Choose a year to see how your finances evolve and compare categories or tags visually.</p>
             <label for="year-select" class="block">Year:
                 <select id="year-select" class="border p-2 rounded w-full"></select>
             </label>
-            <div class="bg-white p-6 rounded shadow"><div id="income-sunburst-chart" style="height:600px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="outgoing-sunburst-chart" style="height:600px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="monthly-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="cumulative-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="pie-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="income-tag-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="outgoing-tag-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow"><div id="scatter-chart" style="height:400px"></div></div>
-            <div class="bg-white p-6 rounded shadow space-y-4">
+
+            <div class="mb-4 border-b" id="graph-tab-bar">
+                <nav class="flex flex-wrap gap-2" id="graph-tabs">
+                    <button class="tab-button px-3 py-2 rounded bg-indigo-100 text-indigo-700" data-target="income-sunburst">Income Sunburst</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="outgoing-sunburst">Outgoing Sunburst</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="monthly-chart-container">Monthly Spend</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="cumulative-chart-container">Cumulative Spend</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="pie-chart-container">Category Pie</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="income-tag-container">Income Tags</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="outgoing-tag-container">Outgoing Tags</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="scatter-chart-container">Scatter</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="segment-section">Segments</button>
+                </nav>
+            </div>
+
+            <div id="income-sunburst" class="tab-content bg-white p-6 rounded shadow"><div id="income-sunburst-chart" style="height:600px"></div></div>
+            <div id="outgoing-sunburst" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-sunburst-chart" style="height:600px"></div></div>
+            <div id="monthly-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="monthly-chart" style="height:400px"></div></div>
+            <div id="cumulative-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="cumulative-chart" style="height:400px"></div></div>
+            <div id="pie-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="pie-chart" style="height:400px"></div></div>
+            <div id="income-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="income-tag-chart" style="height:400px"></div></div>
+            <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-tag-chart" style="height:400px"></div></div>
+            <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" style="height:400px"></div></div>
+            <div id="segment-section" class="tab-content bg-white p-6 rounded shadow hidden space-y-4">
                 <h2 class="text-xl font-semibold">Segment Totals</h2>
                 <div id="segment-table"></div>
                 <div id="segment-chart" style="height:400px"></div>
@@ -48,6 +63,7 @@
 
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    let segmentTable;
 
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
@@ -330,7 +346,7 @@
     function renderSegments(segments){
         const tableEl = document.getElementById('segment-table');
         tableEl.innerHTML = '';
-        tailwindTabulator(tableEl, {
+        segmentTable = tailwindTabulator(tableEl, {
             data: segments,
             layout: 'fitDataStretch',
             columns: [
@@ -374,6 +390,21 @@
             });
 
         document.getElementById('year-select').addEventListener('change', e => loadYear(e.target.value));
+
+        const tabs = document.querySelectorAll('.tab-button');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabs.forEach(b => b.classList.remove('bg-indigo-100', 'text-indigo-700'));
+                contents.forEach(c => c.classList.add('hidden'));
+                document.getElementById(btn.dataset.target).classList.remove('hidden');
+                btn.classList.add('bg-indigo-100', 'text-indigo-700');
+                Highcharts.charts.forEach(c => { if (c) c.reflow(); });
+                if (btn.dataset.target === 'segment-section' && segmentTable) {
+                    segmentTable.redraw();
+                }
+            });
+        });
     });
     </script>
     <script src="js/overlay.js"></script>
