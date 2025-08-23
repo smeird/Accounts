@@ -7,6 +7,8 @@ class Setting {
     private const DEFAULT_HEADING_FONT = 'Roboto';
     private const DEFAULT_BODY_FONT = 'Inter';
     private const DEFAULT_ACCENT_FONT = 'Source Sans Pro';
+    private const DEFAULT_SITE_NAME = 'Finance Manager';
+    private const DEFAULT_COLOR_SCHEME = 'indigo';
 
     /**
      * Retrieve a setting value by name.
@@ -39,6 +41,18 @@ class Setting {
             'heading' => self::get('font_heading') ?? self::DEFAULT_HEADING_FONT,
             'body'    => self::get('font_body') ?? self::DEFAULT_BODY_FONT,
             'accent'  => self::get('font_accent') ?? self::DEFAULT_ACCENT_FONT,
+        ];
+    }
+
+    /**
+     * Retrieve branding settings such as site name and color scheme.
+     *
+     * @return array{site_name: string, color_scheme: string}
+     */
+    public static function getBrand(): array {
+        return [
+            'site_name'    => self::get('site_name') ?? self::DEFAULT_SITE_NAME,
+            'color_scheme' => self::get('color_scheme') ?? self::DEFAULT_COLOR_SCHEME,
         ];
     }
 }
