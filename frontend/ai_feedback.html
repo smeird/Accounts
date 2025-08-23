@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AI Feedback</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome icons loaded via menu.js -->
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="w-64 flex-shrink-0 bg-white border-r p-6"></nav>
+    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">AI Feedback</h1>
+        <p class="mb-4">Request an AI-generated overview of your finances for the last 12 months.</p>
+        <section>
+            <button id="run" class="bg-indigo-600 text-white px-4 py-2 rounded">
+                <i class="fas fa-comments-dollar inline w-4 h-4 mr-1"></i>Generate Feedback
+            </button>
+            <div id="result" class="mt-4 whitespace-pre-wrap"></div>
+        </section>
+    </main>
+</div>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+<script>
+document.getElementById('run').addEventListener('click', async () => {
+    const result = document.getElementById('result');
+    const btn = document.getElementById('run');
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    result.innerHTML = '<i class="fas fa-spinner fa-spin inline w-4 h-4 mr-2"></i>Requesting analysis...';
+    try {
+        const res = await fetch('../php_backend/public/ai_feedback.php', {method: 'POST'});
+        const data = await res.json();
+        if (data.error) {
+            result.textContent = data.error;
+            showMessage('AI feedback failed', 'error');
+        } else {
+            result.textContent = data.feedback;
+            showMessage('AI feedback ready');
+        }
+    } catch (e) {
+        result.textContent = 'Request failed';
+        showMessage('AI feedback failed', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+});
+</script>
+<script src="js/page_help.js"></script>
+</body>
+</html>
