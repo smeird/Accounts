@@ -6,10 +6,16 @@ require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
 
 if (isset($_SESSION['user_id'])) {
-    Log::write('User ' . $_SESSION['user_id'] . ' logged out');
+    $reason = isset($_GET['timeout']) ? ' (timeout)' : '';
+    Log::write('User ' . $_SESSION['user_id'] . ' logged out' . $reason);
 }
 
 session_destroy();
+
+if (isset($_GET['timeout'])) {
+    header('Location: index.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

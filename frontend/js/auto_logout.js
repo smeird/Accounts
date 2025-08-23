@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reset = () => {
           clearTimeout(timer);
           timer = setTimeout(() => {
-            window.location.href = '../logout.php';
+            window.location.href = '../logout.php?timeout=1';
           }, minutes * 60 * 1000);
         };
         ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
