@@ -88,7 +88,9 @@
         return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(sum, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
     }
 
-    function buildHierarchy(yearly, categories){
+
+    function buildHierarchy(yearly, categories, includeTags = true){
+
         const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
         const categoryMap = {};
         categories.forEach(c => {
@@ -110,46 +112,52 @@
                 data.push({ id: segId, parent: 'root', name: segName });
             }
             const catId = 'cat_' + makeId(c.name);
-            data.push({ id: catId, parent: segId, name: c.name });
+
             const total = Math.abs(parseFloat(c.total));
+            const catNode = { id: catId, parent: segId, name: c.name };
+            if (!includeTags) { catNode.value = total; }
+            data.push(catNode);
             categoryTotals[c.name] = { id: catId, total, segment: segName, fromYearly: true };
             segmentTotals[segName] = (segmentTotals[segName] || 0) + total;
         });
-        const tagSums = {};
-        (yearly.tags || []).forEach(t => {
-            if (!t.name || !t.category) return;
-            let catInfo = categoryTotals[t.category];
-            let catId;
-            if (catInfo) {
-                catId = catInfo.id;
-            } else {
-                const segName = categoryMap[t.category] || 'Not Segmented';
-                let segId = segmentIds[segName];
-                if (!segId) {
-                    segId = 'seg_' + makeId(segName);
-                    segmentIds[segName] = segId;
-                    data.push({ id: segId, parent: 'root', name: segName });
+        if (includeTags) {
+            const tagSums = {};
+            (yearly.tags || []).forEach(t => {
+                if (!t.name || !t.category) return;
+                let catInfo = categoryTotals[t.category];
+                let catId;
+                if (catInfo) {
+                    catId = catInfo.id;
+                } else {
+                    const segName = categoryMap[t.category] || 'Not Segmented';
+                    let segId = segmentIds[segName];
+                    if (!segId) {
+                        segId = 'seg_' + makeId(segName);
+                        segmentIds[segName] = segId;
+                        data.push({ id: segId, parent: 'root', name: segName });
+                    }
+                    catId = 'cat_' + makeId(t.category);
+                    data.push({ id: catId, parent: segId, name: t.category });
+                    catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false };
                 }
-                catId = 'cat_' + makeId(t.category);
-                data.push({ id: catId, parent: segId, name: t.category });
-                catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false };
-            }
-            const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
-            const value = Math.abs(parseFloat(t.total));
-            data.push({ id: tagId, parent: catId, name: t.name, value });
-            tagSums[catId] = (tagSums[catId] || 0) + value;
-            if (!catInfo.fromYearly) {
-                catInfo.total += value;
-                segmentTotals[catInfo.segment] = (segmentTotals[catInfo.segment] || 0) + value;
-            }
-        });
-        Object.values(categoryTotals).forEach(ct => {
-            const tagged = tagSums[ct.id] || 0;
-            const diff = ct.total - tagged;
-            if (Math.abs(diff) > 0.01) {
-                data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
-            }
-        });
+                const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
+                const value = Math.abs(parseFloat(t.total));
+                data.push({ id: tagId, parent: catId, name: t.name, value });
+                tagSums[catId] = (tagSums[catId] || 0) + value;
+                if (!catInfo.fromYearly) {
+                    catInfo.total += value;
+                    segmentTotals[catInfo.segment] = (segmentTotals[catInfo.segment] || 0) + value;
+                }
+            });
+            Object.values(categoryTotals).forEach(ct => {
+                const tagged = tagSums[ct.id] || 0;
+                const diff = ct.total - tagged;
+                if (Math.abs(diff) > 0.01) {
+                    data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
+                }
+            });
+        }
+
         if (yearly.segments) {
             const check = {};
             yearly.segments.forEach(s => {
@@ -229,14 +237,16 @@
                 series: categoryCumulative
             });
 
-            const catData = yearly.categories.map(c => ({ name: c.name, y: parseFloat(c.total) }));
+            const catData = yearly.categories
+                .filter(c => parseFloat(c.total) < 0)
+                .map(c => ({ name: c.name, y: Math.abs(parseFloat(c.total)) }));
             Highcharts.chart('pie-chart', {
                 chart: {
 
                     type: 'pie'
 
                 },
-                title: { text: 'Category Breakdown' },
+                title: { text: 'Outgoing Category Breakdown' },
                 tooltip: { pointFormatter: pieTooltip },
                 plotOptions: { pie: { depth: 35 } },
                 series: [{ name: 'Categories', data: catData }]
@@ -311,7 +321,9 @@
             const segmentTotals = renderSunburst(outgoingYearly, categories, 'outgoing-sunburst-chart', 'Outgoing Segments, Categories and Tags');
             renderSunburst(incomeYearly, categories, 'income-sunburst-chart', 'Income Segments, Categories and Tags');
             const allYearly = { segments: yearly.segments, categories: yearly.categories, tags: yearly.tags };
-            const { data: hierarchyData } = buildHierarchy(allYearly, categories);
+
+            const { data: hierarchyData } = buildHierarchy(allYearly, categories, false);
+
             renderHierarchyCharts(hierarchyData);
             if (segmentTotals.length) {
                 renderSegments(segmentTotals);
@@ -352,7 +364,9 @@
         const nodes = data.map(d => ({ id: d.id, name: d.name }));
         Highcharts.chart('network-graph', {
             chart: { type: 'networkgraph' },
-            title: { text: 'Segment / Category / Tag Network' },
+
+            title: { text: 'Segment / Category Network' },
+
             series: [{
                 data: edges,
                 nodes: nodes,
@@ -360,7 +374,9 @@
             }]
         });
         Highcharts.chart('treegraph-chart', {
-            title: { text: 'Segment / Category / Tag Tree' },
+
+            title: { text: 'Segment / Category Tree' },
+
             tooltip: { pointFormatter: sunburstTooltip },
             series: [{
                 type: 'treegraph',
