@@ -286,7 +286,7 @@ class Transaction {
     /**
      * Retrieve all transactions for a specific account ordered by date.
      */
-     public static function getByAccount(int $accountId): array {
+    public static function getByAccount(int $accountId): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
@@ -301,6 +301,28 @@ class Transaction {
              . 'ORDER BY t.`date` DESC, t.`id` DESC';
         $stmt = $db->prepare($sql);
         $stmt->execute(['acc' => $accountId, 'ignore' => $ignore]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retrieve transactions between two dates inclusive.
+     */
+    public static function getByDateRange(string $start, string $end): array {
+        $db = Database::getConnection();
+        $ignore = Tag::getIgnoreId();
+        $sql = 'SELECT t.`id`, t.`account_id`, a.`name` AS account_name, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+             . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
+             . 'FROM `transactions` t '
+             . 'LEFT JOIN `accounts` a ON t.`account_id` = a.`id` '
+             . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
+             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
+             . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
+             . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
+             . 'WHERE t.`date` BETWEEN :start AND :end '
+             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
+             . 'ORDER BY t.`date`';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['start' => $start, 'end' => $end, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

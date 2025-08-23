@@ -13,8 +13,10 @@ header('Content-Disposition: attachment; filename="' . $filename . '"');
 try {
     $db = Database::getConnection();
     $ignore = Tag::getIgnoreId();
-    $stmt = $db->prepare('SELECT id, date, amount, description, memo, ofx_id FROM transactions WHERE tag_id IS NULL OR tag_id != :ignore ORDER BY date');
-    $stmt->execute(['ignore' => $ignore]);
+    $start = $_GET['start'] ?? '1970-01-01';
+    $end   = $_GET['end'] ?? date('Y-m-d');
+    $stmt = $db->prepare('SELECT id, date, amount, description, memo, ofx_id FROM transactions WHERE (tag_id IS NULL OR tag_id != :ignore) AND date BETWEEN :start AND :end ORDER BY date');
+    $stmt->execute(['ignore' => $ignore, 'start' => $start, 'end' => $end]);
     $txns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Retrieve basic account details for the OFX header. If there are

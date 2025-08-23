@@ -102,8 +102,11 @@ This document outlines expected functionality for each section of the finance ma
 
 ## Backup & Restore
 - Download backups selecting which data parts to include
-- Export all transactions as a single OFX file
 - Restore data from an uploaded backup file
+
+## Exports
+- Download transactions for a chosen date range
+- Select output format such as OFX, CSV or XLSX
 
 ## Manage Users
 - Add new users with credentials
