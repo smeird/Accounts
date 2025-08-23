@@ -85,6 +85,17 @@ function tailwindTabulator(element, options) {
     }
     options.paginationSize = 20;
     const table = new Tabulator(element, options);
+    const bodyFont = getComputedStyle(document.body).fontFamily;
+    const headingEl = document.querySelector('h1, h2, h3, h4, h5, h6');
+    const headingFont = headingEl ? getComputedStyle(headingEl).fontFamily : bodyFont;
+    const accentEl = document.querySelector('button, .accent');
+    const accentFont = accentEl ? getComputedStyle(accentEl).fontFamily : bodyFont;
+    const el = table.element;
+    el.style.setProperty('--tabulator-font-family', bodyFont);
+    el.style.setProperty('--tabulator-row-font-family', bodyFont);
+    el.style.setProperty('--tabulator-header-font-family', headingFont);
+    el.style.setProperty('--tabulator-header-font-weight', '700');
+    el.style.fontFamily = bodyFont;
 
     if (rowClickHandler) {
         table.on('rowClick', rowClickHandler);
@@ -104,6 +115,8 @@ function tailwindTabulator(element, options) {
         searchInput.type = 'text';
         searchInput.placeholder = 'Search';
         searchInput.className = 'tabulator-search mb-2 p-2 border rounded w-full';
+        searchInput.style.fontFamily = accentFont;
+        searchInput.style.fontWeight = '300';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         searchInput.addEventListener('input', function() {
             if (typeof table.search === 'function') {
@@ -124,12 +137,16 @@ function tailwindTabulator(element, options) {
         if (cols.length) {
             cols[0].freeze(true);
         }
+        const titles = el.querySelectorAll('.tabulator-col-title');
+        titles.forEach(title => {
+            title.style.fontFamily = headingFont;
+            title.style.fontWeight = '700';
+        });
         styleCalcRows(table);
     });
     table.on('dataProcessed', function() {
         styleCalcRows(table);
     });
-    const el = table.element;
     el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
     const header = el.querySelector('.tabulator-header');
     if (header) {
