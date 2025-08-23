@@ -10,6 +10,39 @@ window.fetch = (input, init = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  let colorScheme = 'indigo';
+  let siteName = 'Finance Manager';
+  const colorMap = {
+    indigo: {600: '#4f46e5', 700: '#4338ca'},
+    blue:   {600: '#2563eb', 700: '#1d4ed8'},
+    green:  {600: '#059669', 700: '#047857'},
+    red:    {600: '#dc2626', 700: '#b91c1c'},
+    purple: {600: '#9333ea', 700: '#7e22ce'}
+  };
+
+  const hoverStyle = document.createElement('style');
+  document.head.appendChild(hoverStyle);
+
+  const applyColorScheme = (root = document) => {
+    if (colorScheme !== 'indigo') {
+      root.querySelectorAll('*').forEach(el => {
+        el.classList.forEach(c => {
+          if (c.includes('indigo')) {
+            el.classList.remove(c);
+            el.classList.add(c.replace('indigo', colorScheme));
+          }
+        });
+      });
+    }
+    const colors = colorMap[colorScheme] || colorMap.indigo;
+    hoverStyle.textContent = `
+      a { transition: color 0.2s ease; }
+      a:hover { color: ${colors[600]}; }
+      button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+      button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    `;
+  };
+
   const applyIconColor = (root = document) => {
     root.querySelectorAll('i').forEach(icon => {
       if (icon.closest('header')) return;
@@ -21,23 +54,72 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.classList.forEach(c => { if (c.startsWith('text-')) icon.classList.remove(c); });
         icon.classList.add('text-white');
       } else if (!hasColor) {
-        icon.classList.add('text-indigo-600');
+        icon.classList.add(`text-${colorScheme}-600`);
       }
     });
   };
 
   // Apply 20% opacity to all page elements
   document.documentElement.style.opacity = '0.9';
-  applyIconColor();
-  // Apply consistent hover styling across the site
-  const hoverStyle = document.createElement('style');
-  hoverStyle.textContent = `
-    a { transition: color 0.2s ease; }
-    a:hover { color: #4f46e5; }
-    button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
-    button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-  `;
-  document.head.appendChild(hoverStyle);
+
+  // Prepare font links
+  let fontLink = document.getElementById('app-fonts');
+  if (!fontLink) {
+    fontLink = document.createElement('link');
+    fontLink.id = 'app-fonts';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+  }
+  const fontStyle = document.createElement('style');
+  document.head.appendChild(fontStyle);
+
+  fetch('../php_backend/public/font_settings.php')
+    .then(r => r.json())
+    .then(f => {
+      const families = [
+        `family=${encodeURIComponent(f.heading)}:wght@700`,
+        `family=${encodeURIComponent(f.body)}:wght@400`,
+        `family=${encodeURIComponent(f.accent)}:wght@300`
+      ];
+      fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
+      fontStyle.textContent = `
+        body { font-family: '${f.body}', sans-serif; font-weight: 400; }
+        h1, h2, h3, h4, h5, h6 { font-family: '${f.heading}', sans-serif; font-weight: 700; }
+        button, .accent { font-family: '${f.accent}', sans-serif; font-weight: 300; }
+      `;
+      siteName = f.site_name || siteName;
+      colorScheme = f.color_scheme || colorScheme;
+      document.title = document.title.replace('Finance Manager', siteName);
+      const landing = document.getElementById('landing-site-name');
+      if (landing) landing.textContent = siteName;
+      applyColorScheme();
+      applyIconColor();
+      document.querySelectorAll('#site-title').forEach(el => el.textContent = siteName);
+      document.querySelectorAll('img[alt="Finance Manager logo"]').forEach(img => {
+        img.alt = `${siteName} logo`;
+      });
+    })
+    .catch(err => {
+      console.error('Font load failed', err);
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
+      fontStyle.textContent = `
+        body { font-family: 'Inter', sans-serif; font-weight: 400; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
+        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+      `;
+      applyColorScheme();
+      applyIconColor();
+    });
+
+  // Ensure every page uses the shared SVG favicon
+  if (!document.querySelector('link[rel="icon"]')) {
+    const iconSvg = document.createElement('link');
+    iconSvg.rel = 'icon';
+    iconSvg.type = 'image/svg+xml';
+    iconSvg.href = '/favicon.svg';
+    iconSvg.sizes = 'any';
+    document.head.appendChild(iconSvg);
+  }
 
   // Ensure every page uses the shared SVG favicon
   if (!document.querySelector('link[rel="icon"]')) {
@@ -72,46 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
       'z-40'
     );
 
-    // Load site fonts and apply them to headings, body text and accents
-    let fontLink = document.getElementById('app-fonts');
-    if (!fontLink) {
-      fontLink = document.createElement('link');
-      fontLink.id = 'app-fonts';
-      fontLink.rel = 'stylesheet';
-      document.head.appendChild(fontLink);
-    }
-    const fontStyle = document.createElement('style');
-    document.head.appendChild(fontStyle);
-
-    fetch('../php_backend/public/font_settings.php')
-      .then(r => r.json())
-      .then(f => {
-        const families = [
-          `family=${encodeURIComponent(f.heading)}:wght@700`,
-          `family=${encodeURIComponent(f.body)}:wght@400`,
-          `family=${encodeURIComponent(f.accent)}:wght@300`
-        ];
-        fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
-        fontStyle.textContent = `
-          body { font-family: '${f.body}', sans-serif; font-weight: 400; }
-          h1, h2, h3, h4, h5, h6 { font-family: '${f.heading}', sans-serif; font-weight: 700; }
-          button, .accent { font-family: '${f.accent}', sans-serif; font-weight: 300; }
-        `;
-      })
-      .catch(err => {
-        console.error('Font load failed', err);
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
-        fontStyle.textContent = `
-          body { font-family: 'Inter', sans-serif; font-weight: 400; }
-          h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
-          button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
-        `;
-      });
-
     fetch('menu.html')
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        applyColorScheme(menu);
         applyIconColor(menu);
         // Enable collapsible sections with animated height transition
         menu.querySelectorAll('.group').forEach(section => {
@@ -139,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (section && page && heading) {
             const crumb = document.createElement('div');
             crumb.textContent = `${section} / ${page}`.toUpperCase();
-            crumb.className = 'uppercase text-indigo-900 text-[0.6rem] mb-1';
+            crumb.className = `uppercase text-${colorScheme}-900 text-[0.6rem] mb-1`;
             heading.before(crumb);
           }
         }
@@ -166,7 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(resp => resp.text())
     .then(html => {
       document.body.insertAdjacentHTML('afterbegin', html);
-      applyIconColor();
+      const header = document.querySelector('header');
+      const titleEl = document.getElementById('site-title');
+      if (titleEl) titleEl.textContent = siteName;
+      document.querySelectorAll('header img[alt="Finance Manager logo"]').forEach(img => {
+        img.alt = `${siteName} logo`;
+      });
+      applyColorScheme(header);
+      applyIconColor(header);
 
       const content = document.querySelector('body > div.flex');
       if (content) {

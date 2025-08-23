@@ -19,9 +19,20 @@ $fontSettings = Setting::getFonts();
 $fontHeading = $fontSettings['heading'];
 $fontBody = $fontSettings['body'];
 $fontAccent = $fontSettings['accent'];
+$brand = Setting::getBrand();
+$siteName = $brand['site_name'];
+$colorScheme = $brand['color_scheme'];
 $fontOptions = [
     'Roboto', 'Inter', 'Source Sans Pro', 'Montserrat', 'Open Sans', 'Lato',
     'Nunito', 'Poppins', 'Raleway', 'Work Sans', 'Quicksand'
+];
+$colorOptions = ['indigo', 'blue', 'green', 'red', 'purple'];
+$colorMap = [
+    'indigo' => '#4f46e5',
+    'blue'   => '#2563eb',
+    'green'  => '#059669',
+    'red'    => '#dc2626',
+    'purple' => '#9333ea',
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -32,6 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fontHeading = trim($_POST['font_heading'] ?? '');
     $fontBody = trim($_POST['font_body'] ?? '');
     $fontAccent = trim($_POST['font_accent'] ?? '');
+    $siteName = trim($_POST['site_name'] ?? '');
+    $colorScheme = trim($_POST['color_scheme'] ?? '');
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -58,8 +71,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('font_accent', $fontAccent);
         Log::write('Updated accent font');
     }
+    if ($siteName !== '') {
+        Setting::set('site_name', $siteName);
+        Log::write('Updated site name');
+    }
+    if ($colorScheme !== '') {
+        Setting::set('color_scheme', $colorScheme);
+        Log::write('Updated color scheme');
+    }
     $message = 'Settings updated.';
 }
+
+$colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
+$text600 = "text-{$colorScheme}-600";
+$text700 = "text-{$colorScheme}-700";
+$text900 = "text-{$colorScheme}-900";
+$bg600 = "bg-{$colorScheme}-600";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,18 +105,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
         button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
         a { transition: color 0.2s ease; }
-        a:hover { color: #4f46e5; }
+        a:hover { color: <?= $colorHex ?>; }
         button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
         button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-        <i class="fas fa-cogs text-indigo-600 text-6xl mb-4 block mx-auto"></i>
-        <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
-        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">System Settings</h1>
+        <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
+        <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
+        <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>
         <p class="mb-4">Adjust application configuration values.</p>
-        <p class="mb-4"><a href="logout.php" class="text-indigo-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-indigo-600 hover:underline">Home</a></p>
+        <p class="mb-4"><a href="logout.php" class="<?= $text600 ?> hover:underline">Logout</a> | <a href="frontend/index.html" class="<?= $text600 ?> hover:underline">Home</a></p>
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
@@ -105,6 +132,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </label>
             <label class="block">Auto-Logout Minutes:
                 <input type="number" name="session_timeout_minutes" value="<?= htmlspecialchars($timeout) ?>" class="border p-2 rounded w-full" data-help="Minutes of inactivity before automatic logout">
+            </label>
+            <label class="block">Site Name:
+                <input type="text" name="site_name" value="<?= htmlspecialchars($siteName) ?>" class="border p-2 rounded w-full" data-help="Displayed name of the website">
+            </label>
+            <label class="block">Color Scheme:
+                <select name="color_scheme" class="border p-2 rounded w-full" data-help="Primary Tailwind color">
+                    <?php foreach ($colorOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $colorScheme ? 'selected' : '' ?>><?= ucfirst($opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </label>
             <label class="block">Heading Font:
                 <select name="font_heading" class="border p-2 rounded w-full" data-help="Font used for headings">
@@ -127,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endforeach; ?>
                 </select>
             </label>
-            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
+            <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
     </div>
     <script src="frontend/js/input_help.js"></script>
