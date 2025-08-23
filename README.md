@@ -2,6 +2,14 @@
 
 This repository now provides a simple PHP implementation for managing accounts and transactions.
 
+## Quick Deployment
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/your-org/Accounts/main/deploy.sh | bash
+```
+
+The script clones the repository, sets up the database, and creates an initial user.
+
 ## Authentication
 
 A basic login page is available at the project root (`index.php`). Users are stored in a `users` table. After logging in, visit `users.php` to add new users or change your password.
