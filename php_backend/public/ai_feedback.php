@@ -60,12 +60,12 @@ try {
     }
 
     $payload = [
-        'model' => 'gpt-5-nano',
+        'model' => 'gpt-5-mini',
         'messages' => [
             ['role' => 'system', 'content' => 'You are a financial analyst that writes long, clear summaries without asking questions.'],
             ['role' => 'user', 'content' => $prompt]
         ],
-        'temperature' => 0.7,
+        'temperature' => 1,
     ];
 
     $ch = curl_init('https://api.openai.com/v1/chat/completions');
