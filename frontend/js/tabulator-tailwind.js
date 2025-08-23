@@ -97,6 +97,7 @@ function tailwindTabulator(element, options) {
     el.style.setProperty('--tabulator-header-font-weight', '700');
     el.style.fontFamily = bodyFont;
 
+
     if (rowClickHandler) {
         table.on('rowClick', rowClickHandler);
     }
