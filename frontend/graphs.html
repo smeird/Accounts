@@ -71,6 +71,7 @@
 
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
     const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    Highcharts.setOptions({ colors: gradientColors });
     let segmentTable;
 
     function columnTooltip(){
@@ -191,6 +192,7 @@
             }));
 
             Highcharts.chart('monthly-chart', {
+                colors: gradientColors,
                 chart: {
                     type: 'column',
 
@@ -222,6 +224,7 @@
                 }, [])
             }));
             Highcharts.chart('cumulative-chart', {
+                colors: gradientColors,
                 chart: {
                     type: 'column',
 
@@ -243,6 +246,7 @@
                 .filter(c => parseFloat(c.total) < 0)
                 .map(c => ({ name: c.name, y: Math.abs(parseFloat(c.total)) }));
             Highcharts.chart('pie-chart', {
+                colors: gradientColors,
                 chart: {
 
                     type: 'pie'
@@ -336,6 +340,7 @@
     function renderSunburst(yearly, categories, chartId, chartTitle){
         const { data, segmentTotals } = buildHierarchy(yearly, categories);
         Highcharts.chart(chartId, {
+            colors: gradientColors,
             series: [{
                 type: 'sunburst',
                 data: data,
@@ -363,8 +368,9 @@
 
     function renderHierarchyCharts(data){
         const edges = data.filter(d => d.parent).map(d => [d.parent, d.id]);
-        const nodes = data.map(d => ({ id: d.id, name: d.name }));
+        const nodes = data.map((d, i) => ({ id: d.id, name: d.name, color: gradientColors[i % gradientColors.length] }));
         Highcharts.chart('network-graph', {
+            colors: gradientColors,
             chart: { type: 'networkgraph' },
 
             title: { text: 'Segment / Category Network' },
@@ -376,7 +382,7 @@
             }]
         });
         Highcharts.chart('treegraph-chart', {
-
+            colors: gradientColors,
             chart: {
                 spacingBottom: 30,
                 marginRight: 120,
