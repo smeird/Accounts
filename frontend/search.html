@@ -36,8 +36,8 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="js/color_map.js"></script>
     <script>
-    const chartColors = Highcharts.getOptions().colors;
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
         const pct = total ? (this.y / total * 100) : 0;
