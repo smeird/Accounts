@@ -30,11 +30,10 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    <script src="js/color_map.js"></script>
 
     <script>
-    const chartColors = Highcharts.getOptions().colors;
     function waterfallTooltip(){
         const name = this.point.name || this.category;
         const change = this.y;

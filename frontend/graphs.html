@@ -62,16 +62,14 @@
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
     <script src="https://code.highcharts.com/modules/networkgraph.js"></script>
     <script src="https://code.highcharts.com/modules/treegraph.js"></script>
-
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="js/color_map.js"></script>
 
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
 
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
-
-    const chartColors = Highcharts.getOptions().colors;
 
     let segmentTable;
 
@@ -106,6 +104,7 @@
         const segmentIds = {};
         const segmentTotals = {};
         const categoryTotals = {};
+        const catCounts = {};
         (yearly.categories || []).forEach(c => {
             if (!c.name) return;
             const segName = categoryMap[c.name] || 'Not Segmented';
@@ -113,15 +112,18 @@
             if (!segId) {
                 segId = 'seg_' + makeId(segName);
                 segmentIds[segName] = segId;
-                data.push({ id: segId, parent: 'root', name: segName });
+                data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
             }
             const catId = 'cat_' + makeId(c.name);
 
             const total = Math.abs(parseFloat(c.total));
-            const catNode = { id: catId, parent: segId, name: c.name };
+            const count = catCounts[segName] || 0;
+            catCounts[segName] = count + 1;
+            const catColor = getCategoryColor(segName, count);
+            const catNode = { id: catId, parent: segId, name: c.name, color: catColor };
             if (!includeTags) { catNode.value = total; }
             data.push(catNode);
-            categoryTotals[c.name] = { id: catId, total, segment: segName, fromYearly: true };
+            categoryTotals[c.name] = { id: catId, total, segment: segName, fromYearly: true, color: catColor };
             segmentTotals[segName] = (segmentTotals[segName] || 0) + total;
         });
         if (includeTags) {
@@ -138,15 +140,19 @@
                     if (!segId) {
                         segId = 'seg_' + makeId(segName);
                         segmentIds[segName] = segId;
-                        data.push({ id: segId, parent: 'root', name: segName });
+                        data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
                     }
                     catId = 'cat_' + makeId(t.category);
-                    data.push({ id: catId, parent: segId, name: t.category });
-                    catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false };
+                    const count = catCounts[segName] || 0;
+                    catCounts[segName] = count + 1;
+                    const catColor = getCategoryColor(segName, count);
+                    data.push({ id: catId, parent: segId, name: t.category, color: catColor });
+                    catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false, color: catColor };
                 }
                 const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
                 const value = Math.abs(parseFloat(t.total));
-                data.push({ id: tagId, parent: catId, name: t.name, value });
+                const tagColor = Highcharts.color(catInfo.color).brighten(0.2).get();
+                data.push({ id: tagId, parent: catId, name: t.name, value, color: tagColor });
                 tagSums[catId] = (tagSums[catId] || 0) + value;
                 if (!catInfo.fromYearly) {
                     catInfo.total += value;
@@ -157,7 +163,8 @@
                 const tagged = tagSums[ct.id] || 0;
                 const diff = ct.total - tagged;
                 if (Math.abs(diff) > 0.01) {
-                    data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff });
+                    const otherColor = Highcharts.color(ct.color).brighten(-0.2).get();
+                    data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff, color: otherColor });
                 }
             });
         }
@@ -187,10 +194,20 @@
         ]).then(([monthly, yearly, categories]) => {
             const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
             const totals = monthly.map(m => parseFloat(m.spent));
-            const categorySeries = yearly.categories.map(c => ({
-                name: c.name,
-                data: months.map((_, i) => parseFloat(c[String(i + 1)]) || 0)
-            }));
+            const segCounts = {};
+            const catColors = {};
+            const categorySeries = yearly.categories.map(c => {
+                const seg = c.segment_name || 'Not Segmented';
+                const count = segCounts[seg] || 0;
+                segCounts[seg] = count + 1;
+                const color = getCategoryColor(seg, count);
+                catColors[c.name] = color;
+                return {
+                    name: c.name,
+                    data: months.map((_, i) => parseFloat(c[String(i + 1)]) || 0),
+                    color
+                };
+            });
 
             Highcharts.chart('monthly-chart', {
 
@@ -220,6 +237,7 @@
             }, []);
             const categoryCumulative = categorySeries.map(cs => ({
                 name: cs.name,
+                color: cs.color,
                 data: cs.data.reduce((acc, val) => {
                     const last = acc.length ? acc[acc.length - 1] : 0;
                     acc.push(last + val);
@@ -249,7 +267,7 @@
 
             const catData = yearly.categories
                 .filter(c => parseFloat(c.total) < 0)
-                .map(c => ({ name: c.name, y: Math.abs(parseFloat(c.total)) }));
+                .map(c => ({ name: c.name, y: Math.abs(parseFloat(c.total)), color: catColors[c.name] }));
             Highcharts.chart('pie-chart', {
 
                 colors: chartColors,
@@ -378,7 +396,7 @@
     function renderHierarchyCharts(data){
         const edges = data.filter(d => d.parent).map(d => [d.parent, d.id]);
 
-        const nodes = data.map((d, i) => ({ id: d.id, name: d.name, color: chartColors[i % chartColors.length] }));
+        const nodes = data.map((d, i) => ({ id: d.id, name: d.name, color: d.color || chartColors[i % chartColors.length] }));
         Highcharts.chart('network-graph', {
             colors: chartColors,
 
@@ -465,10 +483,17 @@
         segmentTable = tailwindTabulator(tableEl, {
             data: segments,
             layout: 'fitDataStretch',
+            rowFormatter: row => {
+                const color = getSegmentColor(row.getData().name);
+                row.getElement().style.backgroundColor = Highcharts.color(color).brighten(0.5).get();
+            },
             columns: [
                 { title: 'Name', field: 'name', formatter: function(cell){
                     const value = cell.getValue();
-                    const badge = createBadge(value, 'bg-yellow-200 text-yellow-800');
+                    const color = getSegmentColor(value);
+                    const badge = createBadge(value, '');
+                    badge.style.backgroundColor = color;
+                    badge.style.color = '#fff';
                     const link = document.createElement('a');
                     link.href = `search.html?value=${encodeURIComponent(value)}`;
                     link.appendChild(badge);
@@ -478,13 +503,12 @@
             ]
         });
         Highcharts.chart('segment-chart', {
-            colors: chartColors,
             chart: { type: 'column' },
             title: { text: 'Segment Totals' },
             xAxis: { categories: segments.map(s => s.name) },
             yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
             tooltip: { pointFormatter: columnTooltip },
-            series: [{ name: 'Total', data: segments.map(s => parseFloat(s.total)), colorByPoint: true }]
+            series: [{ name: 'Total', data: segments.map(s => ({ y: parseFloat(s.total), color: getSegmentColor(s.name) })) }]
         });
     }
 
