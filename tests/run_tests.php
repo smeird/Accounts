@@ -225,6 +225,16 @@ assertEqual(-50.0, (float)$linked[0]['from_amount'], 'Linked from amount stored'
 $candidatesAfter = Transaction::getTransferCandidates();
 assertEqual(0, count($candidatesAfter), 'No candidates after linking');
 
+// --- Link preview test ---
+$sample = 'file://' . realpath(__DIR__ . '/../sample_data/link_preview.html');
+$_GET['url'] = $sample;
+ob_start();
+include __DIR__ . '/../php_backend/public/link_preview.php';
+$previewJson = ob_get_clean();
+$previewData = json_decode($previewJson, true);
+assertEqual('OG Sample Title', $previewData['title'] ?? null, 'Link preview returns og:title');
+assertEqual('OG Sample Description', $previewData['description'] ?? null, 'Link preview returns og:description');
+
 
 // Output results and set exit code
 $failed = false;
