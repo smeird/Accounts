@@ -46,7 +46,7 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script>
-    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    const chartColors = Highcharts.getOptions().colors;
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
         const pct = total ? (this.y / total * 100) : 0;
@@ -154,7 +154,7 @@
                     const categories = data.map(tx => tx.date);
                     const amounts = data.map(tx => parseFloat(tx.amount));
                     Highcharts.chart('chart', {
-                        colors: gradientColors,
+                        colors: chartColors,
                         chart: { type: 'column' },
                         title: { text: 'Transaction Amounts' },
                         xAxis: { categories: categories, title: { text: 'Date' } },
