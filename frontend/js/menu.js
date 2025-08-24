@@ -10,6 +10,7 @@ window.fetch = (input, init = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('pt-4');
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
   const colorMap = {
