@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'flex',
       'flex-col',
       'fixed',
-      'top-16',
+      'top-0',
       'bottom-0',
       'left-0',
       'overflow-y-auto',
@@ -226,79 +226,78 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           })
           .catch(err => console.error('Untagged count load failed', err));
+
+        const releaseEls = document.querySelectorAll('#release-number');
+        if (releaseEls.length > 0) {
+          fetch('../php_backend/public/version.php')
+            .then(r => r.json())
+            .then(v => {
+              const version = v.version || 'unknown';
+              releaseEls.forEach(el => {
+                el.textContent = `v${version}`;
+              });
+            })
+            .catch(() => {
+              releaseEls.forEach(el => {
+                el.textContent = 'v?';
+              });
+            });
+        }
       })
       .catch(err => console.error('Menu load failed', err));
   }
 
-  // Load the top bar with site name, search and latest statement link
-  fetch('topbar.html')
-    .then(resp => resp.text())
-    .then(html => {
-      document.body.insertAdjacentHTML('afterbegin', html);
-      const header = document.querySelector('header');
-      const titleEl = document.getElementById('site-title');
-      if (titleEl) titleEl.textContent = siteName;
-      document.querySelectorAll('header img[alt="Finance Manager logo"]').forEach(img => {
-        img.alt = `${siteName} logo`;
-      });
-      applyColorScheme(header);
-      applyIconColor(header);
+  const content = document.querySelector('body > div.flex');
+  if (content) {
+    content.classList.add('h-screen', 'overflow-hidden');
+    const main = content.querySelector('main');
+    if (main) {
+      main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64');
+    }
+  }
 
-      const content = document.querySelector('body > div.flex');
-      if (content) {
+  const toggle = document.createElement('button');
+  toggle.id = 'menu-toggle';
+  toggle.className = 'fixed top-4 left-4 z-50 md:hidden bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow';
+  toggle.innerHTML = '<i class="fas fa-bars"></i>';
+  toggle.addEventListener('click', () => {
+    if (menu) menu.classList.toggle('hidden');
+  });
+  document.body.appendChild(toggle);
 
-        content.classList.add('pt-16', 'h-screen', 'overflow-hidden');
-        const main = content.querySelector('main');
-        if (main) {
-          main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64');
+  const utility = document.createElement('div');
+  utility.id = 'utility-bar';
+  utility.className = 'fixed top-4 right-4 bg-white rounded-full shadow border border-indigo-600 p-3 flex items-center space-x-4 z-50';
+  utility.innerHTML = `
+    <form id="topbar-search" action="search.html" method="get" class="flex">
+      <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black" />
+      <button type="submit" class="ml-2"><i class="fas fa-search h-4 w-4"></i></button>
+    </form>
+    <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center">
+      <i class="fas fa-file-invoice h-4 w-4 mr-1"></i>
+      <span id="latest-statement-text">Latest Statement</span>
+    </a>
+  `;
+  document.body.appendChild(utility);
+
+  const latestLink = document.getElementById('latest-statement-link');
+  const latestText = document.getElementById('latest-statement-text');
+  if (latestLink && latestText) {
+    fetch('../php_backend/public/transaction_months.php')
+      .then(r => r.json())
+      .then(months => {
+        if (months.length > 0) {
+          const { year, month } = months[0];
+          const names = [
+            'January','February','March','April','May','June',
+            'July','August','September','October','November','December'
+          ];
+          latestLink.href = `monthly_statement.html?year=${year}&month=${month}`;
+          latestText.textContent = `Latest Statement: ${names[month - 1]} ${year}`;
         }
-
-      }
-
-      const toggle = document.getElementById('menu-toggle');
-      if (toggle) {
-        toggle.addEventListener('click', () => {
-          if (menu) menu.classList.toggle('hidden');
-        });
-      }
-
-      const latestLink = document.getElementById('latest-statement-link');
-      const latestText = document.getElementById('latest-statement-text');
-      if (latestLink && latestText) {
-        fetch('../php_backend/public/transaction_months.php')
-          .then(r => r.json())
-          .then(months => {
-            if (months.length > 0) {
-              const { year, month } = months[0];
-              const names = [
-                'January','February','March','April','May','June',
-                'July','August','September','October','November','December'
-              ];
-              latestLink.href = `monthly_statement.html?year=${year}&month=${month}`;
-              latestText.textContent = `Latest Statement: ${names[month - 1]} ${year}`;
-            }
-          })
-          .catch(err => console.error('Latest statement load failed', err));
-      }
-
-      const releaseEls = document.querySelectorAll('#release-number');
-      if (releaseEls.length > 0) {
-        fetch('../php_backend/public/version.php')
-          .then(r => r.json())
-          .then(v => {
-            const version = v.version || 'unknown';
-            releaseEls.forEach(el => {
-              el.textContent = `v${version}`;
-            });
-          })
-          .catch(() => {
-            releaseEls.forEach(el => {
-              el.textContent = 'v?';
-            });
-          });
-      }
-    })
-    .catch(err => console.error('Top bar load failed', err));
+      })
+      .catch(err => console.error('Latest statement load failed', err));
+  }
 
   // Apply Tailwind card styling to all sections or wrap main content in a card
   document.querySelectorAll('main').forEach(main => {
