@@ -70,7 +70,9 @@
     <script>
 
     // Retrieve data for the chosen year and draw charts with 3D bars where applicable
+
     const chartColors = Highcharts.getOptions().colors;
+
     let segmentTable;
 
     function columnTooltip(){
@@ -191,7 +193,9 @@
             }));
 
             Highcharts.chart('monthly-chart', {
+
                 colors: chartColors,
+
                 chart: {
                     type: 'column',
 
@@ -223,7 +227,9 @@
                 }, [])
             }));
             Highcharts.chart('cumulative-chart', {
+
                 colors: chartColors,
+
                 chart: {
                     type: 'column',
 
@@ -245,7 +251,9 @@
                 .filter(c => parseFloat(c.total) < 0)
                 .map(c => ({ name: c.name, y: Math.abs(parseFloat(c.total)) }));
             Highcharts.chart('pie-chart', {
+
                 colors: chartColors,
+
                 chart: {
 
                     type: 'pie'
@@ -339,7 +347,9 @@
     function renderSunburst(yearly, categories, chartId, chartTitle){
         const { data, segmentTotals } = buildHierarchy(yearly, categories);
         Highcharts.chart(chartId, {
+
             colors: chartColors,
+
             series: [{
                 type: 'sunburst',
                 data: data,
@@ -367,9 +377,11 @@
 
     function renderHierarchyCharts(data){
         const edges = data.filter(d => d.parent).map(d => [d.parent, d.id]);
+
         const nodes = data.map((d, i) => ({ id: d.id, name: d.name, color: chartColors[i % chartColors.length] }));
         Highcharts.chart('network-graph', {
             colors: chartColors,
+
             chart: { type: 'networkgraph' },
 
             title: { text: 'Segment / Category Network' },
@@ -381,7 +393,9 @@
             }]
         });
         Highcharts.chart('treegraph-chart', {
+
             colors: chartColors,
+
             chart: {
                 spacingBottom: 30,
                 marginRight: 120,
