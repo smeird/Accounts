@@ -87,6 +87,11 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="application-name" content="<?= htmlspecialchars($siteName) ?>">
+    <?php $origin = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? ''); ?>
+    <meta property="og:title" content="<?= htmlspecialchars($siteName) ?>">
+    <meta property="og:description" content="Finance management system for tracking budgets and expenses.">
+    <meta property="og:image" content="<?= htmlspecialchars($origin) ?>/favicon.svg">
+    <meta property="og:url" content="<?= htmlspecialchars($origin . $_SERVER['REQUEST_URI']) ?>">
     <title><?= htmlspecialchars($siteName) ?> Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">
