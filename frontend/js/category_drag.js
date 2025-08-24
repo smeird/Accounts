@@ -120,7 +120,7 @@
 
     const tagWrap = document.createElement('div');
 
-    tagWrap.className = 'flex-1 min-h-[3rem] flex flex-row flex-wrap gap-2';
+    tagWrap.className = 'flex-1 min-h-[3rem] flex flex-row flex-wrap items-start gap-2';
 
     tagWrap.dataset.categoryId = cat.id;
     (cat.tags || []).forEach(t => tagWrap.appendChild(createTagBadge(t)));
@@ -138,7 +138,7 @@
     title.textContent = 'Unassigned Tags';
     card.appendChild(title);
     const tagWrap = document.createElement('div');
-    tagWrap.className = 'min-h-[3rem] flex flex-row flex-wrap gap-2';
+    tagWrap.className = 'min-h-[3rem] flex flex-row flex-wrap items-start gap-2';
     tags.forEach(t => tagWrap.appendChild(createTagBadge(t)));
     card.appendChild(tagWrap);
     addDropHandlers(tagWrap);
