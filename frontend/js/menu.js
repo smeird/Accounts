@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     content.classList.add('h-screen', 'overflow-hidden');
     const main = content.querySelector('main');
     if (main) {
-      main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64');
+      main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64', 'pt-16', 'md:pt-0');
     }
   }
 
