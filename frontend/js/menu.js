@@ -159,6 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        const titleEl = menu.querySelector('#site-title');
+        if (titleEl) titleEl.textContent = siteName;
+        menu.querySelectorAll('img[alt="Finance Manager logo"]').forEach(img => {
+          img.alt = `${siteName} logo`;
+        });
         applyColorScheme(menu);
         applyIconColor(menu);
         const userEl = menu.querySelector('#current-user');
@@ -276,16 +281,20 @@ document.addEventListener('DOMContentLoaded', () => {
           .catch(err => console.error('Latest statement load failed', err));
       }
 
-      const releaseEl = document.getElementById('release-number');
-      if (releaseEl) {
+      const releaseEls = document.querySelectorAll('#release-number');
+      if (releaseEls.length > 0) {
         fetch('../php_backend/public/version.php')
           .then(r => r.json())
           .then(v => {
             const version = v.version || 'unknown';
-            releaseEl.textContent = `v${version}`;
+            releaseEls.forEach(el => {
+              el.textContent = `v${version}`;
+            });
           })
           .catch(() => {
-            releaseEl.textContent = 'v?';
+            releaseEls.forEach(el => {
+              el.textContent = 'v?';
+            });
           });
       }
     })
