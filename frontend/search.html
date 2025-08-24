@@ -37,7 +37,7 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
     <script>
-    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    const chartColors = Highcharts.getOptions().colors;
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
         const pct = total ? (this.y / total * 100) : 0;
@@ -159,12 +159,12 @@
 
                         const points = values.map((v, i) => ({
                             y: v,
-                            color: gradientColors[i % gradientColors.length]
+                            color: chartColors[i % chartColors.length]
 
                         }));
 
                         Highcharts.chart('results-chart', {
-                            colors: gradientColors,
+                            colors: chartColors,
                             chart: {
                                 type: 'column',
 

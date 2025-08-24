@@ -37,7 +37,7 @@
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script>
-    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    const chartColors = Highcharts.getOptions().colors;
     function balanceTooltip(){
         const prev = this.point.index > 0 ? this.series.yData[this.point.index - 1] : null;
         let text = `Date: ${this.category}<br/>Balance: £${Highcharts.numberFormat(this.y, 2)}`;
@@ -73,7 +73,7 @@
                 const dates = data.history.map(h => h.date);
                 const balances = data.history.map(h => parseFloat(h.balance));
                 Highcharts.chart('balance-chart', {
-                    colors: gradientColors,
+                    colors: chartColors,
                     title: { text: 'Balance Over Time' },
                     xAxis: { categories: dates },
                     yAxis: { title: { text: 'Balance (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },

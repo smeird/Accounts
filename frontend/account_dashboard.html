@@ -34,7 +34,7 @@
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
 
     <script>
-    const gradientColors = ['#4B0082', '#40826D', '#50C878', '#AAF0D1'];
+    const chartColors = Highcharts.getOptions().colors;
     function waterfallTooltip(){
         const name = this.point.name || this.category;
         const change = this.y;
@@ -102,7 +102,7 @@
             });
 
             Highcharts.chart('accounts-chart', {
-                colors: gradientColors,
+                colors: chartColors,
                 chart: { type: 'waterfall' },
                 title: { text: 'Account Balances' },
                 xAxis: { type: 'category' },
