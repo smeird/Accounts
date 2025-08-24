@@ -495,12 +495,14 @@ class Transaction {
 
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
+             . 's.`name` AS `segment_name`, '
              . implode(', ', $dayCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `categories` c ON t.`category_id` = c.`id`
+             LEFT JOIN `segments` s ON c.`segment_id` = s.`id`
              WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
-             GROUP BY `name`
+             GROUP BY `name`, `segment_name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
@@ -610,12 +612,14 @@ class Transaction {
 
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
+             . 's.`name` AS `segment_name`, '
              . implode(', ', $monthCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t
              LEFT JOIN `categories` c ON t.`category_id` = c.`id`
+             LEFT JOIN `segments` s ON c.`segment_id` = s.`id`
              WHERE YEAR(t.`date`) = :year AND t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)
-             GROUP BY `name`
+             GROUP BY `name`, `segment_name`
              ORDER BY `total` DESC';
 
         $stmt = $db->prepare($sql);
@@ -721,12 +725,14 @@ class Transaction {
         }
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT COALESCE(c.`name`, \'Not Categorised\') AS `name`, '
+             . 's.`name` AS `segment_name`, '
              . implode(', ', $yearCases)
              . ', SUM(t.`amount`) AS `total`
              FROM `transactions` t'
              . ' LEFT JOIN `categories` c ON t.`category_id` = c.`id`'
+             . ' LEFT JOIN `segments` s ON c.`segment_id` = s.`id`'
              . ' WHERE t.`transfer_id` IS NULL AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)'
-             . ' GROUP BY `name`'
+             . ' GROUP BY `name`, `segment_name`'
              . ' ORDER BY `total` DESC';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);

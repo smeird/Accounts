@@ -36,8 +36,8 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/color_map.js"></script>
     <script>
-    const chartColors = Highcharts.getOptions().colors;
     function balanceTooltip(){
         const prev = this.point.index > 0 ? this.series.yData[this.point.index - 1] : null;
         let text = `Date: ${this.category}<br/>Balance: £${Highcharts.numberFormat(this.y, 2)}`;
