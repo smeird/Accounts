@@ -65,6 +65,14 @@ function budgetTooltip(){
     const pct=budget?(spent/budget*100):0;
     return `<b>${category}</b><br/>Spent: £${Highcharts.numberFormat(spent,2)} (${Highcharts.numberFormat(pct,1)}% of budget)<br/>Budget: £${Highcharts.numberFormat(budget,2)}`;
 }
+function budgetRowFormatter(row){
+    const data=row.getData();
+    const el=row.getElement();
+    el.classList.remove('text-red-600');
+    if(parseFloat(data.spent)>parseFloat(data.amount)){
+        el.classList.add('text-red-600');
+    }
+}
 let budgetTable;
 const monthInput=document.getElementById('month');
 monthInput.value=new Date().toISOString().slice(0,7);
@@ -86,10 +94,14 @@ async function loadBudgets(){
     const [year,month]=monthInput.value.split('-');
     const res=await fetch(`../php_backend/public/budgets.php?month=${parseInt(month)}&year=${parseInt(year)}`);
     const data=await res.json();
-    if(budgetTable){budgetTable.setData(data);}else{
+    if(budgetTable){
+        budgetTable.setData(data);
+        budgetTable.getRows().forEach(budgetRowFormatter);
+    }else{
         budgetTable=tailwindTabulator('#budget-table',{
             data:data,
             layout: 'fitDataStretch',
+            rowFormatter:budgetRowFormatter,
             columns:[
                 {title:'Category',field:'category'},
                 {title:'Budget',field:'amount',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
@@ -117,7 +129,7 @@ async function loadBudgets(){
         tooltip:{ pointFormatter: budgetTooltip },
         series:[{
             name:'Spent',
-            data:data.map(b=>({y:parseFloat(b.spent),target:parseFloat(b.amount)}))
+            data:data.map(b=>({y:parseFloat(b.spent),target:parseFloat(b.amount),color:parseFloat(b.spent)>parseFloat(b.amount)?'#ef4444':undefined}))
         }]
     });
 }
