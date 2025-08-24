@@ -5,9 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
       const minutes = parseInt(data.minutes, 10);
       if (minutes > 0) {
+        const meta = document.createElement('meta');
+        meta.httpEquiv = 'refresh';
+        document.head.appendChild(meta);
         let timer;
         const reset = () => {
           clearTimeout(timer);
+          meta.content = `${minutes * 60};url=../logout.php?timeout=1`;
           timer = setTimeout(() => {
             window.location.href = '../logout.php?timeout=1';
           }, minutes * 60 * 1000);
