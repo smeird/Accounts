@@ -2,6 +2,18 @@
 
 This repository now provides a simple PHP implementation for managing accounts and transactions.
 
+## Capabilities
+
+- Upload OFX files to import bank statements.
+- Explore yearly and monthly dashboards to analyse spending.
+- Visualise trends with interactive graphs.
+- Automatically tag transactions and propose budgets using AI.
+- Analyse recurring expenses and break down spending by segments and categories.
+- Secure access with two-factor authentication.
+- Search and report on transactions in detail.
+- Back up and restore your data and export it to OFX, CSV, or XLSX.
+- Manage user accounts, processes, and logs.
+
 ## Quick Deployment
 
 ```bash

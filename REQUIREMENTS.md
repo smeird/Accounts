@@ -72,6 +72,7 @@ This document outlines expected functionality for each section of the finance ma
 - Set monthly budgets for categories
 - List current budgets in a table
 - Show progress toward each budget in a chart
+- Offer AI-generated suggestions for upcoming budget allocations
 
 ## Manage Tags
 - Create tags with keyword and description for auto-tagging
@@ -111,6 +112,7 @@ This document outlines expected functionality for each section of the finance ma
 ## Manage Users
 - Add new users with credentials
 - Update password for the current user
+- Enable or disable two-factor authentication
 
 ## Logout
 - Destroy the user session and redirect to the login page
