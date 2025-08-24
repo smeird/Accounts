@@ -484,8 +484,7 @@
             data: segments,
             layout: 'fitDataStretch',
             rowFormatter: row => {
-                const color = getSegmentColor(row.getData().name);
-                row.getElement().style.backgroundColor = Highcharts.color(color).brighten(0.5).get();
+                row.getElement().style.backgroundColor = '#fff';
             },
             columns: [
                 { title: 'Name', field: 'name', formatter: function(cell){
