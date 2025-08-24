@@ -145,7 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add responsive classes so the navigation can toggle on small screens
     menu.classList.add(
       'hidden',
-      'md:block',
+      'flex',
+      'flex-col',
       'fixed',
       'top-16',
       'bottom-0',
@@ -160,6 +161,22 @@ document.addEventListener('DOMContentLoaded', () => {
         menu.innerHTML = html;
         applyColorScheme(menu);
         applyIconColor(menu);
+        const userEl = menu.querySelector('#current-user');
+        const iconEl = menu.querySelector('#user-icon');
+        if (userEl) {
+          fetch('../php_backend/public/current_user.php')
+            .then(r => (r.ok ? r.json() : Promise.reject()))
+            .then(u => {
+              userEl.textContent = u.username || 'Guest';
+              if (u.has2fa && iconEl) {
+                iconEl.classList.remove('fa-user');
+                iconEl.classList.add('fa-user-shield');
+              }
+            })
+            .catch(() => {
+              userEl.textContent = 'Guest';
+            });
+        }
         // Enable collapsible sections with animated height transition
         menu.querySelectorAll('.group').forEach(section => {
           const header = section.querySelector('h3');
@@ -269,23 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
           })
           .catch(() => {
             releaseEl.textContent = 'v?';
-          });
-      }
-
-      const userEl = document.getElementById('current-user');
-      const iconEl = document.getElementById('user-icon');
-      if (userEl) {
-        fetch('../php_backend/public/current_user.php')
-          .then(r => (r.ok ? r.json() : Promise.reject()))
-          .then(u => {
-            userEl.textContent = u.username || 'Guest';
-            if (u.has2fa && iconEl) {
-              iconEl.classList.remove('fa-user');
-              iconEl.classList.add('fa-user-shield');
-            }
-          })
-          .catch(() => {
-            userEl.textContent = 'Guest';
           });
       }
     })
