@@ -13,6 +13,7 @@ This repository now provides a simple PHP implementation for managing accounts a
 - Search and report on transactions in detail.
 - Back up and restore your data and export it to OFX, CSV, or XLSX.
 - Manage user accounts, processes, and logs.
+- Preview external links with their titles and descriptions.
 
 ## Quick Deployment
 
