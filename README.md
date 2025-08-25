@@ -111,6 +111,33 @@ php -S localhost:8000
 Then open `https://localhost:8000/frontend/index.html` in your browser.
 
 
+## Apache Setup
+
+For a persistent deployment use Apache and provide the database credentials as
+environment variables. A simple virtual host might look like:
+
+```apache
+<VirtualHost *:80>
+    DocumentRoot /var/www/Accounts
+    <Directory /var/www/Accounts>
+        Require all granted
+        AllowOverride All
+    </Directory>
+
+    SetEnv DB_HOST localhost
+    SetEnv DB_NAME accounts
+    SetEnv DB_USER accounts_user
+    SetEnv DB_PASS change_me
+</VirtualHost>
+```
+
+Reload Apache after editing the configuration (`sudo systemctl reload apache2`).
+The `SetEnv` directives expose the credentials to PHP through `getenv()` and
+`$_ENV`, keeping secrets out of the codebase. You can also place the variables
+in an external file and load it with the `EnvFile` directive so the values
+remain outside the project directory.
+
+
 ## Backup and Recovery
 
 Back up and restore your data through the web interface. From the navigation
