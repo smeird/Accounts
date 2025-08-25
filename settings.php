@@ -24,15 +24,18 @@ $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
 $fontOptions = [
     'Roboto', 'Inter', 'Source Sans Pro', 'Montserrat', 'Open Sans', 'Lato',
-    'Nunito', 'Poppins', 'Raleway', 'Work Sans', 'Quicksand'
+    'Nunito', 'Poppins', 'Raleway', 'Work Sans', 'Quicksand',
+    'Karla', 'Fira Sans', 'Noto Sans'
 ];
-$colorOptions = ['indigo', 'blue', 'green', 'red', 'purple'];
+$colorOptions = ['indigo', 'blue', 'green', 'red', 'purple', 'teal', 'orange'];
 $colorMap = [
     'indigo' => '#4f46e5',
     'blue'   => '#2563eb',
     'green'  => '#059669',
     'red'    => '#dc2626',
     'purple' => '#9333ea',
+    'teal'   => '#0d9488',
+    'orange' => '#ea580c',
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

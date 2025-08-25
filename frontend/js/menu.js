@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     blue:   {600: '#2563eb', 700: '#1d4ed8'},
     green:  {600: '#059669', 700: '#047857'},
     red:    {600: '#dc2626', 700: '#b91c1c'},
-    purple: {600: '#9333ea', 700: '#7e22ce'}
+    purple: {600: '#9333ea', 700: '#7e22ce'},
+    teal:   {600: '#0d9488', 700: '#0f766e'},
+    orange: {600: '#ea580c', 700: '#c2410c'}
   };
 
   const hoverStyle = document.createElement('style');
