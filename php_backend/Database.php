@@ -16,7 +16,7 @@ class Database {
                 $host = getenv('DB_HOST') ?: 'localhost';
                 $name = getenv('DB_NAME') ?: 'finance';
                 $user = getenv('DB_USER') ?: 'root';
-                $pass = getenv('DB_PASS') ?: '';
+                $pass = getenv('DB_PASS') ?: ' ';
                 $dsn = "mysql:host=$host;dbname=$name;charset=utf8mb4";
             }
             self::$instance = new PDO($dsn, $user, $pass);
