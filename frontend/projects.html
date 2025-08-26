@@ -74,7 +74,7 @@ async function loadProjects(){
             data:data,
             layout:'fitDataStretch',
             columns:[
-                {formatter:()=>'<i class="fas fa-edit w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:(e,cell)=>{
+                {formatter:()=>'<i class="fas fa-edit w-4 h-4" aria-label="Edit"></i>', width:40, hozAlign:'center', cellClick:(e,cell)=>{
                     const id = cell.getRow().getData().id;
                     window.location.href = `project_add.html?id=${id}`;
                 }},
@@ -87,7 +87,7 @@ async function loadProjects(){
                 {title:'Sustainability', field:'benefit_sustainability', hozAlign:'right'},
                 {title:'Funding', field:'funding_source'},
                 {title:'Score', field:'score', hozAlign:'right'},
-                {formatter:()=>'<i class="fas fa-box-archive w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
+                {formatter:()=>'<i class="fas fa-box-archive w-4 h-4" aria-label="Archive"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
                     const id = cell.getRow().getData().id;
                     await fetch('../php_backend/public/projects.php',{
                         method:'PATCH',
@@ -97,7 +97,7 @@ async function loadProjects(){
                     loadProjects();
                     showMessage('Project archived');
                 }},
-                {formatter:()=>'<i class="fas fa-trash w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
+                {formatter:()=>'<i class="fas fa-trash w-4 h-4" aria-label="Delete"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
                     if(!confirm('Delete this project?')) return;
                     const id = cell.getRow().getData().id;
                     await fetch('../php_backend/public/projects.php',{
