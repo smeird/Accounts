@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS segment_categories;
 DROP TABLE IF EXISTS segments;
 DROP TABLE IF EXISTS categories;
@@ -74,6 +75,31 @@ CREATE TABLE IF NOT EXISTS budgets (
     amount DECIMAL(10,2) NOT NULL,
     UNIQUE KEY unique_budget (category_id, month, year),
     FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT DEFAULT NULL,
+    rationale TEXT DEFAULT NULL,
+    cost_low DECIMAL(10,2) DEFAULT NULL,
+    cost_medium DECIMAL(10,2) DEFAULT NULL,
+    cost_high DECIMAL(10,2) DEFAULT NULL,
+    funding_source VARCHAR(100) DEFAULT NULL,
+    recurring_cost DECIMAL(10,2) DEFAULT NULL,
+    estimated_time INT DEFAULT NULL,
+    expected_lifespan INT DEFAULT NULL,
+    benefit_financial TINYINT DEFAULT 0,
+    benefit_quality TINYINT DEFAULT 0,
+    benefit_risk TINYINT DEFAULT 0,
+    benefit_sustainability TINYINT DEFAULT 0,
+    weight_financial TINYINT DEFAULT 1,
+    weight_quality TINYINT DEFAULT 1,
+    weight_risk TINYINT DEFAULT 1,
+    weight_sustainability TINYINT DEFAULT 1,
+    dependencies TEXT DEFAULT NULL,
+    risks TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
