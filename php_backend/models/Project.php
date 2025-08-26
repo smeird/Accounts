@@ -1,6 +1,7 @@
 <?php
 // Model for home improvement projects with cost and benefit tracking.
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/TransactionGroup.php';
 
 class Project {
     /**
@@ -8,7 +9,8 @@ class Project {
      */
     public static function create(array $data): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO projects (name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks) VALUES (:name, :description, :rationale, :cost_low, :cost_medium, :cost_high, :funding_source, :recurring_cost, :estimated_time, :expected_lifespan, :benefit_financial, :benefit_quality, :benefit_risk, :benefit_sustainability, :weight_financial, :weight_quality, :weight_risk, :weight_sustainability, :dependencies, :risks)');
+        $groupId = TransactionGroup::create($data['name'] ?? 'Project');
+        $stmt = $db->prepare('INSERT INTO projects (name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, group_id) VALUES (:name, :description, :rationale, :cost_low, :cost_medium, :cost_high, :funding_source, :recurring_cost, :estimated_time, :expected_lifespan, :benefit_financial, :benefit_quality, :benefit_risk, :benefit_sustainability, :weight_financial, :weight_quality, :weight_risk, :weight_sustainability, :dependencies, :risks, :group_id)');
         $stmt->execute([
             'name' => $data['name'] ?? '',
             'description' => $data['description'] ?? null,
@@ -29,7 +31,8 @@ class Project {
             'weight_risk' => $data['weight_risk'] ?? 1,
             'weight_sustainability' => $data['weight_sustainability'] ?? 1,
             'dependencies' => $data['dependencies'] ?? null,
-            'risks' => $data['risks'] ?? null
+            'risks' => $data['risks'] ?? null,
+            'group_id' => $groupId
         ]);
         return (int)$db->lastInsertId();
     }
@@ -39,12 +42,17 @@ class Project {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT *, (
+        $sql = 'SELECT p.*, (
             benefit_financial*weight_financial +
             benefit_quality*weight_quality +
             benefit_risk*weight_risk +
             benefit_sustainability*weight_sustainability
-        ) AS score FROM projects ORDER BY score DESC, id ASC';
+        ) AS score,
+        COALESCE(SUM(t.amount),0) AS spent
+        FROM projects p
+        LEFT JOIN transactions t ON t.group_id = p.group_id
+        GROUP BY p.id
+        ORDER BY score DESC, p.id ASC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -54,6 +62,13 @@ class Project {
      */
     public static function update(int $id, array $data): bool {
         $db = Database::getConnection();
+        // rename associated transaction group
+        $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
+        $gidStmt->execute(['id' => $id]);
+        $groupId = (int)$gidStmt->fetchColumn();
+        if($groupId){
+            TransactionGroup::update($groupId, $data['name'] ?? 'Project');
+        }
         $stmt = $db->prepare('UPDATE projects SET name=:name, description=:description, rationale=:rationale, cost_low=:cost_low, cost_medium=:cost_medium, cost_high=:cost_high, funding_source=:funding_source, recurring_cost=:recurring_cost, estimated_time=:estimated_time, expected_lifespan=:expected_lifespan, benefit_financial=:benefit_financial, benefit_quality=:benefit_quality, benefit_risk=:benefit_risk, benefit_sustainability=:benefit_sustainability, weight_financial=:weight_financial, weight_quality=:weight_quality, weight_risk=:weight_risk, weight_sustainability=:weight_sustainability, dependencies=:dependencies, risks=:risks WHERE id=:id');
         return $stmt->execute([
             'name' => $data['name'] ?? '',
@@ -85,8 +100,16 @@ class Project {
      */
     public static function delete(int $id): bool {
         $db = Database::getConnection();
+        // find and delete associated group
+        $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
+        $gidStmt->execute(['id' => $id]);
+        $groupId = (int)$gidStmt->fetchColumn();
         $stmt = $db->prepare('DELETE FROM projects WHERE id = :id');
-        return $stmt->execute(['id' => $id]);
+        $ok = $stmt->execute(['id' => $id]);
+        if($ok && $groupId){
+            TransactionGroup::delete($groupId);
+        }
+        return $ok;
     }
 }
 

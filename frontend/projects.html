@@ -22,6 +22,7 @@
         <section>
             <h2 class="text-xl font-semibold mb-4">Add Project</h2>
             <form id="project-form" class="grid md:grid-cols-2 gap-4">
+                <input type="hidden" id="project_id">
                 <label class="block">Name<br><input type="text" id="name" name="name" class="border p-2 rounded w-full" data-help="Project name" required></label>
                 <label class="block">Funding Source<br>
                     <select id="funding_source" name="funding_source" class="border p-2 rounded w-full" data-help="How you will fund this project">
@@ -92,8 +93,16 @@ async function loadProjects(){
             data:data,
             layout:'fitDataStretch',
             columns:[
+                {formatter:()=>'<i class="fas fa-edit w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:(e,cell)=>{
+                    editProject(cell.getRow().getData());
+                }},
                 {title:'Project', field:'name'},
                 {title:'Cost (mid)', field:'cost_medium', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
+                {title:'Spent', field:'spent', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
+                {title:'Risk', field:'benefit_risk', hozAlign:'right'},
+                {title:'Quality', field:'benefit_quality', hozAlign:'right'},
+                {title:'Financial', field:'benefit_financial', hozAlign:'right'},
+                {title:'Sustainability', field:'benefit_sustainability', hozAlign:'right'},
                 {title:'Funding', field:'funding_source'},
                 {title:'Score', field:'score', hozAlign:'right'},
                 {formatter:()=>'<i class="fas fa-trash w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
@@ -137,12 +146,19 @@ document.getElementById('project-form').addEventListener('submit',async e=>{
         dependencies: f.dependencies.value,
         risks: f.risks.value
     };
+    const id = document.getElementById('project_id').value;
+    let method = 'POST';
+    if(id){
+        data.id = id;
+        method = 'PUT';
+    }
     await fetch('../php_backend/public/projects.php',{
-        method:'POST',
+        method,
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify(data)
     });
     f.reset();
+    document.getElementById('project_id').value = '';
     loadProjects();
     showMessage('Project saved');
 });
@@ -153,8 +169,34 @@ document.getElementById('apply-budget').addEventListener('click',()=>{
         projectTable.clearFilter();
         return;
     }
-    projectTable.setFilter(data => parseFloat(data.cost_medium||0) <= budget);
+    projectTable.setFilter('cost_medium','<=',budget);
 });
+
+function editProject(p){
+    const f = document.getElementById('project-form');
+    document.getElementById('project_id').value = p.id;
+    f.name.value = p.name || '';
+    f.funding_source.value = p.funding_source || 'Savings';
+    f.description.value = p.description || '';
+    f.rationale.value = p.rationale || '';
+    f.cost_low.value = p.cost_low || '';
+    f.cost_medium.value = p.cost_medium || '';
+    f.cost_high.value = p.cost_high || '';
+    f.recurring_cost.value = p.recurring_cost || '';
+    f.estimated_time.value = p.estimated_time || '';
+    f.expected_lifespan.value = p.expected_lifespan || '';
+    f.benefit_financial.value = p.benefit_financial || '';
+    f.benefit_quality.value = p.benefit_quality || '';
+    f.benefit_risk.value = p.benefit_risk || '';
+    f.benefit_sustainability.value = p.benefit_sustainability || '';
+    f.weight_financial.value = p.weight_financial || '';
+    f.weight_quality.value = p.weight_quality || '';
+    f.weight_risk.value = p.weight_risk || '';
+    f.weight_sustainability.value = p.weight_sustainability || '';
+    f.dependencies.value = p.dependencies || '';
+    f.risks.value = p.risks || '';
+    window.scrollTo({top:0, behavior:'smooth'});
+}
 
 loadProjects();
 </script>
