@@ -6,8 +6,9 @@ require_once __DIR__ . '/Tag.php';
 class Budget {
     /**
      * Create or update a budget for a category for a given month and year.
+     * Returns an array with rowCount and errorInfo for logging.
      */
-    public static function set(int $categoryId, int $month, int $year, float $amount): void {
+    public static function set(int $categoryId, int $month, int $year, float $amount): array {
         $db = Database::getConnection();
         $stmt = $db->prepare('INSERT INTO budgets (category_id, month, year, amount) VALUES (:cid, :month, :year, :amount) '
             . 'ON DUPLICATE KEY UPDATE amount = VALUES(amount)');
@@ -17,6 +18,7 @@ class Budget {
             'year' => $year,
             'amount' => $amount
         ]);
+        return ['rowCount' => $stmt->rowCount(), 'errorInfo' => $stmt->errorInfo()];
     }
 
     /**
