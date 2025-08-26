@@ -152,7 +152,8 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    Log::write('AI budgeting error: ' . $e->getMessage(), 'ERROR');
+    $info = ($e instanceof PDOException && $e->errorInfo) ? json_encode($e->errorInfo) : '';
+    Log::write('AI budgeting error: ' . $e->getMessage() . ($info ? ' SQL: ' . $info : ''), 'ERROR');
     echo json_encode(['error' => 'Server error']);
 }
 ?>

@@ -32,12 +32,13 @@ if ($method === 'POST') {
         return;
     }
     try {
-        Budget::set($category, $month, $year, $amount);
-        Log::write("Set budget for category $category to $amount");
+        $res = Budget::set($category, $month, $year, $amount);
+        Log::write("Set budget for category $category to $amount SQL: " . json_encode($res));
         echo json_encode(['status' => 'ok']);
     } catch (Exception $e) {
         http_response_code(500);
-        Log::write('Budget save error: ' . $e->getMessage(), 'ERROR');
+        $info = ($e instanceof PDOException && $e->errorInfo) ? json_encode($e->errorInfo) : '';
+        Log::write('Budget save error: ' . $e->getMessage() . ($info ? ' SQL: ' . $info : ''), 'ERROR');
         echo json_encode(['error' => 'Server error']);
     }
     return;
