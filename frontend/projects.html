@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!-- Page for planning and prioritising home projects -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Projects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <!-- Font Awesome icons loaded via menu.js -->
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
+    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Projects</h1>
+        <p class="mb-4">Capture ideas for home projects, weigh their benefits and see which fit your budget.</p>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Add Project</h2>
+            <form id="project-form" class="grid md:grid-cols-2 gap-4">
+                <label class="block">Name<br><input type="text" id="name" name="name" class="border p-2 rounded w-full" data-help="Project name" required></label>
+                <label class="block">Funding Source<br>
+                    <select id="funding_source" name="funding_source" class="border p-2 rounded w-full" data-help="How you will fund this project">
+                        <option value="Savings">Savings</option>
+                        <option value="Loan">Loan</option>
+                        <option value="Grant">Grant</option>
+                        <option value="Credit">Credit</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </label>
+                <label class="block md:col-span-2">Description<br><textarea id="description" name="description" class="border p-2 rounded w-full" rows="2" data-help="Brief description"></textarea></label>
+                <label class="block md:col-span-2">Rationale<br><textarea id="rationale" name="rationale" class="border p-2 rounded w-full" rows="2" data-help="Why this project is needed"></textarea></label>
+
+                <label class="block">Cost Low (£)<br><input type="number" step="0.01" id="cost_low" name="cost_low" class="border p-2 rounded w-full" data-help="Minimum estimated cost"></label>
+                <label class="block">Cost Medium (£)<br><input type="number" step="0.01" id="cost_medium" name="cost_medium" class="border p-2 rounded w-full" data-help="Typical estimated cost"></label>
+                <label class="block">Cost High (£)<br><input type="number" step="0.01" id="cost_high" name="cost_high" class="border p-2 rounded w-full" data-help="Maximum estimated cost"></label>
+                <label class="block">Recurring Cost (£)<br><input type="number" step="0.01" id="recurring_cost" name="recurring_cost" class="border p-2 rounded w-full" data-help="Ongoing maintenance or subscription cost"></label>
+
+                <label class="block">Estimated Time (months)<br><input type="number" id="estimated_time" name="estimated_time" class="border p-2 rounded w-full" data-help="Time to complete"></label>
+                <label class="block">Expected Lifespan (years)<br><input type="number" id="expected_lifespan" name="expected_lifespan" class="border p-2 rounded w-full" data-help="How long the project lasts"></label>
+
+                <label class="block">Financial Benefit (1-5)<br><input type="number" min="0" max="5" id="benefit_financial" name="benefit_financial" class="border p-2 rounded w-full" data-help="Financial return score"></label>
+                <label class="block">Quality of Life (1-5)<br><input type="number" min="0" max="5" id="benefit_quality" name="benefit_quality" class="border p-2 rounded w-full" data-help="Comfort or enjoyment score"></label>
+                <label class="block">Risk Reduction (1-5)<br><input type="number" min="0" max="5" id="benefit_risk" name="benefit_risk" class="border p-2 rounded w-full" data-help="Risk reduction score"></label>
+                <label class="block">Sustainability (1-5)<br><input type="number" min="0" max="5" id="benefit_sustainability" name="benefit_sustainability" class="border p-2 rounded w-full" data-help="Environmental benefit score"></label>
+
+                <label class="block">Financial Weight<br><input type="number" min="0" max="5" id="weight_financial" name="weight_financial" class="border p-2 rounded w-full" data-help="Importance of financial return" value="1"></label>
+                <label class="block">Quality Weight<br><input type="number" min="0" max="5" id="weight_quality" name="weight_quality" class="border p-2 rounded w-full" data-help="Importance of quality of life" value="1"></label>
+                <label class="block">Risk Weight<br><input type="number" min="0" max="5" id="weight_risk" name="weight_risk" class="border p-2 rounded w-full" data-help="Importance of risk reduction" value="1"></label>
+                <label class="block">Sustainability Weight<br><input type="number" min="0" max="5" id="weight_sustainability" name="weight_sustainability" class="border p-2 rounded w-full" data-help="Importance of sustainability" value="1"></label>
+
+                <label class="block md:col-span-2">Dependencies<br><textarea id="dependencies" name="dependencies" class="border p-2 rounded w-full" rows="2" data-help="Prerequisite projects"></textarea></label>
+                <label class="block md:col-span-2">Risks<br><textarea id="risks" name="risks" class="border p-2 rounded w-full" rows="2" data-help="Potential risks or constraints"></textarea></label>
+
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded md:col-span-2">Save Project</button>
+            </form>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Budget Planning</h2>
+            <div class="flex items-end space-x-4">
+                <label class="block">Annual Budget (£)<br><input type="number" id="annual-budget" class="border p-2 rounded" data-help="Total funds available"></label>
+                <button id="apply-budget" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-filter mr-1"></i>Apply Budget</button>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold mb-4">Project Priorities</h2>
+            <div id="projects-table"></div>
+        </section>
+    </main>
+</div>
+
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<script src="js/tabulator-tailwind.js"></script>
+<script>
+let projectTable;
+
+async function loadProjects(){
+    const res = await fetch('../php_backend/public/projects.php');
+    const data = await res.json();
+    if(projectTable){
+        projectTable.setData(data);
+    }else{
+        projectTable = tailwindTabulator('#projects-table',{
+            data:data,
+            layout:'fitDataStretch',
+            columns:[
+                {title:'Project', field:'name'},
+                {title:'Cost (mid)', field:'cost_medium', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
+                {title:'Funding', field:'funding_source'},
+                {title:'Score', field:'score', hozAlign:'right'},
+                {formatter:()=>'<i class="fas fa-trash w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
+                    if(!confirm('Delete this project?')) return;
+                    const id = cell.getRow().getData().id;
+                    await fetch('../php_backend/public/projects.php',{
+                        method:'DELETE',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({id})
+                    });
+                    loadProjects();
+                    showMessage('Project deleted');
+                }}
+            ]
+        });
+    }
+}
+
+document.getElementById('project-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const f = e.target;
+    const data = {
+        name: f.name.value,
+        description: f.description.value,
+        rationale: f.rationale.value,
+        cost_low: f.cost_low.value,
+        cost_medium: f.cost_medium.value,
+        cost_high: f.cost_high.value,
+        funding_source: f.funding_source.value,
+        recurring_cost: f.recurring_cost.value,
+        estimated_time: f.estimated_time.value,
+        expected_lifespan: f.expected_lifespan.value,
+        benefit_financial: f.benefit_financial.value,
+        benefit_quality: f.benefit_quality.value,
+        benefit_risk: f.benefit_risk.value,
+        benefit_sustainability: f.benefit_sustainability.value,
+        weight_financial: f.weight_financial.value,
+        weight_quality: f.weight_quality.value,
+        weight_risk: f.weight_risk.value,
+        weight_sustainability: f.weight_sustainability.value,
+        dependencies: f.dependencies.value,
+        risks: f.risks.value
+    };
+    await fetch('../php_backend/public/projects.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data)
+    });
+    f.reset();
+    loadProjects();
+    showMessage('Project saved');
+});
+
+document.getElementById('apply-budget').addEventListener('click',()=>{
+    const budget = parseFloat(document.getElementById('annual-budget').value);
+    if(isNaN(budget)){
+        projectTable.clearFilter();
+        return;
+    }
+    projectTable.setFilter(data => parseFloat(data.cost_medium||0) <= budget);
+});
+
+loadProjects();
+</script>
+<script src="js/overlay.js"></script>
+<script src="js/page_help.js"></script>
+</body>
+</html>
+
