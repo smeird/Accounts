@@ -9,8 +9,8 @@ class Project {
      */
     public static function create(array $data): int {
         $db = Database::getConnection();
-        $groupId = TransactionGroup::create($data['name'] ?? 'Project');
-        $stmt = $db->prepare('INSERT INTO projects (name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, group_id) VALUES (:name, :description, :rationale, :cost_low, :cost_medium, :cost_high, :funding_source, :recurring_cost, :estimated_time, :expected_lifespan, :benefit_financial, :benefit_quality, :benefit_risk, :benefit_sustainability, :weight_financial, :weight_quality, :weight_risk, :weight_sustainability, :dependencies, :risks, :group_id)');
+        $groupId = TransactionGroup::create($data['name'] ?? 'Project', $data['description'] ?? null);
+        $stmt = $db->prepare('INSERT INTO projects (name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, archived, group_id) VALUES (:name, :description, :rationale, :cost_low, :cost_medium, :cost_high, :funding_source, :recurring_cost, :estimated_time, :expected_lifespan, :benefit_financial, :benefit_quality, :benefit_risk, :benefit_sustainability, :weight_financial, :weight_quality, :weight_risk, :weight_sustainability, :dependencies, :risks, :archived, :group_id)');
         $stmt->execute([
             'name' => $data['name'] ?? '',
             'description' => $data['description'] ?? null,
@@ -32,6 +32,7 @@ class Project {
             'weight_sustainability' => $data['weight_sustainability'] ?? 1,
             'dependencies' => $data['dependencies'] ?? null,
             'risks' => $data['risks'] ?? null,
+            'archived' => $data['archived'] ?? 0,
             'group_id' => $groupId
         ]);
         return (int)$db->lastInsertId();
@@ -40,7 +41,7 @@ class Project {
     /**
      * Retrieve all projects with computed weighted score.
      */
-    public static function all(): array {
+    public static function all(bool $archived = false): array {
         $db = Database::getConnection();
         $sql = 'SELECT p.*, (
             benefit_financial*weight_financial +
@@ -51,9 +52,11 @@ class Project {
         COALESCE(SUM(t.amount),0) AS spent
         FROM projects p
         LEFT JOIN transactions t ON t.group_id = p.group_id
+        WHERE p.archived = :archived
         GROUP BY p.id
         ORDER BY score DESC, p.id ASC';
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['archived' => $archived ? 1 : 0]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -67,9 +70,9 @@ class Project {
         $gidStmt->execute(['id' => $id]);
         $groupId = (int)$gidStmt->fetchColumn();
         if($groupId){
-            TransactionGroup::update($groupId, $data['name'] ?? 'Project');
+            TransactionGroup::update($groupId, $data['name'] ?? 'Project', $data['description'] ?? null);
         }
-        $stmt = $db->prepare('UPDATE projects SET name=:name, description=:description, rationale=:rationale, cost_low=:cost_low, cost_medium=:cost_medium, cost_high=:cost_high, funding_source=:funding_source, recurring_cost=:recurring_cost, estimated_time=:estimated_time, expected_lifespan=:expected_lifespan, benefit_financial=:benefit_financial, benefit_quality=:benefit_quality, benefit_risk=:benefit_risk, benefit_sustainability=:benefit_sustainability, weight_financial=:weight_financial, weight_quality=:weight_quality, weight_risk=:weight_risk, weight_sustainability=:weight_sustainability, dependencies=:dependencies, risks=:risks WHERE id=:id');
+        $stmt = $db->prepare('UPDATE projects SET name=:name, description=:description, rationale=:rationale, cost_low=:cost_low, cost_medium=:cost_medium, cost_high=:cost_high, funding_source=:funding_source, recurring_cost=:recurring_cost, estimated_time=:estimated_time, expected_lifespan=:expected_lifespan, benefit_financial=:benefit_financial, benefit_quality=:benefit_quality, benefit_risk=:benefit_risk, benefit_sustainability=:benefit_sustainability, weight_financial=:weight_financial, weight_quality=:weight_quality, weight_risk=:weight_risk, weight_sustainability=:weight_sustainability, dependencies=:dependencies, risks=:risks, archived=:archived WHERE id=:id');
         return $stmt->execute([
             'name' => $data['name'] ?? '',
             'description' => $data['description'] ?? null,
@@ -91,8 +94,18 @@ class Project {
             'weight_sustainability' => $data['weight_sustainability'] ?? 1,
             'dependencies' => $data['dependencies'] ?? null,
             'risks' => $data['risks'] ?? null,
+            'archived' => $data['archived'] ?? 0,
             'id' => $id
         ]);
+    }
+
+    /**
+     * Mark a project as archived or active.
+     */
+    public static function setArchived(int $id, bool $archived): bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE projects SET archived = :archived WHERE id = :id');
+        return $stmt->execute(['archived' => $archived ? 1 : 0, 'id' => $id]);
     }
 
     /**

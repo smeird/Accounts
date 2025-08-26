@@ -16,6 +16,7 @@ const init = () => {
     'export.html': `Download transactions within a chosen date range. Pick the start and end dates then select a format such as OFX, CSV or XLSX to save the data for use elsewhere.`,
     'budgets.html': `Set monthly spending limits for each category and track how you are doing. Enter a target amount and watch the progress bars show whether you are under or over budget. You can adjust the numbers as your priorities change. Checking this page often helps avoid surprise bills.`,
     'projects.html': `Plan and compare home improvement projects. Record costs, score benefits and see how each project fits your available budget.`,
+    'projects_archived.html': `Browse archived projects and restore any that you wish to revisit.`,
     'categories.html': `Maintain the list of categories and link them to tags so transactions are grouped sensibly. Add new categories when you start tracking a different type of expense and remove ones you no longer use. Keeping this list tidy ensures reports are easy to read and understand.`,
     'dedupe.html': `Review duplicate transactions and remove unwanted copies. Click Refresh to scan for duplicates and use Dedupe All to clear them quickly.`,
     'graphs.html': `Explore interactive charts that analyse your finances from different angles. Switch between graph types or time ranges to highlight trends and unusual activity. Hover over a point to see exact amounts and compare periods. These visuals make it easier to spot patterns than looking at raw numbers.`,

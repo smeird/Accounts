@@ -9,7 +9,8 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 switch ($method) {
     case 'GET':
-        echo json_encode(Project::all());
+        $archived = isset($_GET['archived']) ? (bool)$_GET['archived'] : false;
+        echo json_encode(Project::all($archived));
         break;
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -23,6 +24,15 @@ switch ($method) {
             echo json_encode(['status' => $ok ? 'ok' : 'error']);
         } else {
             echo json_encode(['status' => 'error', 'error' => 'Missing id']);
+        }
+        break;
+    case 'PATCH':
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        if (isset($data['id']) && isset($data['archived'])) {
+            $ok = Project::setArchived((int)$data['id'], (bool)$data['archived']);
+            echo json_encode(['status' => $ok ? 'ok' : 'error']);
+        } else {
+            echo json_encode(['status' => 'error', 'error' => 'Missing id or archived']);
         }
         break;
     case 'DELETE':

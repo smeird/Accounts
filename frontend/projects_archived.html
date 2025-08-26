@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!-- Page for viewing archived home projects -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Archived Projects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <!-- Font Awesome icons loaded via menu.js -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
+        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
+    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Archived Projects</h1>
+        <p class="mb-4">Review projects that have been archived. Restore any project to make it active again.</p>
+        <section class="bg-white p-6 rounded shadow">
+            <div id="archived-projects-table"></div>
+        </section>
+    </main>
+</div>
+
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<script src="js/tabulator-tailwind.js"></script>
+<script>
+let archivedTable;
+async function loadArchived(){
+    const res = await fetch('../php_backend/public/projects.php?archived=1');
+    const data = await res.json();
+    if(archivedTable){
+        archivedTable.setData(data);
+    }else{
+        archivedTable = tailwindTabulator('#archived-projects-table',{
+            data:data,
+            layout:'fitDataStretch',
+            columns:[
+                {title:'Project', field:'name'},
+                {title:'Cost (mid)', field:'cost_medium', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
+                {title:'Spent', field:'spent', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
+                {title:'Score', field:'score', hozAlign:'right'},
+                {formatter:()=>'<i class="fas fa-box-open w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
+                    const id = cell.getRow().getData().id;
+                    await fetch('../php_backend/public/projects.php',{
+                        method:'PATCH',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({id, archived:0})
+                    });
+                    loadArchived();
+                    showMessage('Project restored');
+                }}
+            ]
+        });
+    }
+}
+loadArchived();
+</script>
+<script src="js/overlay.js"></script>
+<script src="js/page_help.js"></script>
+</body>
+</html>
