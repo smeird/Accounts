@@ -1,5 +1,7 @@
 # AGENTS Instructions
 
+- Record any additional project decisions or conventions in this file.
+
 ## Environment
 - Target PHP version: 7.0 and above.
 - Ensure MySQL is available and configure credentials using the environment variables `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASS`.
