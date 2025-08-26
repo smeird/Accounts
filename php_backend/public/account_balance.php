@@ -4,6 +4,7 @@ require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Account.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
 
@@ -40,6 +41,7 @@ try {
     ]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    Log::write('Account balance error: ' . $e->getMessage(), 'ERROR');
+    echo json_encode(['error' => 'Server error']);
 }
 ?>

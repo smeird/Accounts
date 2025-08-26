@@ -1,10 +1,12 @@
 <?php
+require_once __DIR__ . '/../models/Log.php';
 $sent = headers_sent();
 if (!$sent) {
     header('Content-Type: application/json');
 }
 $url = $_GET['url'] ?? '';
 if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
+    Log::write('Invalid link preview URL: ' . $url, 'WARN');
     echo json_encode(['error' => 'Invalid URL']);
     exit;
 }
@@ -19,6 +21,7 @@ $context = stream_context_create([
 ]);
 $html = @file_get_contents($url, false, $context);
 if ($html === false) {
+    Log::write('Link preview fetch failed: ' . $url, 'ERROR');
     echo json_encode(['error' => 'Unable to fetch URL']);
     exit;
 }

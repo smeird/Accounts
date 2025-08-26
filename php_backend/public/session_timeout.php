@@ -2,11 +2,13 @@
 // Returns inactivity timeout in minutes for the current user.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Setting.php';
+require_once __DIR__ . '/../models/Log.php';
 ini_set('session.cookie_secure', '1');
 session_start();
 header('Content-Type: application/json');
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
+    Log::write('Session timeout check without login', 'WARN');
     echo json_encode(['error' => 'Not logged in']);
     exit;
 }

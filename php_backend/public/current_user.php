@@ -2,6 +2,7 @@
 // Returns the username of the currently logged-in user.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../models/Log.php';
 ini_set('session.cookie_secure', '1');
 session_start();
 
@@ -17,5 +18,6 @@ if (isset($_SESSION['username'])) {
     echo json_encode(['username' => $username, 'has2fa' => $has2fa]);
 } else {
     http_response_code(401);
+    Log::write('Unauthorized current_user request', 'WARN');
     echo json_encode(['error' => 'Not logged in']);
 }

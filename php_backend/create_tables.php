@@ -2,6 +2,7 @@
 // Resets and creates all database tables used by the application.
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/models/Transaction.php';
+require_once __DIR__ . '/models/Log.php';
 
 $db = Database::getConnection();
 

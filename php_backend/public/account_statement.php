@@ -2,6 +2,7 @@
 // Returns a list of transactions for a single account.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Transaction.php';
+require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
 
@@ -14,6 +15,7 @@ try {
     echo json_encode($transactions);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    Log::write('Account statement error: ' . $e->getMessage(), 'ERROR');
+    echo json_encode(['error' => 'Server error']);
 }
 ?>
