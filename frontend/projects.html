@@ -35,8 +35,8 @@
                 </div>
             </div>
             <div>
-                <h2 class="text-xl font-semibold mb-4">Cost Breakdown</h2>
-                <div id="project-cost-chart" class="h-64"></div>
+                <h2 class="text-xl font-semibold mb-4">MCDA Analysis</h2>
+                <div id="project-mcda-chart" class="h-64"></div>
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-4">Project Priorities</h2>
@@ -53,20 +53,32 @@
 <script>
 let projectTable;
 
-function drawChart(data){
-    Highcharts.chart('project-cost-chart', {
-        chart: { type: 'column' },
-        title: { text: 'Estimated Costs' },
-        xAxis: { categories: data.map(p => p.name) },
-        yAxis: { title: { text: 'Cost (£)' } },
-        series: [{ name: 'Cost (mid)', data: data.map(p => parseFloat(p.cost_medium) || 0) }]
+function drawMcda(data){
+    const categories = ['Risk','Quality','Financial','Sustainability'];
+    const series = data.map(p => ({
+        name: p.name,
+        data: [
+            parseFloat(p.benefit_risk) || 0,
+            parseFloat(p.benefit_quality) || 0,
+            parseFloat(p.benefit_financial) || 0,
+            parseFloat(p.benefit_sustainability) || 0
+        ],
+        pointPlacement: 'on'
+    }));
+    Highcharts.chart('project-mcda-chart', {
+        chart: { polar: true, type: 'line' },
+        title: { text: 'Project MCDA' },
+        pane: { size: '80%' },
+        xAxis: { categories, tickmarkPlacement: 'on', lineWidth: 0 },
+        yAxis: { gridLineInterpolation: 'polygon', lineWidth: 0, min: 0 },
+        series
     });
 }
 
 async function loadProjects(){
     const res = await fetch('../php_backend/public/projects.php');
     const data = await res.json();
-    drawChart(data);
+    drawMcda(data);
     if(projectTable){
         projectTable.setData(data);
     }else{
