@@ -6,6 +6,7 @@ require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/Totp.php';
 require_once __DIR__ . '/php_backend/Database.php';
+require_once __DIR__ . '/php_backend/models/Log.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
@@ -33,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'User added.';
             } catch (Exception $e) {
                 $message = 'Error adding user.';
+                Log::write('User add error: ' . $e->getMessage(), 'ERROR');
             }
         } else {
             $message = 'Username and password required.';

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Tag.php';
+require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/x-ofx');
 $host = $_SERVER['HTTP_HOST'] ?? 'backup';
@@ -79,5 +80,6 @@ try {
     echo "</OFX>\n";
 } catch (Exception $e) {
     http_response_code(500);
-    echo $e->getMessage();
+    Log::write('Export OFX error: ' . $e->getMessage(), 'ERROR');
+    echo 'Error generating OFX';
 }
