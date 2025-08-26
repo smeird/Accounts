@@ -43,21 +43,39 @@ class Project {
      */
     public static function all(bool $archived = false): array {
         $db = Database::getConnection();
-        $sql = 'SELECT p.*, (
-            benefit_financial*weight_financial +
-            benefit_quality*weight_quality +
-            benefit_risk*weight_risk +
-            benefit_sustainability*weight_sustainability
-        ) AS score,
-        COALESCE(SUM(t.amount),0) AS spent
-        FROM projects p
-        LEFT JOIN transactions t ON t.group_id = p.group_id
-        WHERE p.archived = :archived
-        GROUP BY p.id
-        ORDER BY score DESC, p.id ASC';
-        $stmt = $db->prepare($sql);
-        $stmt->execute(['archived' => $archived ? 1 : 0]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $params = ['archived' => $archived ? 1 : 0];
+        try {
+            $sql = 'SELECT p.*, (
+                benefit_financial*weight_financial +
+                benefit_quality*weight_quality +
+                benefit_risk*weight_risk +
+                benefit_sustainability*weight_sustainability
+            ) AS score,
+            COALESCE(SUM(t.amount),0) AS spent
+            FROM projects p
+            LEFT JOIN transactions t ON t.group_id = p.group_id
+            WHERE p.archived = :archived
+            GROUP BY p.id
+            ORDER BY score DESC, p.id ASC';
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // If the transactions table does not exist yet, fallback to a query
+            // without the join so projects can still be listed.
+            $sql = 'SELECT p.*, (
+                benefit_financial*weight_financial +
+                benefit_quality*weight_quality +
+                benefit_risk*weight_risk +
+                benefit_sustainability*weight_sustainability
+            ) AS score, 0 AS spent
+            FROM projects p
+            WHERE p.archived = :archived
+            ORDER BY score DESC, p.id ASC';
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
 
     /**
