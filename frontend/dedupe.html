@@ -78,7 +78,7 @@
                         { title: 'Description', field: 'description' },
                         { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
                         { title: 'Count', field: 'count', hozAlign: 'right' },
-                        { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm"><i class="fas fa-trash w-4 h-4"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
+                        { title: 'Remove', formatter: function(){ return '<button class="bg-red-600 text-white px-2 py-1 rounded text-sm" aria-label="Delete"><i class="fas fa-trash w-4 h-4"></i></button>'; }, width: 90, hozAlign: 'center', cellClick: function(e, cell){ const r = cell.getRow().getData(); dedupe(r.ids); } }
                     ]
                 });
             }

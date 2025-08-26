@@ -65,6 +65,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Apply 20% opacity to all page elements
   document.documentElement.style.opacity = '0.9';
 
+  // Copy aria-labels to title attributes for tooltips
+  const applyAriaTitles = (root = document) => {
+    root.querySelectorAll('[aria-label]').forEach(el => {
+      if (!el.getAttribute('title')) {
+        el.setAttribute('title', el.getAttribute('aria-label'));
+      }
+    });
+  };
+  applyAriaTitles();
+  const ariaObserver = new MutationObserver(mutations => {
+    for (const m of mutations) {
+      m.addedNodes.forEach(node => {
+        if (node.nodeType === 1) {
+          if (node.hasAttribute && node.hasAttribute('aria-label') && !node.getAttribute('title')) {
+            node.setAttribute('title', node.getAttribute('aria-label'));
+          }
+          if (node.querySelectorAll) {
+            applyAriaTitles(node);
+          }
+        }
+      });
+    }
+  });
+  ariaObserver.observe(document.body, {childList: true, subtree: true});
+
   // Prepare font links
   let fontLink = document.getElementById('app-fonts');
   if (!fontLink) {

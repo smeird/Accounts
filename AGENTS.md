@@ -20,6 +20,7 @@
 - Provide popover help for form inputs using `data-help` attributes handled by `frontend/js/input_help.js`.
 - Ensure the site remains mobile-friendly: include `<meta name="viewport" content="width=device-width, initial-scale=1.0">` on
   every page and use Tailwind's responsive utilities so navigation and layouts work on small screens.
+ - Interactive icons and buttons must include meaningful `aria-label` attributes. A global script copies these to `title` attributes to provide mouse-over explanations.
 
 ## Features
 - Flag transactions recognised as transfers and exclude them from income and expense totals.

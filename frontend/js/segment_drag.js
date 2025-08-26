@@ -68,6 +68,7 @@
     const editBtn = document.createElement('button');
     editBtn.className = 'text-indigo-600';
     editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    editBtn.setAttribute('aria-label','Edit');
     editBtn.addEventListener('click', async () => {
       const name = prompt('Segment Name', seg.name);
       if (name === null) return;
@@ -88,6 +89,7 @@
     const delBtn = document.createElement('button');
     delBtn.className = 'text-red-600';
     delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    delBtn.setAttribute('aria-label','Delete');
     delBtn.addEventListener('click', async () => {
       if (!confirm('Delete this segment?')) return;
       await fetch('../php_backend/public/segments.php', {
