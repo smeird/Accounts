@@ -53,6 +53,43 @@
         return `${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
     }
 
+    // Group transactions by an appropriate time frame so charts remain readable
+    function groupTransactions(data) {
+        if (!Array.isArray(data) || data.length === 0) {
+            return { group: 'day', grouped: [] };
+        }
+        const dates = data.map(tx => new Date(tx.date));
+        const minDate = new Date(Math.min.apply(null, dates));
+        const maxDate = new Date(Math.max.apply(null, dates));
+        const spanDays = Math.round((maxDate - minDate) / 86400000) + 1;
+        let group = 'day';
+        if (spanDays > 365 * 5) {
+            group = 'year';
+        } else if (spanDays > 365) {
+            group = 'month';
+        } else if (spanDays > 90) {
+            group = 'week';
+        }
+        const formatters = {
+            day: d => d.toISOString().slice(0, 10),
+            week: d => {
+                const s = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+                s.setUTCDate(s.getUTCDate() - s.getUTCDay());
+                return s.toISOString().slice(0, 10);
+            },
+            month: d => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`,
+            year: d => String(d.getUTCFullYear())
+        };
+        const sums = {};
+        data.forEach(tx => {
+            const d = new Date(tx.date);
+            const key = formatters[group](d);
+            sums[key] = (sums[key] || 0) + parseFloat(tx.amount);
+        });
+        const grouped = Object.keys(sums).sort().map(k => ({ label: k, total: sums[k] }));
+        return { group, grouped };
+    }
+
     // Load filter options for categories, tags and groups
     async function loadOptions() {
         const [catRes, tagRes, grpRes, segRes] = await Promise.all([
@@ -151,13 +188,15 @@
                             { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: function(values) { var total = 0; values.forEach(function(value) { total += parseFloat(value) || 0; }); return total; }, bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
                         ]
                     });
-                    const categories = data.map(tx => tx.date);
-                    const amounts = data.map(tx => parseFloat(tx.amount));
+                    const grouped = groupTransactions(data);
+                    const cats = grouped.grouped.map(g => g.label);
+                    const amounts = grouped.grouped.map(g => parseFloat(g.total));
+                    const label = grouped.group.charAt(0).toUpperCase() + grouped.group.slice(1);
                     Highcharts.chart('chart', {
                         colors: chartColors,
                         chart: { type: 'column' },
-                        title: { text: 'Transaction Amounts' },
-                        xAxis: { categories: categories, title: { text: 'Date' } },
+                        title: { text: 'Transaction Amounts by ' + label },
+                        xAxis: { categories: cats, title: { text: label } },
                         yAxis: { title: { text: 'Amount' } },
                         tooltip: { pointFormatter: columnTooltip },
                         series: [{ name: 'Amount', data: amounts, colorByPoint: true }]
