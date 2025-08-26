@@ -65,24 +65,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Apply 20% opacity to all page elements
   document.documentElement.style.opacity = '0.9';
 
-  // Copy aria-labels to title attributes for tooltips
-  const applyAriaTitles = (root = document) => {
+  // Copy aria-labels to data-tooltip attributes for custom tooltips
+  const applyAriaTooltips = (root = document) => {
     root.querySelectorAll('[aria-label]').forEach(el => {
-      if (!el.getAttribute('title')) {
-        el.setAttribute('title', el.getAttribute('aria-label'));
+      if (!el.getAttribute('data-tooltip')) {
+        el.setAttribute('data-tooltip', el.getAttribute('aria-label'));
       }
     });
   };
-  applyAriaTitles();
+  applyAriaTooltips();
   const ariaObserver = new MutationObserver(mutations => {
     for (const m of mutations) {
       m.addedNodes.forEach(node => {
         if (node.nodeType === 1) {
-          if (node.hasAttribute && node.hasAttribute('aria-label') && !node.getAttribute('title')) {
-            node.setAttribute('title', node.getAttribute('aria-label'));
+          if (node.hasAttribute && node.hasAttribute('aria-label') && !node.getAttribute('data-tooltip')) {
+            node.setAttribute('data-tooltip', node.getAttribute('aria-label'));
           }
           if (node.querySelectorAll) {
-            applyAriaTitles(node);
+            applyAriaTooltips(node);
           }
         }
       });
@@ -356,4 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutScript = document.createElement('script');
   logoutScript.src = 'js/auto_logout.js';
   document.body.appendChild(logoutScript);
+
+  const tooltipScript = document.createElement('script');
+  tooltipScript.src = 'js/tooltips.js';
+  document.body.appendChild(tooltipScript);
 });
