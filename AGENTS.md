@@ -1,6 +1,7 @@
 # AGENTS Instructions
 
 - Record any additional project decisions or conventions in this file.
+- Projects support archiving via an `archived` flag and can be restored from the Archived Projects page.
 
 ## Environment
 - Target PHP version: 7.0 and above.

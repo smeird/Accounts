@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS projects (
     weight_sustainability TINYINT DEFAULT 1,
     dependencies TEXT DEFAULT NULL,
     risks TEXT DEFAULT NULL,
+    archived TINYINT DEFAULT 0,
     group_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
