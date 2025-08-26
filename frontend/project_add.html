@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- Page for adding or editing home projects -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Add Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <!-- Font Awesome icons loaded via menu.js -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
+        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
+    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Add Project</h1>
+        <p class="mb-4">Capture ideas for home projects and detail their costs and benefits.</p>
+
+        <section class="bg-white p-6 rounded shadow">
+            <h2 class="text-xl font-semibold mb-4">Project Details</h2>
+            <form id="project-form" class="grid md:grid-cols-2 gap-4">
+                <input type="hidden" id="project_id">
+                <label class="block">Name<br><input type="text" id="name" name="name" class="border p-2 rounded w-full" data-help="Project name" required></label>
+                <label class="block">Funding Source<br>
+                    <select id="funding_source" name="funding_source" class="border p-2 rounded w-full" data-help="How you will fund this project">
+                        <option value="Savings">Savings</option>
+                        <option value="Loan">Loan</option>
+                        <option value="Grant">Grant</option>
+                        <option value="Credit">Credit</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </label>
+                <label class="block md:col-span-2">Description<br><textarea id="description" name="description" class="border p-2 rounded w-full" rows="2" data-help="Brief description"></textarea></label>
+                <label class="block md:col-span-2">Rationale<br><textarea id="rationale" name="rationale" class="border p-2 rounded w-full" rows="2" data-help="Why this project is needed"></textarea></label>
+
+                <label class="block">Cost Low (£)<br><input type="number" step="0.01" id="cost_low" name="cost_low" class="border p-2 rounded w-full" data-help="Minimum estimated cost"></label>
+                <label class="block">Cost Medium (£)<br><input type="number" step="0.01" id="cost_medium" name="cost_medium" class="border p-2 rounded w-full" data-help="Typical estimated cost"></label>
+                <label class="block">Cost High (£)<br><input type="number" step="0.01" id="cost_high" name="cost_high" class="border p-2 rounded w-full" data-help="Maximum estimated cost"></label>
+                <label class="block">Recurring Cost (£)<br><input type="number" step="0.01" id="recurring_cost" name="recurring_cost" class="border p-2 rounded w-full" data-help="Ongoing maintenance or subscription cost"></label>
+
+                <label class="block">Estimated Time (months)<br><input type="number" id="estimated_time" name="estimated_time" class="border p-2 rounded w-full" data-help="Time to complete"></label>
+                <label class="block">Expected Lifespan (years)<br><input type="number" id="expected_lifespan" name="expected_lifespan" class="border p-2 rounded w-full" data-help="How long the project lasts"></label>
+
+                <label class="block">Financial Benefit (1-5)<br><input type="number" min="0" max="5" id="benefit_financial" name="benefit_financial" class="border p-2 rounded w-full" data-help="Financial return score"></label>
+                <label class="block">Quality of Life (1-5)<br><input type="number" min="0" max="5" id="benefit_quality" name="benefit_quality" class="border p-2 rounded w-full" data-help="Comfort or enjoyment score"></label>
+                <label class="block">Risk Reduction (1-5)<br><input type="number" min="0" max="5" id="benefit_risk" name="benefit_risk" class="border p-2 rounded w-full" data-help="Risk reduction score"></label>
+                <label class="block">Sustainability (1-5)<br><input type="number" min="0" max="5" id="benefit_sustainability" name="benefit_sustainability" class="border p-2 rounded w-full" data-help="Environmental benefit score"></label>
+
+                <label class="block">Financial Weight<br><input type="number" min="0" max="5" id="weight_financial" name="weight_financial" class="border p-2 rounded w-full" data-help="Importance of financial return" value="1"></label>
+                <label class="block">Quality Weight<br><input type="number" min="0" max="5" id="weight_quality" name="weight_quality" class="border p-2 rounded w-full" data-help="Importance of quality of life" value="1"></label>
+                <label class="block">Risk Weight<br><input type="number" min="0" max="5" id="weight_risk" name="weight_risk" class="border p-2 rounded w-full" data-help="Importance of risk reduction" value="1"></label>
+                <label class="block">Sustainability Weight<br><input type="number" min="0" max="5" id="weight_sustainability" name="weight_sustainability" class="border p-2 rounded w-full" data-help="Importance of sustainability" value="1"></label>
+
+                <label class="block md:col-span-2">Dependencies<br><textarea id="dependencies" name="dependencies" class="border p-2 rounded w-full" rows="2" data-help="Prerequisite projects"></textarea></label>
+                <label class="block md:col-span-2">Risks<br><textarea id="risks" name="risks" class="border p-2 rounded w-full" rows="2" data-help="Potential risks or constraints"></textarea></label>
+
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded md:col-span-2">Save Project</button>
+            </form>
+        </section>
+    </main>
+</div>
+
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script>
+async function loadProject(){
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if(!id) return;
+    const res = await fetch('../php_backend/public/projects.php');
+    const data = await res.json();
+    const p = data.find(pr => pr.id == id);
+    if(!p) return;
+    const f = document.getElementById('project-form');
+    document.getElementById('project_id').value = p.id;
+    f.name.value = p.name || '';
+    f.funding_source.value = p.funding_source || 'Savings';
+    f.description.value = p.description || '';
+    f.rationale.value = p.rationale || '';
+    f.cost_low.value = p.cost_low || '';
+    f.cost_medium.value = p.cost_medium || '';
+    f.cost_high.value = p.cost_high || '';
+    f.recurring_cost.value = p.recurring_cost || '';
+    f.estimated_time.value = p.estimated_time || '';
+    f.expected_lifespan.value = p.expected_lifespan || '';
+    f.benefit_financial.value = p.benefit_financial || '';
+    f.benefit_quality.value = p.benefit_quality || '';
+    f.benefit_risk.value = p.benefit_risk || '';
+    f.benefit_sustainability.value = p.benefit_sustainability || '';
+    f.weight_financial.value = p.weight_financial || '';
+    f.weight_quality.value = p.weight_quality || '';
+    f.weight_risk.value = p.weight_risk || '';
+    f.weight_sustainability.value = p.weight_sustainability || '';
+    f.dependencies.value = p.dependencies || '';
+    f.risks.value = p.risks || '';
+}
+
+document.getElementById('project-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    const data = {
+        name: f.name.value,
+        description: f.description.value,
+        rationale: f.rationale.value,
+        cost_low: f.cost_low.value,
+        cost_medium: f.cost_medium.value,
+        cost_high: f.cost_high.value,
+        funding_source: f.funding_source.value,
+        recurring_cost: f.recurring_cost.value,
+        estimated_time: f.estimated_time.value,
+        expected_lifespan: f.expected_lifespan.value,
+        benefit_financial: f.benefit_financial.value,
+        benefit_quality: f.benefit_quality.value,
+        benefit_risk: f.benefit_risk.value,
+        benefit_sustainability: f.benefit_sustainability.value,
+        weight_financial: f.weight_financial.value,
+        weight_quality: f.weight_quality.value,
+        weight_risk: f.weight_risk.value,
+        weight_sustainability: f.weight_sustainability.value,
+        dependencies: f.dependencies.value,
+        risks: f.risks.value
+    };
+    const id = document.getElementById('project_id').value;
+    let method = 'POST';
+    if(id){
+        data.id = id;
+        method = 'PUT';
+    }
+    await fetch('../php_backend/public/projects.php',{
+        method,
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data)
+    });
+    f.reset();
+    document.getElementById('project_id').value = '';
+    showMessage('Project saved');
+});
+
+loadProject();
+</script>
+<script src="js/overlay.js"></script>
+<script src="js/page_help.js"></script>
+</body>
+</html>
