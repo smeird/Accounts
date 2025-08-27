@@ -2,7 +2,9 @@
 
 - Record any additional project decisions or conventions in this file.
 - Projects support archiving via an `archived` flag and can be restored from the Archived Projects page.
+
 - Projects view visualises benefits using a bubble chart plotting cost vs quality with bubble size representing score, displaying each project as its own series for distinct colours.
+
 
 ## Environment
 - Target PHP version: 7.0 and above.
