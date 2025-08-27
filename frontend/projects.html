@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <!-- Font Awesome icons loaded via menu.js -->
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -35,8 +36,8 @@
                 </div>
             </div>
             <div>
-                <h2 class="text-xl font-semibold mb-4">MCDA Analysis</h2>
-                <div id="project-mcda-chart" class="h-64"></div>
+                <h2 class="text-xl font-semibold mb-4">Cost vs Quality</h2>
+                <div id="project-bubble-chart" class="h-64"></div>
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-4">Project Priorities</h2>
@@ -53,32 +54,30 @@
 <script>
 let projectTable;
 
-function drawMcda(data){
-    const categories = ['Risk','Quality','Financial','Sustainability'];
-    const series = data.map(p => ({
+function drawBubble(data){
+    const seriesData = data.map(p => ({
         name: p.name,
-        data: [
-            parseFloat(p.benefit_risk) || 0,
-            parseFloat(p.benefit_quality) || 0,
-            parseFloat(p.benefit_financial) || 0,
-            parseFloat(p.benefit_sustainability) || 0
-        ],
-        pointPlacement: 'on'
+        x: parseFloat(p.cost_medium) || 0,
+        y: parseFloat(p.benefit_quality) || 0,
+        z: parseFloat(p.score) || 0
     }));
-    Highcharts.chart('project-mcda-chart', {
-        chart: { polar: true, type: 'line' },
-        title: { text: 'Project MCDA' },
-        pane: { size: '80%' },
-        xAxis: { categories, tickmarkPlacement: 'on', lineWidth: 0 },
-        yAxis: { gridLineInterpolation: 'polygon', lineWidth: 0, min: 0 },
-        series
+    Highcharts.chart('project-bubble-chart', {
+        chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy' },
+        title: { text: 'Cost vs Quality' },
+        xAxis: {
+            title: { text: 'Cost (£)' },
+            labels: { formatter: function(){ return '£' + this.value; } }
+        },
+        yAxis: { title: { text: 'Quality' } },
+        tooltip: { pointFormat: 'Cost: £{point.x}<br>Quality: {point.y}<br>Score: {point.z}' },
+        series: [{ name: 'Projects', data: seriesData }]
     });
 }
 
 async function loadProjects(){
     const res = await fetch('../php_backend/public/projects.php');
     const data = await res.json();
-    drawMcda(data);
+    drawBubble(data);
     if(projectTable){
         projectTable.setData(data);
     }else{
