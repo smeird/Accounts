@@ -55,11 +55,15 @@
 let projectTable;
 
 function drawBubble(data){
-    const seriesData = data.map(p => ({
+
+    const series = data.map(p => ({
         name: p.name,
-        x: parseFloat(p.cost_medium) || 0,
-        y: parseFloat(p.benefit_quality) || 0,
-        z: parseFloat(p.score) || 0
+        data: [{
+            x: parseFloat(p.cost_medium) || 0,
+            y: parseFloat(p.benefit_quality) || 0,
+            z: parseFloat(p.score) || 0
+        }]
+
     }));
     Highcharts.chart('project-bubble-chart', {
         chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy' },
@@ -69,8 +73,13 @@ function drawBubble(data){
             labels: { formatter: function(){ return '£' + this.value; } }
         },
         yAxis: { title: { text: 'Quality' } },
-        tooltip: { pointFormat: 'Cost: £{point.x}<br>Quality: {point.y}<br>Score: {point.z}' },
-        series: [{ name: 'Projects', data: seriesData }]
+
+        tooltip: {
+            headerFormat: '<b>{series.name}</b><br/>',
+            pointFormat: 'Cost: £{point.x}<br>Quality: {point.y}<br>Score: {point.z}'
+        },
+        series: series
+
     });
 }
 
