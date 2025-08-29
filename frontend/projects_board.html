@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- Page for viewing projects as cards -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Project Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <!-- Font Awesome icons loaded via menu.js -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
+        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
+    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Project Board</h1>
+        <p class="mb-4">Browse all active projects in a card layout.</p>
+
+        <section class="bg-white p-6 rounded shadow">
+            <div id="projects-board" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+    </main>
+</div>
+
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script>
+function fmtMoney(v){
+    return '£' + (parseFloat(v) || 0).toFixed(2);
+}
+
+async function loadProjects(){
+    const res = await fetch('../php_backend/public/projects.php');
+    const projects = await res.json();
+    const board = document.getElementById('projects-board');
+    board.innerHTML = '';
+    projects.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-4 rounded shadow flex flex-col space-y-2';
+
+        const header = document.createElement('div');
+        header.className = 'flex justify-between items-start';
+        const title = document.createElement('h3');
+        title.className = 'text-lg font-semibold text-indigo-700';
+        title.textContent = p.name;
+        const icons = document.createElement('div');
+        icons.className = 'flex space-x-2 text-gray-600';
+        icons.innerHTML = `
+            <i class="fas fa-edit cursor-pointer" aria-label="Edit"></i>
+            <i class="fas fa-box-archive cursor-pointer" aria-label="Archive"></i>
+            <i class="fas fa-trash cursor-pointer" aria-label="Delete"></i>
+        `;
+        header.appendChild(title);
+        header.appendChild(icons);
+        card.appendChild(header);
+
+        const details = document.createElement('div');
+        details.className = 'text-sm space-y-1';
+        details.innerHTML = `
+            <p><span class="font-semibold">Description:</span> ${p.description || ''}</p>
+            <p><span class="font-semibold">Rationale:</span> ${p.rationale || ''}</p>
+            <p><span class="font-semibold">Cost Low:</span> ${fmtMoney(p.cost_low)}</p>
+            <p><span class="font-semibold">Cost Medium:</span> ${fmtMoney(p.cost_medium)}</p>
+            <p><span class="font-semibold">Cost High:</span> ${fmtMoney(p.cost_high)}</p>
+            <p><span class="font-semibold">Funding:</span> ${p.funding_source || ''}</p>
+            <p><span class="font-semibold">Recurring Cost:</span> ${fmtMoney(p.recurring_cost)}</p>
+            <p><span class="font-semibold">Estimated Time:</span> ${p.estimated_time || ''}</p>
+            <p><span class="font-semibold">Expected Lifespan:</span> ${p.expected_lifespan || ''}</p>
+            <p><span class="font-semibold">Financial Benefit:</span> ${p.benefit_financial || 0}</p>
+            <p><span class="font-semibold">Quality Benefit:</span> ${p.benefit_quality || 0}</p>
+            <p><span class="font-semibold">Risk Benefit:</span> ${p.benefit_risk || 0}</p>
+            <p><span class="font-semibold">Sustainability Benefit:</span> ${p.benefit_sustainability || 0}</p>
+            <p><span class="font-semibold">Score:</span> ${p.score || 0}</p>
+            <p><span class="font-semibold">Dependencies:</span> ${p.dependencies || ''}</p>
+            <p><span class="font-semibold">Risks:</span> ${p.risks || ''}</p>
+            <p><span class="font-semibold">Spent:</span> ${fmtMoney(p.spent)}</p>
+        `;
+        card.appendChild(details);
+
+        const [editIcon, archiveIcon, deleteIcon] = Array.from(icons.children);
+        editIcon.addEventListener('click', () => {
+            window.location.href = `project_add.html?id=${p.id}`;
+        });
+        archiveIcon.addEventListener('click', async () => {
+            await fetch('../php_backend/public/projects.php', {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: p.id, archived: 1})
+            });
+            loadProjects();
+            showMessage('Project archived');
+        });
+        deleteIcon.addEventListener('click', async () => {
+            if(!confirm('Delete this project?')) return;
+            await fetch('../php_backend/public/projects.php', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: p.id})
+            });
+            loadProjects();
+            showMessage('Project deleted');
+        });
+
+        board.appendChild(card);
+    });
+}
+
+loadProjects();
+</script>
+<script src="js/overlay.js"></script>
+<script src="js/page_help.js"></script>
+</body>
+</html>
