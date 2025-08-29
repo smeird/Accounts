@@ -1,7 +1,7 @@
 <?php
 
 // Restores users, accounts, segments, categories, tags, groups,
-// transactions, and budgets from an uploaded gzipped JSON backup.
+// transactions, budgets, and projects from an uploaded gzipped JSON backup.
 
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
@@ -83,6 +83,7 @@ try {
     if (isset($data['categories'])) $db->exec('TRUNCATE TABLE categories');
     if (isset($data['segments'])) $db->exec('TRUNCATE TABLE segments');
     if (isset($data['groups'])) $db->exec('TRUNCATE TABLE transaction_groups');
+    if (isset($data['projects'])) $db->exec('TRUNCATE TABLE projects');
     if (isset($data['budgets'])) $db->exec('TRUNCATE TABLE budgets');
     if (isset($data['accounts'])) $db->exec('TRUNCATE TABLE accounts');
     if (isset($data['users'])) $db->exec('TRUNCATE TABLE users');
@@ -151,6 +152,38 @@ try {
                 'name' => $row['name'],
                 'description' => $row['description'] ?? null,
                 'active' => isset($row['active']) ? (int)$row['active'] : 1
+            ]);
+        }
+    }
+
+    if (isset($data['projects'])) {
+        $stmtProj = $db->prepare('INSERT INTO projects (id, name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, archived, group_id, created_at) VALUES (:id, :name, :description, :rationale, :cost_low, :cost_medium, :cost_high, :funding_source, :recurring_cost, :estimated_time, :expected_lifespan, :benefit_financial, :benefit_quality, :benefit_risk, :benefit_sustainability, :weight_financial, :weight_quality, :weight_risk, :weight_sustainability, :dependencies, :risks, :archived, :group_id, :created_at)');
+        foreach ($data['projects'] as $row) {
+            $stmtProj->execute([
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'description' => $row['description'] ?? null,
+                'rationale' => $row['rationale'] ?? null,
+                'cost_low' => $row['cost_low'] ?? null,
+                'cost_medium' => $row['cost_medium'] ?? null,
+                'cost_high' => $row['cost_high'] ?? null,
+                'funding_source' => $row['funding_source'] ?? null,
+                'recurring_cost' => $row['recurring_cost'] ?? null,
+                'estimated_time' => $row['estimated_time'] ?? null,
+                'expected_lifespan' => $row['expected_lifespan'] ?? null,
+                'benefit_financial' => $row['benefit_financial'] ?? null,
+                'benefit_quality' => $row['benefit_quality'] ?? null,
+                'benefit_risk' => $row['benefit_risk'] ?? null,
+                'benefit_sustainability' => $row['benefit_sustainability'] ?? null,
+                'weight_financial' => $row['weight_financial'] ?? null,
+                'weight_quality' => $row['weight_quality'] ?? null,
+                'weight_risk' => $row['weight_risk'] ?? null,
+                'weight_sustainability' => $row['weight_sustainability'] ?? null,
+                'dependencies' => $row['dependencies'] ?? null,
+                'risks' => $row['risks'] ?? null,
+                'archived' => $row['archived'] ?? 0,
+                'group_id' => $row['group_id'] ?? null,
+                'created_at' => $row['created_at'] ?? null,
             ]);
         }
     }

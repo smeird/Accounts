@@ -29,6 +29,7 @@
                     <label class="block"><input type="checkbox" name="parts" value="tags" class="mr-2">Tags</label>
                     <label class="block"><input type="checkbox" name="parts" value="groups" class="mr-2">Groups</label>
                     <label class="block"><input type="checkbox" name="parts" value="segments" class="mr-2">Segments</label>
+                    <label class="block"><input type="checkbox" name="parts" value="projects" class="mr-2">Projects</label>
                     <label class="block"><input type="checkbox" name="parts" value="budgets" class="mr-2">Budgets</label>
 
                 </div>
@@ -38,7 +39,7 @@
             </section>
             <section class="bg-white p-6 rounded shadow space-y-4">
                 <h2 class="text-xl font-semibold">Restore Backup</h2>
-                <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags, groups, segments, or budgets.</p>
+                <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags, groups, segments, projects, or budgets.</p>
                 <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="file" id="backup-file" name="backup_file" accept="application/gzip,application/json" required data-help="Choose a previously downloaded compressed backup file">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-upload inline w-4 h-4 mr-2"></i>Restore</button>
