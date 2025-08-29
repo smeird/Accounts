@@ -1,14 +1,15 @@
 <?php
 // Exports selected data as JSON. Allows selecting categories, tags, groups,
-// segments, transactions, and budgets via the `parts` query parameter. User
-// and account information is always included so a full backup can be restored.
+// segments, transactions, budgets, and projects via the `parts` query parameter.
+// User and account information is always included so a full backup can be restored.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 
 // Determine which parts are being backed up so the filename can reflect them
 // Include segments so they can be exported and restored
-$allParts = ['categories','tags','groups','transactions','budgets','segments'];
+// Allow optionally including projects in the backup
+$allParts = ['categories','tags','groups','transactions','budgets','segments','projects'];
 $parts = isset($_GET['parts']) && $_GET['parts'] !== ''
     ? array_intersect($allParts, explode(',', $_GET['parts']))
     : $allParts;
@@ -54,6 +55,9 @@ try {
     }
     if (in_array('budgets', $parts)) {
         $data['budgets'] = $getAll('SELECT category_id, month, year, amount FROM budgets ORDER BY category_id, year, month');
+    }
+    if (in_array('projects', $parts)) {
+        $data['projects'] = $getAll('SELECT id, name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, archived, group_id, created_at FROM projects ORDER BY id');
     }
 
     // Compress the JSON payload
