@@ -33,9 +33,13 @@ window.getCategoryColor = getCategoryColor;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-chart-desc]').forEach(el => {
+        const wrapper = document.createElement('div');
+        el.parentNode.insertBefore(wrapper, el);
+        wrapper.appendChild(el);
+
         const p = document.createElement('p');
         p.className = 'text-xs text-gray-600 mt-2';
         p.textContent = el.dataset.chartDesc;
-        el.insertAdjacentElement('afterend', p);
+        wrapper.appendChild(p);
     });
 });
