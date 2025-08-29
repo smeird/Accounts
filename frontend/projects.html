@@ -37,7 +37,7 @@
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-4">Cost vs Quality</h2>
-                <div id="project-bubble-chart" class="h-64"></div>
+                <div id="project-bubble-chart" style="height:800px"></div>
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-4">Project Priorities</h2>
@@ -66,7 +66,7 @@ function drawBubble(data){
 
     }));
     Highcharts.chart('project-bubble-chart', {
-        chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy' },
+        chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy', height: 800 },
         title: { text: 'Cost vs Quality' },
         xAxis: {
             title: { text: 'Cost (£)' },
