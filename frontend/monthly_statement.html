@@ -219,7 +219,7 @@ function loadTransactions(retry = false) {
             return;
         }
         const groupValues = { '': 'None' };
-        groups.forEach(g => groupValues[g.id] = g.name);
+        groups.filter(g => g.active).forEach(g => groupValues[g.id] = g.name);
 
         // normalise group ids for Tabulator
         data.forEach(t => { t.group_id = t.group_id ? String(t.group_id) : ''; });
@@ -336,7 +336,7 @@ function loadTransactions(retry = false) {
                     field: 'group_id',
                     formatter: function(cell){
                         const id = cell.getValue();
-                        const name = groupValues[id] || '';
+                        const name = cell.getRow().getData().group_name || groupValues[id] || '';
                         if (!name) return '';
                         const badge = createBadge(name, 'bg-purple-200 text-purple-800');
                         const link = document.createElement('a');
@@ -359,8 +359,8 @@ function loadTransactions(retry = false) {
                                 group_id: newId === '' ? '' : parseInt(newId, 10)
                             })
                         }).then(r => r.json()).then(res => {
-                            const name = groupValues[newId] || '';
-                            cell.getRow().update({ group_name: name });
+                        const name = groupValues[newId] || '';
+                        cell.getRow().update({ group_name: name });
                         });
                     }
                 },

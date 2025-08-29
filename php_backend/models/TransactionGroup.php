@@ -6,20 +6,38 @@ class TransactionGroup {
     /**
      * Create a new transaction group and return its ID.
      */
-    public static function create(string $name, ?string $description = null): int {
+    public static function create(string $name, ?string $description = null, bool $active = true): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO transaction_groups (name, description) VALUES (:name, :description)');
-        $stmt->execute(['name' => $name, 'description' => $description]);
+        $stmt = $db->prepare('INSERT INTO transaction_groups (name, description, active) VALUES (:name, :description, :active)');
+        $stmt->execute([
+            'name' => $name,
+            'description' => $description,
+            'active' => $active ? 1 : 0
+        ]);
         return (int)$db->lastInsertId();
     }
 
     /**
      * Rename an existing transaction group.
      */
-    public static function update(int $id, string $name, ?string $description = null): void {
+    public static function update(int $id, string $name, ?string $description = null, bool $active = true): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE transaction_groups SET name = :name, description = :description WHERE id = :id');
-        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description]);
+        $stmt = $db->prepare('UPDATE transaction_groups SET name = :name, description = :description, active = :active WHERE id = :id');
+        $stmt->execute([
+            'id' => $id,
+            'name' => $name,
+            'description' => $description,
+            'active' => $active ? 1 : 0
+        ]);
+    }
+
+    /**
+     * Mark a group as active or inactive.
+     */
+    public static function setActive(int $id, bool $active): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE transaction_groups SET active = :active WHERE id = :id');
+        $stmt->execute(['id' => $id, 'active' => $active ? 1 : 0]);
     }
 
     /**
@@ -41,7 +59,7 @@ class TransactionGroup {
      */
     public static function find(int $id): ?array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT id, name, description FROM transaction_groups WHERE id = :id');
+        $stmt = $db->prepare('SELECT id, name, description, active FROM transaction_groups WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
@@ -52,7 +70,7 @@ class TransactionGroup {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT id, name, description FROM transaction_groups ORDER BY id');
+        $stmt = $db->query('SELECT id, name, description, active FROM transaction_groups ORDER BY id');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

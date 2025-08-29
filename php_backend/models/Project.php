@@ -9,7 +9,7 @@ class Project {
      */
     public static function create(array $data): int {
         $db = Database::getConnection();
-        $groupId = TransactionGroup::create($data['name'] ?? 'Project', $data['description'] ?? null);
+        $groupId = TransactionGroup::create($data['name'] ?? 'Project', $data['description'] ?? null, !($data['archived'] ?? 0));
         $stmt = $db->prepare('INSERT INTO projects (name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, archived, group_id) VALUES (:name, :description, :rationale, :cost_low, :cost_medium, :cost_high, :funding_source, :recurring_cost, :estimated_time, :expected_lifespan, :benefit_financial, :benefit_quality, :benefit_risk, :benefit_sustainability, :weight_financial, :weight_quality, :weight_risk, :weight_sustainability, :dependencies, :risks, :archived, :group_id)');
         $stmt->execute([
             'name' => $data['name'] ?? '',
@@ -83,12 +83,15 @@ class Project {
      */
     public static function update(int $id, array $data): bool {
         $db = Database::getConnection();
-        // rename associated transaction group
-        $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
-        $gidStmt->execute(['id' => $id]);
-        $groupId = (int)$gidStmt->fetchColumn();
+        // rename associated transaction group and align active flag
+        $projStmt = $db->prepare('SELECT group_id, archived FROM projects WHERE id = :id');
+        $projStmt->execute(['id' => $id]);
+        $proj = $projStmt->fetch(PDO::FETCH_ASSOC);
+        $groupId = (int)($proj['group_id'] ?? 0);
+        $currentArchived = (int)($proj['archived'] ?? 0);
+        $archivedFlag = $data['archived'] ?? $currentArchived;
         if($groupId){
-            TransactionGroup::update($groupId, $data['name'] ?? 'Project', $data['description'] ?? null);
+            TransactionGroup::update($groupId, $data['name'] ?? 'Project', $data['description'] ?? null, !$archivedFlag);
         }
         $stmt = $db->prepare('UPDATE projects SET name=:name, description=:description, rationale=:rationale, cost_low=:cost_low, cost_medium=:cost_medium, cost_high=:cost_high, funding_source=:funding_source, recurring_cost=:recurring_cost, estimated_time=:estimated_time, expected_lifespan=:expected_lifespan, benefit_financial=:benefit_financial, benefit_quality=:benefit_quality, benefit_risk=:benefit_risk, benefit_sustainability=:benefit_sustainability, weight_financial=:weight_financial, weight_quality=:weight_quality, weight_risk=:weight_risk, weight_sustainability=:weight_sustainability, dependencies=:dependencies, risks=:risks, archived=:archived WHERE id=:id');
         return $stmt->execute([
@@ -112,7 +115,7 @@ class Project {
             'weight_sustainability' => $data['weight_sustainability'] ?? 1,
             'dependencies' => $data['dependencies'] ?? null,
             'risks' => $data['risks'] ?? null,
-            'archived' => $data['archived'] ?? 0,
+            'archived' => $archivedFlag,
             'id' => $id
         ]);
     }
@@ -123,7 +126,16 @@ class Project {
     public static function setArchived(int $id, bool $archived): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE projects SET archived = :archived WHERE id = :id');
-        return $stmt->execute(['archived' => $archived ? 1 : 0, 'id' => $id]);
+        $ok = $stmt->execute(['archived' => $archived ? 1 : 0, 'id' => $id]);
+        if($ok){
+            $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
+            $gidStmt->execute(['id' => $id]);
+            $groupId = (int)$gidStmt->fetchColumn();
+            if($groupId){
+                TransactionGroup::setActive($groupId, !$archived);
+            }
+        }
+        return $ok;
     }
 
     /**
