@@ -5,6 +5,7 @@
 
 - Projects view visualises benefits using a bubble chart plotting cost vs quality with bubble size representing score, displaying each project as its own series for distinct colours.
 - Projects board page presents each active project as an individual card with key details and actions.
+- Projects board cards display post-description details in a compact table with a smaller font to minimise card size.
 
 
 ## Environment

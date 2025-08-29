@@ -63,26 +63,35 @@ async function loadProjects(){
         card.appendChild(header);
 
         const details = document.createElement('div');
-        details.className = 'text-sm space-y-1';
-        details.innerHTML = `
-            <p><span class="font-semibold">Description:</span> ${p.description || ''}</p>
-            <p><span class="font-semibold">Rationale:</span> ${p.rationale || ''}</p>
-            <p><span class="font-semibold">Cost Low:</span> ${fmtMoney(p.cost_low)}</p>
-            <p><span class="font-semibold">Cost Medium:</span> ${fmtMoney(p.cost_medium)}</p>
-            <p><span class="font-semibold">Cost High:</span> ${fmtMoney(p.cost_high)}</p>
-            <p><span class="font-semibold">Funding:</span> ${p.funding_source || ''}</p>
-            <p><span class="font-semibold">Recurring Cost:</span> ${fmtMoney(p.recurring_cost)}</p>
-            <p><span class="font-semibold">Estimated Time:</span> ${p.estimated_time || ''}</p>
-            <p><span class="font-semibold">Expected Lifespan:</span> ${p.expected_lifespan || ''}</p>
-            <p><span class="font-semibold">Financial Benefit:</span> ${p.benefit_financial || 0}</p>
-            <p><span class="font-semibold">Quality Benefit:</span> ${p.benefit_quality || 0}</p>
-            <p><span class="font-semibold">Risk Benefit:</span> ${p.benefit_risk || 0}</p>
-            <p><span class="font-semibold">Sustainability Benefit:</span> ${p.benefit_sustainability || 0}</p>
-            <p><span class="font-semibold">Score:</span> ${p.score || 0}</p>
-            <p><span class="font-semibold">Dependencies:</span> ${p.dependencies || ''}</p>
-            <p><span class="font-semibold">Risks:</span> ${p.risks || ''}</p>
-            <p><span class="font-semibold">Spent:</span> ${fmtMoney(p.spent)}</p>
+        details.className = 'space-y-1 text-sm';
+
+        const desc = document.createElement('p');
+        desc.innerHTML = `<span class="font-semibold">Description:</span> ${p.description || ''}`;
+        const rationale = document.createElement('p');
+        rationale.innerHTML = `<span class="font-semibold">Rationale:</span> ${p.rationale || ''}`;
+        details.appendChild(desc);
+        details.appendChild(rationale);
+
+        const table = document.createElement('table');
+        table.className = 'text-xs w-full';
+        table.innerHTML = `
+            <tr><td class="pr-2 font-semibold">Cost Low:</td><td>${fmtMoney(p.cost_low)}</td></tr>
+            <tr><td class="pr-2 font-semibold">Cost Medium:</td><td>${fmtMoney(p.cost_medium)}</td></tr>
+            <tr><td class="pr-2 font-semibold">Cost High:</td><td>${fmtMoney(p.cost_high)}</td></tr>
+            <tr><td class="pr-2 font-semibold">Funding:</td><td>${p.funding_source || ''}</td></tr>
+            <tr><td class="pr-2 font-semibold">Recurring Cost:</td><td>${fmtMoney(p.recurring_cost)}</td></tr>
+            <tr><td class="pr-2 font-semibold">Estimated Time:</td><td>${p.estimated_time || ''}</td></tr>
+            <tr><td class="pr-2 font-semibold">Expected Lifespan:</td><td>${p.expected_lifespan || ''}</td></tr>
+            <tr><td class="pr-2 font-semibold">Financial Benefit:</td><td>${p.benefit_financial || 0}</td></tr>
+            <tr><td class="pr-2 font-semibold">Quality Benefit:</td><td>${p.benefit_quality || 0}</td></tr>
+            <tr><td class="pr-2 font-semibold">Risk Benefit:</td><td>${p.benefit_risk || 0}</td></tr>
+            <tr><td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${p.benefit_sustainability || 0}</td></tr>
+            <tr><td class="pr-2 font-semibold">Score:</td><td>${p.score || 0}</td></tr>
+            <tr><td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td></tr>
+            <tr><td class="pr-2 font-semibold">Risks:</td><td>${p.risks || ''}</td></tr>
+            <tr><td class="pr-2 font-semibold">Spent:</td><td>${fmtMoney(p.spent)}</td></tr>
         `;
+        details.appendChild(table);
         card.appendChild(details);
 
         const [editIcon, archiveIcon, deleteIcon] = Array.from(icons.children);
