@@ -34,6 +34,7 @@
 - Analyse recurring expenses and break down spending by segments and categories.
 - Support backups, restores, and exporting transactions to OFX, CSV, or XLSX.
 - Secure accounts with two-factor authentication and offer detailed search and reporting.
+- Transaction groups include an `active` flag. Inactive groups are hidden from selection and projects set to archived automatically deactivate their associated group.
 
 ## Testing
 - Run `php tests/run_tests.php` to execute the test suite.

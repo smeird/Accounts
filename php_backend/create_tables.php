@@ -133,7 +133,8 @@ CREATE TABLE IF NOT EXISTS category_tags (
 CREATE TABLE IF NOT EXISTS transaction_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    description TEXT DEFAULT NULL
+    description TEXT DEFAULT NULL,
+    active TINYINT DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -218,6 +219,12 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `transaction_groups` LIKE 'description'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `transaction_groups` ADD COLUMN `description` TEXT DEFAULT NULL");
+}
+
+// Ensure active column exists in transaction_groups
+$result = $db->query("SHOW COLUMNS FROM `transaction_groups` LIKE 'active'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `transaction_groups` ADD COLUMN `active` TINYINT DEFAULT 1");
 }
 
 // Ensure transfer_id column exists in transactions

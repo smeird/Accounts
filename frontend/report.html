@@ -121,7 +121,7 @@
             tagSelect.appendChild(opt);
         });
         groupSelect.innerHTML = '<option value="">All</option>';
-        groups.forEach(g => {
+        groups.filter(g => g.active).forEach(g => {
             const opt = document.createElement('option');
             opt.value = g.id;
             opt.textContent = g.name;

@@ -99,11 +99,14 @@
             blankGrp.textContent = '-- None --';
             groupSel.appendChild(blankGrp);
             groups.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g.id;
-                opt.textContent = g.name;
-                if (g.id == tx.group_id) opt.selected = true;
-                groupSel.appendChild(opt);
+                if (g.active || g.id == tx.group_id) {
+                    const opt = document.createElement('option');
+                    opt.value = g.id;
+                    opt.textContent = g.name;
+                    if (g.id == tx.group_id) opt.selected = true;
+                    else if (!g.active) opt.disabled = true;
+                    groupSel.appendChild(opt);
+                }
             });
             const newGrp = document.createElement('option');
             newGrp.value = '__new';

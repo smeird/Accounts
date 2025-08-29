@@ -144,9 +144,14 @@ try {
     }
 
     if (isset($data['groups'])) {
-        $stmtGrp = $db->prepare('INSERT INTO transaction_groups (id, name, description) VALUES (:id, :name, :description)');
+        $stmtGrp = $db->prepare('INSERT INTO transaction_groups (id, name, description, active) VALUES (:id, :name, :description, :active)');
         foreach ($data['groups'] as $row) {
-            $stmtGrp->execute(['id' => $row['id'], 'name' => $row['name'], 'description' => $row['description'] ?? null]);
+            $stmtGrp->execute([
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'description' => $row['description'] ?? null,
+                'active' => isset($row['active']) ? (int)$row['active'] : 1
+            ]);
         }
     }
 

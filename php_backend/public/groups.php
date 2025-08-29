@@ -27,24 +27,26 @@ try {
     if ($method === 'POST') {
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
+        $active = isset($data['active']) ? (bool)$data['active'] : true;
         if ($name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'Name required']);
             return;
         }
-        $id = TransactionGroup::create($name, $description);
+        $id = TransactionGroup::create($name, $description, $active);
         Log::write("Created group $name");
         echo json_encode(['id' => $id]);
     } elseif ($method === 'PUT') {
         $id = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
+        $active = isset($data['active']) ? (bool)$data['active'] : true;
         if ($id <= 0 || $name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'ID and name required']);
             return;
         }
-        TransactionGroup::update($id, $name, $description);
+        TransactionGroup::update($id, $name, $description, $active);
         Log::write("Updated group $id");
         echo json_encode(['status' => 'ok']);
     } elseif ($method === 'DELETE') {

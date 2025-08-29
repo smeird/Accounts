@@ -50,6 +50,7 @@ async function loadGroups() {
         columns: [
             { title: 'Name', field: 'name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
             { title: 'Description', field: 'description', editor: 'input' },
+            { title: 'Active', field: 'active', formatter: 'tickCross', editor: true },
             { title: 'Actions', formatter: function(cell){
                 const g = cell.getRow().getData();
                 const container = document.createElement('div');
@@ -65,7 +66,7 @@ async function loadGroups() {
                     await fetch('../php_backend/public/groups.php', {
                         method: 'PUT',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({id: g.id, name, description})
+                        body: JSON.stringify({id: g.id, name, description, active: g.active})
                     });
                     loadGroups();
                     showMessage('Group updated');
@@ -90,12 +91,13 @@ async function loadGroups() {
             }}
         ],
         cellEdited: async function(cell){
-            if (cell.getField() !== 'description') return;
+            const field = cell.getField();
+            if (field !== 'description' && field !== 'active') return;
             const g = cell.getRow().getData();
             await fetch('../php_backend/public/groups.php', {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: g.id, name: g.name, description: cell.getValue()})
+                body: JSON.stringify({id: g.id, name: g.name, description: g.description, active: g.active})
             });
             showMessage('Group updated');
         }
@@ -109,7 +111,7 @@ document.getElementById('group-form').addEventListener('submit', async e => {
     await fetch('../php_backend/public/groups.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name, description})
+        body: JSON.stringify({name, description, active: 1})
     });
     document.getElementById('group-name').value = '';
     document.getElementById('group-description').value = '';
