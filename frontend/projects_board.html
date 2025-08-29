@@ -75,24 +75,42 @@ async function loadProjects(){
         const table = document.createElement('table');
         table.className = 'text-xs w-full';
         table.innerHTML = `
-            <tr><td class="pr-2 font-semibold">Cost Low:</td><td>${fmtMoney(p.cost_low)}</td></tr>
-            <tr><td class="pr-2 font-semibold">Cost Medium:</td><td>${fmtMoney(p.cost_medium)}</td></tr>
-            <tr><td class="pr-2 font-semibold">Cost High:</td><td>${fmtMoney(p.cost_high)}</td></tr>
-            <tr><td class="pr-2 font-semibold">Funding:</td><td>${p.funding_source || ''}</td></tr>
-            <tr><td class="pr-2 font-semibold">Recurring Cost:</td><td>${fmtMoney(p.recurring_cost)}</td></tr>
-            <tr><td class="pr-2 font-semibold">Estimated Time:</td><td>${p.estimated_time || ''}</td></tr>
-            <tr><td class="pr-2 font-semibold">Expected Lifespan:</td><td>${p.expected_lifespan || ''}</td></tr>
-            <tr><td class="pr-2 font-semibold">Financial Benefit:</td><td>${p.benefit_financial || 0}</td></tr>
-            <tr><td class="pr-2 font-semibold">Quality Benefit:</td><td>${p.benefit_quality || 0}</td></tr>
-            <tr><td class="pr-2 font-semibold">Risk Benefit:</td><td>${p.benefit_risk || 0}</td></tr>
-            <tr><td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${p.benefit_sustainability || 0}</td></tr>
-            <tr><td class="pr-2 font-semibold">Score:</td><td>${p.score || 0}</td></tr>
-            <tr><td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td></tr>
-            <tr><td class="pr-2 font-semibold">Risks:</td><td>${p.risks || ''}</td></tr>
-            <tr><td class="pr-2 font-semibold">Spent:</td><td>${fmtMoney(p.spent)}</td></tr>
+            <tr>
+                <td class="pr-2 font-semibold">Cost Low:</td><td>${fmtMoney(p.cost_low)}</td>
+                <td class="pr-2 font-semibold">Cost Medium:</td><td>${fmtMoney(p.cost_medium)}</td>
+            </tr>
+            <tr>
+                <td class="pr-2 font-semibold">Cost High:</td><td>${fmtMoney(p.cost_high)}</td>
+                <td class="pr-2 font-semibold">Funding:</td><td>${p.funding_source || ''}</td>
+            </tr>
+            <tr>
+                <td class="pr-2 font-semibold">Recurring Cost:</td><td>${fmtMoney(p.recurring_cost)}</td>
+                <td class="pr-2 font-semibold">Estimated Time:</td><td>${p.estimated_time || ''}</td>
+            </tr>
+            <tr>
+                <td class="pr-2 font-semibold">Expected Lifespan:</td><td>${p.expected_lifespan || ''}</td>
+                <td class="pr-2 font-semibold">Financial Benefit:</td><td>${p.benefit_financial || 0}</td>
+            </tr>
+            <tr>
+                <td class="pr-2 font-semibold">Quality Benefit:</td><td>${p.benefit_quality || 0}</td>
+                <td class="pr-2 font-semibold">Risk Benefit:</td><td>${p.benefit_risk || 0}</td>
+            </tr>
+            <tr>
+                <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${p.benefit_sustainability || 0}</td>
+                <td class="pr-2 font-semibold">Score:</td><td>${p.score || 0}</td>
+            </tr>
+            <tr>
+                <td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td>
+                <td class="pr-2 font-semibold">Risks:</td><td>${p.risks || ''}</td>
+            </tr>
         `;
         details.appendChild(table);
         card.appendChild(details);
+
+        const spent = document.createElement('h4');
+        spent.className = 'text-indigo-700 font-semibold';
+        spent.textContent = `Spent: ${fmtMoney(p.spent)}`;
+        card.appendChild(spent);
 
         const [editIcon, archiveIcon, deleteIcon] = Array.from(icons.children);
         editIcon.addEventListener('click', () => {
