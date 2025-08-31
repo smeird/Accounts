@@ -43,3 +43,6 @@
 
 ## Commit Guidelines
 - There is no specific commit message format; write concise, descriptive messages.
+
+## Documentation
+- README includes Mermaid diagrams to illustrate application architecture and request flow.

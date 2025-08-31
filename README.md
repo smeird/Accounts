@@ -2,6 +2,34 @@
 
 This repository now provides a simple PHP implementation for managing accounts and transactions.
 
+## How It Works
+
+### Architecture
+```mermaid
+graph LR
+    U[User] -->|Interacts| F[Frontend]
+    F -->|Sends requests| P[PHP Backend]
+    P -->|Reads/Writes| D[(Database)]
+    P -->|Returns JSON| F
+    F -->|Updates UI| U
+```
+
+### Request Flow
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant P as PHP Backend
+    participant D as Database
+
+    U->>F: Uploads OFX / Requests Data
+    F->>P: Sends request
+    P->>D: Query / Update
+    D-->>P: Results
+    P-->>F: Response
+    F-->>U: Rendered interface
+```
+
 ## Capabilities
 
 - Upload OFX files to import bank statements.
