@@ -84,6 +84,17 @@ function tailwindTabulator(element, options) {
         options.pagination = 'local';
     }
     options.paginationSize = 20;
+
+    // Freeze the first column by default using the column definition to
+    // maintain compatibility across Tabulator versions. Earlier builds used
+    // `cols[0].freeze(true)` after the table was built, but newer versions
+    // (v6+) removed the freeze function from column components, triggering
+    // errors. Setting the `frozen` property avoids calling missing APIs while
+    // still freezing the column when the module is available.
+    if (Array.isArray(options.columns) && options.columns.length) {
+        options.columns[0].frozen = true;
+    }
+
     const table = new Tabulator(element, options);
     const bodyFont = getComputedStyle(document.body).fontFamily;
     const headingEl = document.querySelector('h1, h2, h3, h4, h5, h6');
@@ -134,10 +145,6 @@ function tailwindTabulator(element, options) {
         });
     }
     table.on('tableBuilt', function() {
-        const cols = table.getColumns();
-        if (cols.length) {
-            cols[0].freeze(true);
-        }
         const titles = el.querySelectorAll('.tabulator-col-title');
         titles.forEach(title => {
             title.style.fontFamily = headingFont;
