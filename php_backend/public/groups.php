@@ -27,7 +27,12 @@ try {
     if ($method === 'POST') {
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
-        $active = isset($data['active']) ? (bool)$data['active'] : true;
+        $active = isset($data['active'])
+            ? filter_var($data['active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+            : true;
+        if ($active === null) {
+            $active = true;
+        }
         if ($name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'Name required']);
@@ -40,7 +45,12 @@ try {
         $id = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
-        $active = isset($data['active']) ? (bool)$data['active'] : true;
+        $active = isset($data['active'])
+            ? filter_var($data['active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+            : true;
+        if ($active === null) {
+            $active = true;
+        }
         if ($id <= 0 || $name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'ID and name required']);
