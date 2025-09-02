@@ -36,8 +36,34 @@
                 </div>
             </div>
             <div>
-                <h2 class="text-xl font-semibold mb-4">Cost vs Quality</h2>
-                <div id="project-bubble-chart" style="height:800px" data-chart-desc="Bubble chart plotting cost vs quality with bubble size representing score."></div>
+                <h2 class="text-xl font-semibold mb-4">Project Comparison</h2>
+                <div class="flex items-end space-x-4 mb-4">
+                    <label class="block">X Axis<br>
+                        <select id="x-axis" class="border p-2 rounded" data-help="Field used for horizontal axis">
+                            <option value="cost_medium" selected>Cost (mid)</option>
+                            <option value="cost_low">Cost (low)</option>
+                            <option value="cost_high">Cost (high)</option>
+                            <option value="spent">Spent</option>
+                            <option value="benefit_quality">Quality</option>
+                            <option value="benefit_financial">Financial</option>
+                            <option value="benefit_risk">Risk</option>
+                            <option value="benefit_sustainability">Sustainability</option>
+                        </select>
+                    </label>
+                    <label class="block">Y Axis<br>
+                        <select id="y-axis" class="border p-2 rounded" data-help="Field used for vertical axis">
+                            <option value="cost_medium">Cost (mid)</option>
+                            <option value="cost_low">Cost (low)</option>
+                            <option value="cost_high">Cost (high)</option>
+                            <option value="spent">Spent</option>
+                            <option value="benefit_quality" selected>Quality</option>
+                            <option value="benefit_financial">Financial</option>
+                            <option value="benefit_risk">Risk</option>
+                            <option value="benefit_sustainability">Sustainability</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="project-bubble-chart" style="height:800px" data-chart-desc="Bubble chart plotting chosen fields with bubble size representing score."></div>
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-4">Project Priorities</h2>
@@ -53,45 +79,66 @@
 <script src="js/tabulator-tailwind.js"></script>
 <script>
 let projectTable;
+let projectData = [];
 
-function drawBubble(data){
+const axisOptions = {
+    cost_low: {label: 'Cost (low)', prefix: '£'},
+    cost_medium: {label: 'Cost (mid)', prefix: '£'},
+    cost_high: {label: 'Cost (high)', prefix: '£'},
+    spent: {label: 'Spent', prefix: '£'},
+    benefit_quality: {label: 'Quality'},
+    benefit_financial: {label: 'Financial'},
+    benefit_risk: {label: 'Risk'},
+    benefit_sustainability: {label: 'Sustainability'}
+};
 
-    const series = data.map(p => ({
+function drawBubble(){
+    const xKey = document.getElementById('x-axis').value;
+    const yKey = document.getElementById('y-axis').value;
+    const xOpt = axisOptions[xKey];
+    const yOpt = axisOptions[yKey];
+
+    const series = projectData.map(p => ({
         name: p.name,
         data: [{
-            x: parseFloat(p.cost_medium) || 0,
-            y: parseFloat(p.benefit_quality) || 0,
+            x: parseFloat(p[xKey]) || 0,
+            y: parseFloat(p[yKey]) || 0,
             z: parseFloat(p.score) || 0
         }]
-
     }));
+
     Highcharts.chart('project-bubble-chart', {
         chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy', height: 800 },
-        title: { text: 'Cost vs Quality' },
+        title: { text: `${xOpt.label} vs ${yOpt.label}` },
         xAxis: {
-            title: { text: 'Cost (£)' },
-            labels: { formatter: function(){ return '£' + this.value; } }
+            title: { text: xOpt.label },
+            labels: { formatter: function(){ return xOpt.prefix ? xOpt.prefix + this.value : this.value; } }
         },
-        yAxis: { title: { text: 'Quality' } },
-
+        yAxis: {
+            title: { text: yOpt.label },
+            labels: { formatter: function(){ return yOpt.prefix ? yOpt.prefix + this.value : this.value; } }
+        },
         tooltip: {
             headerFormat: '<b>{series.name}</b><br/>',
-            pointFormat: 'Cost: £{point.x}<br>Quality: {point.y}<br>Score: {point.z}'
+            pointFormatter: function(){
+                const xVal = xOpt.prefix ? xOpt.prefix + this.x : this.x;
+                const yVal = yOpt.prefix ? yOpt.prefix + this.y : this.y;
+                return `${xOpt.label}: ${xVal}<br>${yOpt.label}: ${yVal}<br>Score: ${this.z}`;
+            }
         },
         series: series
-
     });
 }
 
 async function loadProjects(){
     const res = await fetch('../php_backend/public/projects.php');
-    const data = await res.json();
-    drawBubble(data);
+    projectData = await res.json();
+    drawBubble();
     if(projectTable){
-        projectTable.setData(data);
+        projectTable.setData(projectData);
     }else{
         projectTable = tailwindTabulator('#projects-table',{
-            data:data,
+            data:projectData,
             layout:'fitDataStretch',
             columns:[
                 {formatter:()=>'<i class="fas fa-edit w-4 h-4" aria-label="Edit"></i>', width:40, hozAlign:'center', cellClick:(e,cell)=>{
@@ -141,6 +188,9 @@ document.getElementById('apply-budget').addEventListener('click',()=>{
     }
     projectTable.setFilter('cost_medium','<=',budget);
 });
+
+document.getElementById('x-axis').addEventListener('change', drawBubble);
+document.getElementById('y-axis').addEventListener('change', drawBubble);
 
 loadProjects();
 </script>
