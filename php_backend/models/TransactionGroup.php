@@ -62,6 +62,9 @@ class TransactionGroup {
         $stmt = $db->prepare('SELECT id, name, description, active FROM transaction_groups WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $row['active'] = (int)$row['active'];
+        }
         return $row ?: null;
     }
 
@@ -71,7 +74,11 @@ class TransactionGroup {
     public static function all(): array {
         $db = Database::getConnection();
         $stmt = $db->query('SELECT id, name, description, active FROM transaction_groups ORDER BY id');
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as &$row) {
+            $row['active'] = (int)$row['active'];
+        }
+        return $rows;
     }
 }
 ?>

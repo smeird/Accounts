@@ -4,6 +4,7 @@ require_once __DIR__ . '/../php_backend/models/Tag.php';
 require_once __DIR__ . '/../php_backend/models/Category.php';
 require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
+require_once __DIR__ . '/../php_backend/models/TransactionGroup.php';
 require_once __DIR__ . '/../php_backend/OfxParser.php';
 
 // Use an in-memory SQLite database for tests.
@@ -148,6 +149,12 @@ $txCat = $db->query('SELECT category_id FROM transactions WHERE id = 1')->fetchC
 assertEqual(null, $txCat, 'Transaction category cleared');
 $budCount = $db->query('SELECT COUNT(*) FROM budgets')->fetchColumn();
 assertEqual(0, (int)$budCount, 'Budgets removed with category');
+
+// --- Group active flag ---
+$groupId = TransactionGroup::create('Temp', 'desc', true);
+TransactionGroup::update($groupId, 'Temp', 'desc', false);
+$groups = TransactionGroup::all();
+assertEqual(0, $groups[0]['active'], 'Group updated to inactive returns 0');
 
 // --- Segment tests ---
 $db->exec('DELETE FROM segments');
