@@ -45,7 +45,7 @@
             <div id="pie-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="pie-chart" class="h-[80vh]" data-chart-desc="Pie chart of spending by category."></div></div>
             <div id="income-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="income-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of income totals by tag."></div></div>
             <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of outgoing totals by tag."></div></div>
-            <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Scatter chart comparing income and expenses."></div></div>
+            <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Bubble chart comparing monthly income and outgoings."></div></div>
             <div id="stream-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="stream-chart" class="h-[80vh]" data-chart-desc="Stream graph of category spending over the year."></div></div>
             <div id="area-range-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="area-range-chart" class="h-[80vh]" data-chart-desc="Area spline chart of min and max monthly spending."></div></div>
             <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="network-graph" class="h-[80vh]" data-chart-desc="Network graph linking segments and categories."></div></div>
@@ -200,6 +200,12 @@
         ]).then(([monthly, yearly, categories]) => {
             const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
             const totals = monthly.map(m => parseFloat(m.spent));
+            const bubbleData = monthly.map((m, i) => ({
+                name: months[i],
+                x: parseFloat(m.income || 0),
+                y: parseFloat(m.spent),
+                z: Math.abs(parseFloat(m.income || 0) - parseFloat(m.spent))
+            }));
             const segCounts = {};
             const catColors = {};
             const categorySeries = yearly.categories.map(c => {
@@ -328,21 +334,25 @@
 
             Highcharts.chart('scatter-chart', {
                 colors: chartColors,
-                chart: {
-
-                    type: 'scatter'
-
-                },
-                title: { text: 'Monthly Spending Scatter' },
-                xAxis: { categories: months, title: { text: 'Month' } },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
+                chart: { type: 'bubble', plotBorderWidth: 1 },
+                title: { text: 'Income vs Outgoings' },
+                xAxis: {
+                    title: { text: 'Income (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
-                tooltip: { pointFormatter: columnTooltip },
-
-                series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]), colorByPoint: true }]
-
+                yAxis: {
+                    title: { text: 'Outgoings (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: {
+                    formatter: function(){
+                        return `<b>${this.point.name}</b><br/>Income: £${Highcharts.numberFormat(this.x, 2)}<br/>Outgoings: £${Highcharts.numberFormat(this.y, 2)}<br/>Delta: £${Highcharts.numberFormat(this.point.z, 2)}`;
+                    }
+                },
+                plotOptions: {
+                    series: { dataLabels: { enabled: true, format: '{point.name}' } }
+                },
+                series: [{ name: 'Months', data: bubbleData, colorByPoint: true }]
             });
 
             Highcharts.chart('stream-chart', {

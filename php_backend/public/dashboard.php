@@ -1,5 +1,5 @@
 <?php
-// API endpoint returning monthly spending data for the dashboard.
+// API endpoint returning monthly income and spending data for the dashboard.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
