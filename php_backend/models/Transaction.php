@@ -399,14 +399,15 @@ class Transaction {
     }
 
     /**
-     * Retrieve the total amount spent in each month of a given year.
-     * Amounts are returned as positive numbers representing outflows.
-     * Months with no spending will have a total of 0.
+     * Retrieve total income and outgoings for each month of a given year.
+     * Amounts are returned as positive numbers and months with no activity will have totals of 0.
      */
     public static function getMonthlySpending(int $year): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $stmt = $db->prepare('SELECT MONTH(`date`) AS `month`, SUM(CASE WHEN `amount` < 0 THEN -`amount` ELSE 0 END) AS `spent`
+        $stmt = $db->prepare('SELECT MONTH(`date`) AS `month`,
+            SUM(CASE WHEN `amount` > 0 THEN `amount` ELSE 0 END) AS `income`,
+            SUM(CASE WHEN `amount` < 0 THEN -`amount` ELSE 0 END) AS `spent`
             FROM `transactions`
             WHERE YEAR(`date`) = :year AND `transfer_id` IS NULL AND (`tag_id` IS NULL OR `tag_id` != :ignore)
             GROUP BY MONTH(`date`)
@@ -417,16 +418,19 @@ class Transaction {
         // Ensure all months are present in the result
         $result = [];
         for ($m = 1; $m <= 12; $m++) {
-            $result[$m] = 0.0;
+            $result[$m] = ['income' => 0.0, 'spent' => 0.0];
         }
         foreach ($rows as $row) {
             $month = (int)$row['month'];
-            $result[$month] = isset($row['spent']) ? (float)$row['spent'] : 0.0;
+            $result[$month] = [
+                'income' => isset($row['income']) ? (float)$row['income'] : 0.0,
+                'spent' => isset($row['spent']) ? (float)$row['spent'] : 0.0,
+            ];
         }
 
         $output = [];
-        foreach ($result as $month => $spent) {
-            $output[] = ['month' => $month, 'spent' => $spent];
+        foreach ($result as $month => $vals) {
+            $output[] = ['month' => $month, 'income' => $vals['income'], 'spent' => $vals['spent']];
         }
         return $output;
     }
