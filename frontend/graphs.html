@@ -30,7 +30,7 @@
                     <button class="tab-button px-3 py-2 rounded" data-target="income-tag-container">Income Tags</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="outgoing-tag-container">Outgoing Tags</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="scatter-chart-container">Scatter</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="stream-chart-container" aria-label="Category stream graph">Category Stream</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="stream-chart-container" aria-label="Cumulative category stream graph">Category Stream (Cumulative)</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="area-range-chart-container" aria-label="Spending range chart">Spend Range</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="network-graph-container">Segment Network</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="treegraph-container">Segment Tree</button>
@@ -47,6 +47,7 @@
             <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of outgoing totals by tag."></div></div>
             <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Bubble chart comparing monthly income and outgoings."></div></div>
             <div id="stream-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="stream-chart" class="h-[80vh]" data-chart-desc="Stream graph of category spending over the year."></div></div>
+
             <div id="area-range-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="area-range-chart" class="h-[80vh]" data-chart-desc="Area spline chart of min and max monthly spending."></div></div>
             <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="network-graph" class="h-[80vh]" data-chart-desc="Network graph linking segments and categories."></div></div>
 
@@ -358,14 +359,14 @@
             Highcharts.chart('stream-chart', {
                 colors: chartColors,
                 chart: { type: 'streamgraph' },
-                title: { text: 'Category Spending Streamgraph' },
+                title: { text: 'Cumulative Category Spending Streamgraph' },
                 xAxis: { categories: months },
                 yAxis: {
                     title: { text: 'Amount (£)' },
                     labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
                 },
                 tooltip: { pointFormatter: columnTooltip },
-                series: categorySeries
+                series: categoryCumulative
             });
 
             const monthExtremes = months.map((_, i) => {
