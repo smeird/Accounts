@@ -30,6 +30,8 @@
                     <button class="tab-button px-3 py-2 rounded" data-target="income-tag-container">Income Tags</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="outgoing-tag-container">Outgoing Tags</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="scatter-chart-container">Scatter</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="stream-chart-container" aria-label="Category stream graph">Category Stream</button>
+                    <button class="tab-button px-3 py-2 rounded" data-target="area-range-chart-container" aria-label="Spending range chart">Spend Range</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="network-graph-container">Segment Network</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="treegraph-container">Segment Tree</button>
                     <button class="tab-button px-3 py-2 rounded" data-target="segment-section">Segments</button>
@@ -44,6 +46,8 @@
             <div id="income-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="income-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of income totals by tag."></div></div>
             <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="outgoing-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of outgoing totals by tag."></div></div>
             <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Scatter chart comparing income and expenses."></div></div>
+            <div id="stream-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="stream-chart" class="h-[80vh]" data-chart-desc="Stream graph of category spending over the year."></div></div>
+            <div id="area-range-chart-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="area-range-chart" class="h-[80vh]" data-chart-desc="Area spline chart of min and max monthly spending."></div></div>
             <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="network-graph" class="h-[80vh]" data-chart-desc="Network graph linking segments and categories."></div></div>
 
             <div id="treegraph-container" class="tab-content bg-white p-6 rounded shadow hidden"><div id="treegraph-chart" data-chart-desc="Tree graph of segments and categories."></div></div>
@@ -58,7 +62,9 @@
 
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://code.highcharts.com/modules/streamgraph.js"></script>
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
     <script src="https://code.highcharts.com/modules/networkgraph.js"></script>
     <script src="https://code.highcharts.com/modules/treegraph.js"></script>
@@ -337,6 +343,40 @@
 
                 series: [{ name: 'Spending', data: totals.map((v, i) => [i, v]), colorByPoint: true }]
 
+            });
+
+            Highcharts.chart('stream-chart', {
+                colors: chartColors,
+                chart: { type: 'streamgraph' },
+                title: { text: 'Category Spending Streamgraph' },
+                xAxis: { categories: months },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: { pointFormatter: columnTooltip },
+                series: categorySeries
+            });
+
+            const monthExtremes = months.map((_, i) => {
+                const vals = categorySeries.map(cs => cs.data[i]);
+                return [Math.min(...vals), Math.max(...vals)];
+            });
+            Highcharts.chart('area-range-chart', {
+                colors: chartColors,
+                chart: { type: 'areasplinerange' },
+                title: { text: 'Monthly Spending Range' },
+                xAxis: { categories: months },
+                yAxis: {
+                    title: { text: 'Amount (£)' },
+                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
+                },
+                tooltip: {
+                    formatter: function(){
+                        return `<b>${this.x}</b><br/>Min: £${Highcharts.numberFormat(this.point.low, 2)}<br/>Max: £${Highcharts.numberFormat(this.point.high, 2)}`;
+                    }
+                },
+                series: [{ name: 'Range', data: monthExtremes, color: chartColors[0], fillOpacity: 0.3 }]
             });
 
             const incomeYearly = {
