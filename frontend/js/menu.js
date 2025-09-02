@@ -295,22 +295,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const utility = document.createElement('div');
   utility.id = 'utility-bar';
-  utility.className = 'fixed top-4 right-4 bg-white rounded-full border border-indigo-600 p-3 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg';
+  utility.className = 'fixed top-4 right-4 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg';
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">
-      <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white transition-shadow hover:shadow focus:shadow" />
+      <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white transition-shadow focus:shadow" />
       <button type="submit" class="ml-2"><i class="fas fa-search h-4 w-4"></i></button>
     </form>
     <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center">
-      <i class="fas fa-file-invoice h-4 w-4 mr-1"></i>
-      <span id="latest-statement-text">Latest Statement</span>
+      <i class="fas fa-file-invoice h-4 w-4"></i>
     </a>
   `;
   document.body.appendChild(utility);
 
   const latestLink = document.getElementById('latest-statement-link');
-  const latestText = document.getElementById('latest-statement-text');
-  if (latestLink && latestText) {
+  if (latestLink) {
     fetch('../php_backend/public/transaction_months.php')
       .then(r => r.json())
       .then(months => {
@@ -321,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
             'July','August','September','October','November','December'
           ];
           latestLink.href = `monthly_statement.html?year=${year}&month=${month}`;
-          latestText.textContent = `Latest Statement: ${names[month - 1]} ${year}`;
         }
       })
       .catch(err => console.error('Latest statement load failed', err));
