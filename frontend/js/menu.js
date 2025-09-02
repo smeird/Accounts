@@ -291,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
   toggle.addEventListener('click', () => {
     if (menu) menu.classList.toggle('hidden');
   });
+  toggle.setAttribute('aria-label', 'Toggle navigation');
   document.body.appendChild(toggle);
 
   const utility = document.createElement('div');
@@ -299,9 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">
       <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white transition-shadow focus:shadow" />
-      <button type="submit" class="ml-2"><i class="fas fa-search h-4 w-4"></i></button>
+      <button type="submit" class="ml-2" aria-label="Search"><i class="fas fa-search h-4 w-4"></i></button>
     </form>
-    <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center">
+    <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center" aria-label="Latest statement">
       <i class="fas fa-file-invoice h-4 w-4"></i>
     </a>
   `;
