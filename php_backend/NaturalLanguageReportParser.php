@@ -23,7 +23,7 @@ class NaturalLanguageReportParser {
     }
 
     /**
-     * Use the OpenAI chat API to interpret the query.
+     * Use the OpenAI Responses API to interpret the query.
      * Returns null if the API request fails or the response is invalid.
      */
     private static function parseWithAI(string $query, string $token): ?array {
@@ -60,14 +60,15 @@ class NaturalLanguageReportParser {
 
         $payload = [
             'model' => 'gpt-5-nano',
-            'messages' => [
+            'input' => [
                 ['role' => 'system', 'content' => 'You convert report requests into JSON filters.'],
                 ['role' => 'user', 'content' => $prompt],
             ],
             'temperature' => 0,
+            'response_format' => ['type' => 'json_object'],
         ];
 
-        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+        $ch = curl_init('https://api.openai.com/v1/responses');
         curl_setopt_array($ch, [
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
@@ -82,7 +83,7 @@ class NaturalLanguageReportParser {
             return null;
         }
         $data = json_decode($response, true);
-        $content = $data['choices'][0]['message']['content'] ?? '';
+        $content = $data['output'][0]['content'][0]['text'] ?? '';
 
         $content = trim($content);
         if (substr($content, 0, 3) === '```') {
