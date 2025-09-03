@@ -265,6 +265,20 @@ $parsedTags = NaturalLanguageReportParser::parse('car auto');
 sort($parsedTags['tag']);
 assertEqual([1,2], $parsedTags['tag'], 'Natural language parser finds multiple tags');
 
+$db->exec('DELETE FROM categories');
+$db->exec('DELETE FROM sqlite_sequence WHERE name="categories"');
+$db->exec("INSERT INTO categories (name) VALUES ('#groceries')");
+$catSymbolId = (int)$db->lastInsertId();
+$parsedPunctCat = NaturalLanguageReportParser::parse('#groceries');
+assertEqual($catSymbolId, $parsedPunctCat['category'], 'Natural language parser handles category starting with symbol');
+
+$db->exec('DELETE FROM tags');
+$db->exec('DELETE FROM sqlite_sequence WHERE name="tags"');
+$db->exec("INSERT INTO tags (name, keyword, description) VALUES ('#fun','', ''), ('bills!','', '')");
+$parsedPunctTags = NaturalLanguageReportParser::parse('#fun bills!');
+sort($parsedPunctTags['tag']);
+assertEqual([1,2], $parsedPunctTags['tag'], 'Natural language parser handles tag names with symbols');
+
 
 // Output results and set exit code
 $failed = false;
