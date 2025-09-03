@@ -30,6 +30,7 @@
                 <div class="md:col-span-3 space-x-2">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Run Report</button>
                     <button type="button" id="save-report" class="bg-gray-600 text-white px-4 py-2 rounded">Save Report</button>
+                    <button type="button" id="download-pdf" class="bg-green-600 text-white px-4 py-2 rounded" aria-label="Download report as PDF"><i class="fas fa-file-download inline w-4 h-4 mr-1"></i>Download PDF</button>
                 </div>
             </form>
             <div class="mt-4 flex items-center space-x-2">
@@ -46,6 +47,9 @@
     <script src="js/color_map.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js"></script>
     <script>
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
@@ -167,7 +171,7 @@
         if (text) params.append('text', text);
         if (start) params.append('start', start);
         if (end) params.append('end', end);
-        fetch('../php_backend/public/report.php?' + params.toString())
+        return fetch('../php_backend/public/report.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
                 const gridEl = document.getElementById('results-grid');
@@ -255,6 +259,24 @@
         localStorage.setItem('reports', JSON.stringify(saved));
         loadSavedReports();
         select.value = '';
+    });
+
+    document.getElementById('download-pdf').addEventListener('click', async function() {
+        await runReport();
+        const gridEl = document.getElementById('results-grid');
+        const canvas = await html2canvas(gridEl);
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = canvas.height * pdfWidth / canvas.width;
+        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const blob = doc.output('blob');
+        doc.save('report.pdf');
+
+        const formData = new FormData();
+        formData.append('report', blob, 'report.pdf');
+        fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
     });
 
     loadOptions();
