@@ -3,6 +3,7 @@
 require_once __DIR__ . '/Database.php';
 
 require_once __DIR__ . '/models/Setting.php';
+require_once __DIR__ . '/models/Log.php';
 
 class NaturalLanguageReportParser {
     /**
@@ -27,6 +28,7 @@ class NaturalLanguageReportParser {
      * Returns null if the API request fails or the response is invalid.
      */
     private static function parseWithAI(string $query, string $token): ?array {
+        Log::write('NL report AI query: ' . $query);
         $db = Database::getConnection();
 
         $tables = [
