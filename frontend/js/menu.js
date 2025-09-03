@@ -261,8 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(r => r.json())
             .then(v => {
               const version = v.version || 'unknown';
+              const behind = v.behind;
               releaseEls.forEach(el => {
-                el.textContent = `v${version}`;
+                let text = `v${version}`;
+                if (typeof behind === 'number') {
+                  text += ` (${behind} behind)`;
+                }
+                el.textContent = text;
               });
             })
             .catch(() => {

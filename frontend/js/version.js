@@ -6,7 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     .then((response) => response.json())
     .then((data) => {
       const version = data.version || 'unknown';
-      target.textContent = `Version: ${version}`;
+      const behind = data.behind;
+      let text = `Version: ${version}`;
+      if (typeof behind === 'number') {
+        text += ` (${behind} behind)`;
+      }
+      target.textContent = text;
     })
     .catch(() => {
       target.textContent = 'Version: unknown';
