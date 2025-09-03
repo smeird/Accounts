@@ -24,6 +24,7 @@ $colorMap = [
 ];
 $text600 = "text-{$colorScheme}-600";
 $text700 = "text-{$colorScheme}-700";
+$text900 = "text-{$colorScheme}-900";
 $bg600 = "bg-{$colorScheme}-600";
 $bgHover = "hover:bg-{$colorScheme}-700";
 $error = '';
