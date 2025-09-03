@@ -178,8 +178,9 @@
                 const chartContainer = document.getElementById('chart');
                 gridEl.innerHTML = '';
                 chartContainer.innerHTML = '';
+                window.reportTable = null;
                 if (Array.isArray(data) && data.length) {
-                    tailwindTabulator(gridEl, {
+                    window.reportTable = tailwindTabulator(gridEl, {
                         data: data,
                         layout: 'fitDataStretch',
                         columns: [
@@ -263,31 +264,72 @@
 
     document.getElementById('download-pdf').addEventListener('click', async function() {
 
-        const gridEl = document.getElementById('results-grid');
-        // Refresh the report only if no table has been rendered yet
-        if (!gridEl.querySelector('.tabulator-table') && !gridEl.textContent.trim()) {
+        if (!window.reportTable) {
             await runReport();
+            if (!window.reportTable) return;
         }
 
-        const tableEl = gridEl.querySelector('.tabulator-table') || gridEl;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
 
-        try {
-            const canvas = await html2canvas(tableEl, { backgroundColor: '#ffffff', useCORS: true });
-            const imgData = canvas.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const pdfWidth = doc.internal.pageSize.getWidth();
-            const pdfHeight = canvas.height * pdfWidth / canvas.width;
-            doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            const blob = doc.output('blob');
-            doc.save('report.pdf');
+        // Header
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 0, pageWidth, 20, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.text('Accounts - Transaction Report', 14, 12);
 
-            const formData = new FormData();
-            formData.append('report', blob, 'report.pdf');
-            fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
-        } catch (err) {
-            console.error('PDF generation failed', err);
+        // Description
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        let y = 26;
+        doc.text('This report summarises transactions matching your selected filters.', 14, y);
+        y += 6;
+
+        const filters = [];
+        const catSel = document.getElementById('category');
+        if (catSel.value) filters.push('Category: ' + catSel.options[catSel.selectedIndex].text);
+        const tagSel = document.getElementById('tag');
+        if (tagSel.value) filters.push('Tag: ' + tagSel.options[tagSel.selectedIndex].text);
+        const grpSel = document.getElementById('group');
+        if (grpSel.value) filters.push('Group: ' + grpSel.options[grpSel.selectedIndex].text);
+        const segSel = document.getElementById('segment');
+        if (segSel.value) filters.push('Segment: ' + segSel.options[segSel.selectedIndex].text);
+        const textVal = document.getElementById('text').value.trim();
+        if (textVal) filters.push('Text contains: ' + textVal);
+        const startVal = document.getElementById('start').value;
+        if (startVal) filters.push('Start: ' + startVal);
+        const endVal = document.getElementById('end').value;
+        if (endVal) filters.push('End: ' + endVal);
+        if (filters.length) {
+            doc.text('Filters: ' + filters.join(', '), 14, y);
+            y += 6;
         }
+        doc.text('Generated on ' + new Date().toLocaleString(), 14, y);
+        y += 8;
+
+        // Table
+        const columns = window.reportTable.getColumns().map(col => ({
+            header: col.getDefinition().title,
+            dataKey: col.getField()
+        }));
+        const data = window.reportTable.getData();
+        doc.autoTable({
+            startY: y,
+            head: [columns.map(c => c.header)],
+            body: data.map(row => columns.map(c => row[c.dataKey])),
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            alternateRowStyles: { fillColor: [243, 244, 246] }
+        });
+
+        const blob = doc.output('blob');
+        doc.save('report.pdf');
+
+        const formData = new FormData();
+        formData.append('report', blob, 'report.pdf');
+        fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
 
     });
 
