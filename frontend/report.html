@@ -325,10 +325,16 @@
         });
 
         const blob = doc.output('blob');
-        doc.save('report.pdf');
+
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const filename = `transactions_report_${timestamp}.pdf`;
+
+        doc.save(filename);
 
         const formData = new FormData();
-        formData.append('report', blob, 'report.pdf');
+        formData.append('report', blob, filename);
         fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
 
     });
