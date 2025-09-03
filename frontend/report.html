@@ -210,7 +210,7 @@
                 document.getElementById('text').value = filters.text || '';
                 document.getElementById('start').value = filters.start || '';
                 document.getElementById('end').value = filters.end || '';
-                aiStatus.textContent = 'AI suggestions applied';
+                aiStatus.textContent = filters.summary || 'AI suggestions applied';
             } catch (e) {
                 aiStatus.textContent = 'AI request failed';
             }
