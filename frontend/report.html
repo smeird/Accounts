@@ -263,6 +263,7 @@
     });
 
     document.getElementById('download-pdf').addEventListener('click', async function() {
+
         if (!window.reportTable) {
             await runReport();
             if (!window.reportTable) return;
@@ -329,6 +330,7 @@
         const formData = new FormData();
         formData.append('report', blob, 'report.pdf');
         fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
+
     });
 
     loadOptions();
