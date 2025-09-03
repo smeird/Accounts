@@ -6,10 +6,18 @@ require_once __DIR__ . '/../models/Transaction.php';
 
 header('Content-Type: application/json');
 
-$category = isset($_GET['category']) ? (int)$_GET['category'] : null;
-$tag = isset($_GET['tag']) ? (int)$_GET['tag'] : null;
-$group = isset($_GET['group']) ? (int)$_GET['group'] : null;
-$segment = isset($_GET['segment']) ? (int)$_GET['segment'] : null;
+function parseList(string $key) {
+    if (!isset($_GET[$key]) || $_GET[$key] === '') {
+        return null;
+    }
+    $vals = array_filter(array_map('intval', explode(',', $_GET[$key])));
+    return count($vals) > 1 ? $vals : ($vals ? $vals[0] : null);
+}
+
+$category = parseList('category');
+$tag = parseList('tag');
+$group = parseList('group');
+$segment = parseList('segment');
 $text = isset($_GET['text']) ? trim($_GET['text']) : null;
 $start = isset($_GET['start']) ? $_GET['start'] : null;
 $end = isset($_GET['end']) ? $_GET['end'] : null;

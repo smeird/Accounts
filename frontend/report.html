@@ -21,10 +21,10 @@
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Transaction Reports</h1>
             <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
             <form id="report-form" class="bg-white p-4 rounded shadow grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label class="block">Category: <select id="category" class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
-                <label class="block">Tag: <select id="tag" class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
-                <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
-                <label class="block">Segment: <select id="segment" class="border p-2 rounded w-full" data-help="Filter by segment"></select></label>
+                <label class="block">Category: <select id="category" multiple class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
+                <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
+                <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
+                <label class="block">Segment: <select id="segment" multiple class="border p-2 rounded w-full" data-help="Filter by segment"></select></label>
                 <label class="block">Text: <input type="text" id="text" class="border p-2 rounded w-full" data-help="Filter by description text"></label>
                 <label class="block">Start Date: <input type="date" id="start" class="border p-2 rounded w-full" data-help="Start date for report"></label>
                 <label class="block">End Date: <input type="date" id="end" class="border p-2 rounded w-full" data-help="End date for report"></label>
@@ -57,6 +57,19 @@
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
         const pct = total ? (this.y / total * 100) : 0;
         return `${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
+    }
+
+    function getSelectedValues(choice) {
+        if (!choice) return [];
+        const val = choice.getValue(true);
+        return Array.isArray(val) ? val.filter(v => v !== '') : (val ? [val] : []);
+    }
+
+    function getSelectedLabels(choice) {
+        if (!choice) return [];
+        const val = choice.getValue();
+        const arr = Array.isArray(val) ? val : (val ? [val] : []);
+        return arr.map(v => v.label);
     }
 
     // Group transactions by an appropriate time frame so charts remain readable
@@ -144,6 +157,14 @@
             opt.textContent = s.name;
             segmentSelect.appendChild(opt);
         });
+        if (window.catChoices) { window.catChoices.destroy(); }
+        if (window.tagChoices) { window.tagChoices.destroy(); }
+        if (window.groupChoices) { window.groupChoices.destroy(); }
+        if (window.segmentChoices) { window.segmentChoices.destroy(); }
+        window.catChoices = new Choices(catSelect, { searchEnabled: true, shouldSort: false, removeItemButton: true });
+        window.tagChoices = new Choices(tagSelect, { searchEnabled: true, shouldSort: false, removeItemButton: true });
+        window.groupChoices = new Choices(groupSelect, { searchEnabled: true, shouldSort: false, removeItemButton: true });
+        window.segmentChoices = new Choices(segmentSelect, { searchEnabled: true, shouldSort: false, removeItemButton: true });
     }
 
     // Populate the saved reports dropdown from localStorage
@@ -157,23 +178,25 @@
             opt.textContent = r.name;
             select.appendChild(opt);
         });
+        if (window.savedChoices) { window.savedChoices.destroy(); }
+        window.savedChoices = new Choices(select, { searchEnabled: true, shouldSort: false, itemSelectText: '' });
         document.getElementById('delete-report').disabled = saved.length === 0;
     }
 
     // Execute the report query and render results and chart
     function runReport() {
-        const category = document.getElementById('category').value;
-        const tag = document.getElementById('tag').value;
-        const group = document.getElementById('group').value;
-        const segment = document.getElementById('segment').value;
+        const category = getSelectedValues(window.catChoices);
+        const tag = getSelectedValues(window.tagChoices);
+        const group = getSelectedValues(window.groupChoices);
+        const segment = getSelectedValues(window.segmentChoices);
         const text = document.getElementById('text').value;
         const start = document.getElementById('start').value;
         const end = document.getElementById('end').value;
         const params = new URLSearchParams();
-        if (category) params.append('category', category);
-        if (tag) params.append('tag', tag);
-        if (group) params.append('group', group);
-        if (segment) params.append('segment', segment);
+        if (category.length) params.append('category', category.join(','));
+        if (tag.length) params.append('tag', tag.join(','));
+        if (group.length) params.append('group', group.join(','));
+        if (segment.length) params.append('segment', segment.join(','));
         if (text) params.append('text', text);
         if (start) params.append('start', start);
         if (end) params.append('end', end);
@@ -228,10 +251,10 @@
         if (!name) return;
         const report = {
             name,
-            category: document.getElementById('category').value,
-            tag: document.getElementById('tag').value,
-            group: document.getElementById('group').value,
-            segment: document.getElementById('segment').value,
+            category: getSelectedValues(window.catChoices),
+            tag: getSelectedValues(window.tagChoices),
+            group: getSelectedValues(window.groupChoices),
+            segment: getSelectedValues(window.segmentChoices),
             text: document.getElementById('text').value,
             start: document.getElementById('start').value,
             end: document.getElementById('end').value
@@ -247,14 +270,16 @@
         const idx = this.value;
         if (idx === '') return;
         const r = saved[idx];
-        document.getElementById('category').value = r.category || '';
-        if (window.tagChoices) {
-            window.tagChoices.setChoiceByValue(r.tag || '');
-        } else {
-            document.getElementById('tag').value = r.tag || '';
-        }
-        document.getElementById('group').value = r.group || '';
-        document.getElementById('segment').value = r.segment || '';
+
+        const catVals = Array.isArray(r.category) ? r.category : (r.category ? [r.category] : []);
+        const tagVals = Array.isArray(r.tag) ? r.tag : (r.tag ? [r.tag] : []);
+        const grpVals = Array.isArray(r.group) ? r.group : (r.group ? [r.group] : []);
+        const segVals = Array.isArray(r.segment) ? r.segment : (r.segment ? [r.segment] : []);
+        if (window.catChoices) { window.catChoices.setChoiceByValue(catVals); } else { document.getElementById('category').value = catVals[0] || ''; }
+        if (window.tagChoices) { window.tagChoices.setChoiceByValue(tagVals); } else { document.getElementById('tag').value = tagVals[0] || ''; }
+        if (window.groupChoices) { window.groupChoices.setChoiceByValue(grpVals); } else { document.getElementById('group').value = grpVals[0] || ''; }
+        if (window.segmentChoices) { window.segmentChoices.setChoiceByValue(segVals); } else { document.getElementById('segment').value = segVals[0] || ''; }
+
         document.getElementById('text').value = r.text || '';
         document.getElementById('start').value = r.start || '';
         document.getElementById('end').value = r.end || '';
@@ -270,6 +295,7 @@
         localStorage.setItem('reports', JSON.stringify(saved));
         loadSavedReports();
         select.value = '';
+        if (window.savedChoices) { window.savedChoices.setChoiceByValue(''); }
     });
 
     document.getElementById('download-pdf').addEventListener('click', async function() {
@@ -298,14 +324,14 @@
         y += 6;
 
         const filters = [];
-        const catSel = document.getElementById('category');
-        if (catSel.value) filters.push('Category: ' + catSel.options[catSel.selectedIndex].text);
-        const tagSel = document.getElementById('tag');
-        if (tagSel.value) filters.push('Tag: ' + tagSel.options[tagSel.selectedIndex].text);
-        const grpSel = document.getElementById('group');
-        if (grpSel.value) filters.push('Group: ' + grpSel.options[grpSel.selectedIndex].text);
-        const segSel = document.getElementById('segment');
-        if (segSel.value) filters.push('Segment: ' + segSel.options[segSel.selectedIndex].text);
+        const catLabels = getSelectedLabels(window.catChoices);
+        if (catLabels.length) filters.push('Category: ' + catLabels.join(', '));
+        const tagLabels = getSelectedLabels(window.tagChoices);
+        if (tagLabels.length) filters.push('Tag: ' + tagLabels.join(', '));
+        const grpLabels = getSelectedLabels(window.groupChoices);
+        if (grpLabels.length) filters.push('Group: ' + grpLabels.join(', '));
+        const segLabels = getSelectedLabels(window.segmentChoices);
+        if (segLabels.length) filters.push('Segment: ' + segLabels.join(', '));
         const textVal = document.getElementById('text').value.trim();
         if (textVal) filters.push('Text contains: ' + textVal);
         const startVal = document.getElementById('start').value;

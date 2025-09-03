@@ -174,8 +174,13 @@ $filtered = Transaction::filter($catId);
 assertEqual(1, count($filtered), 'Transaction::filter returns one result for category');
 assertEqual('Grocery run', $filtered[0]['description'] ?? null, 'Filtered transaction matches description');
 
+$catId2 = Category::create('Bills', 'Utilities');
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id) VALUES (1, '2024-07-02', -30, 'Electric', $catId2)");
+$multi = Transaction::filter([$catId, $catId2]);
+assertEqual(2, count($multi), 'Transaction::filter supports multiple categories');
+
 $totals = Segment::totals();
-assertEqual(-20.0, (float)$totals[0]['total'], 'Segment totals reflect transaction amount');
+assertEqual(-50.0, (float)$totals[0]['total'], 'Segment totals reflect transaction amount');
 
 Segment::delete($segId);
 $segCount = $db->query('SELECT COUNT(*) FROM segments')->fetchColumn();
