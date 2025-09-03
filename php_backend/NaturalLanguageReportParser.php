@@ -71,7 +71,7 @@ class NaturalLanguageReportParser {
                 ['role' => 'user', 'content' => $prompt],
             ],
             'temperature' => 0,
-            'response_format' => ['type' => 'json_object'],
+            'text' => ['format' => 'json_object'],
         ];
 
         $ch = curl_init('https://api.openai.com/v1/responses');
