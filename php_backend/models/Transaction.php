@@ -1089,6 +1089,15 @@ class Transaction {
     }
 
     /**
+     * Return the total number of untagged transactions.
+     */
+    public static function getUntaggedTotal(): int {
+        $db = Database::getConnection();
+        $stmt = $db->query('SELECT COUNT(*) FROM `transactions` WHERE `tag_id` IS NULL');
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
      * Analyse the last 12 months to find regularly occurring spend items.
      * Transactions marked as transfers are ignored.
      *

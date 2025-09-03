@@ -241,10 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
         // Display counter for untagged transactions in menu
-        fetch('../php_backend/public/untagged_transactions.php')
+        fetch('../php_backend/public/untagged_count.php')
           .then(r => r.json())
-          .then(rows => {
-            const total = rows.reduce((sum, row) => sum + Number(row.count || 0), 0);
+          .then(data => {
+            const total = Number(data.count || 0);
             if (total > 10) {
               const counter = menu.querySelector('#missing-tags-count');
               if (counter) {
