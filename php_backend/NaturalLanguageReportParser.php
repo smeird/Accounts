@@ -4,7 +4,6 @@ require_once __DIR__ . '/Database.php';
 
 require_once __DIR__ . '/models/Setting.php';
 
-
 class NaturalLanguageReportParser {
     /**
      * Convert a free-text query into filters for Transaction::filter().
