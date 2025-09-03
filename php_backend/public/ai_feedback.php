@@ -50,7 +50,7 @@ try {
     $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $prompt = "Provide an overall summary and financial analysis based on these segment and category totals for the last 12 months. "
-        . "Respond with a detailed paragraph and do not ask any questions.\n\nSegments:\n";
+        . "Respond with a detailed paragraph and do not ask any questions. Return JSON {\"feedback\":\"analysis\"}.\n\nSegments:\n";
     foreach ($segments as $s) {
         $prompt .= $s['name'] . ': £' . number_format((float)$s['total'], 2) . "\n";
     }
@@ -61,21 +61,22 @@ try {
 
     $payload = [
         'model' => 'gpt-5-mini',
-        'messages' => [
+        'input' => [
             ['role' => 'system', 'content' => 'You are a financial analyst that writes long, clear summaries without asking questions.'],
             ['role' => 'user', 'content' => $prompt]
         ],
         'temperature' => 1,
+        'text' => ['format' => 'json_object'],
     ];
 
-    $ch = curl_init('https://api.openai.com/v1/chat/completions');
+    $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
-            'Authorization: Bearer ' . $apiKey
+            'Authorization: Bearer ' . $apiKey,
         ],
         CURLOPT_POSTFIELDS => json_encode($payload),
-        CURLOPT_RETURNTRANSFER => true
+        CURLOPT_RETURNTRANSFER => true,
     ]);
     $response = curl_exec($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -86,8 +87,23 @@ try {
         exit;
     }
     $data = json_decode($response, true);
-    $content = trim($data['choices'][0]['message']['content'] ?? '');
+    $content = $data['output'][0]['content'][0]['text'] ?? '';
     $usage = $data['usage']['total_tokens'] ?? 0;
+
+    $content = trim($content);
+    if (substr($content, 0, 3) === '```') {
+        $content = preg_replace('/^```(?:json)?\\s*/i', '', $content);
+        $content = preg_replace('/```\\s*$/', '', $content);
+        $content = trim($content);
+    }
+    $parsed = json_decode($content, true);
+    if (!is_array($parsed) || !isset($parsed['feedback'])) {
+        http_response_code(500);
+        Log::write('AI feedback invalid response: ' . $content, 'ERROR');
+        echo json_encode(['error' => 'Invalid AI response']);
+        exit;
+    }
+    $content = trim($parsed['feedback']);
 
     Log::write("AI feedback generated using $usage tokens");
     echo json_encode(['feedback' => $content, 'tokens' => $usage]);
