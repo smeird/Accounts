@@ -262,21 +262,33 @@
     });
 
     document.getElementById('download-pdf').addEventListener('click', async function() {
-        await runReport();
-        const gridEl = document.getElementById('results-grid');
-        const canvas = await html2canvas(gridEl);
-        const imgData = canvas.toDataURL('image/png');
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const pdfWidth = doc.internal.pageSize.getWidth();
-        const pdfHeight = canvas.height * pdfWidth / canvas.width;
-        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        const blob = doc.output('blob');
-        doc.save('report.pdf');
 
-        const formData = new FormData();
-        formData.append('report', blob, 'report.pdf');
-        fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
+        const gridEl = document.getElementById('results-grid');
+        // Refresh the report only if no table has been rendered yet
+        if (!gridEl.querySelector('.tabulator-table') && !gridEl.textContent.trim()) {
+            await runReport();
+        }
+
+        const tableEl = gridEl.querySelector('.tabulator-table') || gridEl;
+
+        try {
+            const canvas = await html2canvas(tableEl, { backgroundColor: '#ffffff', useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pdfWidth = doc.internal.pageSize.getWidth();
+            const pdfHeight = canvas.height * pdfWidth / canvas.width;
+            doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            const blob = doc.output('blob');
+            doc.save('report.pdf');
+
+            const formData = new FormData();
+            formData.append('report', blob, 'report.pdf');
+            fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
+        } catch (err) {
+            console.error('PDF generation failed', err);
+        }
+
     });
 
     loadOptions();
