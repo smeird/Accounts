@@ -30,6 +30,7 @@
                 <div class="md:col-span-3 space-x-2">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Run Report</button>
                     <button type="button" id="save-report" class="bg-gray-600 text-white px-4 py-2 rounded">Save Report</button>
+                    <button type="button" id="download-pdf" class="bg-green-600 text-white px-4 py-2 rounded" aria-label="Download report as PDF"><i class="fas fa-file-download inline w-4 h-4 mr-1"></i>Download PDF</button>
                 </div>
             </form>
             <div class="mt-4 flex items-center space-x-2">
@@ -46,6 +47,9 @@
     <script src="js/color_map.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js"></script>
     <script>
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
@@ -167,15 +171,16 @@
         if (text) params.append('text', text);
         if (start) params.append('start', start);
         if (end) params.append('end', end);
-        fetch('../php_backend/public/report.php?' + params.toString())
+        return fetch('../php_backend/public/report.php?' + params.toString())
             .then(resp => resp.json())
             .then(data => {
                 const gridEl = document.getElementById('results-grid');
                 const chartContainer = document.getElementById('chart');
                 gridEl.innerHTML = '';
                 chartContainer.innerHTML = '';
+                window.reportTable = null;
                 if (Array.isArray(data) && data.length) {
-                    tailwindTabulator(gridEl, {
+                    window.reportTable = tailwindTabulator(gridEl, {
                         data: data,
                         layout: 'fitDataStretch',
                         columns: [
@@ -255,6 +260,75 @@
         localStorage.setItem('reports', JSON.stringify(saved));
         loadSavedReports();
         select.value = '';
+    });
+
+    document.getElementById('download-pdf').addEventListener('click', async function() {
+        if (!window.reportTable) {
+            await runReport();
+            if (!window.reportTable) return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        // Header
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 0, pageWidth, 20, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.text('Accounts - Transaction Report', 14, 12);
+
+        // Description
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(11);
+        let y = 26;
+        doc.text('This report summarises transactions matching your selected filters.', 14, y);
+        y += 6;
+
+        const filters = [];
+        const catSel = document.getElementById('category');
+        if (catSel.value) filters.push('Category: ' + catSel.options[catSel.selectedIndex].text);
+        const tagSel = document.getElementById('tag');
+        if (tagSel.value) filters.push('Tag: ' + tagSel.options[tagSel.selectedIndex].text);
+        const grpSel = document.getElementById('group');
+        if (grpSel.value) filters.push('Group: ' + grpSel.options[grpSel.selectedIndex].text);
+        const segSel = document.getElementById('segment');
+        if (segSel.value) filters.push('Segment: ' + segSel.options[segSel.selectedIndex].text);
+        const textVal = document.getElementById('text').value.trim();
+        if (textVal) filters.push('Text contains: ' + textVal);
+        const startVal = document.getElementById('start').value;
+        if (startVal) filters.push('Start: ' + startVal);
+        const endVal = document.getElementById('end').value;
+        if (endVal) filters.push('End: ' + endVal);
+        if (filters.length) {
+            doc.text('Filters: ' + filters.join(', '), 14, y);
+            y += 6;
+        }
+        doc.text('Generated on ' + new Date().toLocaleString(), 14, y);
+        y += 8;
+
+        // Table
+        const columns = window.reportTable.getColumns().map(col => ({
+            header: col.getDefinition().title,
+            dataKey: col.getField()
+        }));
+        const data = window.reportTable.getData();
+        doc.autoTable({
+            startY: y,
+            head: [columns.map(c => c.header)],
+            body: data.map(row => columns.map(c => row[c.dataKey])),
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            alternateRowStyles: { fillColor: [243, 244, 246] }
+        });
+
+        const blob = doc.output('blob');
+        doc.save('report.pdf');
+
+        const formData = new FormData();
+        formData.append('report', blob, 'report.pdf');
+        fetch('../php_backend/public/send_pdf.php', { method: 'POST', body: formData });
     });
 
     loadOptions();
