@@ -40,5 +40,23 @@ class NaturalLanguageReportParserTest extends TestCase
         sort($filters['tag']);
         $this->assertSame([1,2], $filters['tag']);
     }
+
+    public function testCategoryNameWithLeadingSymbol(): void
+    {
+        $db = Database::getConnection();
+        $db->exec("INSERT INTO categories (name) VALUES ('#groceries')");
+        $filters = NaturalLanguageReportParser::parse('#groceries');
+        $this->assertSame(2, $filters['category']);
+    }
+
+    public function testTagNamesWithNonWordCharacters(): void
+    {
+        $db = Database::getConnection();
+        $db->exec("INSERT INTO tags (name, keyword, description) VALUES ('#fun', '', ''), ('bills!', '', '')");
+        $filters = NaturalLanguageReportParser::parse('#fun bills!');
+        $this->assertIsArray($filters['tag']);
+        sort($filters['tag']);
+        $this->assertSame([1,2], $filters['tag']);
+    }
 }
 ?>
