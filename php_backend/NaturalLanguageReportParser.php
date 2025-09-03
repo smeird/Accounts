@@ -48,8 +48,9 @@ class NaturalLanguageReportParser {
             $names[$table] = $list;
         }
 
-        $prompt = "Convert the following query into JSON {\"category\",\"tag\",\"segment\",\"group\",\"start\",\"end\",\"text\"}. " .
+        $prompt = "Convert the following query into JSON {\"category\",\"tag\",\"segment\",\"group\",\"start\",\"end\",\"text\",\"summary\"}. " .
             "Return tag as an array of tag names (use an empty array when none). " .
+            "The summary should be a short natural language description of the filters. " .
             "Use ISO dates and only the names listed.\n\n" .
             "Categories:\n- " . implode("\n- ", $names['categories']) . "\n\n" .
             "Tags:\n- " . implode("\n- ", $names['tags']) . "\n\n" .
@@ -103,6 +104,7 @@ class NaturalLanguageReportParser {
             'start' => $parsed['start'] ?? null,
             'end' => $parsed['end'] ?? null,
             'text' => $parsed['text'] ?? null,
+            'summary' => $parsed['summary'] ?? null,
         ];
 
         // Map single-name fields
@@ -135,6 +137,10 @@ class NaturalLanguageReportParser {
             $filters['tag'] = null;
         }
 
+        if (empty($filters['summary'])) {
+            $filters['summary'] = self::makeSummary($filters);
+        }
+
         return $filters;
     }
 
@@ -151,6 +157,7 @@ class NaturalLanguageReportParser {
             'start' => null,
             'end' => null,
             'text' => null,
+            'summary' => null,
         ];
 
         $q = strtolower($query);
@@ -176,6 +183,8 @@ class NaturalLanguageReportParser {
             $filters['start'] = date('Y-m-d', strtotime('-1 month'));
             $filters['end'] = date('Y-m-d');
         }
+
+        $filters['summary'] = self::makeSummary($filters);
 
         return $filters;
     }
@@ -209,6 +218,62 @@ class NaturalLanguageReportParser {
             }
         }
         return $ids;
+    }
+
+    /**
+     * Build a simple natural language summary of the applied filters.
+     */
+    private static function makeSummary(array $filters): string {
+        $db = Database::getConnection();
+        $parts = [];
+        if ($filters['category']) {
+            $stmt = $db->prepare('SELECT name FROM categories WHERE id = ?');
+            $stmt->execute([$filters['category']]);
+            if ($name = $stmt->fetchColumn()) {
+                $parts[] = 'category ' . $name;
+            }
+        }
+        if (is_array($filters['tag']) && $filters['tag']) {
+            $in = implode(',', array_fill(0, count($filters['tag']), '?'));
+            $stmt = $db->prepare("SELECT name FROM tags WHERE id IN ($in)");
+            $stmt->execute($filters['tag']);
+            $names = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            if ($names) {
+                $parts[] = 'tags ' . implode(', ', $names);
+            }
+        }
+        if ($filters['group']) {
+            $stmt = $db->prepare('SELECT name FROM transaction_groups WHERE id = ?');
+            $stmt->execute([$filters['group']]);
+            if ($name = $stmt->fetchColumn()) {
+                $parts[] = 'group ' . $name;
+            }
+        }
+        if ($filters['segment']) {
+            $stmt = $db->prepare('SELECT name FROM segments WHERE id = ?');
+            $stmt->execute([$filters['segment']]);
+            if ($name = $stmt->fetchColumn()) {
+                $parts[] = 'segment ' . $name;
+            }
+        }
+        if (!empty($filters['text'])) {
+            $parts[] = 'description contains "' . $filters['text'] . '"';
+        }
+        if ($filters['start'] || $filters['end']) {
+            $start = $filters['start'];
+            $end = $filters['end'];
+            if ($start && $end) {
+                $parts[] = "from $start to $end";
+            } elseif ($start) {
+                $parts[] = "from $start onwards";
+            } elseif ($end) {
+                $parts[] = "up to $end";
+            }
+        }
+        if (empty($parts)) {
+            return 'No specific filters applied.';
+        }
+        return 'Report filtered by ' . implode(', ', $parts) . '.';
     }
 }
 ?>
