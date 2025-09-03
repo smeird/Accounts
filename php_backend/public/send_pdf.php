@@ -23,7 +23,10 @@ try {
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0777, true);
     }
-    $filename = 'report_' . date('Ymd_His') . '.pdf';
+
+    $uploadedName = isset($file['name']) ? basename($file['name']) : '';
+    $sanitized = preg_replace('/[^A-Za-z0-9_.-]/', '_', $uploadedName);
+    $filename = $sanitized ?: 'report_' . date('Ymd_His') . '.pdf';
     $path = $uploadDir . '/' . $filename;
     move_uploaded_file($file['tmp_name'], $path);
 
