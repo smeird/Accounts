@@ -47,7 +47,9 @@ sequenceDiagram
  
 ## Natural-language Reports
 
-The reporting page now accepts plain English queries. Enter phrases such as "costs for cars in the last 12 months" in the Ask in plain English field on `frontend/report.html`. The backend parser translates the query into category, tag, segment and date filters and returns results using the existing report API. Leaving the field empty uses the manual selectors instead.
+
+The reporting page now accepts plain English queries. Enter phrases such as "costs for cars in the last 12 months" in the Ask in plain English field on `frontend/report.html`. When an OpenAI API token is configured the backend sends the query to the AI service which returns category, tag, segment and date filters. Without a token a simple rule-based parser is used. Leaving the field empty falls back to the manual selectors.
+
 
 ## Quick Deployment
 
