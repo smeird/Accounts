@@ -187,6 +187,7 @@
     }
 
     // Execute the report query and render results and chart
+
     async function runReport() {
         const nl = document.getElementById('nl-query').value.trim();
         if (nl) {
@@ -238,6 +239,7 @@
                     { title: 'Segment', field: 'segment_name', formatter: badgeFormatter('bg-yellow-200 text-yellow-800') },
                     { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: function(values) { var total = 0; values.forEach(function(value) { total += parseFloat(value) || 0; }); return total; }, bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
                 ]
+
             });
             const grouped = groupTransactions(data);
             const cats = grouped.grouped.map(g => g.label);

@@ -19,6 +19,7 @@ class NaturalLanguageReportParserTest extends TestCase
         $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
         $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, active INTEGER);');
         $db->exec('CREATE TABLE settings (name TEXT PRIMARY KEY, value TEXT);');
+
         $db->exec('INSERT INTO categories (name) VALUES ("cars");');
     }
 

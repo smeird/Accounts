@@ -1,11 +1,13 @@
 <?php
 // Parses plain-English report requests into Transaction::filter parameters.
 require_once __DIR__ . '/Database.php';
+
 require_once __DIR__ . '/models/Setting.php';
 
 class NaturalLanguageReportParser {
     /**
      * Convert a free-text query into filters for Transaction::filter().
+
      * Tries the AI integration when an API token is configured and falls
      * back to a simple rule-based parser otherwise.
      */
@@ -124,6 +126,7 @@ class NaturalLanguageReportParser {
      * Simple regex-based fallback parser used when AI is unavailable.
      */
     private static function parseFallback(string $query): array {
+
         $filters = [
             'category' => null,
             'tag' => null,
@@ -139,6 +142,7 @@ class NaturalLanguageReportParser {
         $filters['tag'] = self::matchName($q, 'tags');
         $filters['group'] = self::matchName($q, 'transaction_groups');
         $filters['segment'] = self::matchName($q, 'segments');
+
 
         if (preg_match('/last\s+(\d+)\s+months?/', $q, $m)) {
             $months = (int)$m[1];
