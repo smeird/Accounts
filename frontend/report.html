@@ -262,6 +262,7 @@
     });
 
     document.getElementById('download-pdf').addEventListener('click', async function() {
+
         const gridEl = document.getElementById('results-grid');
         // Refresh the report only if no table has been rendered yet
         if (!gridEl.querySelector('.tabulator-table') && !gridEl.textContent.trim()) {
@@ -287,6 +288,7 @@
         } catch (err) {
             console.error('PDF generation failed', err);
         }
+
     });
 
     loadOptions();
