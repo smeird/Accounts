@@ -139,6 +139,10 @@
             opt.textContent = t.name;
             tagSelect.appendChild(opt);
         });
+        if (window.tagChoices) {
+            window.tagChoices.destroy();
+        }
+        window.tagChoices = new Choices(tagSelect, { searchEnabled: true, shouldSort: false, itemSelectText: '' });
         groupSelect.innerHTML = '<option value="">All</option>';
         groups.filter(g => g.active).forEach(g => {
             const opt = document.createElement('option');
@@ -266,6 +270,7 @@
         const idx = this.value;
         if (idx === '') return;
         const r = saved[idx];
+
         const catVals = Array.isArray(r.category) ? r.category : (r.category ? [r.category] : []);
         const tagVals = Array.isArray(r.tag) ? r.tag : (r.tag ? [r.tag] : []);
         const grpVals = Array.isArray(r.group) ? r.group : (r.group ? [r.group] : []);
@@ -274,6 +279,7 @@
         if (window.tagChoices) { window.tagChoices.setChoiceByValue(tagVals); } else { document.getElementById('tag').value = tagVals[0] || ''; }
         if (window.groupChoices) { window.groupChoices.setChoiceByValue(grpVals); } else { document.getElementById('group').value = grpVals[0] || ''; }
         if (window.segmentChoices) { window.segmentChoices.setChoiceByValue(segVals); } else { document.getElementById('segment').value = segVals[0] || ''; }
+
         document.getElementById('text').value = r.text || '';
         document.getElementById('start').value = r.start || '';
         document.getElementById('end').value = r.end || '';
