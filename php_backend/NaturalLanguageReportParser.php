@@ -187,7 +187,8 @@ class NaturalLanguageReportParser {
         $db = Database::getConnection();
         $stmt = $db->query("SELECT id, name FROM $table");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            if (stripos($query, strtolower($row['name'])) !== false) {
+            $pattern = '/\\b' . preg_quote($row['name'], '/') . '\\b/i';
+            if (preg_match($pattern, $query)) {
                 return (int)$row['id'];
             }
         }
@@ -202,7 +203,8 @@ class NaturalLanguageReportParser {
         $stmt = $db->query("SELECT id, name FROM $table");
         $ids = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            if (stripos($query, strtolower($row['name'])) !== false) {
+            $pattern = '/\\b' . preg_quote($row['name'], '/') . '\\b/i';
+            if (preg_match($pattern, $query)) {
                 $ids[] = (int)$row['id'];
             }
         }
