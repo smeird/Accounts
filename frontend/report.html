@@ -193,6 +193,7 @@
         const nl = document.getElementById('nl-query').value.trim();
         const aiStatus = document.getElementById('ai-status');
         if (nl) {
+
             aiStatus.textContent = 'Submitting query to AI...';
             aiStatus.classList.remove('hidden');
             try {
@@ -213,6 +214,7 @@
             } catch (e) {
                 aiStatus.textContent = 'AI request failed';
             }
+
             document.getElementById('nl-query').value = '';
         } else {
             aiStatus.classList.add('hidden');
