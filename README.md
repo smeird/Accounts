@@ -39,11 +39,15 @@ sequenceDiagram
 - Analyse recurring expenses and break down spending by segments and categories.
 - Secure access with two-factor authentication.
 - Search and report on transactions in detail.
+- Generate reports using natural-language queries.
 - Back up and restore your data and export it to OFX, CSV, or XLSX.
 - Manage user accounts, processes, and logs.
 
 - Share links to the site with rich previews via Open Graph metadata.
+ 
+## Natural-language Reports
 
+The reporting page now accepts plain English queries. Enter phrases such as "costs for cars in the last 12 months" in the Ask in plain English field on `frontend/report.html`. The backend parser translates the query into category, tag, segment and date filters and returns results using the existing report API. Leaving the field empty uses the manual selectors instead.
 
 ## Quick Deployment
 

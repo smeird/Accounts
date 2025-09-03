@@ -6,6 +6,7 @@ require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
 require_once __DIR__ . '/../php_backend/models/TransactionGroup.php';
 require_once __DIR__ . '/../php_backend/OfxParser.php';
+require_once __DIR__ . '/../php_backend/NaturalLanguageReportParser.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -246,6 +247,15 @@ $previewJson = ob_get_clean();
 $previewData = json_decode($previewJson, true);
 assertEqual('OG Sample Title', $previewData['title'] ?? null, 'Link preview returns og:title');
 assertEqual('OG Sample Description', $previewData['description'] ?? null, 'Link preview returns og:description');
+
+
+// --- Natural language report parser ---
+$db->exec('DELETE FROM categories');
+$db->exec("INSERT INTO categories (name) VALUES ('cars')");
+$carId = (int)$db->lastInsertId();
+$parsed = NaturalLanguageReportParser::parse('costs for cars in the last 12 months');
+assertEqual($carId, $parsed['category'], 'Natural language parser finds category');
+assertEqual(date('Y-m-d', strtotime('-12 months')), $parsed['start'], 'Natural language parser sets start date');
 
 
 // Output results and set exit code
