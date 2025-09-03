@@ -15,10 +15,14 @@ class NaturalLanguageReportParser {
     public static function parse(string $query): array {
         $token = Setting::get('openai_api_token');
         if ($token) {
+            Log::write('NL report token present, attempting AI parse');
             $ai = self::parseWithAI($query, $token);
             if ($ai !== null) {
                 return $ai;
             }
+            Log::write('NL report AI parse failed; using fallback');
+        } else {
+            Log::write('NL report no API token; using fallback');
         }
         return self::parseFallback($query);
     }
@@ -80,12 +84,23 @@ class NaturalLanguageReportParser {
             CURLOPT_RETURNTRANSFER => true,
         ]);
         $response = curl_exec($ch);
+        if ($response === false) {
+            Log::write('NL report AI HTTP error: ' . curl_error($ch), 'ERROR');
+            return null;
+        }
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($response === false || $code !== 200) {
+        Log::write('NL report AI HTTP status: ' . $code);
+        if ($code !== 200) {
+            Log::write('NL report AI bad response: ' . $response, 'ERROR');
             return null;
         }
         $data = json_decode($response, true);
+        if ($data === null) {
+            Log::write('NL report AI JSON decode failed: ' . $response, 'ERROR');
+            return null;
+        }
         $content = $data['output'][0]['content'][0]['text'] ?? '';
+        Log::write('NL report AI raw content: ' . $content);
 
         $content = trim($content);
         if (substr($content, 0, 3) === '```') {
@@ -96,6 +111,7 @@ class NaturalLanguageReportParser {
 
         $parsed = json_decode($content, true);
         if (!is_array($parsed)) {
+            Log::write('NL report AI content decode failed: ' . $content, 'ERROR');
             return null;
         }
 
@@ -121,6 +137,8 @@ class NaturalLanguageReportParser {
                 $id = $tables[$table][strtolower($name)] ?? null;
                 if ($id !== null) {
                     $filters[$field] = $id;
+                } else {
+                    Log::write("NL report AI unknown $field: $name", 'ERROR');
                 }
             }
         }
@@ -134,6 +152,8 @@ class NaturalLanguageReportParser {
             $id = $tables['tags'][strtolower($name)] ?? null;
             if ($id !== null) {
                 $filters['tag'][] = $id;
+            } else {
+                Log::write('NL report AI unknown tag: ' . $name, 'ERROR');
             }
         }
         if (empty($filters['tag'])) {
@@ -144,6 +164,8 @@ class NaturalLanguageReportParser {
             $filters['summary'] = self::makeSummary($filters);
         }
 
+        Log::write('NL report AI filters: ' . json_encode($filters));
+
         return $filters;
     }
 
@@ -151,6 +173,8 @@ class NaturalLanguageReportParser {
      * Simple regex-based fallback parser used when AI is unavailable.
      */
     private static function parseFallback(string $query): array {
+
+        Log::write('NL report fallback parser used for query: ' . $query);
 
         $filters = [
             'category' => null,
@@ -188,6 +212,8 @@ class NaturalLanguageReportParser {
         }
 
         $filters['summary'] = self::makeSummary($filters);
+
+        Log::write('NL report fallback filters: ' . json_encode($filters));
 
         return $filters;
     }
