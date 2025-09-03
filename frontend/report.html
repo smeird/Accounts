@@ -315,14 +315,54 @@
             dataKey: col.getField()
         }));
         const data = window.reportTable.getData();
+
+        // Calculate totals for the main table
+        const totalAmount = data.reduce((sum, row) => sum + parseFloat(row.amount || 0), 0);
+        const body = data.map(row => columns.map(c => row[c.dataKey]));
+        const foot = [columns.map(c => {
+            if (c.dataKey === 'description') return 'Total';
+            if (c.dataKey === 'amount') return '£' + totalAmount.toFixed(2);
+            return '';
+        })];
+
         doc.autoTable({
             startY: y,
             head: [columns.map(c => c.header)],
-            body: data.map(row => columns.map(c => row[c.dataKey])),
+            body,
+            foot,
             theme: 'grid',
             headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            footStyles: { fillColor: [226, 232, 240], textColor: 0, fontStyle: 'bold' },
             alternateRowStyles: { fillColor: [243, 244, 246] }
         });
+
+        // Summary table (totals by category, tag, group, and segment)
+        const summary = [];
+        function addSummary(field, label) {
+            const totals = {};
+            data.forEach(row => {
+                const key = row[field] || 'Unspecified';
+                totals[key] = (totals[key] || 0) + parseFloat(row.amount || 0);
+            });
+            Object.keys(totals).forEach(name => {
+                summary.push({ type: label, name, total: totals[name] });
+            });
+        }
+        addSummary('category_name', 'Category');
+        addSummary('tag_name', 'Tag');
+        addSummary('group_name', 'Group');
+        addSummary('segment_name', 'Segment');
+
+        if (summary.length) {
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 10,
+                head: [['Type', 'Name', 'Total']],
+                body: summary.map(r => [r.type, r.name, '£' + r.total.toFixed(2)]),
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+                alternateRowStyles: { fillColor: [243, 244, 246] }
+            });
+        }
 
         const blob = doc.output('blob');
 
