@@ -202,7 +202,7 @@ class Transaction {
     /**
      * Filter transactions by optional category, tag, group, segment, text and date range.
      */
-    public static function filter(?int $category = null, ?int $tag = null, ?int $group = null, ?int $segment = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
+    public static function filter($category = null, $tag = null, $group = null, $segment = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
         if ($category === null && $tag === null && $group === null && $segment === null && $text === null && $start === null && $end === null) {
             return [];
         }
@@ -220,22 +220,24 @@ class Transaction {
              . ' AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
 
         $params = [];
-        if ($category !== null) {
-            $sql .= ' AND t.`category_id` = :category';
-            $params['category'] = $category;
-        }
-        if ($tag !== null) {
-            $sql .= ' AND t.`tag_id` = :tag';
-            $params['tag'] = $tag;
-        }
-        if ($group !== null) {
-            $sql .= ' AND t.`group_id` = :grp';
-            $params['grp'] = $group;
-        }
-        if ($segment !== null) {
-            $sql .= ' AND t.`segment_id` = :segment';
-            $params['segment'] = $segment;
-        }
+        $addIn = function($values, $column, $prefix) use (&$sql, &$params) {
+            if (is_array($values) && !empty($values)) {
+                $ph = [];
+                foreach ($values as $i => $val) {
+                    $key = $prefix . $i;
+                    $ph[] = ':' . $key;
+                    $params[$key] = $val;
+                }
+                $sql .= ' AND t.`' . $column . '` IN (' . implode(',', $ph) . ')';
+            } elseif ($values !== null) {
+                $sql .= ' AND t.`' . $column . '` = :' . $prefix;
+                $params[$prefix] = $values;
+            }
+        };
+        $addIn($category, 'category_id', 'category');
+        $addIn($tag, 'tag_id', 'tag');
+        $addIn($group, 'group_id', 'grp');
+        $addIn($segment, 'segment_id', 'segment');
         if ($text !== null && $text !== '') {
             $sql .= ' AND (t.`description` LIKE :txt OR t.`memo` LIKE :txt)';
             $params['txt'] = '%' . $text . '%';
