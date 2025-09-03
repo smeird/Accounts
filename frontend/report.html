@@ -24,6 +24,7 @@
                 <label class="block md:col-span-3">Ask in plain English:
                     <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
                 </label>
+                <div id="ai-status" class="md:col-span-3 text-sm text-gray-600 hidden" aria-live="polite"></div>
                 <label class="block">Category: <select id="category" multiple class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
                 <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
                 <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
@@ -190,17 +191,31 @@
 
     async function runReport() {
         const nl = document.getElementById('nl-query').value.trim();
+        const aiStatus = document.getElementById('ai-status');
         if (nl) {
-            const resp = await fetch('../php_backend/public/nl_report.php?' + new URLSearchParams({ q: nl }).toString());
-            const filters = await resp.json();
-            if (filters.category) window.catChoices.setChoiceByValue(String(filters.category));
-            if (filters.tag) window.tagChoices.setChoiceByValue(String(filters.tag));
-            if (filters.group) window.groupChoices.setChoiceByValue(String(filters.group));
-            if (filters.segment) window.segmentChoices.setChoiceByValue(String(filters.segment));
-            document.getElementById('text').value = filters.text || '';
-            document.getElementById('start').value = filters.start || '';
-            document.getElementById('end').value = filters.end || '';
+            aiStatus.textContent = 'Submitting query to AI...';
+            aiStatus.classList.remove('hidden');
+            try {
+                const resp = await fetch('../php_backend/public/nl_report.php?' + new URLSearchParams({ q: nl }).toString());
+                const filters = await resp.json();
+                if (filters.category) window.catChoices.setChoiceByValue(String(filters.category));
+                if (filters.tag) {
+                    window.tagChoices.removeActiveItems();
+                    const t = Array.isArray(filters.tag) ? filters.tag : [filters.tag];
+                    t.forEach(id => window.tagChoices.setChoiceByValue(String(id)));
+                }
+                if (filters.group) window.groupChoices.setChoiceByValue(String(filters.group));
+                if (filters.segment) window.segmentChoices.setChoiceByValue(String(filters.segment));
+                document.getElementById('text').value = filters.text || '';
+                document.getElementById('start').value = filters.start || '';
+                document.getElementById('end').value = filters.end || '';
+                aiStatus.textContent = 'AI suggestions applied';
+            } catch (e) {
+                aiStatus.textContent = 'AI request failed';
+            }
             document.getElementById('nl-query').value = '';
+        } else {
+            aiStatus.classList.add('hidden');
         }
 
         const category = getSelectedValues(window.catChoices);

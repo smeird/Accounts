@@ -49,6 +49,7 @@ class NaturalLanguageReportParser {
         }
 
         $prompt = "Convert the following query into JSON {\"category\",\"tag\",\"segment\",\"group\",\"start\",\"end\",\"text\"}. " .
+            "Return tag as an array of tag names (use an empty array when none). " .
             "Use ISO dates and only the names listed.\n\n" .
             "Categories:\n- " . implode("\n- ", $names['categories']) . "\n\n" .
             "Tags:\n- " . implode("\n- ", $names['tags']) . "\n\n" .
@@ -96,7 +97,7 @@ class NaturalLanguageReportParser {
 
         $filters = [
             'category' => null,
-            'tag' => null,
+            'tag' => [],
             'group' => null,
             'segment' => null,
             'start' => $parsed['start'] ?? null,
@@ -104,9 +105,9 @@ class NaturalLanguageReportParser {
             'text' => $parsed['text'] ?? null,
         ];
 
+        // Map single-name fields
         foreach ([
             'category' => 'categories',
-            'tag' => 'tags',
             'group' => 'transaction_groups',
             'segment' => 'segments',
         ] as $field => $table) {
@@ -117,6 +118,21 @@ class NaturalLanguageReportParser {
                     $filters[$field] = $id;
                 }
             }
+        }
+
+        // Map tag array
+        $tagNames = $parsed['tag'] ?? [];
+        if (!is_array($tagNames)) {
+            $tagNames = [$tagNames];
+        }
+        foreach ($tagNames as $name) {
+            $id = $tables['tags'][strtolower($name)] ?? null;
+            if ($id !== null) {
+                $filters['tag'][] = $id;
+            }
+        }
+        if (empty($filters['tag'])) {
+            $filters['tag'] = null;
         }
 
         return $filters;
@@ -139,7 +155,8 @@ class NaturalLanguageReportParser {
 
         $q = strtolower($query);
         $filters['category'] = self::matchName($q, 'categories');
-        $filters['tag'] = self::matchName($q, 'tags');
+        $tags = self::matchNames($q, 'tags');
+        $filters['tag'] = $tags ? $tags : null;
         $filters['group'] = self::matchName($q, 'transaction_groups');
         $filters['segment'] = self::matchName($q, 'segments');
 
@@ -175,6 +192,21 @@ class NaturalLanguageReportParser {
             }
         }
         return null;
+    }
+
+    /**
+     * Find ids of all entities in a table whose name appears in the query.
+     */
+    private static function matchNames(string $query, string $table): array {
+        $db = Database::getConnection();
+        $stmt = $db->query("SELECT id, name FROM $table");
+        $ids = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (stripos($query, strtolower($row['name'])) !== false) {
+                $ids[] = (int)$row['id'];
+            }
+        }
+        return $ids;
     }
 }
 ?>

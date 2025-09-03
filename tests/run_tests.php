@@ -258,6 +258,13 @@ $parsed = NaturalLanguageReportParser::parse('costs for cars in the last 12 mont
 assertEqual($carId, $parsed['category'], 'Natural language parser finds category');
 assertEqual(date('Y-m-d', strtotime('-12 months')), $parsed['start'], 'Natural language parser sets start date');
 
+$db->exec('DELETE FROM tags');
+$db->exec('DELETE FROM sqlite_sequence WHERE name="tags"');
+$db->exec("INSERT INTO tags (name, keyword, description) VALUES ('car','', ''), ('auto','', '')");
+$parsedTags = NaturalLanguageReportParser::parse('car auto');
+sort($parsedTags['tag']);
+assertEqual([1,2], $parsedTags['tag'], 'Natural language parser finds multiple tags');
+
 
 // Output results and set exit code
 $failed = false;

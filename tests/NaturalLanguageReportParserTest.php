@@ -30,5 +30,15 @@ class NaturalLanguageReportParserTest extends TestCase
         $this->assertSame(date('Y-m-d', strtotime('-12 months')), $filters['start']);
         $this->assertSame(date('Y-m-d'), $filters['end']);
     }
+
+    public function testParseMultipleTags(): void
+    {
+        $db = Database::getConnection();
+        $db->exec("INSERT INTO tags (name, keyword, description) VALUES ('car', '', ''), ('auto', '', '')");
+        $filters = NaturalLanguageReportParser::parse('car auto');
+        $this->assertIsArray($filters['tag']);
+        sort($filters['tag']);
+        $this->assertSame([1,2], $filters['tag']);
+    }
 }
 ?>
