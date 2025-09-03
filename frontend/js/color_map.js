@@ -1,8 +1,20 @@
-const chartColors = Highcharts.getOptions().colors;
+const chartColors = [
+    '#4F46E5', // indigo-600
+    '#4338CA', // indigo-700
+    '#3730A3', // indigo-800
+    '#6366F1', // indigo-500
+    '#818CF8', // indigo-400
+    '#A5B4FC', // indigo-300
+    '#C7D2FE', // indigo-200
+    '#E0E7FF'  // indigo-100
+];
 const segmentColorMap = {};
 let nextSegmentIndex = 0;
 
 Highcharts.setOptions({
+    colors: chartColors,
+    chart: { style: { fontFamily: 'Inter, sans-serif' } },
+    credits: { enabled: false },
     legend: { enabled: true, itemStyle: { fontSize: '10px' } },
     plotOptions: {
         series: { showInLegend: true },

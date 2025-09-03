@@ -39,7 +39,7 @@
                 <button type="button" id="delete-report" class="bg-red-600 text-white px-3 py-2 rounded" aria-label="Delete saved report"><i class="fas fa-trash inline w-4 h-4"></i></button>
             </div>
             <div id="results-grid" class="mt-4"></div>
-            <div id="chart" class="mt-6" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
+            <div id="chart" class="mt-6 bg-white p-6 rounded shadow" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -227,13 +227,13 @@
                     const amounts = grouped.grouped.map(g => parseFloat(g.total));
                     const label = grouped.group.charAt(0).toUpperCase() + grouped.group.slice(1);
                     Highcharts.chart('chart', {
-                        colors: chartColors,
-                        chart: { type: 'column' },
+                        chart: { type: 'column', backgroundColor: 'transparent' },
                         title: { text: 'Transaction Amounts by ' + label },
                         xAxis: { categories: cats, title: { text: label } },
                         yAxis: { title: { text: 'Amount' } },
+                        legend: { enabled: false },
                         tooltip: { pointFormatter: columnTooltip },
-                        series: [{ name: 'Amount', data: amounts, colorByPoint: true }]
+                        series: [{ name: 'Amount', data: amounts, color: chartColors[0] }]
                     });
                 } else {
                     gridEl.innerHTML = 'No transactions found.';
