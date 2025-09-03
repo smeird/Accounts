@@ -43,11 +43,17 @@
             .then(data => {
                 tailwindTabulator(gridEl, {
                     data: data,
-                    layout: 'fitDataStretch',
+                    layout: 'fitColumns',
+                    variableHeight: true,
                     columns: [
                         { title: 'Time', field: 'created_at' },
                         { title: 'Level', field: 'level' },
-                        { title: 'Message', field: 'message' }
+                        { title: 'Message', field: 'message', formatter: function(cell) {
+                            const el = cell.getElement();
+                            el.style.whiteSpace = 'pre-wrap';
+                            el.style.wordBreak = 'break-word';
+                            return cell.getValue();
+                        } }
                     ]
                 });
             });
