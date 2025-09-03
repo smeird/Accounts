@@ -47,21 +47,22 @@ foreach ($txns as $t) {
 
 $payload = [
     'model' => 'gpt-5-nano',
-    'messages' => [
+    'input' => [
         ['role' => 'system', 'content' => 'You label bank transactions. Use JSON.'],
         ['role' => 'user', 'content' => $prompt]
     ],
     'temperature' => 1,
+    'text' => ['format' => 'json_object'],
 ];
 
-$ch = curl_init('https://api.openai.com/v1/chat/completions');
+$ch = curl_init('https://api.openai.com/v1/responses');
 curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER => [
         'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey
+        'Authorization: Bearer ' . $apiKey,
     ],
     CURLOPT_POSTFIELDS => json_encode($payload),
-    CURLOPT_RETURNTRANSFER => true
+    CURLOPT_RETURNTRANSFER => true,
 ]);
 $response = curl_exec($ch);
 $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -72,7 +73,7 @@ if ($response === false || $code !== 200) {
     exit;
 }
 $data = json_decode($response, true);
-$content = $data['choices'][0]['message']['content'] ?? '';
+$content = $data['output'][0]['content'][0]['text'] ?? '';
 $usage = $data['usage']['total_tokens'] ?? 0;
 
 
