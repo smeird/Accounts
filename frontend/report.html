@@ -21,6 +21,9 @@
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Transaction Reports</h1>
             <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
             <form id="report-form" class="bg-white p-4 rounded shadow grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label class="block md:col-span-3">Ask in plain English:
+                    <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
+                </label>
                 <label class="block">Category: <select id="category" multiple class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
                 <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
                 <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
@@ -185,22 +188,29 @@
 
     // Execute the report query and render results and chart
     function runReport() {
-        const category = getSelectedValues(window.catChoices);
-        const tag = getSelectedValues(window.tagChoices);
-        const group = getSelectedValues(window.groupChoices);
-        const segment = getSelectedValues(window.segmentChoices);
-        const text = document.getElementById('text').value;
-        const start = document.getElementById('start').value;
-        const end = document.getElementById('end').value;
-        const params = new URLSearchParams();
-        if (category.length) params.append('category', category.join(','));
-        if (tag.length) params.append('tag', tag.join(','));
-        if (group.length) params.append('group', group.join(','));
-        if (segment.length) params.append('segment', segment.join(','));
-        if (text) params.append('text', text);
-        if (start) params.append('start', start);
-        if (end) params.append('end', end);
-        return fetch('../php_backend/public/report.php?' + params.toString())
+        const nl = document.getElementById('nl-query').value.trim();
+        let fetchUrl;
+        if (nl) {
+            fetchUrl = '../php_backend/public/nl_report.php?' + new URLSearchParams({ q: nl }).toString();
+        } else {
+            const category = getSelectedValues(window.catChoices);
+            const tag = getSelectedValues(window.tagChoices);
+            const group = getSelectedValues(window.groupChoices);
+            const segment = getSelectedValues(window.segmentChoices);
+            const text = document.getElementById('text').value;
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const params = new URLSearchParams();
+            if (category.length) params.append('category', category.join(','));
+            if (tag.length) params.append('tag', tag.join(','));
+            if (group.length) params.append('group', group.join(','));
+            if (segment.length) params.append('segment', segment.join(','));
+            if (text) params.append('text', text);
+            if (start) params.append('start', start);
+            if (end) params.append('end', end);
+            fetchUrl = '../php_backend/public/report.php?' + params.toString();
+        }
+        return fetch(fetchUrl)
             .then(resp => resp.json())
             .then(data => {
                 const gridEl = document.getElementById('results-grid');
