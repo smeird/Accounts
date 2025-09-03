@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
@@ -47,6 +48,7 @@
     <script src="js/color_map.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js"></script>
@@ -124,6 +126,10 @@
             opt.textContent = t.name;
             tagSelect.appendChild(opt);
         });
+        if (window.tagChoices) {
+            window.tagChoices.destroy();
+        }
+        window.tagChoices = new Choices(tagSelect, { searchEnabled: true, shouldSort: false, itemSelectText: '' });
         groupSelect.innerHTML = '<option value="">All</option>';
         groups.filter(g => g.active).forEach(g => {
             const opt = document.createElement('option');
@@ -242,7 +248,11 @@
         if (idx === '') return;
         const r = saved[idx];
         document.getElementById('category').value = r.category || '';
-        document.getElementById('tag').value = r.tag || '';
+        if (window.tagChoices) {
+            window.tagChoices.setChoiceByValue(r.tag || '');
+        } else {
+            document.getElementById('tag').value = r.tag || '';
+        }
         document.getElementById('group').value = r.group || '';
         document.getElementById('segment').value = r.segment || '';
         document.getElementById('text').value = r.text || '';
