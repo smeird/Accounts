@@ -63,11 +63,11 @@ try {
         'model' => 'gpt-5-mini',
         'input' => [
             ['role' => 'system', 'content' => 'You are a financial analyst that writes long, clear summaries without asking questions.'],
-            ['role' => 'user', 'content' => $prompt]
-        ],
-        'temperature' => 1,
-        'text' => ['format' => 'json_object'],
-    ];
+        ['role' => 'user', 'content' => $prompt]
+    ],
+    'temperature' => 1,
+    'response_format' => ['type' => 'json_object'],
+];
 
     $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [

@@ -91,11 +91,11 @@ try {
         'model' => 'gpt-5-nano',
         'input' => [
             ['role' => 'system', 'content' => 'You create budgets and explanations in JSON.'],
-            ['role' => 'user', 'content' => $prompt]
-        ],
-        'temperature' => 1,
-        'text' => ['format' => 'json_object'],
-    ];
+        ['role' => 'user', 'content' => $prompt]
+    ],
+    'temperature' => 1,
+    'response_format' => ['type' => 'json_object'],
+];
 
     $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [
