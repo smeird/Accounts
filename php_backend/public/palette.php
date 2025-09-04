@@ -13,8 +13,22 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 try {
     switch ($method) {
         case 'GET':
+            $seed = Setting::get('palette_seed');
+            if (!$seed) {
+                $brand = Setting::getBrand();
+                $colorMap = [
+                    'indigo' => '#4f46e5',
+                    'blue'   => '#2563eb',
+                    'green'  => '#059669',
+                    'red'    => '#dc2626',
+                    'purple' => '#9333ea',
+                    'teal'   => '#0d9488',
+                    'orange' => '#ea580c',
+                ];
+                $seed = $colorMap[$brand['color_scheme']] ?? '#4f46e5';
+            }
             echo json_encode([
-                'seed' => Setting::get('palette_seed'),
+                'seed' => $seed,
                 'segments' => Segment::allWithCategories()
             ]);
             break;

@@ -93,6 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($colorScheme !== '') {
         Setting::set('color_scheme', $colorScheme);
         Log::write('Updated color scheme');
+        if (isset($colorMap[$colorScheme])) {
+            Setting::set('palette_seed', $colorMap[$colorScheme]);
+            Log::write('Updated palette seed to match color scheme');
+        }
     }
     $message = 'Settings updated.';
 }
