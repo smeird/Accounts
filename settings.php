@@ -39,6 +39,7 @@ $colorMap = [
     'teal'   => '#0d9488',
     'orange' => '#ea580c',
 ];
+$paletteSeed = Setting::get('palette_seed');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
@@ -51,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fontBody = trim($_POST['font_body'] ?? '');
     $fontAccent = trim($_POST['font_accent'] ?? '');
     $siteName = trim($_POST['site_name'] ?? '');
-    $colorScheme = trim($_POST['color_scheme'] ?? '');
+    $newColorScheme = trim($_POST['color_scheme'] ?? '');
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -90,11 +91,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('site_name', $siteName);
         Log::write('Updated site name');
     }
-    if ($colorScheme !== '') {
-        Setting::set('color_scheme', $colorScheme);
-        Log::write('Updated color scheme');
-        if (isset($colorMap[$colorScheme])) {
-            Setting::set('palette_seed', $colorMap[$colorScheme]);
+    if ($newColorScheme !== '') {
+        if ($newColorScheme !== $colorScheme) {
+            Setting::set('color_scheme', $newColorScheme);
+            Log::write('Updated color scheme');
+            if (isset($colorMap[$newColorScheme])) {
+                Setting::set('palette_seed', $colorMap[$newColorScheme]);
+                Log::write('Updated palette seed to match color scheme');
+            }
+            $colorScheme = $newColorScheme;
+        } elseif (($paletteSeed === null || $paletteSeed === '') && isset($colorMap[$newColorScheme])) {
+            Setting::set('palette_seed', $colorMap[$newColorScheme]);
             Log::write('Updated palette seed to match color scheme');
         }
     }
