@@ -4,6 +4,7 @@
 - AI integrations use the OpenAI Responses API with JSON text via `text.format` responses.
 - Set `text.format.type` to `json_object` when requesting JSON responses.
 - AI model and temperature are configurable via `ai_model` and `ai_temperature` settings.
+- AI debug output can be toggled with `ai_debug` to expose request and response details.
 - Projects support archiving via an `archived` flag and can be restored from the Archived Projects page.
 
 - Projects view visualises benefits using a bubble chart plotting cost vs quality with bubble size representing score, displaying each project as its own series for distinct colours.

@@ -14,10 +14,19 @@ class NaturalLanguageReportParser {
      */
     public static function parse(string $query): array {
         $token = Setting::get('openai_api_token');
+        $debugMode = Setting::get('ai_debug') === '1';
         if ($token) {
             Log::write('NL report token present, attempting AI parse');
             $ai = self::parseWithAI($query, $token);
             if ($ai !== null) {
+                if ($debugMode && isset($ai['error'])) {
+                    $fallback = self::parseFallback($query);
+                    $fallback['error'] = $ai['error'];
+                    if (isset($ai['debug'])) {
+                        $fallback['debug'] = $ai['debug'];
+                    }
+                    return $fallback;
+                }
                 return $ai;
             }
             Log::write('NL report AI parse failed; using fallback');
@@ -69,6 +78,7 @@ class NaturalLanguageReportParser {
         if ($temperature === null || $temperature === '') {
             $temperature = 0;
         }
+        $debugMode = Setting::get('ai_debug') === '1';
         $payload = [
             'model' => $model,
             'input' => [
@@ -89,19 +99,25 @@ class NaturalLanguageReportParser {
             CURLOPT_RETURNTRANSFER => true,
         ]);
         $response = curl_exec($ch);
-        if ($response === false) {
-            Log::write('NL report AI HTTP error: ' . curl_error($ch), 'ERROR');
-            return null;
-        }
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $debugInfo = null;
+        if ($debugMode) {
+            $debugInfo = ['request' => $payload, 'response' => $response, 'http_code' => $code];
+        }
         Log::write('NL report AI HTTP status: ' . $code);
-        if ($code !== 200) {
-            Log::write('NL report AI bad response: ' . $response, 'ERROR');
+        if ($response === false || $code !== 200) {
+            Log::write('NL report AI HTTP error: ' . ($response === false ? curl_error($ch) : $response), 'ERROR');
+            if ($debugMode) {
+                return ['error' => 'OpenAI request failed', 'debug' => $debugInfo];
+            }
             return null;
         }
         $data = json_decode($response, true);
         if ($data === null) {
             Log::write('NL report AI JSON decode failed: ' . $response, 'ERROR');
+            if ($debugMode) {
+                return ['error' => 'Invalid AI response', 'debug' => $debugInfo];
+            }
             return null;
         }
         $content = $data['output'][0]['content'][0]['text'] ?? '';
@@ -117,6 +133,10 @@ class NaturalLanguageReportParser {
         $parsed = json_decode($content, true);
         if (!is_array($parsed)) {
             Log::write('NL report AI content decode failed: ' . $content, 'ERROR');
+            if ($debugMode) {
+                $debugInfo['response'] = $content;
+                return ['error' => 'Invalid AI response', 'debug' => $debugInfo];
+            }
             return null;
         }
 
@@ -170,7 +190,10 @@ class NaturalLanguageReportParser {
         }
 
         Log::write('NL report AI filters: ' . json_encode($filters));
-
+        if ($debugMode) {
+            $debugInfo['response'] = $content;
+            $filters['debug'] = $debugInfo;
+        }
         return $filters;
     }
 

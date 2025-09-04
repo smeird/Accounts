@@ -92,6 +92,7 @@ try {
     if ($temperature === null || $temperature === '') {
         $temperature = 1;
     }
+    $debugMode = Setting::get('ai_debug') === '1';
     $payload = [
         'model' => $model,
         'input' => [
@@ -113,10 +114,16 @@ try {
     ]);
     $response = curl_exec($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $debugInfo = null;
+    if ($debugMode) {
+        $debugInfo = ['request' => $payload, 'response' => $response, 'http_code' => $code];
+    }
     if ($response === false || $code !== 200) {
         http_response_code(500);
         Log::write('AI budget API error: ' . ($response ?: 'no response'), 'ERROR');
-        echo json_encode(['error' => 'OpenAI request failed']);
+        $err = ['error' => 'OpenAI request failed'];
+        if ($debugMode) $err['debug'] = $debugInfo;
+        echo json_encode($err);
         exit;
     }
     $data = json_decode($response, true);
@@ -135,7 +142,12 @@ try {
 
         http_response_code(500);
         Log::write('AI budget invalid response: ' . $content, 'ERROR');
-        echo json_encode(['error' => 'Invalid AI response']);
+        $err = ['error' => 'Invalid AI response'];
+        if ($debugMode) {
+            $debugInfo['response'] = $content;
+            $err['debug'] = $debugInfo;
+        }
+        echo json_encode($err);
         exit;
     }
 
@@ -150,9 +162,13 @@ try {
     }
 
     $budgets = Budget::getMonthly($month, $year);
+    $out = ['status' => 'ok', 'budgets' => $budgets, 'summary' => $summary];
+    if ($debugMode) {
+        $debugInfo['response'] = $content;
+        $out['debug'] = $debugInfo;
+    }
     Log::write("AI budgets applied for $month/$year with goal $goal using $usage tokens");
-
-    echo json_encode(['status' => 'ok', 'budgets' => $budgets, 'summary' => $summary]);
+    echo json_encode($out);
 
 } catch (Exception $e) {
     http_response_code(500);
