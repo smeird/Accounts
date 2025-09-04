@@ -13,6 +13,15 @@ const categoryColorMap = {};
 const categorySegmentMap = {};
 let nextSegmentIndex = 0;
 
+function hashString(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+        h = (h << 5) - h + str.charCodeAt(i);
+        h |= 0;
+    }
+    return Math.abs(h);
+}
+
 // Load palette CSS and data synchronously so colours are available immediately
 try {
     const cssReq = new XMLHttpRequest();
@@ -36,11 +45,6 @@ try {
             }
             (seg.categories || []).forEach(cat => {
                 categorySegmentMap[cat.name] = seg.name;
-                const idx = (cat.shade_index !== null ? cat.shade_index + 1 : 1);
-                const col = styles.getPropertyValue(`--segment-${seg.id}-s${idx}`).trim() || base;
-                if (col) {
-                    categoryColorMap[cat.name] = col;
-                }
             });
         });
     }
@@ -72,7 +76,18 @@ function getSegmentColor(name) {
 function getCategoryColor(name, segmentName = null) {
     if (categoryColorMap[name]) return categoryColorMap[name];
     const seg = segmentName || categorySegmentMap[name];
-    if (seg) return getSegmentColor(seg);
+    if (seg) {
+        const base = getSegmentColor(seg);
+        const hsl = Highcharts.color(base).get('hsl');
+        const hash = hashString(name);
+        const hueShift = (hash % 40) - 20; // -20..19
+        const lightShift = ((hash >> 3) % 30 - 15) / 100; // -0.15..0.14
+        hsl.h = (hsl.h + hueShift + 360) % 360;
+        hsl.l = Math.min(1, Math.max(0, hsl.l + lightShift));
+        const color = Highcharts.color(hsl).get();
+        categoryColorMap[name] = color;
+        return color;
+    }
     return chartColors[0];
 }
 
