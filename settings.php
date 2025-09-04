@@ -13,6 +13,8 @@ if (!isset($_SESSION['user_id'])) {
 $message = '';
 $openai = Setting::get('openai_api_token') ?? '';
 $batch = Setting::get('ai_tag_batch_size') ?? '20';
+$aiModel = Setting::get('ai_model') ?? 'gpt-5-nano';
+$aiTemp = Setting::get('ai_temperature') ?? '1';
 $retention = Setting::get('log_retention_days') ?? '30';
 $timeout = Setting::get('session_timeout_minutes') ?? '0';
 $fontSettings = Setting::getFonts();
@@ -41,6 +43,8 @@ $colorMap = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
     $batch = trim($_POST['ai_tag_batch_size'] ?? '');
+    $aiModel = trim($_POST['ai_model'] ?? '');
+    $aiTemp = trim($_POST['ai_temperature'] ?? '');
     $retention = trim($_POST['log_retention_days'] ?? '');
     $timeout = trim($_POST['session_timeout_minutes'] ?? '');
     $fontHeading = trim($_POST['font_heading'] ?? '');
@@ -53,6 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($batch !== '') {
         Setting::set('ai_tag_batch_size', $batch);
         Log::write('Updated AI tag batch size');
+    }
+    if ($aiModel !== '') {
+        Setting::set('ai_model', $aiModel);
+        Log::write('Updated AI model');
+    }
+    if ($aiTemp !== '') {
+        Setting::set('ai_temperature', $aiTemp);
+        Log::write('Updated AI temperature');
     }
     if ($retention !== '') {
         Setting::set('log_retention_days', $retention);
@@ -129,6 +141,12 @@ $bg600 = "bg-{$colorScheme}-600";
             </label>
             <label class="block">AI Tag Batch Size:
                 <input type="number" name="ai_tag_batch_size" value="<?= htmlspecialchars($batch) ?>" class="border p-2 rounded w-full" data-help="How many transactions to submit for AI tagging at once">
+            </label>
+            <label class="block">AI Model:
+                <input type="text" name="ai_model" value="<?= htmlspecialchars($aiModel) ?>" class="border p-2 rounded w-full" data-help="Model name for OpenAI responses">
+            </label>
+            <label class="block">AI Temperature:
+                <input type="number" step="0.1" name="ai_temperature" value="<?= htmlspecialchars($aiTemp) ?>" class="border p-2 rounded w-full" data-help="Creativity level for AI responses">
             </label>
             <label class="block">Log Retention Days:
                 <input type="number" name="log_retention_days" value="<?= htmlspecialchars($retention) ?>" class="border p-2 rounded w-full" data-help="Automatically prune logs older than this many days">

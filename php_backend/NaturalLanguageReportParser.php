@@ -64,13 +64,18 @@ class NaturalLanguageReportParser {
             "Groups:\n- " . implode("\n- ", $names['transaction_groups']) . "\n\n" .
             "Query: $query";
 
+        $model = Setting::get('ai_model') ?? 'gpt-5-nano';
+        $temperature = Setting::get('ai_temperature');
+        if ($temperature === null || $temperature === '') {
+            $temperature = 0;
+        }
         $payload = [
-            'model' => 'gpt-5-nano',
+            'model' => $model,
             'input' => [
                 ['role' => 'system', 'content' => 'You convert report requests into JSON filters.'],
                 ['role' => 'user', 'content' => $prompt],
             ],
-            'temperature' => 0,
+            'temperature' => (float)$temperature,
             'text' => ['format' => ['type' => 'json']],
         ];
 
