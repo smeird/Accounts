@@ -11,10 +11,17 @@
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
     <main class="flex-1 p-6">
       <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Palette Settings</h1>
+
       <div class="bg-white p-6 rounded shadow border border-gray-400 space-y-4">
+
         <label class="block">Seed Colour
-          <input type="color" id="seed" class="ml-2" aria-label="Seed colour picker">
+          <input type="color" id="seed" class="ml-2" aria-label="Seed colour picker" data-help="Base colour for generating the palette">
         </label>
+        <ul class="list-disc pl-5 text-gray-700">
+          <li>Set segment colours using the picker beside each name. Ticking <em>Lock</em> keeps your choice.</li>
+          <li>To reset a segment, untick its <em>Lock</em> box and press <strong>Refresh</strong>.</li>
+          <li>Press <strong>Apply</strong> to save the seed and any locked colours.</li>
+        </ul>
         <p>Segments: <span id="segment-count"></span></p>
         <div id="segments"></div>
         <div class="flex gap-2">
@@ -25,6 +32,8 @@
     </main>
   </div>
   <script src="js/menu.js"></script>
+  <script src="js/input_help.js"></script>
+  <script src="js/overlay.js"></script>
   <script type="module" src="js/palette_ui.js"></script>
 </body>
 </html>
