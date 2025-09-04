@@ -1,21 +1,15 @@
 import {generatePalette, applyCss, supportsOklch} from './palette.js';
 import {hexToOklch, oklchToHex} from './colour.js';
 
-const state = { seed: '#ff0000', segments: [] };
+const state = { segments: [] };
 
 document.addEventListener('DOMContentLoaded', async () => {
   const res = await fetch('../php_backend/public/palette.php', {cache: 'no-store'});
   const data = await res.json();
-  state.seed = data.seed || '#ff0000';
   state.segments = data.segments;
-  document.getElementById('seed').value = state.seed;
   document.getElementById('segment-count').textContent = state.segments.length;
   buildSegmentInputs();
   update();
-  document.getElementById('seed').addEventListener('input', e => {
-    state.seed = e.target.value;
-    update();
-  });
   document.getElementById('apply').addEventListener('click', save);
   document.getElementById('refresh').addEventListener('click', update);
 });
@@ -55,7 +49,7 @@ function buildSegmentInputs() {
 }
 
 function update() {
-  generatePalette(state.seed, state.segments);
+  generatePalette(state.segments);
   applyCss(state.segments);
   renderPreview();
 }
@@ -79,7 +73,6 @@ function renderPreview() {
 
 async function save() {
   const payload = {
-    seed: state.seed,
     segments: state.segments.map(s => ({
       id: s.id,
       hue_deg: s.hue_deg,

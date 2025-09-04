@@ -39,7 +39,7 @@ const init = () => {
 
     'yearly_dashboard.html': `Analyse totals for a chosen year using charts and tables. Look through the months to see how spending and income evolved as the year progressed. This broader view helps you understand whether you are meeting your long‑term goals and where you might need to cut back.`,
     'recurring_spend.html': `Identify expenses that recur over the past year so you are aware of ongoing commitments. The page highlights regular payments like subscriptions or rent and shows how much they cost overall. Spotting these repeated charges helps you decide which ones are essential and which could be reduced or cancelled.`,
-    'palette.html': `Customise segment colours for charts and reports. Pick a seed colour, adjust segment hues and lock any you want to keep. Use Refresh to regenerate unlocked colours and Apply to save your palette.`,
+    'palette.html': `Customise segment colours for charts and reports. Adjust segment hues and lock any you want to keep. Use Refresh to regenerate unlocked colours and Apply to save your palette.`,
     'pivot.html': `Explore transactions with a pivot table. Choose a year or view all records to break down amounts by category, month or other fields. Use the export options to save the results for further analysis.`
 
   };

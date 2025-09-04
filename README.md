@@ -41,11 +41,11 @@ sequenceDiagram
 
 ## Palette Generation
 
-The interface offers a seed-driven colour palette. A global seed colour disperses segment hues around the wheel using the golden angle for even spacing. All colour maths use the perceptually uniform OKLCH space with graceful HSL fallbacks when OKLCH is unsupported.
+The interface generates a colour palette by spacing segment hues around the wheel using the golden angle for even distribution. All colour maths use the perceptually uniform OKLCH space with graceful HSL fallbacks when OKLCH is unsupported.
 
 Segment colours are persisted by storing only `hue_deg`, `base_l_pct` and `base_c` values. Shade indices for categories are stored separately. The endpoint `/php_backend/public/palette.php` reads and writes these parameters, while `/php_backend/public/palette_css.php` outputs matching CSS custom properties for non-JavaScript environments.
 
-Updating the seed or segment hues in `frontend/palette.html` regenerates the palette deterministically and ensures text contrast meets WCAG AA.
+Updating segment hues in `frontend/palette.html` regenerates the palette deterministically and ensures text contrast meets WCAG AA.
 - Search and report on transactions in detail.
 - Generate reports using natural-language queries.
 - Back up and restore your data and export it to OFX, CSV, or XLSX.
