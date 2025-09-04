@@ -69,6 +69,7 @@ class NaturalLanguageReportParser {
         if ($temperature === null || $temperature === '') {
             $temperature = 0;
         }
+        $debugMode = Setting::get('ai_debug') === '1';
         $payload = [
             'model' => $model,
             'input' => [
@@ -170,7 +171,9 @@ class NaturalLanguageReportParser {
         }
 
         Log::write('NL report AI filters: ' . json_encode($filters));
-
+        if ($debugMode) {
+            $filters['debug'] = ['request' => $payload, 'response' => $content];
+        }
         return $filters;
     }
 

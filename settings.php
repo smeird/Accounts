@@ -15,6 +15,7 @@ $openai = Setting::get('openai_api_token') ?? '';
 $batch = Setting::get('ai_tag_batch_size') ?? '20';
 $aiModel = Setting::get('ai_model') ?? 'gpt-5-nano';
 $aiTemp = Setting::get('ai_temperature') ?? '1';
+$aiDebug = Setting::get('ai_debug') === '1';
 $retention = Setting::get('log_retention_days') ?? '30';
 $timeout = Setting::get('session_timeout_minutes') ?? '0';
 $fontSettings = Setting::getFonts();
@@ -46,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $batch = trim($_POST['ai_tag_batch_size'] ?? '');
     $aiModel = trim($_POST['ai_model'] ?? '');
     $aiTemp = trim($_POST['ai_temperature'] ?? '');
+    $aiDebug = isset($_POST['ai_debug']);
     $retention = trim($_POST['log_retention_days'] ?? '');
     $timeout = trim($_POST['session_timeout_minutes'] ?? '');
     $fontHeading = trim($_POST['font_heading'] ?? '');
@@ -67,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('ai_temperature', $aiTemp);
         Log::write('Updated AI temperature');
     }
+    Setting::set('ai_debug', $aiDebug ? '1' : '0');
+    Log::write('Updated AI debug mode');
     if ($retention !== '') {
         Setting::set('log_retention_days', $retention);
         Log::write('Updated log retention days');
@@ -158,6 +162,9 @@ $bg600 = "bg-{$colorScheme}-600";
             </label>
             <label class="block">AI Temperature:
                 <input type="number" step="0.1" name="ai_temperature" value="<?= htmlspecialchars($aiTemp) ?>" class="border p-2 rounded w-full" data-help="Creativity level for AI responses">
+            </label>
+            <label class="block">AI Debug Mode:
+                <input type="checkbox" name="ai_debug" value="1" <?= $aiDebug ? 'checked' : '' ?> class="ml-2" data-help="Show AI request and response details on pages for troubleshooting">
             </label>
             <label class="block">Log Retention Days:
                 <input type="number" name="log_retention_days" value="<?= htmlspecialchars($retention) ?>" class="border p-2 rounded w-full" data-help="Automatically prune logs older than this many days">

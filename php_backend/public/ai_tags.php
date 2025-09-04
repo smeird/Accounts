@@ -50,6 +50,7 @@ $temperature = Setting::get('ai_temperature');
 if ($temperature === null || $temperature === '') {
     $temperature = 1;
 }
+$debugMode = Setting::get('ai_debug') === '1';
 $payload = [
     'model' => $model,
     'input' => [
@@ -139,7 +140,11 @@ foreach ($suggestions as $s) {
 }
 
 Log::write("AI tagged $processed transactions using $usage tokens");
-echo json_encode(['processed' => $processed, 'tokens' => $usage]);
+ $out = ['processed' => $processed, 'tokens' => $usage];
+ if ($debugMode) {
+     $out['debug'] = ['request' => $payload, 'response' => $content];
+ }
+ echo json_encode($out);
 // Self-check:
 // Endpoint detected: Responses
 // Using text.format.type = json_object for structured JSON tag suggestions

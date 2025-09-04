@@ -92,6 +92,7 @@ try {
     if ($temperature === null || $temperature === '') {
         $temperature = 1;
     }
+    $debugMode = Setting::get('ai_debug') === '1';
     $payload = [
         'model' => $model,
         'input' => [
@@ -150,9 +151,12 @@ try {
     }
 
     $budgets = Budget::getMonthly($month, $year);
+    $out = ['status' => 'ok', 'budgets' => $budgets, 'summary' => $summary];
+    if ($debugMode) {
+        $out['debug'] = ['request' => $payload, 'response' => $content];
+    }
     Log::write("AI budgets applied for $month/$year with goal $goal using $usage tokens");
-
-    echo json_encode(['status' => 'ok', 'budgets' => $budgets, 'summary' => $summary]);
+    echo json_encode($out);
 
 } catch (Exception $e) {
     http_response_code(500);
