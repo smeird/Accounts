@@ -30,8 +30,8 @@ function buildSegmentInputs() {
     div.innerHTML = `
       <div class="flex items-center gap-2">
         <span class="w-32">${seg.name}</span>
-        <input type="color" class="hue" value="${color}">
-        <label class="text-sm"><input type="checkbox" class="lock" ${seg.locked ? 'checked' : ''}> Lock</label>
+        <input type="color" class="hue" value="${color}" data-help="Select a hue for this segment">
+        <label class="text-sm"><input type="checkbox" class="lock" ${seg.locked ? 'checked' : ''} data-help="Keep this colour when refreshing"> Lock</label>
       </div>
       <div class="preview flex mt-2 gap-1"></div>
     `;
@@ -50,6 +50,7 @@ function buildSegmentInputs() {
     });
     container.appendChild(div);
     seg._preview = div.querySelector('.preview');
+    if (window.initInputHelp) window.initInputHelp(div);
   });
 }
 
