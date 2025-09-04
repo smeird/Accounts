@@ -19,10 +19,16 @@ document.addEventListener('DOMContentLoaded', () => {
         helpBox.classList.add('hidden');
     }
 
-    document.querySelectorAll('input[data-help], select[data-help]').forEach(el => {
-        el.addEventListener('focus', () => showHelp(el));
-        el.addEventListener('blur', hideHelp);
-        el.addEventListener('mouseenter', () => showHelp(el));
-        el.addEventListener('mouseleave', hideHelp);
-    });
+    // Allow other scripts to attach help to dynamically created inputs
+    window.initInputHelp = function(root = document) {
+        root.querySelectorAll('input[data-help], select[data-help]').forEach(el => {
+            el.addEventListener('focus', () => showHelp(el));
+            el.addEventListener('blur', hideHelp);
+            el.addEventListener('mouseenter', () => showHelp(el));
+            el.addEventListener('mouseleave', hideHelp);
+        });
+    };
+
+    // Initialise for existing elements
+    window.initInputHelp();
 });
