@@ -71,7 +71,7 @@ try {
             ['role' => 'user', 'content' => $prompt]
         ],
         'temperature' => (float)$temperature,
-        'text' => ['format' => ['type' => 'json']],
+        'text' => ['format' => ['type' => 'json_object']],
     ];
 
     $ch = curl_init('https://api.openai.com/v1/responses');
