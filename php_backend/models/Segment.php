@@ -7,65 +7,20 @@ class Segment {
     /**
      * Create a new segment and return its ID.
      */
-    public static function create(
-        string $name,
-        ?string $description = null,
-        ?float $hueDeg = null,
-        ?float $baseLPct = null,
-        ?float $baseC = null,
-        bool $locked = false
-    ): int {
+    public static function create(string $name, ?string $description = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO segments (name, description, hue_deg, base_l_pct, base_c, locked) VALUES (:name, :description, :hue, :l, :c, :locked)');
-        $stmt->execute([
-            'name' => $name,
-            'description' => $description,
-            'hue' => $hueDeg,
-            'l' => $baseLPct,
-            'c' => $baseC,
-            'locked' => $locked ? 1 : 0
-        ]);
+        $stmt = $db->prepare('INSERT INTO segments (name, description) VALUES (:name, :description)');
+        $stmt->execute(['name' => $name, 'description' => $description]);
         return (int)$db->lastInsertId();
     }
 
     /**
      * Update the details of an existing segment.
      */
-    public static function update(
-        int $id,
-        string $name,
-        ?string $description = null,
-        ?float $hueDeg = null,
-        ?float $baseLPct = null,
-        ?float $baseC = null,
-        bool $locked = false
-    ): void {
+    public static function update(int $id, string $name, ?string $description = null): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE segments SET name = :name, description = :description, hue_deg = :hue, base_l_pct = :l, base_c = :c, locked = :locked WHERE id = :id');
-        $stmt->execute([
-            'id' => $id,
-            'name' => $name,
-            'description' => $description,
-            'hue' => $hueDeg,
-            'l' => $baseLPct,
-            'c' => $baseC,
-            'locked' => $locked ? 1 : 0
-        ]);
-    }
-
-    /**
-     * Update only the palette parameters for a segment.
-     */
-    public static function updatePalette(int $id, float $hueDeg, float $baseLPct, float $baseC, bool $locked): void {
-        $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE segments SET hue_deg = :hue, base_l_pct = :l, base_c = :c, locked = :locked WHERE id = :id');
-        $stmt->execute([
-            'id' => $id,
-            'hue' => $hueDeg,
-            'l' => $baseLPct,
-            'c' => $baseC,
-            'locked' => $locked ? 1 : 0
-        ]);
+        $stmt = $db->prepare('UPDATE segments SET name = :name, description = :description WHERE id = :id');
+        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description]);
     }
 
     /**
@@ -112,8 +67,7 @@ class Segment {
     public static function allWithCategories(): array {
         $db = Database::getConnection();
         $sql = 'SELECT s.id AS segment_id, s.name AS segment_name, s.description AS segment_description, '
-             . 's.hue_deg, s.base_l_pct, s.base_c, s.locked, '
-             . 'c.id AS category_id, c.name AS category_name, c.shade_index '
+             . 'c.id AS category_id, c.name AS category_name '
              . 'FROM segments s '
              . 'LEFT JOIN categories c ON c.segment_id = s.id '
              . 'ORDER BY s.id, c.id';
@@ -126,18 +80,13 @@ class Segment {
                     'id' => $sid,
                     'name' => $row['segment_name'],
                     'description' => $row['segment_description'],
-                    'hue_deg' => $row['hue_deg'] !== null ? (float)$row['hue_deg'] : null,
-                    'base_l_pct' => $row['base_l_pct'] !== null ? (float)$row['base_l_pct'] : null,
-                    'base_c' => $row['base_c'] !== null ? (float)$row['base_c'] : null,
-                    'locked' => (bool)$row['locked'],
                     'categories' => []
                 ];
             }
             if ($row['category_id'] !== null) {
                 $segments[$sid]['categories'][] = [
                     'id' => (int)$row['category_id'],
-                    'name' => $row['category_name'],
-                    'shade_index' => $row['shade_index'] !== null ? (int)$row['shade_index'] : null
+                    'name' => $row['category_name']
                 ];
             }
         }
