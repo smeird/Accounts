@@ -25,7 +25,15 @@
                     <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
                 </label>
                 <div id="ai-status" class="md:col-span-3 text-sm text-gray-600 hidden" aria-live="polite"></div>
-                <pre id="ai-debug" class="md:col-span-3 text-xs bg-gray-100 p-2 overflow-x-auto hidden"></pre>
+                <div id="ai-debug" class="md:col-span-3 hidden">
+                    <div class="bg-white p-4 rounded shadow border border-gray-400">
+                        <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
+                        <p class="text-sm font-semibold">Request</p>
+                        <pre id="ai-debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
+                        <p class="text-sm font-semibold">Response</p>
+                        <pre id="ai-debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
+                    </div>
+                </div>
                 <label class="block">Category: <select id="category" multiple class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
                 <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
                 <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
@@ -193,7 +201,9 @@
     async function runReport() {
         const nl = document.getElementById('nl-query').value.trim();
         const aiStatus = document.getElementById('ai-status');
-        const aiDebug = document.getElementById('ai-debug');
+        const aiDebugContainer = document.getElementById('ai-debug');
+        const aiDebugReq = document.getElementById('ai-debug-request');
+        const aiDebugRes = document.getElementById('ai-debug-response');
         if (nl) {
 
             aiStatus.textContent = 'Submitting query to AI...';
@@ -214,20 +224,22 @@
                 document.getElementById('end').value = filters.end || '';
                 aiStatus.textContent = filters.summary || 'AI suggestions applied';
                 if (filters.debug) {
-                    aiDebug.textContent = JSON.stringify(filters.debug, null, 2);
-                    aiDebug.classList.remove('hidden');
+                    aiDebugReq.textContent = JSON.stringify(filters.debug.request, null, 2);
+                    const resp = typeof filters.debug.response === 'string' ? filters.debug.response : JSON.stringify(filters.debug.response, null, 2);
+                    aiDebugRes.textContent = resp;
+                    aiDebugContainer.classList.remove('hidden');
                 } else {
-                    aiDebug.classList.add('hidden');
+                    aiDebugContainer.classList.add('hidden');
                 }
             } catch (e) {
                 aiStatus.textContent = 'AI request failed';
-                aiDebug.classList.add('hidden');
+                aiDebugContainer.classList.add('hidden');
             }
 
             document.getElementById('nl-query').value = '';
         } else {
             aiStatus.classList.add('hidden');
-            aiDebug.classList.add('hidden');
+            aiDebugContainer.classList.add('hidden');
         }
 
         const category = getSelectedValues(window.catChoices);
