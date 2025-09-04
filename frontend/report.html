@@ -20,7 +20,7 @@
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Transaction Reports</h1>
             <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
-            <form id="report-form" class="bg-white p-4 rounded shadow grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form id="report-form" class="bg-white p-4 rounded shadow border border-gray-400 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label class="block md:col-span-3">Ask in plain English:
                     <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
                 </label>
@@ -43,7 +43,7 @@
                 <button type="button" id="delete-report" class="bg-red-600 text-white px-3 py-2 rounded" aria-label="Delete saved report"><i class="fas fa-trash inline w-4 h-4"></i></button>
             </div>
             <div id="results-grid" class="mt-4"></div>
-            <div id="chart" class="mt-6 bg-white p-6 rounded shadow" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
+            <div id="chart" class="mt-6 bg-white p-6 rounded shadow border border-gray-400" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
         </main>
     </div>
     <script src="js/menu.js"></script>

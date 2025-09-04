@@ -47,7 +47,7 @@ $bgHover = "hover:bg-{$colorScheme}-700";
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter']">
-    <div class="w-full max-w-sm bg-white p-6 rounded shadow text-center">
+    <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 text-center">
         <img src="favicon.svg" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 mx-auto" />
         <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 <?= $text700 ?>">Logged Out</h1>
         <p class="mb-4">You have been safely logged out of the <?= htmlspecialchars($siteName) ?>.</p>
