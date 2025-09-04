@@ -367,7 +367,10 @@
         doc.rect(0, 0, pageWidth, 20, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(16);
-        doc.text('Accounts - Transaction Report', 14, 12);
+        const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
+        const reportTitle = `${siteTitle} - Transaction Report`;
+        doc.text(reportTitle, 14, 12);
+        doc.setProperties({ title: reportTitle });
 
         // Description
         doc.setTextColor(0, 0, 0);
