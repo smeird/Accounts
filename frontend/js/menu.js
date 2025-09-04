@@ -334,11 +334,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = main.querySelectorAll('section');
     if (sections.length > 0) {
       sections.forEach(section => {
-        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow');
+        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow', 'border', 'border-gray-400');
       });
     } else {
       const wrapper = document.createElement('section');
-      wrapper.className = 'bg-white p-6 rounded shadow';
+      wrapper.className = 'bg-white p-6 rounded shadow border border-gray-400';
       while (main.firstChild) {
         wrapper.appendChild(main.firstChild);
       }

@@ -137,7 +137,7 @@ $bg600 = "bg-{$colorScheme}-600";
     </style>
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
         <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
         <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>

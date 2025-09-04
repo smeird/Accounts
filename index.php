@@ -101,7 +101,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter']">
-    <div class="w-full max-w-sm bg-white p-6 rounded shadow">
+    <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400">
         <img src="favicon.svg" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 block mx-auto" />
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1 text-center">AUTHENTICATION / <?= $needsToken ? 'TWO-FACTOR' : 'LOGIN' ?></div>
         <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 text-center <?= $text700 ?>"><?= $needsToken ? 'Enter Code' : 'Login' ?></h1>
