@@ -150,12 +150,20 @@
         // Create hierarchical data for income or outgoings
         function createData(isIncome){
             const data = [{ id: 'root', parent: '', name: '' }];
+            const segmentIds = {};
             categories.forEach(c => {
                 const total = parseFloat(c.total);
                 if ((isIncome && total > 0) || (!isIncome && total < 0)) {
-                    const color = getCategoryColor(c.name, c.segment_name);
+                    const segName = c.segment_name || 'Not Segmented';
+                    let segId = segmentIds[segName];
+                    if (!segId) {
+                        segId = 'seg_' + segName.replace(/\s+/g, '_');
+                        segmentIds[segName] = segId;
+                        data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
+                    }
+                    const color = getCategoryColor(c.name, segName);
                     const catId = c.name;
-                    data.push({ id: catId, parent: 'root', name: c.name, value: Math.abs(total), color });
+                    data.push({ id: catId, parent: segId, name: c.name, value: Math.abs(total), color });
                     tags.filter(t => t.category === c.name && ((isIncome && parseFloat(t.total) > 0) || (!isIncome && parseFloat(t.total) < 0))).forEach(t => {
                         data.push({
                             name: t.name,
