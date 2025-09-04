@@ -25,6 +25,7 @@
                     <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
                 </label>
                 <div id="ai-status" class="md:col-span-3 text-sm text-gray-600 hidden" aria-live="polite"></div>
+                <pre id="ai-debug" class="md:col-span-3 text-xs bg-gray-100 p-2 overflow-x-auto hidden"></pre>
                 <label class="block">Category: <select id="category" multiple class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
                 <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
                 <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
@@ -192,6 +193,7 @@
     async function runReport() {
         const nl = document.getElementById('nl-query').value.trim();
         const aiStatus = document.getElementById('ai-status');
+        const aiDebug = document.getElementById('ai-debug');
         if (nl) {
 
             aiStatus.textContent = 'Submitting query to AI...';
@@ -211,13 +213,21 @@
                 document.getElementById('start').value = filters.start || '';
                 document.getElementById('end').value = filters.end || '';
                 aiStatus.textContent = filters.summary || 'AI suggestions applied';
+                if (filters.debug) {
+                    aiDebug.textContent = JSON.stringify(filters.debug, null, 2);
+                    aiDebug.classList.remove('hidden');
+                } else {
+                    aiDebug.classList.add('hidden');
+                }
             } catch (e) {
                 aiStatus.textContent = 'AI request failed';
+                aiDebug.classList.add('hidden');
             }
 
             document.getElementById('nl-query').value = '';
         } else {
             aiStatus.classList.add('hidden');
+            aiDebug.classList.add('hidden');
         }
 
         const category = getSelectedValues(window.catChoices);

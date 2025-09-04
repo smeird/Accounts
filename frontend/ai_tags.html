@@ -30,6 +30,7 @@
             <p class="mb-4">Use AI to suggest tags and categories for untagged transactions.</p>
             <button id="run" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fas fa-robot inline w-4 h-4 mr-1"></i>Run AI Tagging</button>
             <div id="result" class="mt-4"></div>
+            <pre id="debug" class="mt-4 text-xs bg-gray-100 p-2 overflow-x-auto hidden"></pre>
         </section>
     </main>
 </div>
@@ -55,6 +56,7 @@ document.getElementById('save-token').addEventListener('click', async () => {
 
 document.getElementById('run').addEventListener('click', async () => {
     const resultEl = document.getElementById('result');
+    const debugEl = document.getElementById('debug');
     const btn = document.getElementById('run');
     btn.disabled = true;
     btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -71,9 +73,16 @@ document.getElementById('run').addEventListener('click', async () => {
             resultEl.textContent = `Tagged ${data.processed} transactions using ${data.tokens} tokens.`;
             showMessage('AI tagging complete');
         }
+        if (data.debug) {
+            debugEl.textContent = JSON.stringify(data.debug, null, 2);
+            debugEl.classList.remove('hidden');
+        } else {
+            debugEl.classList.add('hidden');
+        }
     } catch (e) {
         resultEl.textContent = 'Request failed';
         showMessage('AI tagging failed', 'error');
+        debugEl.classList.add('hidden');
     } finally {
         btn.disabled = false;
         btn.classList.remove('opacity-50', 'cursor-not-allowed');

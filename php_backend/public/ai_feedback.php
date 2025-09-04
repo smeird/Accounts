@@ -64,6 +64,7 @@ try {
     if ($temperature === null || $temperature === '') {
         $temperature = 1;
     }
+    $debugMode = Setting::get('ai_debug') === '1';
     $payload = [
         'model' => $model,
         'input' => [
@@ -109,9 +110,12 @@ try {
         exit;
     }
     $content = trim($parsed['feedback']);
-
+    $out = ['feedback' => $content, 'tokens' => $usage];
+    if ($debugMode) {
+        $out['debug'] = ['request' => $payload, 'response' => $content];
+    }
     Log::write("AI feedback generated using $usage tokens");
-    echo json_encode(['feedback' => $content, 'tokens' => $usage]);
+    echo json_encode($out);
 
 } catch (Exception $e) {
     http_response_code(500);
