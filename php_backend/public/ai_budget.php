@@ -87,15 +87,20 @@ try {
         $prompt .= "{$h['id']} {$h['name']}: [" . implode(',', $h['totals']) . "]\n";
     }
 
+    $model = Setting::get('ai_model') ?? 'gpt-5-nano';
+    $temperature = Setting::get('ai_temperature');
+    if ($temperature === null || $temperature === '') {
+        $temperature = 1;
+    }
     $payload = [
-        'model' => 'gpt-5-nano',
+        'model' => $model,
         'input' => [
             ['role' => 'system', 'content' => 'You create budgets and explanations in JSON.'],
-        ['role' => 'user', 'content' => $prompt]
-    ],
-    'temperature' => 1,
-    'text' => ['format' => ['type' => 'json']],
-];
+            ['role' => 'user', 'content' => $prompt]
+        ],
+        'temperature' => (float)$temperature,
+        'text' => ['format' => ['type' => 'json']],
+    ];
 
     $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [

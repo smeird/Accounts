@@ -45,13 +45,18 @@ foreach ($txns as $t) {
     $prompt .= "{$t['id']}: {$t['description']}{$memo} ({$t['amount']})\n";
 }
 
+$model = Setting::get('ai_model') ?? 'gpt-5-nano';
+$temperature = Setting::get('ai_temperature');
+if ($temperature === null || $temperature === '') {
+    $temperature = 1;
+}
 $payload = [
-    'model' => 'gpt-5-nano',
+    'model' => $model,
     'input' => [
         ['role' => 'system', 'content' => 'You label bank transactions. Use JSON.'],
         ['role' => 'user', 'content' => $prompt]
     ],
-    'temperature' => 1,
+    'temperature' => (float)$temperature,
     'text' => ['format' => ['type' => 'json']],
 ];
 

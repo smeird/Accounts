@@ -59,15 +59,20 @@ try {
         $prompt .= $c['name'] . ': £' . number_format((float)$c['total'], 2) . "\n";
     }
 
+    $model = Setting::get('ai_model') ?? 'gpt-5-mini';
+    $temperature = Setting::get('ai_temperature');
+    if ($temperature === null || $temperature === '') {
+        $temperature = 1;
+    }
     $payload = [
-        'model' => 'gpt-5-mini',
+        'model' => $model,
         'input' => [
             ['role' => 'system', 'content' => 'You are a financial analyst that writes long, clear summaries without asking questions.'],
-        ['role' => 'user', 'content' => $prompt]
-    ],
-    'temperature' => 1,
-    'text' => ['format' => ['type' => 'json']],
-];
+            ['role' => 'user', 'content' => $prompt]
+        ],
+        'temperature' => (float)$temperature,
+        'text' => ['format' => ['type' => 'json']],
+    ];
 
     $ch = curl_init('https://api.openai.com/v1/responses');
     curl_setopt_array($ch, [
