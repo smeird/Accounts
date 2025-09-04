@@ -88,8 +88,9 @@
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/color_map.js"></script>
 
-    
+
 <script>
 const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
@@ -391,7 +392,7 @@ function buildDonutChart(spendings, prevSpendings){
     const data = Object.entries(spendings).map(([cat, total]) => {
         const prev = prevSpendings[cat] || 0;
         const change = total - prev;
-        const color = change > 0 ? '#dc2626' : (change < 0 ? '#16a34a' : '#9ca3af');
+        const color = getCategoryColor(cat);
         return { name: cat, y: parseFloat(total.toFixed(2)), color, change };
     });
     Highcharts.chart('category-donut', {
