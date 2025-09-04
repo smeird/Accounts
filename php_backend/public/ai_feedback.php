@@ -118,4 +118,7 @@ try {
     Log::write('AI feedback error: ' . $e->getMessage(), 'ERROR');
     echo json_encode(['error' => 'Server error']);
 }
+// Self-check:
+// Endpoint detected: Responses
+// Using text.format.type = json_object for structured JSON feedback
 ?>
