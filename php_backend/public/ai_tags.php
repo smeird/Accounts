@@ -140,4 +140,7 @@ foreach ($suggestions as $s) {
 
 Log::write("AI tagged $processed transactions using $usage tokens");
 echo json_encode(['processed' => $processed, 'tokens' => $usage]);
+// Self-check:
+// Endpoint detected: Responses
+// Using text.format.type = json_object for structured JSON tag suggestions
 ?>

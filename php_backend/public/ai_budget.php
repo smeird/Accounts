@@ -160,4 +160,7 @@ try {
     Log::write('AI budgeting error: ' . $e->getMessage() . ($info ? ' SQL: ' . $info : ''), 'ERROR');
     echo json_encode(['error' => 'Server error']);
 }
+// Self-check:
+// Endpoint detected: Responses
+// Using text.format.type = json_object for structured JSON budget suggestions
 ?>

@@ -310,4 +310,7 @@ class NaturalLanguageReportParser {
         return 'Report filtered by ' . implode(', ', $parts) . '.';
     }
 }
+// Self-check:
+// Endpoint detected: Responses
+// Using text.format.type = json_object for structured JSON filter parsing
 ?>
