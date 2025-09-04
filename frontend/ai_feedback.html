@@ -21,7 +21,15 @@
                 <i class="fas fa-comments-dollar inline w-4 h-4 mr-1"></i>Generate Feedback
             </button>
             <div id="result" class="mt-4 whitespace-pre-wrap"></div>
-            <pre id="debug" class="mt-4 text-xs bg-gray-100 p-2 overflow-x-auto hidden"></pre>
+            <div id="debug" class="mt-4 hidden">
+                <div class="bg-white p-4 rounded shadow border border-gray-400">
+                    <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
+                    <p class="text-sm font-semibold">Request</p>
+                    <pre id="debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
+                    <p class="text-sm font-semibold">Response</p>
+                    <pre id="debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
+                </div>
+            </div>
         </section>
     </main>
 </div>
@@ -31,7 +39,9 @@
 <script>
 document.getElementById('run').addEventListener('click', async () => {
     const result = document.getElementById('result');
-    const debugEl = document.getElementById('debug');
+    const debugContainer = document.getElementById('debug');
+    const debugReq = document.getElementById('debug-request');
+    const debugRes = document.getElementById('debug-response');
     const btn = document.getElementById('run');
     btn.disabled = true;
     btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -47,15 +57,17 @@ document.getElementById('run').addEventListener('click', async () => {
             showMessage('AI feedback ready');
         }
         if (data.debug) {
-            debugEl.textContent = JSON.stringify(data.debug, null, 2);
-            debugEl.classList.remove('hidden');
+            debugReq.textContent = JSON.stringify(data.debug.request, null, 2);
+            const resp = typeof data.debug.response === 'string' ? data.debug.response : JSON.stringify(data.debug.response, null, 2);
+            debugRes.textContent = resp;
+            debugContainer.classList.remove('hidden');
         } else {
-            debugEl.classList.add('hidden');
+            debugContainer.classList.add('hidden');
         }
     } catch (e) {
         result.textContent = 'Request failed';
         showMessage('AI feedback failed', 'error');
-        debugEl.classList.add('hidden');
+        debugContainer.classList.add('hidden');
     } finally {
         btn.disabled = false;
         btn.classList.remove('opacity-50', 'cursor-not-allowed');
