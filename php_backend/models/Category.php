@@ -6,20 +6,29 @@ class Category {
     /**
      * Insert a new category and return its ID.
      */
-    public static function create(string $name, ?string $description = null, ?int $segmentId = null): int {
+    public static function create(string $name, ?string $description = null, ?int $segmentId = null, ?int $shadeIndex = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO categories (name, description, segment_id) VALUES (:name, :description, :segment_id)');
-        $stmt->execute(['name' => $name, 'description' => $description, 'segment_id' => $segmentId]);
+        $stmt = $db->prepare('INSERT INTO categories (name, description, segment_id, shade_index) VALUES (:name, :description, :segment_id, :shade_index)');
+        $stmt->execute(['name' => $name, 'description' => $description, 'segment_id' => $segmentId, 'shade_index' => $shadeIndex]);
         return (int)$db->lastInsertId();
     }
 
     /**
      * Update the name, description and segment of an existing category.
      */
-    public static function update(int $id, string $name, ?string $description = null, ?int $segmentId = null): void {
+    public static function update(int $id, string $name, ?string $description = null, ?int $segmentId = null, ?int $shadeIndex = null): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE categories SET name = :name, description = :description, segment_id = :segment_id WHERE id = :id');
-        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description, 'segment_id' => $segmentId]);
+        $stmt = $db->prepare('UPDATE categories SET name = :name, description = :description, segment_id = :segment_id, shade_index = :shade_index WHERE id = :id');
+        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description, 'segment_id' => $segmentId, 'shade_index' => $shadeIndex]);
+    }
+
+    /**
+     * Update only the shade index for a category.
+     */
+    public static function setShadeIndex(int $id, ?int $shadeIndex): void {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('UPDATE categories SET shade_index = :shade_index WHERE id = :id');
+        $stmt->execute(['id' => $id, 'shade_index' => $shadeIndex]);
     }
 
     /**
