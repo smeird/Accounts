@@ -439,10 +439,22 @@
     function renderHierarchyCharts(data){
         const edges = data.filter(d => d.parent).map(d => [d.parent, d.id]);
 
-        const nodes = data.map((d, i) => ({ id: d.id, name: d.name, color: d.color || chartColors[i % chartColors.length] }));
+        const nodes = data.map((d, i) => {
+            let color = d.color;
+            if (!color) {
+                if (d.id.startsWith('seg_')) {
+                    color = getSegmentColor(d.name);
+                } else if (d.id.startsWith('cat_')) {
+                    const parent = data.find(p => p.id === d.parent);
+                    color = getCategoryColor(d.name, parent ? parent.name : null);
+                } else {
+                    color = chartColors[i % chartColors.length];
+                }
+                d.color = color;
+            }
+            return { id: d.id, name: d.name, color };
+        });
         Highcharts.chart('network-graph', {
-            colors: chartColors,
-
             chart: { type: 'networkgraph' },
 
             title: { text: 'Segment / Category Network' },
@@ -454,8 +466,6 @@
             }]
         });
         Highcharts.chart('treegraph-chart', {
-
-            colors: chartColors,
 
             chart: {
                 spacingBottom: 30,
