@@ -260,8 +260,16 @@
             });
             const grouped = groupTransactions(data);
             const cats = grouped.grouped.map(g => g.label);
-            const amounts = grouped.grouped.map(g => parseFloat(g.total));
             const label = grouped.group.charAt(0).toUpperCase() + grouped.group.slice(1);
+            const seriesData = grouped.grouped.map(g => {
+                let color = chartColors[0];
+                if (grouped.group === 'segment') {
+                    color = getSegmentColor(g.label);
+                } else if (grouped.group === 'category') {
+                    color = getCategoryColor(g.label);
+                }
+                return { y: parseFloat(g.total), color };
+            });
             Highcharts.chart('chart', {
                 chart: { type: 'column', backgroundColor: 'transparent' },
                 title: { text: 'Transaction Amounts by ' + label },
@@ -269,7 +277,7 @@
                 yAxis: { title: { text: 'Amount' } },
                 legend: { enabled: false },
                 tooltip: { pointFormatter: columnTooltip },
-                series: [{ name: 'Amount', data: amounts, color: chartColors[0] }]
+                series: [{ name: 'Amount', data: seriesData }]
             });
         } else {
             gridEl.innerHTML = 'No transactions found.';

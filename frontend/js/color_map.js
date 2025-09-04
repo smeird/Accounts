@@ -9,7 +9,44 @@ const chartColors = [
     '#E0E7FF'  // indigo-100
 ];
 const segmentColorMap = {};
+const categoryColorMap = {};
+const categorySegmentMap = {};
 let nextSegmentIndex = 0;
+
+// Load palette CSS and data synchronously so colours are available immediately
+try {
+    const cssReq = new XMLHttpRequest();
+    cssReq.open('GET', '../php_backend/public/palette_css.php', false);
+    cssReq.send(null);
+    if (cssReq.status === 200) {
+        const style = document.createElement('style');
+        style.textContent = cssReq.responseText;
+        document.head.appendChild(style);
+    }
+    const req = new XMLHttpRequest();
+    req.open('GET', '../php_backend/public/palette.php', false);
+    req.send(null);
+    if (req.status === 200) {
+        const data = JSON.parse(req.responseText);
+        const styles = getComputedStyle(document.documentElement);
+        (data.segments || []).forEach(seg => {
+            const base = styles.getPropertyValue(`--segment-${seg.id}-base`).trim();
+            if (base) {
+                segmentColorMap[seg.name] = base;
+            }
+            (seg.categories || []).forEach(cat => {
+                categorySegmentMap[cat.name] = seg.name;
+                const idx = (cat.shade_index !== null ? cat.shade_index + 1 : 1);
+                const col = styles.getPropertyValue(`--segment-${seg.id}-s${idx}`).trim() || base;
+                if (col) {
+                    categoryColorMap[cat.name] = col;
+                }
+            });
+        });
+    }
+} catch (e) {
+    console.error('Failed to load colour palette', e);
+}
 
 Highcharts.setOptions({
     colors: chartColors,
@@ -32,11 +69,11 @@ function getSegmentColor(name) {
     return segmentColorMap[name];
 }
 
-function getCategoryColor(segmentName, index = 0) {
-    const base = getSegmentColor(segmentName);
-    const steps = [0, 0.2, -0.2, 0.4, -0.4];
-    const bright = steps[index % steps.length];
-    return Highcharts.color(base).brighten(bright).get();
+function getCategoryColor(name, segmentName = null) {
+    if (categoryColorMap[name]) return categoryColorMap[name];
+    const seg = segmentName || categorySegmentMap[name];
+    if (seg) return getSegmentColor(seg);
+    return chartColors[0];
 }
 
 window.chartColors = chartColors;

@@ -111,7 +111,6 @@
         const segmentIds = {};
         const segmentTotals = {};
         const categoryTotals = {};
-        const catCounts = {};
         (yearly.categories || []).forEach(c => {
             if (!c.name) return;
             const segName = categoryMap[c.name] || 'Not Segmented';
@@ -124,9 +123,7 @@
             const catId = 'cat_' + makeId(c.name);
 
             const total = Math.abs(parseFloat(c.total));
-            const count = catCounts[segName] || 0;
-            catCounts[segName] = count + 1;
-            const catColor = getCategoryColor(segName, count);
+            const catColor = getCategoryColor(c.name, segName);
             const catNode = { id: catId, parent: segId, name: c.name, color: catColor };
             if (!includeTags) { catNode.value = total; }
             data.push(catNode);
@@ -150,9 +147,7 @@
                         data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
                     }
                     catId = 'cat_' + makeId(t.category);
-                    const count = catCounts[segName] || 0;
-                    catCounts[segName] = count + 1;
-                    const catColor = getCategoryColor(segName, count);
+                    const catColor = getCategoryColor(t.category, segName);
                     data.push({ id: catId, parent: segId, name: t.category, color: catColor });
                     catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false, color: catColor };
                 }
@@ -207,13 +202,10 @@
                 y: parseFloat(m.spent),
                 z: Math.abs(parseFloat(m.income || 0) - parseFloat(m.spent))
             }));
-            const segCounts = {};
             const catColors = {};
             const categorySeries = yearly.categories.map(c => {
                 const seg = c.segment_name || 'Not Segmented';
-                const count = segCounts[seg] || 0;
-                segCounts[seg] = count + 1;
-                const color = getCategoryColor(seg, count);
+                const color = getCategoryColor(c.name, seg);
                 catColors[c.name] = color;
                 return {
                     name: c.name,
