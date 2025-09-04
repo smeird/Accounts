@@ -1,7 +1,8 @@
 <?php
 // Exports selected data as JSON. Allows selecting categories, tags, groups,
-// segments, transactions, budgets, and projects via the `parts` query parameter.
-// User and account information is always included so a full backup can be restored.
+// segments, transactions, budgets, projects, and settings via the `parts`
+// query parameter. User and account information is always included so a full
+// backup can be restored.
 require_once __DIR__ . '/../nocache.php';
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
@@ -9,7 +10,8 @@ require_once __DIR__ . '/../models/Log.php';
 // Determine which parts are being backed up so the filename can reflect them
 // Include segments so they can be exported and restored
 // Allow optionally including projects in the backup
-$allParts = ['categories','tags','groups','transactions','budgets','segments','projects'];
+// Settings may also be backed up and restored
+$allParts = ['categories','tags','groups','transactions','budgets','segments','projects','settings'];
 $parts = isset($_GET['parts']) && $_GET['parts'] !== ''
     ? array_intersect($allParts, explode(',', $_GET['parts']))
     : $allParts;
@@ -34,6 +36,9 @@ try {
     // Always include users and account details
     $data['users'] = $getAll('SELECT id, username, password FROM users ORDER BY id');
     $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts ORDER BY id');
+    if (in_array('settings', $parts)) {
+        $data['settings'] = $getAll('SELECT name, value FROM settings ORDER BY name');
+    }
     if (in_array('categories', $parts)) {
         // Include segment references with categories
         $data['categories'] = $getAll('SELECT id, segment_id, name, description FROM categories ORDER BY id');

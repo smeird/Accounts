@@ -186,7 +186,7 @@ Back up and restore your data through the web interface. From the navigation
 menu open **Backup & Restore** under *Administration*. User accounts and
 account information are always included in backups. You can additionally choose
 which other parts of the database to download—transactions, categories, tags,
-groups, segments, projects, or budgets. The downloaded file contains gzipped JSON and is named after
+groups, segments, projects, budgets, or settings. The downloaded file contains gzipped JSON and is named after
 your site's hostname, the current date, and the selected sections (for example,
 `example.com-2024-05-15-transactions-categories.json.gz`). To restore a backup,
 choose the compressed file on the same page and click **Restore**; any included

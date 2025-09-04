@@ -1,6 +1,6 @@
 <?php
 
-// Restores users, accounts, segments, categories, tags, groups,
+// Restores users, accounts, settings, segments, categories, tags, groups,
 // transactions, budgets, and projects from an uploaded gzipped JSON backup.
 
 require_once __DIR__ . '/../nocache.php';
@@ -85,6 +85,7 @@ try {
     if (isset($data['groups'])) $db->exec('TRUNCATE TABLE transaction_groups');
     if (isset($data['projects'])) $db->exec('TRUNCATE TABLE projects');
     if (isset($data['budgets'])) $db->exec('TRUNCATE TABLE budgets');
+    if (isset($data['settings'])) $db->exec('TRUNCATE TABLE settings');
     if (isset($data['accounts'])) $db->exec('TRUNCATE TABLE accounts');
     if (isset($data['users'])) $db->exec('TRUNCATE TABLE users');
     $db->exec('SET FOREIGN_KEY_CHECKS=1');
@@ -107,6 +108,13 @@ try {
                 'ledger_balance' => $row['ledger_balance'],
                 'ledger_balance_date' => $row['ledger_balance_date'] ?? null
             ]);
+        }
+    }
+
+    if (isset($data['settings'])) {
+        $stmtSet = $db->prepare('INSERT INTO settings (name, value) VALUES (:name, :value)');
+        foreach ($data['settings'] as $row) {
+            $stmtSet->execute(['name' => $row['name'], 'value' => $row['value']]);
         }
     }
 
