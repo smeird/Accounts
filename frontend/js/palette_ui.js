@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     update();
   });
   document.getElementById('apply').addEventListener('click', save);
+  document.getElementById('refresh').addEventListener('click', update);
 });
 
 function buildSegmentInputs() {
@@ -39,10 +40,13 @@ function buildSegmentInputs() {
     colorInput.addEventListener('input', e => {
       const o = hexToOklch(e.target.value);
       seg.hue_deg = o.h;
+      seg.locked = true;
+      lockInput.checked = true;
       update();
     });
     lockInput.addEventListener('change', e => {
       seg.locked = e.target.checked;
+      update();
     });
     container.appendChild(div);
     seg._preview = div.querySelector('.preview');
