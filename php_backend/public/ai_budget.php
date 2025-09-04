@@ -94,7 +94,7 @@ try {
         ['role' => 'user', 'content' => $prompt]
     ],
     'temperature' => 1,
-    'response_format' => ['type' => 'json_object'],
+    'text' => ['format' => 'json'],
 ];
 
     $ch = curl_init('https://api.openai.com/v1/responses');
