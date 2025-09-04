@@ -10,16 +10,20 @@ export function supportsOklch() {
 
 export function generatePalette(seedHex, segments, shadeCount = 7) {
   const seed = hexToOklch(seedHex);
-  const hues = [];
+  const used = new Set();
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
+    let h;
     if (seg.locked && seg.hue_deg !== null) {
-      hues.push(seg.hue_deg);
+      h = seg.hue_deg;
     } else {
-      const h = (seed.h + i * GOLDEN_ANGLE) % 360;
-      hues.push(h);
+      h = (seed.h + i * GOLDEN_ANGLE) % 360;
+      while (used.has(Math.round(h))) {
+        h = (h + GOLDEN_ANGLE) % 360;
+      }
       seg.hue_deg = h;
     }
+    used.add(Math.round(seg.hue_deg));
     seg.base_l_pct = clamp(seg.base_l_pct ?? 67, 65, 70);
     seg.base_c = clamp(seg.base_c ?? 0.12, 0.1, 0.14);
   }
