@@ -39,7 +39,6 @@ $colorMap = [
     'teal'   => '#0d9488',
     'orange' => '#ea580c',
 ];
-$paletteSeed = Setting::get('palette_seed');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
@@ -95,14 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($newColorScheme !== $colorScheme) {
             Setting::set('color_scheme', $newColorScheme);
             Log::write('Updated color scheme');
-            if (isset($colorMap[$newColorScheme])) {
-                Setting::set('palette_seed', $colorMap[$newColorScheme]);
-                Log::write('Updated palette seed to match color scheme');
-            }
             $colorScheme = $newColorScheme;
-        } elseif (($paletteSeed === null || $paletteSeed === '') && isset($colorMap[$newColorScheme])) {
-            Setting::set('palette_seed', $colorMap[$newColorScheme]);
-            Log::write('Updated palette seed to match color scheme');
         }
     }
     $message = 'Settings updated.';

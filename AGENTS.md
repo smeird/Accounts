@@ -11,7 +11,7 @@
 - Projects board page presents each active project as an individual card with key details and actions.
 - Projects board cards display post-description details in a compact table with a smaller font to minimise card size.
 - Colour palettes are generated in OKLCH with an HSL fallback. Palette settings are stored using hue, lightness and chroma parameters rather than hex values.
-- Palette seed colour defaults to the configured colour scheme and updates when the colour scheme changes.
+- Palette generation spaces segment hues using the golden angle without a seed colour.
 
 
 ## Environment

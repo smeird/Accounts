@@ -1,6 +1,6 @@
-// Seed-driven palette generation using OKLCH with HSL fallback.
+// Palette generation using OKLCH with HSL fallback.
 // Requires colour.js utilities.
-import {hexToOklch, oklchToHsl, oklchToRgb, contrastRatio} from './colour.js';
+import {oklchToHsl, oklchToRgb, contrastRatio} from './colour.js';
 
 const GOLDEN_ANGLE = 137.50776405;
 
@@ -8,8 +8,8 @@ export function supportsOklch() {
   return CSS && CSS.supports && CSS.supports('color', 'oklch(50% 0.1 40)');
 }
 
-export function generatePalette(seedHex, segments, shadeCount = 7) {
-  const seed = hexToOklch(seedHex);
+export function generatePalette(segments, shadeCount = 7) {
+  const startHue = 0;
   const used = new Set(
     segments
       .filter(s => s.locked && s.hue_deg !== null)
@@ -21,7 +21,7 @@ export function generatePalette(seedHex, segments, shadeCount = 7) {
     if (seg.locked && seg.hue_deg !== null) {
       h = seg.hue_deg;
     } else {
-      h = (seed.h + i * GOLDEN_ANGLE) % 360;
+      h = (startHue + i * GOLDEN_ANGLE) % 360;
       while (used.has(Math.round(h))) {
         h = (h + GOLDEN_ANGLE) % 360;
       }
