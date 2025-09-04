@@ -50,6 +50,7 @@ $temperature = Setting::get('ai_temperature');
 if ($temperature === null || $temperature === '') {
     $temperature = 1;
 }
+$debugMode = Setting::get('ai_debug') === '1';
 $payload = [
     'model' => $model,
     'input' => [
@@ -71,10 +72,16 @@ curl_setopt_array($ch, [
 ]);
 $response = curl_exec($ch);
 $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$debugInfo = null;
+if ($debugMode) {
+    $debugInfo = ['request' => $payload, 'response' => $response, 'http_code' => $code];
+}
 if ($response === false || $code !== 200) {
     http_response_code(500);
     Log::write('AI tag API error: ' . ($response ?: 'no response'), 'ERROR');
-    echo json_encode(['error' => 'OpenAI request failed']);
+    $err = ['error' => 'OpenAI request failed'];
+    if ($debugMode) $err['debug'] = $debugInfo;
+    echo json_encode($err);
     exit;
 }
 $data = json_decode($response, true);
@@ -95,7 +102,12 @@ $suggestions = json_decode($content, true);
 if (!is_array($suggestions)) {
     http_response_code(500);
     Log::write('AI tag invalid response: ' . $content, 'ERROR');
-    echo json_encode(['error' => 'Invalid AI response']);
+    $err = ['error' => 'Invalid AI response'];
+    if ($debugMode) {
+        $debugInfo['response'] = $content;
+        $err['debug'] = $debugInfo;
+    }
+    echo json_encode($err);
     exit;
 }
 
@@ -139,7 +151,12 @@ foreach ($suggestions as $s) {
 }
 
 Log::write("AI tagged $processed transactions using $usage tokens");
-echo json_encode(['processed' => $processed, 'tokens' => $usage]);
+ $out = ['processed' => $processed, 'tokens' => $usage];
+ if ($debugMode) {
+     $debugInfo['response'] = $content;
+     $out['debug'] = $debugInfo;
+ }
+ echo json_encode($out);
 // Self-check:
 // Endpoint detected: Responses
 // Using text.format.type = json_object for structured JSON tag suggestions
