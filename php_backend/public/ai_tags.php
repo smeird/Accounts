@@ -32,7 +32,11 @@ if (!$txns) {
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
 $txnMap = [];
-$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. Return JSON as either a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"} or an object {\"transactions\":[...]} containing that array.\n\n";
+
+$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. ";
+$prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"} ";
+$prompt .= "or as an object {\"transactions\":[...]} containing that array. Do not return a single object.\n\n";
+
 
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
@@ -85,9 +89,20 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     echo json_encode(['error' => 'Invalid AI response']);
     exit;
 }
-$content = $data['output_text']
-    ?? ($data['output'][0]['content'][0]['text']
-        ?? ($data['choices'][0]['message']['content'] ?? ''));
+
+$content = $data['output_text'] ?? '';
+if ($content === '' && isset($data['output']) && is_array($data['output'])) {
+    foreach ($data['output'] as $out) {
+        if (!empty($out['content'][0]['text'])) {
+            $content = $out['content'][0]['text'];
+            break;
+        }
+    }
+}
+if ($content === '' && isset($data['choices'][0]['message']['content'])) {
+    $content = $data['choices'][0]['message']['content'];
+}
+
 $usage = $data['usage']['total_tokens'] ?? 0;
 if ($content === '') {
     http_response_code(500);
@@ -114,9 +129,14 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     echo json_encode(['error' => 'Invalid AI response']);
     exit;
 }
-if (is_array($suggestions) && isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
 
-    $suggestions = $suggestions['transactions'];
+if (is_array($suggestions)) {
+    if (isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
+        $suggestions = $suggestions['transactions'];
+    } elseif (isset($suggestions['id']) && isset($suggestions['tag']) && isset($suggestions['category'])) {
+        $suggestions = [$suggestions];
+    }
+
 }
 if (!is_array($suggestions)) {
     http_response_code(500);
