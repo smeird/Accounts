@@ -10,6 +10,7 @@ $db = Database::getConnection();
 $db->exec("SET FOREIGN_KEY_CHECKS=0");
 $dropSql = <<<SQL
 DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS saved_reports;
 DROP TABLE IF EXISTS totp_secrets;
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS users;
@@ -43,6 +44,14 @@ CREATE TABLE IF NOT EXISTS totp_secrets (
 CREATE TABLE IF NOT EXISTS settings (
     name VARCHAR(100) PRIMARY KEY,
     value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS saved_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT DEFAULT NULL,
+    filters TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS accounts (

@@ -180,20 +180,27 @@
         window.segmentChoices = new Choices(segmentSelect, { searchEnabled: true, shouldSort: false, removeItemButton: true });
     }
 
-    // Populate the saved reports dropdown from localStorage
-    function loadSavedReports() {
-        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
-        const select = document.getElementById('saved-reports');
-        select.innerHTML = '<option value="">Select</option>';
-        saved.forEach((r, idx) => {
-            const opt = document.createElement('option');
-            opt.value = idx;
-            opt.textContent = r.name;
-            select.appendChild(opt);
-        });
-        if (window.savedChoices) { window.savedChoices.destroy(); }
-        window.savedChoices = new Choices(select, { searchEnabled: true, shouldSort: false, itemSelectText: '' });
-        document.getElementById('delete-report').disabled = saved.length === 0;
+    // Populate the saved reports dropdown from the server
+    async function loadSavedReports() {
+        try {
+            const res = await fetch('../php_backend/public/saved_reports.php');
+            const saved = await res.json();
+            window.savedReports = saved;
+            const select = document.getElementById('saved-reports');
+            select.innerHTML = '<option value="">Select</option>';
+            saved.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = r.name;
+                if (r.description) opt.title = r.description;
+                select.appendChild(opt);
+            });
+            if (window.savedChoices) { window.savedChoices.destroy(); }
+            window.savedChoices = new Choices(select, { searchEnabled: true, shouldSort: false, itemSelectText: '' });
+            document.getElementById('delete-report').disabled = saved.length === 0;
+        } catch (e) {
+            console.error('Failed to load saved reports', e);
+        }
     }
 
     // Execute the report query and render results and chart
@@ -311,11 +318,13 @@
         runReport();
     });
 
-    document.getElementById('save-report').addEventListener('click', function() {
+    document.getElementById('save-report').addEventListener('click', async function() {
         const name = prompt('Report name');
         if (!name) return;
+        const description = prompt('Report description') || '';
         const report = {
             name,
+            description,
             category: getSelectedValues(window.catChoices),
             tag: getSelectedValues(window.tagChoices),
             group: getSelectedValues(window.groupChoices),
@@ -324,40 +333,45 @@
             start: document.getElementById('start').value,
             end: document.getElementById('end').value
         };
-        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
-        saved.push(report);
-        localStorage.setItem('reports', JSON.stringify(saved));
+        await fetch('../php_backend/public/saved_reports.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(report)
+        });
         loadSavedReports();
     });
 
     document.getElementById('saved-reports').addEventListener('change', function() {
-        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
-        const idx = this.value;
-        if (idx === '') return;
-        const r = saved[idx];
+        const id = this.value;
+        if (id === '') return;
+        const r = (window.savedReports || []).find(s => String(s.id) === String(id));
+        if (!r) return;
+        const f = r.filters || {};
 
-        const catVals = Array.isArray(r.category) ? r.category : (r.category ? [r.category] : []);
-        const tagVals = Array.isArray(r.tag) ? r.tag : (r.tag ? [r.tag] : []);
-        const grpVals = Array.isArray(r.group) ? r.group : (r.group ? [r.group] : []);
-        const segVals = Array.isArray(r.segment) ? r.segment : (r.segment ? [r.segment] : []);
+        const catVals = Array.isArray(f.category) ? f.category : (f.category ? [f.category] : []);
+        const tagVals = Array.isArray(f.tag) ? f.tag : (f.tag ? [f.tag] : []);
+        const grpVals = Array.isArray(f.group) ? f.group : (f.group ? [f.group] : []);
+        const segVals = Array.isArray(f.segment) ? f.segment : (f.segment ? [f.segment] : []);
         if (window.catChoices) { window.catChoices.setChoiceByValue(catVals); } else { document.getElementById('category').value = catVals[0] || ''; }
         if (window.tagChoices) { window.tagChoices.setChoiceByValue(tagVals); } else { document.getElementById('tag').value = tagVals[0] || ''; }
         if (window.groupChoices) { window.groupChoices.setChoiceByValue(grpVals); } else { document.getElementById('group').value = grpVals[0] || ''; }
         if (window.segmentChoices) { window.segmentChoices.setChoiceByValue(segVals); } else { document.getElementById('segment').value = segVals[0] || ''; }
 
-        document.getElementById('text').value = r.text || '';
-        document.getElementById('start').value = r.start || '';
-        document.getElementById('end').value = r.end || '';
+        document.getElementById('text').value = f.text || '';
+        document.getElementById('start').value = f.start || '';
+        document.getElementById('end').value = f.end || '';
         runReport();
     });
 
-    document.getElementById('delete-report').addEventListener('click', function() {
+    document.getElementById('delete-report').addEventListener('click', async function() {
         const select = document.getElementById('saved-reports');
-        const idx = select.value;
-        if (idx === '') return;
-        const saved = JSON.parse(localStorage.getItem('reports') || '[]');
-        saved.splice(idx, 1);
-        localStorage.setItem('reports', JSON.stringify(saved));
+        const id = select.value;
+        if (id === '') return;
+        await fetch('../php_backend/public/saved_reports.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
         loadSavedReports();
         select.value = '';
         if (window.savedChoices) { window.savedChoices.setChoiceByValue(''); }
