@@ -22,7 +22,7 @@
             <button id="run" class="bg-indigo-600 text-white px-4 py-2 rounded">
                 <i class="fas fa-comments-dollar inline w-4 h-4 mr-1"></i>Generate Feedback
             </button>
-            <div id="result" class="mt-4 whitespace-pre-wrap"></div>
+            <div id="result" class="mt-4"></div>
             <div id="debug" class="mt-4 hidden">
                 <div class="bg-white p-4 rounded shadow border border-gray-400">
                     <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
@@ -39,6 +39,29 @@
 <script src="js/input_help.js"></script>
 <script src="js/overlay.js"></script>
 <script>
+function escapeHtml(str){
+    const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'};
+    map["'"]='&#39;';
+    return str.replace(/[&<>"']/g,c=>map[c]);
+}
+
+function renderFeedback(data){
+    const highlights = data.highlights.map(h=>`<li>${escapeHtml(h)}</li>`).join('');
+    const actions = data.actions.map(a=>`<li>${escapeHtml(a)}</li>`).join('');
+    return `
+        <div class="bg-white p-4 rounded shadow space-y-4">
+            <p>${escapeHtml(data.summary)}</p>
+            <div>
+                <h3 class="font-semibold">Highlights</h3>
+                <ul class="list-disc ml-5">${highlights}</ul>
+            </div>
+            <div>
+                <h3 class="font-semibold">Recommended Actions</h3>
+                <ul class="list-disc ml-5">${actions}</ul>
+            </div>
+        </div>`;
+}
+
 document.getElementById('run').addEventListener('click', async () => {
     const result = document.getElementById('result');
     const debugContainer = document.getElementById('debug');
@@ -55,7 +78,7 @@ document.getElementById('run').addEventListener('click', async () => {
             result.textContent = data.error;
             showMessage('AI feedback failed', 'error');
         } else {
-            result.textContent = data.feedback;
+            result.innerHTML = renderFeedback(data);
             showMessage('AI feedback ready');
         }
         if (data.debug) {

@@ -50,7 +50,8 @@ try {
     $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $prompt = "Provide an overall summary and financial analysis based on these segment and category totals for the last 12 months. "
-        . "Respond with a detailed paragraph and do not ask any questions. Return JSON {\"feedback\":\"analysis\"}.\n\nSegments:\n";
+        . "Return JSON with keys: summary (string), highlights (array of key points), and actions (array of recommendations). "
+        . "Do not ask any questions.\n\nSegments:\n";
     foreach ($segments as $s) {
         $prompt .= $s['name'] . ': £' . number_format((float)$s['total'], 2) . "\n";
     }
@@ -126,16 +127,31 @@ try {
         $content = trim($content);
     }
     $parsed = json_decode($content, true);
-    if (json_last_error() !== JSON_ERROR_NONE || !is_array($parsed) || !isset($parsed['feedback'])) {
+    if (
+        json_last_error() !== JSON_ERROR_NONE ||
+        !is_array($parsed) ||
+        !isset($parsed['summary']) ||
+        !isset($parsed['highlights']) ||
+        !isset($parsed['actions']) ||
+        !is_array($parsed['highlights']) ||
+        !is_array($parsed['actions'])
+    ) {
         http_response_code(500);
         Log::write('AI feedback invalid response: ' . $content, 'ERROR');
         echo json_encode(['error' => 'Invalid AI response']);
         exit;
     }
-    $content = trim($parsed['feedback']);
-    $out = ['feedback' => $content, 'tokens' => $usage];
+    $summary = trim($parsed['summary']);
+    $highlights = array_map('trim', $parsed['highlights']);
+    $actions = array_map('trim', $parsed['actions']);
+    $out = [
+        'summary' => $summary,
+        'highlights' => $highlights,
+        'actions' => $actions,
+        'tokens' => $usage
+    ];
     if ($debugMode) {
-        $out['debug'] = ['prompt' => $prompt, 'response' => $content];
+        $out['debug'] = ['prompt' => $prompt, 'response' => $parsed];
     }
     Log::write("AI feedback generated using $usage tokens");
     echo json_encode($out);
