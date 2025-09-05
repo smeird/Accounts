@@ -50,6 +50,7 @@
 - Secure accounts with two-factor authentication and offer detailed search and reporting.
 - Transaction groups include an `active` flag. Inactive groups are hidden from selection and projects set to archived automatically deactivate their associated group.
 - PDF reports are named using a timestamped `transactions_report_YYYYMMDD_HHMMSS.pdf` format to ensure uniqueness and clarity.
+- Saved reports persist in a `saved_reports` table storing each report's name, description, and filter criteria.
 
 ## Testing
 - Run `php tests/run_tests.php` to execute the test suite.

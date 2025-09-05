@@ -5,6 +5,7 @@ require_once __DIR__ . '/../php_backend/models/Category.php';
 require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
 require_once __DIR__ . '/../php_backend/models/TransactionGroup.php';
+require_once __DIR__ . '/../php_backend/models/SavedReport.php';
 require_once __DIR__ . '/../php_backend/OfxParser.php';
 require_once __DIR__ . '/../php_backend/NaturalLanguageReportParser.php';
 
@@ -16,14 +17,15 @@ $db = Database::getConnection();
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, keyword TEXT, description TEXT);');
-$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
-$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER);');
+$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, hue_deg REAL, base_l_pct REAL, base_c REAL, locked TINYINT);');
+$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER, shade_index INTEGER);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
 $db->exec('CREATE TABLE settings (name TEXT PRIMARY KEY, value TEXT);');
 $db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, segment_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER, ofx_id TEXT, ofx_type TEXT, bank_ofx_id TEXT);');
 $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, active TINYINT DEFAULT 1);');
 $db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, amount REAL);');
 $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
+$db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 
 $results = [];
 
@@ -279,6 +281,14 @@ $parsedPunctTags = NaturalLanguageReportParser::parse('#fun bills!');
 sort($parsedPunctTags['tag']);
 assertEqual([1,2], $parsedPunctTags['tag'], 'Natural language parser handles tag names with symbols');
 
+
+$repId = SavedReport::create('Sample', 'Example', ['category' => [1]]);
+$reports = SavedReport::all();
+assertEqual('Sample', $reports[0]['name'] ?? null, 'SavedReport::create stores report');
+assertEqual('Example', $reports[0]['description'] ?? null, 'SavedReport description stored');
+SavedReport::delete($repId);
+$afterDel = SavedReport::all();
+assertEqual(0, count($afterDel), 'SavedReport::delete removes report');
 
 // Output results and set exit code
 $failed = false;
