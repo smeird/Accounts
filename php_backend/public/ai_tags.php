@@ -32,7 +32,7 @@ if (!$txns) {
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
 $txnMap = [];
-$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
+$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. Return JSON as either a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"} or an object {\"transactions\":[...]} containing that array.\n\n";
 
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
@@ -93,6 +93,9 @@ if (substr($content, 0, 3) === '```') {
 
 
 $suggestions = json_decode($content, true);
+if (isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
+    $suggestions = $suggestions['transactions'];
+}
 if (!is_array($suggestions)) {
     http_response_code(500);
     Log::write('AI tag invalid response: ' . $content, 'ERROR');
