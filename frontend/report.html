@@ -484,6 +484,17 @@
             });
         }
 
+        // Include the chart in the PDF
+        const chartEl = document.getElementById('chart');
+        if (chartEl) {
+            const canvas = await html2canvas(chartEl, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pageWidth - 28;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            const chartY = ((doc.lastAutoTable && doc.lastAutoTable.finalY) || y) + 10;
+            doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
+        }
+
         const blob = doc.output('blob');
 
         const now = new Date();
