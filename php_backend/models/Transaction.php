@@ -288,7 +288,7 @@ class Transaction {
     /**
      * Retrieve all transactions for a specific account ordered by date.
      */
-    public static function getByAccount(int $accountId, ?string $startDate = null): array {
+    public static function getByAccount(int $accountId): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
@@ -299,17 +299,10 @@ class Transaction {
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`account_id` = :acc '
-             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) ';
-        if ($startDate) {
-            $sql .= 'AND t.`date` >= :start ';
-        }
-        $sql .= 'ORDER BY t.`date` DESC, t.`id` DESC';
+             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
+             . 'ORDER BY t.`date` DESC, t.`id` DESC';
         $stmt = $db->prepare($sql);
-        $params = ['acc' => $accountId, 'ignore' => $ignore];
-        if ($startDate) {
-            $params['start'] = $startDate;
-        }
-        $stmt->execute($params);
+        $stmt->execute(['acc' => $accountId, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

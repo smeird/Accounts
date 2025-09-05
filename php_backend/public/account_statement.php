@@ -11,15 +11,7 @@ try {
         throw new Exception('Account id required');
     }
     $id = (int)$_GET['id'];
-    $months = null;
-    if (isset($_GET['months']) && $_GET['months'] !== 'all') {
-        $months = max(1, (int)$_GET['months']);
-    }
-    $startDate = null;
-    if ($months) {
-        $startDate = (new DateTime())->modify("-{$months} months")->format('Y-m-d');
-    }
-    $transactions = Transaction::getByAccount($id, $startDate);
+    $transactions = Transaction::getByAccount($id);
     echo json_encode($transactions);
 } catch (Exception $e) {
     http_response_code(500);

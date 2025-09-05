@@ -20,14 +20,6 @@
             <h1 id="account-name" class="text-2xl font-semibold mb-4 text-indigo-700">Account Balance</h1>
             <p id="account-details" class="mb-4 text-gray-600"></p>
             <p class="mb-4">View the balance over time based on the latest bank statement.</p>
-            <label for="range-select" class="block mb-4">Range:
-                <select id="range-select" class="border p-2 rounded" data-help="Select time range">
-                    <option value="1">Last Month</option>
-                    <option value="3">Last 3 Months</option>
-                    <option value="12">Last Year</option>
-                    <option value="all">All</option>
-                </select>
-            </label>
             <div class="bg-white p-6 rounded shadow border border-gray-400">
                 <div id="balance-chart" style="height:400px" data-chart-desc="Line chart of account balance over time."></div>
             </div>
@@ -67,19 +59,8 @@
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-
-    function loadRange(range){
-        if (!id) {
-            document.getElementById('balance-chart').textContent = 'No account specified.';
-            return;
-        }
-        let balanceUrl = `../php_backend/public/account_balance.php?id=${id}`;
-        let stmtUrl = `../php_backend/public/account_statement.php?id=${id}`;
-        if (range !== 'all') {
-            balanceUrl += `&months=${range}`;
-            stmtUrl += `&months=${range}`;
-        }
-        fetch(balanceUrl)
+    if (id) {
+        fetch(`../php_backend/public/account_balance.php?id=${id}`)
             .then(r => r.json())
             .then(data => {
                 if (data.error) {
@@ -101,12 +82,11 @@
                 });
             });
 
-        fetch(stmtUrl)
+
+        fetch(`../php_backend/public/account_statement.php?id=${id}`)
             .then(r => r.json())
             .then(rows => {
-                const tableEl = document.getElementById('statement-table');
-                tableEl.innerHTML = '';
-                tailwindTabulator(tableEl, {
+                tailwindTabulator(document.getElementById('statement-table'), {
                     data: rows,
                     layout: 'fitDataStretch',
                     rowClick: (e, row) => {
@@ -119,11 +99,10 @@
                     ]
                 });
             });
-    }
 
-    const rangeSelect = document.getElementById('range-select');
-    rangeSelect.addEventListener('change', () => loadRange(rangeSelect.value));
-    loadRange(rangeSelect.value);
+    } else {
+        document.getElementById('balance-chart').textContent = 'No account specified.';
+    }
     </script>
     <script src="js/overlay.js"></script>
 </body>
