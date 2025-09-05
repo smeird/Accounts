@@ -20,27 +20,36 @@
     <div class="flex flex-col md:flex-row min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto shadow"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <section class="bg-white p-8 rounded shadow border border-gray-400 text-center mb-8">
-                <h1 class="font-['Roboto'] text-4xl font-semibold mb-4 text-indigo-700">Welcome to <span id="landing-site-name">Finance Manager</span></h1>
-                <p class="text-gray-700 mb-4">Select an option from the menu to get started exploring your finances. Each section opens tools and dashboards that help you understand where your money goes.</p>
-                <a href="upload.html" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 font-['Source_Sans_Pro'] font-light">Get Started</a>
-                <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-8">
-                    <img src="laptop.png" alt="Laptop illustration" class="w-32 h-32 md:w-40 md:h-40 object-contain rounded shadow">
-                    <img src="coin_flower.png" alt="Coin plant illustration" class="w-32 h-32 md:w-40 md:h-40 object-contain rounded shadow">
+            <section class="mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="relative rounded-lg overflow-hidden shadow">
+                        <img src="laptop.png" alt="Laptop illustration" class="w-full h-72 md:h-96 object-cover">
+                        <div class="absolute inset-0 bg-indigo-700/60 flex flex-col items-center justify-center text-center p-6">
+                            <h1 class="font-['Roboto'] text-3xl md:text-4xl font-semibold mb-4 text-white">Welcome to <span id="landing-site-name">Finance Manager</span></h1>
+                            <p class="text-indigo-100 mb-4">Select an option from the menu to get started exploring your finances. Each section opens tools and dashboards that help you understand where your money goes.</p>
+                            <a href="upload.html" class="inline-block bg-white text-indigo-700 px-4 py-2 rounded hover:bg-indigo-100 font-['Source_Sans_Pro'] font-light">Get Started</a>
+                        </div>
+                    </div>
+                    <div class="relative rounded-lg overflow-hidden shadow h-72 md:h-96">
+                        <img src="coin_flower.png" alt="Coin plant illustration" class="absolute inset-0 w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center p-6 text-center">
+                            <p class="text-white text-2xl font-['Roboto']">Track savings effortlessly</p>
+                        </div>
+                    </div>
                 </div>
-                <p id="version" class="text-gray-500 mt-2">Version: loading...</p>
+                <p id="version" class="text-gray-500 mt-2 text-center">Version: loading...</p>
             </section>
 
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                <div class="bg-white p-6 rounded shadow border border-gray-400 flex flex-col items-center text-center">
+                <div class="bg-white p-6 rounded shadow border border-gray-300 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-lg">
                     <i class="fas fa-chart-line fa-6x mb-2 text-indigo-600"></i>
                     <p class="text-gray-700">Visualise your spending trends with clear charts that highlight where your money goes.</p>
                 </div>
-                <div class="bg-white p-6 rounded shadow border border-gray-400 flex flex-col items-center text-center">
+                <div class="bg-white p-6 rounded shadow border border-gray-300 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-lg">
                     <i class="fas fa-piggy-bank fa-6x mb-2 text-indigo-600"></i>
                     <p class="text-gray-700">Track savings effortlessly to see how your balance grows over time.</p>
                 </div>
-                <div class="bg-white p-6 rounded shadow border border-gray-400 flex flex-col items-center text-center">
+                <div class="bg-white p-6 rounded shadow border border-gray-300 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-lg">
                     <i class="fas fa-wallet fa-6x mb-2 text-indigo-600"></i>
                     <p class="text-gray-700">Manage budgets with ease by setting targets and watching your progress.</p>
                 </div>
