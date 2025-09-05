@@ -11,6 +11,7 @@ const chartColors = [
 const segmentColorMap = {};
 const categoryColorMap = {};
 const categorySegmentMap = {};
+const tagColorMap = {};
 let nextSegmentIndex = 0;
 
 function hashString(str) {
@@ -78,22 +79,30 @@ function getCategoryColor(name, segmentName = null) {
     const seg = segmentName || categorySegmentMap[name];
     if (seg) {
         const base = getSegmentColor(seg);
-        const hsl = Highcharts.color(base).get('hsl');
         const hash = hashString(name);
-        const hueShift = (hash % 40) - 20; // -20..19
-        const lightShift = ((hash >> 3) % 30 - 15) / 100; // -0.15..0.14
-        hsl.h = (hsl.h + hueShift + 360) % 360;
-        hsl.l = Math.min(1, Math.max(0, hsl.l + lightShift));
-        const color = Highcharts.color(hsl).get();
+        const shift = ((hash % 40) - 20) / 100; // -0.20..0.19
+        const color = Highcharts.color(base).brighten(shift).get();
         categoryColorMap[name] = color;
         return color;
     }
     return chartColors[0];
 }
 
+function getTagColor(name, categoryName, categoryColor = null) {
+    const key = `${categoryName}|${name}`;
+    if (tagColorMap[key]) return tagColorMap[key];
+    const base = categoryColor || getCategoryColor(categoryName);
+    const hash = hashString(key);
+    const shift = ((hash % 40) - 20) / 100; // -0.20..0.19
+    const color = Highcharts.color(base).brighten(shift).get();
+    tagColorMap[key] = color;
+    return color;
+}
+
 window.chartColors = chartColors;
 window.getSegmentColor = getSegmentColor;
 window.getCategoryColor = getCategoryColor;
+window.getTagColor = getTagColor;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-chart-desc]').forEach(el => {

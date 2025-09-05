@@ -155,7 +155,7 @@
                 }
                 const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
                 const value = Math.abs(parseFloat(t.total));
-                const tagColor = Highcharts.color(catInfo.color).brighten(0.2).get();
+                const tagColor = getTagColor(t.name, t.category, catInfo.color);
                 data.push({ id: tagId, parent: catId, name: t.name, value, color: tagColor });
                 tagSums[catId] = (tagSums[catId] || 0) + value;
                 if (!catInfo.fromYearly) {
@@ -167,7 +167,7 @@
                 const tagged = tagSums[ct.id] || 0;
                 const diff = ct.total - tagged;
                 if (Math.abs(diff) > 0.01) {
-                    const otherColor = Highcharts.color(ct.color).brighten(-0.2).get();
+                    const otherColor = getTagColor('Other', ct.name, ct.color);
                     data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff, color: otherColor });
                 }
             });
