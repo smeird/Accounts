@@ -112,7 +112,7 @@ try {
     $content = trim($parsed['feedback']);
     $out = ['feedback' => $content, 'tokens' => $usage];
     if ($debugMode) {
-        $out['debug'] = ['request' => $payload, 'response' => $content];
+        $out['debug'] = ['prompt' => $prompt, 'response' => $content];
     }
     Log::write("AI feedback generated using $usage tokens");
     echo json_encode($out);

@@ -28,7 +28,7 @@
                 <div id="ai-debug" class="md:col-span-3 hidden">
                     <div class="bg-white p-4 rounded shadow border border-gray-400">
                         <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
-                        <p class="text-sm font-semibold">Request</p>
+                        <p class="text-sm font-semibold">Prompt</p>
                         <pre id="ai-debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
                         <p class="text-sm font-semibold">Response</p>
                         <pre id="ai-debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
@@ -224,7 +224,7 @@
                 document.getElementById('end').value = filters.end || '';
                 aiStatus.textContent = filters.summary || 'AI suggestions applied';
                 if (filters.debug) {
-                    aiDebugReq.textContent = JSON.stringify(filters.debug.request, null, 2);
+                    aiDebugReq.textContent = filters.debug.prompt;
                     const resp = typeof filters.debug.response === 'string' ? filters.debug.response : JSON.stringify(filters.debug.response, null, 2);
                     aiDebugRes.textContent = resp;
                     aiDebugContainer.classList.remove('hidden');
