@@ -202,14 +202,14 @@ class Transaction {
     /**
      * Filter transactions by optional category, tag, group, segment, text and date range.
      */
-    public static function filter($category = null, $tag = null, $group = null, $segment = null, ?string $text = null, ?string $start = null, ?string $end = null): array {
-        if ($category === null && $tag === null && $group === null && $segment === null && $text === null && $start === null && $end === null) {
+    public static function filter($category = null, $tag = null, $group = null, $segment = null, ?string $text = null, ?string $memo = null, ?string $start = null, ?string $end = null): array {
+        if ($category === null && $tag === null && $group === null && $segment === null && $text === null && $memo === null && $start === null && $end === null) {
             return [];
         }
 
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, '
+        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name, s.`name` AS segment_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
@@ -239,8 +239,12 @@ class Transaction {
         $addIn($group, 'group_id', 'grp');
         $addIn($segment, 'segment_id', 'segment');
         if ($text !== null && $text !== '') {
-            $sql .= ' AND (t.`description` LIKE :txt OR t.`memo` LIKE :txt)';
+            $sql .= ' AND t.`description` LIKE :txt';
             $params['txt'] = '%' . $text . '%';
+        }
+        if ($memo !== null && $memo !== '') {
+            $sql .= ' AND t.`memo` LIKE :memo';
+            $params['memo'] = '%' . $memo . '%';
         }
         if ($start !== null && $start !== '') {
             $sql .= ' AND t.`date` >= :start';

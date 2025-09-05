@@ -183,6 +183,7 @@ $db->exec("INSERT INTO transactions (account_id, date, amount, description, cate
 $multi = Transaction::filter([$catId, $catId2]);
 assertEqual(2, count($multi), 'Transaction::filter supports multiple categories');
 
+
 $totals = Segment::totals();
 assertEqual(-50.0, (float)$totals[0]['total'], 'Segment totals reflect transaction amount');
 
@@ -191,6 +192,10 @@ $segCount = $db->query('SELECT COUNT(*) FROM segments')->fetchColumn();
 assertEqual(0, (int)$segCount, 'Segment deleted');
 $relCount = $db->query('SELECT COUNT(*) FROM categories WHERE segment_id IS NOT NULL')->fetchColumn();
 assertEqual(0, (int)$relCount, 'Category-segment relation removed');
+
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, memo) VALUES (1, '2024-07-03', -5, 'Snack', 'afternoon tea')");
+$memoFiltered = Transaction::filter(null, null, null, null, null, 'tea');
+assertEqual(1, count($memoFiltered), 'Transaction::filter filters by memo');
 
 
 // --- Duplicate FITID test ---

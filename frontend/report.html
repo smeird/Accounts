@@ -40,7 +40,8 @@
                 <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
                 <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
                 <label class="block">Segment: <select id="segment" multiple class="border p-2 rounded w-full" data-help="Filter by segment"></select></label>
-                <label class="block">Text: <input type="text" id="text" class="border p-2 rounded w-full" data-help="Filter by description text"></label>
+                <label class="block">Description: <input type="text" id="text" class="border p-2 rounded w-full" data-help="Filter by description text"></label>
+                <label class="block">Memo: <input type="text" id="memo" class="border p-2 rounded w-full" data-help="Filter by memo text"></label>
                 <label class="block">Start Date: <input type="date" id="start" class="border p-2 rounded w-full" data-help="Start date for report"></label>
                 <label class="block">End Date: <input type="date" id="end" class="border p-2 rounded w-full" data-help="End date for report"></label>
                 <div class="md:col-span-3 space-x-2">
@@ -86,6 +87,9 @@
         const arr = Array.isArray(val) ? val : (val ? [val] : []);
         return arr.map(v => v.label);
     }
+
+    let currentReportName = '';
+    let currentReportDesc = '';
 
     // Group transactions by an appropriate time frame so charts remain readable
     function groupTransactions(data) {
@@ -214,6 +218,8 @@
         const aiDebugReq = document.getElementById('ai-debug-request');
         const aiDebugRes = document.getElementById('ai-debug-response');
         if (nl) {
+            currentReportName = '';
+            currentReportDesc = '';
 
             aiStatus.textContent = 'Submitting query to AI...';
             aiStatus.classList.remove('hidden');
@@ -229,8 +235,11 @@
                 if (filters.group) window.groupChoices.setChoiceByValue(String(filters.group));
                 if (filters.segment) window.segmentChoices.setChoiceByValue(String(filters.segment));
                 document.getElementById('text').value = filters.text || '';
+                document.getElementById('memo').value = filters.memo || '';
                 document.getElementById('start').value = filters.start || '';
                 document.getElementById('end').value = filters.end || '';
+                currentReportName = filters.name || '';
+                currentReportDesc = filters.description || '';
                 aiStatus.textContent = filters.summary || 'AI suggestions applied';
                 if (filters.debug) {
                     aiDebugReq.textContent = filters.debug.prompt;
@@ -256,6 +265,7 @@
         const group = getSelectedValues(window.groupChoices);
         const segment = getSelectedValues(window.segmentChoices);
         const text = document.getElementById('text').value;
+        const memo = document.getElementById('memo').value;
         const start = document.getElementById('start').value;
         const end = document.getElementById('end').value;
         const params = new URLSearchParams();
@@ -264,6 +274,7 @@
         if (group.length) params.append('group', group.join(','));
         if (segment.length) params.append('segment', segment.join(','));
         if (text) params.append('text', text);
+        if (memo) params.append('memo', memo);
         if (start) params.append('start', start);
         if (end) params.append('end', end);
 
@@ -321,9 +332,9 @@
     });
 
     document.getElementById('save-report').addEventListener('click', async function() {
-        const name = prompt('Report name');
+        let name = currentReportName || prompt('Report name');
         if (!name) return;
-        const description = prompt('Report description') || '';
+        let description = currentReportDesc || prompt('Report description') || '';
         const report = {
             name,
             description,
@@ -332,6 +343,7 @@
             group: getSelectedValues(window.groupChoices),
             segment: getSelectedValues(window.segmentChoices),
             text: document.getElementById('text').value,
+            memo: document.getElementById('memo').value,
             start: document.getElementById('start').value,
             end: document.getElementById('end').value
         };
@@ -340,6 +352,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(report)
         });
+        currentReportName = '';
+        currentReportDesc = '';
         loadSavedReports();
     });
 
@@ -360,8 +374,11 @@
         if (window.segmentChoices) { window.segmentChoices.setChoiceByValue(segVals); } else { document.getElementById('segment').value = segVals[0] || ''; }
 
         document.getElementById('text').value = f.text || '';
+        document.getElementById('memo').value = f.memo || '';
         document.getElementById('start').value = f.start || '';
         document.getElementById('end').value = f.end || '';
+        currentReportName = r.name || '';
+        currentReportDesc = r.description || '';
         runReport();
     });
 
@@ -417,7 +434,9 @@
         const segLabels = getSelectedLabels(window.segmentChoices);
         if (segLabels.length) filters.push('Segment: ' + segLabels.join(', '));
         const textVal = document.getElementById('text').value.trim();
-        if (textVal) filters.push('Text contains: ' + textVal);
+        if (textVal) filters.push('Description contains: ' + textVal);
+        const memoVal = document.getElementById('memo').value.trim();
+        if (memoVal) filters.push('Memo contains: ' + memoVal);
         const startVal = document.getElementById('start').value;
         if (startVal) filters.push('Start: ' + startVal);
         const endVal = document.getElementById('end').value;

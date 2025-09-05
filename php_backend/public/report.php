@@ -19,8 +19,9 @@ $tag = parseList('tag');
 $group = parseList('group');
 $segment = parseList('segment');
 $text = isset($_GET['text']) ? trim($_GET['text']) : null;
+$memo = isset($_GET['memo']) ? trim($_GET['memo']) : null;
 $start = isset($_GET['start']) ? $_GET['start'] : null;
 $end = isset($_GET['end']) ? $_GET['end'] : null;
 
-echo json_encode(Transaction::filter($category, $tag, $group, $segment, $text, $start, $end));
+echo json_encode(Transaction::filter($category, $tag, $group, $segment, $text, $memo, $start, $end));
 ?>
