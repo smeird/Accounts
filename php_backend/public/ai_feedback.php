@@ -93,8 +93,31 @@ try {
         exit;
     }
     $data = json_decode($response, true);
-    $content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(500);
+        Log::write('AI feedback API JSON decode error: ' . json_last_error_msg() . ' | ' . $response, 'ERROR');
+        echo json_encode(['error' => 'Invalid AI response']);
+        exit;
+    }
+    $content = $data['output_text'] ?? '';
+    if ($content === '' && isset($data['output']) && is_array($data['output'])) {
+        foreach ($data['output'] as $out) {
+            if (!empty($out['content'][0]['text'])) {
+                $content = $out['content'][0]['text'];
+                break;
+            }
+        }
+    }
+    if ($content === '' && isset($data['choices'][0]['message']['content'])) {
+        $content = $data['choices'][0]['message']['content'];
+    }
     $usage = $data['usage']['total_tokens'] ?? 0;
+    if ($content === '') {
+        http_response_code(500);
+        Log::write('AI feedback empty response: ' . $response, 'ERROR');
+        echo json_encode(['error' => 'Invalid AI response']);
+        exit;
+    }
 
     $content = trim($content);
     if (substr($content, 0, 3) === '```') {
@@ -103,7 +126,7 @@ try {
         $content = trim($content);
     }
     $parsed = json_decode($content, true);
-    if (!is_array($parsed) || !isset($parsed['feedback'])) {
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($parsed) || !isset($parsed['feedback'])) {
         http_response_code(500);
         Log::write('AI feedback invalid response: ' . $content, 'ERROR');
         echo json_encode(['error' => 'Invalid AI response']);

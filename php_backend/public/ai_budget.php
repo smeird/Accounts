@@ -81,7 +81,7 @@ try {
     $available = max($totalSpent - $goal, 0);
 
 
-    $prompt = "You are a financial assistant. Allocate budgets for next month so total spending is about £$available leaving £$goal for savings. Use the last 12 months of totals to respect fixed costs. Return JSON object {\"budgets\":[{\"id\":<category_id>,\"amount\":<budget>}],\"summary\":\"short plain English explanation of the allocation avoiding listing every category\"}\n\n";
+    $prompt = "You are a financial assistant. Allocate budgets for next month so total spending is about £$available leaving £$goal for savings. Use the last 12 months of totals to respect fixed costs. Return JSON only as a top-level array of {\"id\":<category_id>,\"amount\":<budget>} or as {\"budgets\":[...],\"summary\":\"short plain English explanation of the allocation avoiding listing every category\"}.\n\n";
 
     foreach ($history as $h) {
         $prompt .= "{$h['id']} {$h['name']}: [" . implode(',', $h['totals']) . "]\n";
@@ -121,8 +121,31 @@ try {
         exit;
     }
     $data = json_decode($response, true);
-    $content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(500);
+        Log::write('AI budget API JSON decode error: ' . json_last_error_msg() . ' | ' . $response, 'ERROR');
+        echo json_encode(['error' => 'Invalid AI response']);
+        exit;
+    }
+    $content = $data['output_text'] ?? '';
+    if ($content === '' && isset($data['output']) && is_array($data['output'])) {
+        foreach ($data['output'] as $out) {
+            if (!empty($out['content'][0]['text'])) {
+                $content = $out['content'][0]['text'];
+                break;
+            }
+        }
+    }
+    if ($content === '' && isset($data['choices'][0]['message']['content'])) {
+        $content = $data['choices'][0]['message']['content'];
+    }
     $usage = $data['usage']['total_tokens'] ?? 0;
+    if ($content === '') {
+        http_response_code(500);
+        Log::write('AI budget empty response: ' . $response, 'ERROR');
+        echo json_encode(['error' => 'Invalid AI response']);
+        exit;
+    }
 
     $content = trim($content);
     if (substr($content, 0, 3) === '```') {
@@ -131,17 +154,24 @@ try {
         $content = trim($content);
     }
     $suggestions = json_decode($content, true);
-
-    if (!is_array($suggestions) || !isset($suggestions['budgets']) || !is_array($suggestions['budgets'])) {
-
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(500);
+        Log::write('AI budget invalid JSON: ' . json_last_error_msg() . ' | ' . $content, 'ERROR');
+        echo json_encode(['error' => 'Invalid AI response']);
+        exit;
+    }
+    $summary = '';
+    if (isset($suggestions['budgets']) && is_array($suggestions['budgets'])) {
+        $summary = isset($suggestions['summary']) ? (string)$suggestions['summary'] : '';
+        $suggestions = $suggestions['budgets'];
+    }
+    if (!is_array($suggestions)) {
         http_response_code(500);
         Log::write('AI budget invalid response: ' . $content, 'ERROR');
         echo json_encode(['error' => 'Invalid AI response']);
         exit;
     }
-
-    $summary = isset($suggestions['summary']) ? (string)$suggestions['summary'] : '';
-    foreach ($suggestions['budgets'] as $s) {
+    foreach ($suggestions as $s) {
 
         $cid = (int)($s['id'] ?? 0);
         $amount = isset($s['amount']) ? (float)$s['amount'] : null;
