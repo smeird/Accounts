@@ -153,7 +153,7 @@ try {
     $budgets = Budget::getMonthly($month, $year);
     $out = ['status' => 'ok', 'budgets' => $budgets, 'summary' => $summary];
     if ($debugMode) {
-        $out['debug'] = ['request' => $payload, 'response' => $content];
+        $out['debug'] = ['prompt' => $prompt, 'response' => $content];
     }
     Log::write("AI budgets applied for $month/$year with goal $goal using $usage tokens");
     echo json_encode($out);
