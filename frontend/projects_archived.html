@@ -8,7 +8,10 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Archived Projects</title>
-    <script>tailwind.config={darkMode:"class"}</script>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = { darkMode: "class" };
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
