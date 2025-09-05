@@ -93,7 +93,15 @@ if (substr($content, 0, 3) === '```') {
 
 
 $suggestions = json_decode($content, true);
-if (isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(500);
+    Log::write('AI tag invalid JSON: ' . json_last_error_msg() . ' | ' . $content, 'ERROR');
+    echo json_encode(['error' => 'Invalid AI response']);
+    exit;
+}
+if (is_array($suggestions) && isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
+
     $suggestions = $suggestions['transactions'];
 }
 if (!is_array($suggestions)) {
