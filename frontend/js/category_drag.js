@@ -64,8 +64,8 @@
     card.dataset.categoryId = cat.id;
 
     const nameCol = document.createElement('div');
-    // Shrink name column so the name and actions take up less horizontal space
-    nameCol.className = 'w-[10%] flex items-center gap-2';
+    // Stack the title above the action icons for a cleaner layout
+    nameCol.className = 'w-[10%] flex flex-col items-start';
 
     const title = document.createElement('h2');
     title.className = 'font-semibold';
@@ -73,7 +73,7 @@
     nameCol.appendChild(title);
 
     const actions = document.createElement('div');
-    actions.className = 'flex gap-2';
+    actions.className = 'flex gap-2 mt-1';
 
     const editBtn = document.createElement('button');
     editBtn.className = 'text-indigo-600';
