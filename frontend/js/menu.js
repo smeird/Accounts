@@ -277,6 +277,26 @@ document.addEventListener('DOMContentLoaded', () => {
               });
             });
         }
+
+        let themeToggle = document.getElementById('theme-toggle');
+        if (!themeToggle) {
+          themeToggle = document.createElement('button');
+          themeToggle.id = 'theme-toggle';
+          themeToggle.setAttribute('aria-label', 'Toggle dark mode');
+          themeToggle.className = 'ml-auto p-2 rounded-full bg-indigo-600 text-white dark:bg-gray-700';
+          themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+        const userInfo = menu.querySelector('#user-info');
+        if (userInfo && !userInfo.contains(themeToggle)) {
+          userInfo.appendChild(themeToggle);
+        } else if (menu && !menu.contains(themeToggle)) {
+          menu.appendChild(themeToggle);
+        }
+        if (!document.querySelector('script[src="js/theme_toggle.js"]')) {
+          const themeScript = document.createElement('script');
+          themeScript.src = 'js/theme_toggle.js';
+          document.body.appendChild(themeScript);
+        }
       })
       .catch(err => console.error('Menu load failed', err));
   }
@@ -312,23 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
     </a>
   `;
   document.body.appendChild(utility);
-
-  let themeToggle = document.getElementById('theme-toggle');
-  if (!themeToggle) {
-    themeToggle = document.createElement('button');
-    themeToggle.id = 'theme-toggle';
-    themeToggle.setAttribute('aria-label', 'Toggle dark mode');
-    themeToggle.className = 'p-2 rounded-full bg-indigo-600 text-white dark:bg-gray-700';
-    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-  }
-  utility.appendChild(themeToggle);
-
-  if (!document.querySelector('script[src="js/theme_toggle.js"]')) {
-    const themeScript = document.createElement('script');
-    themeScript.src = 'js/theme_toggle.js';
-    document.body.appendChild(themeScript);
-  }
-
   const latestLink = document.getElementById('latest-statement-link');
   if (latestLink) {
     fetch('../php_backend/public/transaction_months.php')
