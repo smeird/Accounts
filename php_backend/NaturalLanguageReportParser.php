@@ -105,7 +105,7 @@ class NaturalLanguageReportParser {
             Log::write('NL report AI JSON decode failed: ' . $response, 'ERROR');
             return null;
         }
-        $content = $data['output'][0]['content'][0]['text'] ?? '';
+        $content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
         Log::write('NL report AI raw content: ' . $content);
 
         $content = trim($content);

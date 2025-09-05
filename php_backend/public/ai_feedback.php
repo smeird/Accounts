@@ -93,7 +93,7 @@ try {
         exit;
     }
     $data = json_decode($response, true);
-    $content = $data['output'][0]['content'][0]['text'] ?? '';
+    $content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
     $usage = $data['usage']['total_tokens'] ?? 0;
 
     $content = trim($content);
