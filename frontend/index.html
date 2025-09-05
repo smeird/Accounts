@@ -16,7 +16,10 @@
     <meta property="og:image" content="/favicon.svg">
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-['Inter']">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-['Inter'] dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
+    <button id="theme-toggle" aria-label="Toggle dark mode" class="fixed top-4 right-4 bg-indigo-600 text-white p-2 rounded-full shadow">
+        <i class="fas fa-moon"></i>
+    </button>
     <div class="flex flex-col md:flex-row min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto shadow"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
@@ -134,6 +137,7 @@
     </div>
 
     <script src="js/menu.js"></script>
+    <script src="js/theme_toggle.js"></script>
     <script src="js/version.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>

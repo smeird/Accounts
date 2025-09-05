@@ -9,8 +9,10 @@ window.fetch = (input, init = {}) => {
   return originalFetch(input, init);
 };
 
+tailwind.config = { darkMode: 'class' };
+
 document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.add('pt-4');
+  document.body.classList.add('pt-4', 'dark:from-gray-900', 'dark:to-gray-800', 'dark:text-gray-100');
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
   const colorMap = {
@@ -182,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'overflow-y-auto',
       'z-40'
     );
+    menu.classList.add('dark:bg-gray-800', 'dark:border-gray-700');
 
     fetch('menu.php')
       .then(resp => resp.text())
@@ -300,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const utility = document.createElement('div');
   utility.id = 'utility-bar';
-  utility.className = 'fixed top-8 right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg';
+  utility.className = 'fixed top-8 right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg dark:bg-gray-800 dark:border-gray-500 dark:text-gray-100';
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">
       <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white transition-shadow focus:shadow" />
@@ -311,6 +314,22 @@ document.addEventListener('DOMContentLoaded', () => {
     </a>
   `;
   document.body.appendChild(utility);
+
+  let themeToggle = document.getElementById('theme-toggle');
+  if (!themeToggle) {
+    themeToggle = document.createElement('button');
+    themeToggle.id = 'theme-toggle';
+    themeToggle.setAttribute('aria-label', 'Toggle dark mode');
+    themeToggle.className = 'p-2 rounded-full bg-indigo-600 text-white dark:bg-gray-700';
+    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+  }
+  utility.appendChild(themeToggle);
+
+  if (!document.querySelector('script[src="js/theme_toggle.js"]')) {
+    const themeScript = document.createElement('script');
+    themeScript.src = 'js/theme_toggle.js';
+    document.body.appendChild(themeScript);
+  }
 
   const latestLink = document.getElementById('latest-statement-link');
   if (latestLink) {
@@ -334,11 +353,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = main.querySelectorAll('section');
     if (sections.length > 0) {
       sections.forEach(section => {
-        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow', 'border', 'border-gray-400');
+        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow', 'border', 'border-gray-400', 'dark:bg-gray-800', 'dark:border-gray-700');
       });
     } else {
       const wrapper = document.createElement('section');
-      wrapper.className = 'bg-white p-6 rounded shadow border border-gray-400';
+      wrapper.className = 'bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700';
       while (main.firstChild) {
         wrapper.appendChild(main.firstChild);
       }
