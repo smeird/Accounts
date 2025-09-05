@@ -6,6 +6,9 @@
 - AI model and temperature are configurable via `ai_model` and `ai_temperature` settings.
 - AI debug output can be toggled with `ai_debug` to expose request and response details.
 - When AI debug is enabled, AI pages show a card displaying the submitted prompt followed by the AI response.
+
+- Frontend pages query `php_backend/public/ai_debug.php` to determine whether to display the debug card.
+
 - Projects support archiving via an `archived` flag and can be restored from the Archived Projects page.
 
 - Projects view visualises benefits using a bubble chart plotting cost vs quality with bubble size representing score, displaying each project as its own series for distinct colours.

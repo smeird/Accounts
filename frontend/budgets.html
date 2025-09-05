@@ -210,7 +210,18 @@ document.getElementById('ai-form').addEventListener('submit',async e=>{
     }
 });
 
+async function initDebug(){
+    try{
+        const res=await fetch('../php_backend/public/ai_debug.php');
+        const data=await res.json();
+        if(data.debug){
+            document.getElementById('ai-debug').classList.remove('hidden');
+        }
+    }catch(e){}
+}
+
 loadCategories().then(loadBudgets);
+initDebug();
 </script>
 <script src="js/overlay.js"></script>
 <script src="js/page_help.js"></script>

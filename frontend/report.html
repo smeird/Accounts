@@ -485,6 +485,16 @@
 
     loadOptions();
     loadSavedReports();
+    initDebug();
+    async function initDebug(){
+        try{
+            const res=await fetch('../php_backend/public/ai_debug.php');
+            const data=await res.json();
+            if(data.debug){
+                document.getElementById('ai-debug').classList.remove('hidden');
+            }
+        }catch(e){}
+    }
     </script>
     <script src="js/overlay.js"></script>
 </body>

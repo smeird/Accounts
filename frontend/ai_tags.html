@@ -101,7 +101,18 @@ document.getElementById('run').addEventListener('click', async () => {
     }
 });
 
+async function initDebug(){
+    try{
+        const res=await fetch('../php_backend/public/ai_debug.php');
+        const data=await res.json();
+        if(data.debug){
+            document.getElementById('debug').classList.remove('hidden');
+        }
+    }catch(e){}
+}
+
 loadToken();
+initDebug();
 </script>
 <script src="js/page_help.js"></script>
 </body>

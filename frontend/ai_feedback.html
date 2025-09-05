@@ -73,6 +73,18 @@ document.getElementById('run').addEventListener('click', async () => {
         btn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
 });
+
+async function initDebug(){
+    try{
+        const res=await fetch('../php_backend/public/ai_debug.php');
+        const data=await res.json();
+        if(data.debug){
+            document.getElementById('debug').classList.remove('hidden');
+        }
+    }catch(e){}
+}
+
+initDebug();
 </script>
 <script src="js/page_help.js"></script>
 </body>
