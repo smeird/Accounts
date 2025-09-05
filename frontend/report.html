@@ -442,17 +442,21 @@
         const endVal = document.getElementById('end').value;
         if (endVal) filters.push('End: ' + endVal);
         if (filters.length) {
-            doc.text('Filters: ' + filters.join(', '), 14, y);
-            y += 6;
+            const filterText = 'Filters: ' + filters.join(', ');
+            const wrapped = doc.splitTextToSize(filterText, pageWidth - 28);
+            doc.text(wrapped, 14, y);
+            y += wrapped.length * 6;
         }
         doc.text('Generated on ' + new Date().toLocaleString(), 14, y);
         y += 8;
 
         // Table
-        const columns = window.reportTable.getColumns().map(col => ({
-            header: col.getDefinition().title,
-            dataKey: col.getField()
-        }));
+        const columns = window.reportTable.getColumns()
+            .filter(col => col.getField() !== 'tag_name')
+            .map(col => ({
+                header: col.getDefinition().title,
+                dataKey: col.getField()
+            }));
         const data = window.reportTable.getData();
 
         // Calculate totals for the main table
