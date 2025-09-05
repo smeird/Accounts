@@ -119,7 +119,10 @@ $bg600 = "bg-{$colorScheme}-600";
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>System Settings</title>
-    <script>tailwind.config={darkMode:"class"}</script>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = { darkMode: "class" };
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">

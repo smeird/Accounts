@@ -95,7 +95,10 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <meta property="og:image" content="<?= htmlspecialchars($origin) ?>/favicon.svg">
     <meta property="og:url" content="<?= htmlspecialchars($origin . $_SERVER['REQUEST_URI']) ?>">
     <title><?= htmlspecialchars($siteName) ?> Login</title>
-    <script>tailwind.config={darkMode:"class"}</script>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = { darkMode: "class" };
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">
