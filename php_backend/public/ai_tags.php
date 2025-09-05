@@ -32,7 +32,7 @@ if (!$txns) {
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
 
 $txnMap = [];
-$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. Return JSON array with objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"}.\n\n";
+$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. Return JSON as either a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"} or an object {\"transactions\":[...]} containing that array.\n\n";
 
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
@@ -79,8 +79,22 @@ if ($response === false || $code !== 200) {
     exit;
 }
 $data = json_decode($response, true);
-$content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(500);
+    Log::write('AI tag API JSON decode error: ' . json_last_error_msg() . ' | ' . $response, 'ERROR');
+    echo json_encode(['error' => 'Invalid AI response']);
+    exit;
+}
+$content = $data['output_text']
+    ?? ($data['output'][0]['content'][0]['text']
+        ?? ($data['choices'][0]['message']['content'] ?? ''));
 $usage = $data['usage']['total_tokens'] ?? 0;
+if ($content === '') {
+    http_response_code(500);
+    Log::write('AI tag empty response: ' . $response, 'ERROR');
+    echo json_encode(['error' => 'Invalid AI response']);
+    exit;
+}
 
 
 // Strip Markdown code fences if present
@@ -93,6 +107,15 @@ if (substr($content, 0, 3) === '```') {
 
 
 $suggestions = json_decode($content, true);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(500);
+    Log::write('AI tag invalid JSON: ' . json_last_error_msg() . ' | ' . $content, 'ERROR');
+    echo json_encode(['error' => 'Invalid AI response']);
+    exit;
+}
+if (is_array($suggestions) && isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
+    $suggestions = $suggestions['transactions'];
+}
 if (!is_array($suggestions)) {
     http_response_code(500);
     Log::write('AI tag invalid response: ' . $content, 'ERROR');
