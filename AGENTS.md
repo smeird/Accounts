@@ -9,6 +9,8 @@
 
 - Frontend pages query `php_backend/public/ai_debug.php` to determine whether to display the debug card.
 
+- Static pages must prevent caching via `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">` tags or equivalent PHP headers.
+
 - Projects support archiving via an `archived` flag and can be restored from the Archived Projects page.
 
 - Projects view visualises benefits using a bubble chart plotting cost vs quality with bubble size representing score, displaying each project as its own series for distinct colours.

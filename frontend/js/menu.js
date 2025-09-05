@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'z-40'
     );
 
-    fetch('menu.html')
+    fetch('menu.php')
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
