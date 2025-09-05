@@ -334,7 +334,8 @@
             const catTotals = {};
             data.forEach(row => {
                 const name = row.category_name || 'Unspecified';
-                catTotals[name] = (catTotals[name] || 0) + parseFloat(row.amount);
+                const amount = Math.abs(parseFloat(row.amount));
+                catTotals[name] = (catTotals[name] || 0) + amount;
             });
             const pieData = Object.keys(catTotals).map(name => ({
                 name,
