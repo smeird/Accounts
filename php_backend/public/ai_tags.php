@@ -79,8 +79,22 @@ if ($response === false || $code !== 200) {
     exit;
 }
 $data = json_decode($response, true);
-$content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(500);
+    Log::write('AI tag API JSON decode error: ' . json_last_error_msg() . ' | ' . $response, 'ERROR');
+    echo json_encode(['error' => 'Invalid AI response']);
+    exit;
+}
+$content = $data['output_text']
+    ?? ($data['output'][0]['content'][0]['text']
+        ?? ($data['choices'][0]['message']['content'] ?? ''));
 $usage = $data['usage']['total_tokens'] ?? 0;
+if ($content === '') {
+    http_response_code(500);
+    Log::write('AI tag empty response: ' . $response, 'ERROR');
+    echo json_encode(['error' => 'Invalid AI response']);
+    exit;
+}
 
 
 // Strip Markdown code fences if present
