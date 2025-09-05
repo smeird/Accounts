@@ -255,7 +255,7 @@ $db->exec('DELETE FROM categories');
 $db->exec("INSERT INTO categories (name) VALUES ('cars')");
 $carId = (int)$db->lastInsertId();
 $parsed = NaturalLanguageReportParser::parse('costs for cars in the last 12 months');
-assertEqual($carId, $parsed['category'], 'Natural language parser finds category');
+assertEqual(null, $parsed['category'], 'Natural language parser ignores category');
 assertEqual(date('Y-m-d', strtotime('-12 months')), $parsed['start'], 'Natural language parser sets start date');
 
 $db->exec('DELETE FROM tags');
@@ -270,7 +270,7 @@ $db->exec('DELETE FROM sqlite_sequence WHERE name="categories"');
 $db->exec("INSERT INTO categories (name) VALUES ('#groceries')");
 $catSymbolId = (int)$db->lastInsertId();
 $parsedPunctCat = NaturalLanguageReportParser::parse('#groceries');
-assertEqual($catSymbolId, $parsedPunctCat['category'], 'Natural language parser handles category starting with symbol');
+assertEqual(null, $parsedPunctCat['category'], 'Natural language parser ignores category starting with symbol');
 
 $db->exec('DELETE FROM tags');
 $db->exec('DELETE FROM sqlite_sequence WHERE name="tags"');

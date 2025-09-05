@@ -23,10 +23,10 @@ class NaturalLanguageReportParserTest extends TestCase
         $db->exec('INSERT INTO categories (name) VALUES ("cars");');
     }
 
-    public function testParseCategoryAndDateRange(): void
+    public function testParseDateRange(): void
     {
         $filters = NaturalLanguageReportParser::parse('costs for cars in the last 12 months');
-        $this->assertSame(1, $filters['category']);
+        $this->assertNull($filters['category']);
         $this->assertSame(date('Y-m-d', strtotime('-12 months')), $filters['start']);
         $this->assertSame(date('Y-m-d'), $filters['end']);
     }
@@ -41,12 +41,12 @@ class NaturalLanguageReportParserTest extends TestCase
         $this->assertSame([1,2], $filters['tag']);
     }
 
-    public function testCategoryNameWithLeadingSymbol(): void
+    public function testCategoryNamesIgnored(): void
     {
         $db = Database::getConnection();
         $db->exec("INSERT INTO categories (name) VALUES ('#groceries')");
         $filters = NaturalLanguageReportParser::parse('#groceries');
-        $this->assertSame(2, $filters['category']);
+        $this->assertNull($filters['category']);
     }
 
     public function testTagNamesWithNonWordCharacters(): void

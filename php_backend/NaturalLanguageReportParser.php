@@ -35,11 +35,10 @@ class NaturalLanguageReportParser {
         Log::write('NL report AI query: ' . $query);
         $db = Database::getConnection();
 
+        // Only tags are needed for AI parsing. Other fields are deliberately
+        // omitted to avoid over-constrained searches.
         $tables = [
-            'categories' => [],
             'tags' => [],
-            'segments' => [],
-            'transaction_groups' => [],
         ];
         $names = [];
         foreach ($tables as $table => $_) {
@@ -54,14 +53,11 @@ class NaturalLanguageReportParser {
             $names[$table] = $list;
         }
 
-        $prompt = "Convert the following query into JSON {\"category\",\"tag\",\"segment\",\"group\",\"start\",\"end\",\"text\",\"summary\"}. " .
+        $prompt = "Convert the following query into JSON {\"tag\",\"start\",\"end\",\"summary\"}. " .
             "Return tag as an array of tag names (use an empty array when none). " .
             "The summary should be a short natural language description of the filters. " .
-            "Use ISO dates and only the names listed.\n\n" .
-            "Categories:\n- " . implode("\n- ", $names['categories']) . "\n\n" .
+            "Use ISO dates and only the tag names listed.\n\n" .
             "Tags:\n- " . implode("\n- ", $names['tags']) . "\n\n" .
-            "Segments:\n- " . implode("\n- ", $names['segments']) . "\n\n" .
-            "Groups:\n- " . implode("\n- ", $names['transaction_groups']) . "\n\n" .
             "Query: $query";
 
         $model = Setting::get('ai_model') ?? 'gpt-5-nano';
@@ -143,26 +139,9 @@ class NaturalLanguageReportParser {
             'segment' => null,
             'start' => $parsed['start'] ?? null,
             'end' => $parsed['end'] ?? null,
-            'text' => $parsed['text'] ?? null,
+            'text' => null,
             'summary' => $parsed['summary'] ?? null,
         ];
-
-        // Map single-name fields
-        foreach ([
-            'category' => 'categories',
-            'group' => 'transaction_groups',
-            'segment' => 'segments',
-        ] as $field => $table) {
-            $name = $parsed[$field] ?? null;
-            if ($name) {
-                $id = $tables[$table][strtolower($name)] ?? null;
-                if ($id !== null) {
-                    $filters[$field] = $id;
-                } else {
-                    Log::write("NL report AI unknown $field: $name", 'ERROR');
-                }
-            }
-        }
 
         // Map tag array
         $tagNames = $parsed['tag'] ?? [];
@@ -211,12 +190,8 @@ class NaturalLanguageReportParser {
         ];
 
         $q = strtolower($query);
-        $filters['category'] = self::matchName($q, 'categories');
         $tags = self::matchNames($q, 'tags');
         $filters['tag'] = $tags ? $tags : null;
-        $filters['group'] = self::matchName($q, 'transaction_groups');
-        $filters['segment'] = self::matchName($q, 'segments');
-
 
         if (preg_match('/last\s+(\d+)\s+months?/', $q, $m)) {
             $months = (int)$m[1];
@@ -239,21 +214,6 @@ class NaturalLanguageReportParser {
         Log::write('NL report fallback filters: ' . json_encode($filters));
 
         return $filters;
-    }
-
-    /**
-     * Find the id of an entity in a table whose name appears in the query.
-     */
-    private static function matchName(string $query, string $table): ?int {
-        $db = Database::getConnection();
-        $stmt = $db->query("SELECT id, name FROM $table");
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $pattern = '/(?<!\\w)' . preg_quote($row['name'], '/') . '(?!\\w)/i';
-            if (preg_match($pattern, $query)) {
-                return (int)$row['id'];
-            }
-        }
-        return null;
     }
 
     /**
