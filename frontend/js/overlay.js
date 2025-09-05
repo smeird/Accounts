@@ -4,7 +4,7 @@
     function createOverlay(){
         const overlay = document.createElement('div');
         overlay.id = 'overlay';
-        overlay.className = 'fixed top-2 right-4 z-50 px-4 py-2 rounded-full shadow bg-white text-gray-800 hidden transform translate-x-full transition-transform duration-300 border';
+        overlay.className = 'fixed top-6 right-8 z-50 px-4 py-2 rounded-full shadow bg-white text-gray-800 hidden transform translate-x-full transition-transform duration-300 border';
 
         document.body.appendChild(overlay);
         return overlay;
