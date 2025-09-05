@@ -172,7 +172,7 @@ class NaturalLanguageReportParser {
 
         Log::write('NL report AI filters: ' . json_encode($filters));
         if ($debugMode) {
-            $filters['debug'] = ['request' => $payload, 'response' => $content];
+            $filters['debug'] = ['prompt' => $prompt, 'response' => $content];
         }
         return $filters;
     }

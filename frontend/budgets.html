@@ -40,7 +40,7 @@
             <div id="ai-debug" class="mt-4 hidden">
                 <div class="bg-white p-4 rounded shadow border border-gray-400">
                     <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
-                    <p class="text-sm font-semibold">Request</p>
+                    <p class="text-sm font-semibold">Prompt</p>
                     <pre id="ai-debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
                     <p class="text-sm font-semibold">Response</p>
                     <pre id="ai-debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
@@ -192,7 +192,7 @@ document.getElementById('ai-form').addEventListener('submit',async e=>{
             showMessage('AI budgeting failed','error');
         }
         if(data.debug){
-            debugReq.textContent=JSON.stringify(data.debug.request,null,2);
+            debugReq.textContent=data.debug.prompt;
             const resp=typeof data.debug.response==='string'?data.debug.response:JSON.stringify(data.debug.response,null,2);
             debugRes.textContent=resp;
             debugContainer.classList.remove('hidden');

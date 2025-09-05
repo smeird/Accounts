@@ -142,7 +142,7 @@ foreach ($suggestions as $s) {
 Log::write("AI tagged $processed transactions using $usage tokens");
  $out = ['processed' => $processed, 'tokens' => $usage];
  if ($debugMode) {
-     $out['debug'] = ['request' => $payload, 'response' => $content];
+     $out['debug'] = ['prompt' => $prompt, 'response' => $content];
  }
  echo json_encode($out);
 // Self-check:
