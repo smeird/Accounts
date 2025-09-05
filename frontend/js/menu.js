@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const utility = document.createElement('div');
   utility.id = 'utility-bar';
-  utility.className = 'fixed top-8 right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg dark:bg-gray-800 dark:border-gray-500 dark:text-gray-100';
+  utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg dark:bg-gray-800 dark:border-gray-500 dark:text-gray-100';
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">
       <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white transition-shadow focus:shadow" />
