@@ -1,3 +1,8 @@
+<?php
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
+?>
 <!-- Navigation menu shared across pages -->
 <div class="flex items-center space-x-2 mb-4">
   <img src="/favicon.svg" alt="Finance Manager logo" class="h-8 w-8" />
