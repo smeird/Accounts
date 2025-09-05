@@ -1,7 +1,6 @@
 // Handles toggling between light and dark themes and persists the choice.
-document.addEventListener('DOMContentLoaded', () => {
-  const button = document.getElementById('theme-toggle');
-  if (!button) return;
+const button = document.getElementById('theme-toggle');
+if (button) {
   const icon = button.querySelector('i');
 
   const applyTheme = theme => {
@@ -24,4 +23,4 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   });
-});
+}
