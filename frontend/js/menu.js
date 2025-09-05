@@ -9,8 +9,6 @@ window.fetch = (input, init = {}) => {
   return originalFetch(input, init);
 };
 
-tailwind.config = { darkMode: 'class' };
-
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('pt-4', 'dark:from-gray-900', 'dark:to-gray-800', 'dark:text-gray-100');
   let colorScheme = 'indigo';

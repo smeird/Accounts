@@ -43,6 +43,8 @@ $bgHover = "hover:bg-{$colorScheme}-700";
     <meta http-equiv="Expires" content="0">
     <title>Logged Out</title>
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">
+    <script>tailwind.config={darkMode:"class"}</script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
 </head>
