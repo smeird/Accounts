@@ -56,6 +56,7 @@
             </div>
             <div id="results-grid" class="mt-4"></div>
             <div id="chart" class="mt-6 bg-white p-6 rounded shadow border border-gray-400" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
+            <div id="category-chart" class="mt-6 bg-white p-6 rounded shadow border border-gray-400" style="height:400px;" data-chart-desc="Pie chart of transaction totals by category."></div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -73,6 +74,12 @@
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
         const pct = total ? (this.y / total * 100) : 0;
         return `${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
+    }
+
+    function pieTooltip(){
+        const total = this.series.data.reduce((sum, p) => sum + p.y, 0);
+        const pct = total ? (this.y / total * 100) : 0;
+        return `${this.name}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
     }
 
     function getSelectedValues(choice) {
@@ -282,8 +289,10 @@
         const data = await fetch(fetchUrl).then(resp => resp.json());
         const gridEl = document.getElementById('results-grid');
         const chartContainer = document.getElementById('chart');
+        const categoryChartContainer = document.getElementById('category-chart');
         gridEl.innerHTML = '';
         chartContainer.innerHTML = '';
+        categoryChartContainer.innerHTML = '';
         window.reportTable = null;
         if (Array.isArray(data) && data.length) {
             window.reportTable = tailwindTabulator(gridEl, {
@@ -321,6 +330,26 @@
                 tooltip: { pointFormatter: columnTooltip },
                 series: [{ name: 'Amount', data: seriesData }]
             });
+
+            const catTotals = {};
+            data.forEach(row => {
+                const name = row.category_name || 'Unspecified';
+                catTotals[name] = (catTotals[name] || 0) + parseFloat(row.amount);
+            });
+            const pieData = Object.keys(catTotals).map(name => ({
+                name,
+                y: catTotals[name],
+                color: getCategoryColor(name)
+            }));
+            if (pieData.length) {
+                Highcharts.chart('category-chart', {
+                    chart: { type: 'pie', backgroundColor: 'transparent' },
+                    title: { text: 'Totals by Category' },
+                    tooltip: { pointFormatter: pieTooltip },
+                    legend: { enabled: false },
+                    series: [{ name: 'Amount', data: pieData }]
+                });
+            }
         } else {
             gridEl.innerHTML = 'No transactions found.';
         }
@@ -508,13 +537,23 @@
         }
 
         // Include the chart in the PDF
+        let chartY = ((doc.lastAutoTable && doc.lastAutoTable.finalY) || y) + 10;
         const chartEl = document.getElementById('chart');
         if (chartEl) {
             const canvas = await html2canvas(chartEl, { scale: 2 });
             const imgData = canvas.toDataURL('image/png');
             const imgWidth = pageWidth - 28;
             const imgHeight = canvas.height * imgWidth / canvas.width;
-            const chartY = ((doc.lastAutoTable && doc.lastAutoTable.finalY) || y) + 10;
+            doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
+            chartY += imgHeight + 10;
+        }
+
+        const catChartEl = document.getElementById('category-chart');
+        if (catChartEl) {
+            const canvas = await html2canvas(catChartEl, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pageWidth - 28;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
             doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
         }
 
