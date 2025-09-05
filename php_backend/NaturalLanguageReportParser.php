@@ -101,12 +101,27 @@ class NaturalLanguageReportParser {
             return null;
         }
         $data = json_decode($response, true);
-        if ($data === null) {
-            Log::write('NL report AI JSON decode failed: ' . $response, 'ERROR');
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::write('NL report AI JSON decode failed: ' . json_last_error_msg() . ' | ' . $response, 'ERROR');
             return null;
         }
-        $content = $data['output_text'] ?? ($data['output'][0]['content'][0]['text'] ?? '');
+        $content = $data['output_text'] ?? '';
+        if ($content === '' && isset($data['output']) && is_array($data['output'])) {
+            foreach ($data['output'] as $out) {
+                if (!empty($out['content'][0]['text'])) {
+                    $content = $out['content'][0]['text'];
+                    break;
+                }
+            }
+        }
+        if ($content === '' && isset($data['choices'][0]['message']['content'])) {
+            $content = $data['choices'][0]['message']['content'];
+        }
         Log::write('NL report AI raw content: ' . $content);
+        if ($content === '') {
+            Log::write('NL report AI empty response', 'ERROR');
+            return null;
+        }
 
         $content = trim($content);
         if (substr($content, 0, 3) === '```') {
@@ -116,7 +131,7 @@ class NaturalLanguageReportParser {
         }
 
         $parsed = json_decode($content, true);
-        if (!is_array($parsed)) {
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($parsed)) {
             Log::write('NL report AI content decode failed: ' . $content, 'ERROR');
             return null;
         }
