@@ -13,15 +13,6 @@ try {
         throw new Exception('Account id required');
     }
     $id = (int)$_GET['id'];
-    $months = null;
-    if (isset($_GET['months']) && $_GET['months'] !== 'all') {
-        $months = max(1, (int)$_GET['months']);
-    }
-    $cutoff = null;
-    if ($months) {
-        $cutoff = (new DateTime())->modify("-{$months} months")->format('Y-m-d');
-    }
-
     $db = Database::getConnection();
     $stmt = $db->prepare('SELECT name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts WHERE id = :id');
     $stmt->execute(['id' => $id]);
@@ -39,16 +30,9 @@ try {
     $stmt->execute(['id' => $id, 'ignore' => $ignore]);
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $balance -= (float)$row['amount'];
-        if (!$cutoff || $row['date'] >= $cutoff) {
-            $history[] = ['date' => $row['date'], 'balance' => $balance];
-        }
+        $history[] = ['date' => $row['date'], 'balance' => $balance];
     }
     $history = array_reverse($history);
-    if ($cutoff) {
-        $history = array_values(array_filter($history, function($h) use ($cutoff){
-            return $h['date'] >= $cutoff;
-        }));
-    }
     echo json_encode([
         'name' => $account['name'],
         'sort_code' => $account['sort_code'],
