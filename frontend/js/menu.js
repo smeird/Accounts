@@ -214,10 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
         menu.querySelectorAll('.group').forEach(section => {
           const header = section.querySelector('h3');
           const list = section.querySelector('ul');
+          const icon = header ? header.querySelector('i') : null;
           if (header && list) {
             header.addEventListener('click', () => {
               const expanded = list.style.maxHeight && list.style.maxHeight !== '0px';
               list.style.maxHeight = expanded ? '0px' : `${list.scrollHeight}px`;
+              if (icon) {
+                icon.classList.toggle('rotate-90', !expanded);
+              }
             });
           }
         });
