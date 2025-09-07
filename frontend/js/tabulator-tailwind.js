@@ -155,7 +155,7 @@ function tailwindTabulator(element, options) {
     table.on('dataProcessed', function() {
         styleCalcRows(table);
     });
-    el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
+    el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm', 'dark:bg-gray-800');
     const header = el.querySelector('.tabulator-header');
     if (header) {
         header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]', 'rounded-t-lg');

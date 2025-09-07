@@ -52,7 +52,7 @@
 
   function createSegmentCard(seg){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-64 flex-shrink-0';
+    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-64 flex-shrink-0 dark:bg-gray-800 dark:border-gray-700';
     card.dataset.segmentId = seg.id;
 
     const header = document.createElement('div');
@@ -123,7 +123,7 @@
 
   function createUnassignedCard(categories){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-64 flex-shrink-0';
+    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-64 flex-shrink-0 dark:bg-gray-800 dark:border-gray-700';
     const title = document.createElement('h2');
     title.className = 'font-semibold mb-2';
     title.textContent = 'Unassigned Categories';

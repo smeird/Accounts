@@ -59,7 +59,7 @@
   function createCategoryCard(cat){
     const card = document.createElement('div');
 
-    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-full flex gap-4 items-start';
+    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-full flex gap-4 items-start dark:bg-gray-800 dark:border-gray-700';
 
     card.dataset.categoryId = cat.id;
 
@@ -134,7 +134,7 @@
 
   function createUnassignedCard(tags){
     const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-full';
+    card.className = 'bg-white p-4 rounded shadow border border-gray-400 w-full dark:bg-gray-800 dark:border-gray-700';
     const title = document.createElement('h2');
     title.className = 'font-semibold mb-2';
     title.textContent = 'Unassigned Tags';
