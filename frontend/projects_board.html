@@ -49,7 +49,7 @@ async function loadProjects(){
     board.innerHTML = '';
     projects.forEach(p => {
         const card = document.createElement('div');
-        card.className = 'bg-white p-4 rounded shadow border border-gray-400 flex flex-col space-y-2';
+        card.className = 'bg-white p-4 rounded shadow border border-gray-400 flex flex-col space-y-2 dark:bg-gray-800 dark:border-gray-700';
 
         const header = document.createElement('div');
         header.className = 'flex justify-between items-start';

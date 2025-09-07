@@ -27,7 +27,7 @@
             </button>
             <div id="result" class="mt-4"></div>
             <div id="debug" class="mt-4 hidden">
-                <div class="bg-white p-4 rounded shadow border border-gray-400">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
                     <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
                     <p class="text-sm font-semibold">Prompt</p>
                     <pre id="debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
@@ -52,7 +52,7 @@ function renderFeedback(data){
     const highlights = data.highlights.map(h=>`<li>${escapeHtml(h)}</li>`).join('');
     const actions = data.actions.map(a=>`<li>${escapeHtml(a)}</li>`).join('');
     return `
-        <div class="bg-white p-4 rounded shadow space-y-4">
+        <div class="bg-white p-4 rounded shadow border border-gray-400 space-y-4 dark:bg-gray-800 dark:border-gray-700">
             <p>${escapeHtml(data.summary)}</p>
             <div>
                 <h3 class="font-semibold">Highlights</h3>
