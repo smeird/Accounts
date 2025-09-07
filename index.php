@@ -107,7 +107,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter'] dark:bg-gray-900 dark:text-gray-100">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
-        <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 block mx-auto" />
+        <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 block mx-auto rounded shadow" />
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1 text-center">AUTHENTICATION / <?= $needsToken ? 'TWO-FACTOR' : 'LOGIN' ?></div>
         <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 text-center <?= $text700 ?>"><?= $needsToken ? 'Enter Code' : 'Login' ?></h1>
         <p class="mb-4 text-center">
