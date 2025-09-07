@@ -5,7 +5,7 @@ header('Expires: 0');
 ?>
 <!-- Navigation menu shared across pages -->
 <div class="flex items-center space-x-2 mb-4">
-  <img src="/favicon.svg" alt="Finance Manager logo" class="h-8 w-8" />
+  <img src="/favicon.png" alt="Finance Manager logo" class="h-8 w-8" />
   <div class="flex flex-col">
     <span id="site-title" class="text-xl font-semibold text-indigo-700">Personal Finance Manager</span>
     <span id="release-number" class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded mt-1">v0.0.0</span>

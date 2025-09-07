@@ -139,22 +139,22 @@ document.addEventListener('DOMContentLoaded', () => {
       applyIconColor();
     });
 
-  // Ensure every page uses the shared SVG favicon
+  // Ensure every page uses the shared PNG favicon
   if (!document.querySelector('link[rel="icon"]')) {
     const iconSvg = document.createElement('link');
     iconSvg.rel = 'icon';
-    iconSvg.type = 'image/svg+xml';
-    iconSvg.href = '/favicon.svg';
+    iconSvg.type = 'image/png';
+    iconSvg.href = '/favicon.png';
     iconSvg.sizes = 'any';
     document.head.appendChild(iconSvg);
   }
 
-  // Ensure every page uses the shared SVG favicon
+  // Ensure every page uses the shared PNG favicon
   if (!document.querySelector('link[rel="icon"]')) {
     const iconSvg = document.createElement('link');
     iconSvg.rel = 'icon';
-    iconSvg.type = 'image/svg+xml';
-    iconSvg.href = '/favicon.svg';
+    iconSvg.type = 'image/png';
+    iconSvg.href = '/favicon.png';
     iconSvg.sizes = 'any';
     document.head.appendChild(iconSvg);
   }

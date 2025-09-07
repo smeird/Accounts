@@ -92,7 +92,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <?php $origin = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? ''); ?>
     <meta property="og:title" content="<?= htmlspecialchars($siteName) ?>">
     <meta property="og:description" content="Finance management system for tracking budgets and expenses.">
-    <meta property="og:image" content="<?= htmlspecialchars($origin) ?>/favicon.svg">
+    <meta property="og:image" content="<?= htmlspecialchars($origin) ?>/favicon.png">
     <meta property="og:url" content="<?= htmlspecialchars($origin . $_SERVER['REQUEST_URI']) ?>">
     <title><?= htmlspecialchars($siteName) ?> Login</title>
     <script>
@@ -101,13 +101,13 @@ $needsToken = isset($_SESSION['pending_user_id']);
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter'] dark:bg-gray-900 dark:text-gray-100">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
-        <img src="favicon.svg" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 block mx-auto" />
+        <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 block mx-auto" />
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1 text-center">AUTHENTICATION / <?= $needsToken ? 'TWO-FACTOR' : 'LOGIN' ?></div>
         <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 text-center <?= $text700 ?>"><?= $needsToken ? 'Enter Code' : 'Login' ?></h1>
         <p class="mb-4 text-center">
