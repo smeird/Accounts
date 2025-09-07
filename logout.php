@@ -42,7 +42,7 @@ $bgHover = "hover:bg-{$colorScheme}-700";
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Logged Out</title>
-    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = { darkMode: "class" };
@@ -53,7 +53,7 @@ $bgHover = "hover:bg-{$colorScheme}-700";
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter'] dark:bg-gray-900 dark:text-gray-100">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
-        <img src="favicon.svg" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 mx-auto" />
+        <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 mx-auto" />
         <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 <?= $text700 ?>">Logged Out</h1>
         <p class="mb-4">You have been safely logged out of the <?= htmlspecialchars($siteName) ?>.</p>
         <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded font-['Source_Sans_Pro'] font-light transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
