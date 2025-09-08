@@ -65,4 +65,3 @@
 
 ## Decisions
 - Sections use scroll-based fade-in; apply `opacity-0` initially and `frontend/js/scroll_animations.js` adds a `fade-in` class when in view.
-- Tailwind CSS is compiled locally; run `npx tailwindcss -c tailwind.config.js -i frontend/src/tailwind.css -o frontend/dist/tailwind.css --minify` to regenerate `frontend/dist/tailwind.css`.

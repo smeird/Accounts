@@ -5,8 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Dashboard</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
 
-    <link rel="stylesheet" href="dist/tailwind.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 
@@ -31,6 +35,7 @@
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="js/color_map.js"></script>
 
+    <script>
     function waterfallTooltip(){
         const name = this.point.name || this.category;
         const change = this.y;
