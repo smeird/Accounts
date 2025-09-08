@@ -42,6 +42,19 @@ function fmtMoney(v){
     return '£' + (parseFloat(v) || 0).toFixed(2);
 }
 
+function scoreBadge(score){
+    const s = parseInt(score, 10) || 0;
+    const colors = {
+        1: 'bg-green-500',
+        2: 'bg-lime-400',
+        3: 'bg-yellow-500',
+        4: 'bg-orange-500',
+        5: 'bg-red-600'
+    };
+    const colorClass = colors[s] || 'bg-gray-300';
+    return `<span class="inline-block px-2 py-0.5 rounded text-xs ${colorClass} text-black">${s}</span>`;
+}
+
 async function loadProjects(){
     const res = await fetch('../php_backend/public/projects.php');
     const projects = await res.json();
@@ -102,7 +115,7 @@ async function loadProjects(){
             </tr>
             <tr>
                 <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${p.benefit_sustainability || 0}</td>
-                <td class="pr-2 font-semibold">Score:</td><td>${p.score || 0}</td>
+                <td class="pr-2 font-semibold">Score:</td><td>${scoreBadge(p.score)}</td>
             </tr>
             <tr>
                 <td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td>
