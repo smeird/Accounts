@@ -5,8 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Run Processes</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
 
-    <link rel="stylesheet" href="dist/tailwind.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
@@ -27,6 +31,7 @@
         </main>
     </div>
     <script src="js/menu.js"></script>
+    <script>
     // Trigger a backend process with a progress indicator
     async function run(action){
         const progressContainer = document.getElementById('progress-container');
