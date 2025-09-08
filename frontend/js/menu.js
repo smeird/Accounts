@@ -62,6 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const styleInputs = (root = document) => {
+    root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), select, textarea').forEach(el => {
+      if (!el.classList.contains('styled-input')) {
+        el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'bg-white', 'border-gray-400',
+          'dark:bg-gray-700', 'dark:border-gray-600', 'dark:text-gray-100');
+      }
+    });
+  };
+
   // Apply 20% opacity to all page elements
   document.documentElement.style.opacity = '0.9';
 
@@ -74,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
   applyAriaTooltips();
+  styleInputs();
   const ariaObserver = new MutationObserver(mutations => {
     for (const m of mutations) {
       m.addedNodes.forEach(node => {
@@ -83,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (node.querySelectorAll) {
             applyAriaTooltips(node);
+            styleInputs(node);
           }
         }
       });

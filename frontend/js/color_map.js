@@ -53,17 +53,36 @@ try {
     console.error('Failed to load colour palette', e);
 }
 
-Highcharts.setOptions({
-    colors: chartColors,
-    chart: { style: { fontFamily: 'Inter, sans-serif' } },
-    credits: { enabled: false },
-    legend: { enabled: true, itemStyle: { fontSize: '10px' } },
-    plotOptions: {
-        series: { showInLegend: true },
-        pie: { showInLegend: true },
-        sunburst: { showInLegend: true }
-    }
+function getChartTheme(theme) {
+    const dark = theme === 'dark';
+    const text = dark ? '#f3f4f6' : '#000000';
+    return {
+        colors: chartColors,
+        chart: { style: { fontFamily: 'Inter, sans-serif', color: text }, backgroundColor: dark ? '#1f2937' : '#ffffff' },
+        credits: { enabled: false },
+        legend: { enabled: true, itemStyle: { fontSize: '10px', color: text } },
+        title: { style: { color: text } },
+        xAxis: { labels: { style: { color: text } }, title: { style: { color: text } } },
+        yAxis: { labels: { style: { color: text } }, title: { style: { color: text } } },
+        plotOptions: {
+            series: { showInLegend: true },
+            pie: { showInLegend: true },
+            sunburst: { showInLegend: true }
+        }
+    };
+}
+
+function applyChartTheme(theme) {
+    const opts = getChartTheme(theme);
+    Highcharts.setOptions(opts);
+    Highcharts.charts.forEach(c => { if (c) { c.update(opts, false); c.redraw(); } });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    applyChartTheme(document.body.classList.contains('dark') ? 'dark' : 'light');
 });
+
+document.addEventListener('themechange', e => applyChartTheme(e.detail));
 
 function getSegmentColor(name) {
     if (!name) name = 'Not Segmented';
