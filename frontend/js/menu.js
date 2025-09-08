@@ -344,23 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg dark:bg-gray-800 dark:border-gray-500 dark:text-gray-100';
 
-  // Safari on the home page sometimes misplaces the floating search box.
-  // Detect that scenario and manually position the utility bar.
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isHome = ['', 'index.html'].includes(location.pathname.split('/').pop());
-
-  const positionUtility = () => {
-    const mq = window.matchMedia('(min-width: 768px)');
-    utility.style.top = mq.matches ? '2rem' : '1rem';
-    utility.style.right = mq.matches ? '3rem' : '2rem';
-  };
-
-  if (isSafari && isHome) {
-    utility.classList.remove('top-4', 'right-8', 'md:top-8', 'md:right-12');
-    positionUtility();
-    window.addEventListener('resize', positionUtility);
-  }
-
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">
       <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white border-0 transition-shadow focus:shadow" />
