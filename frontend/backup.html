@@ -16,13 +16,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
     <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Backup &amp; Restore</h1>
             <p class="mb-4">Create backups of your data or restore from an earlier snapshot. Use the tools below to download a copy of your information or load a previous backup.</p>
-            <section class="bg-white p-6 rounded shadow border border-gray-400 space-y-4">
+            <section class="bg-white p-6 rounded shadow border border-gray-400 space-y-4 dark:bg-gray-800 dark:border-gray-700">
                 <h2 class="text-xl font-semibold">Download Backup</h2>
 
                 <p>Select which data to include in the compressed JSON backup file. User and account
@@ -43,7 +43,7 @@
 
                 <p class="mt-4">Need your transactions in another format? Visit the <a href="export.html" class="text-indigo-600 underline">Exports</a> page.</p>
             </section>
-            <section class="bg-white p-6 rounded shadow border border-gray-400 space-y-4">
+            <section class="bg-white p-6 rounded shadow border border-gray-400 space-y-4 dark:bg-gray-800 dark:border-gray-700">
                 <h2 class="text-xl font-semibold">Restore Backup</h2>
                 <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags, groups, segments, projects, budgets, or settings.</p>
                 <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">

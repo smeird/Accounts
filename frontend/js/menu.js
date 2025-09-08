@@ -373,10 +373,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Apply Tailwind card styling to all sections or wrap main content in a card
   document.querySelectorAll('main').forEach(main => {
-    const sections = main.querySelectorAll('section');
+    // Only style direct child sections and allow explicit opt-out via data-no-card
+    const sections = main.querySelectorAll(':scope > section');
     if (sections.length > 0) {
       sections.forEach(section => {
-        section.classList.add('cards');
+        if (!section.dataset.noCard) {
+          section.classList.add('cards');
+        }
       });
     } else {
       const wrapper = document.createElement('section');

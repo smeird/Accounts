@@ -3,6 +3,7 @@
 const initThemeToggle = () => {
   const button = document.getElementById('theme-toggle');
   const icon = button ? button.querySelector('i') : null;
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
   const applyTheme = theme => {
     if (theme === 'dark') {
@@ -23,14 +24,25 @@ const initThemeToggle = () => {
     document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
   };
 
-  const saved = localStorage.getItem('theme') || 'light';
-  applyTheme(saved);
+  const saved = localStorage.getItem('theme');
+  const systemTheme = prefersDark.matches ? 'dark' : 'light';
+  applyTheme(saved || systemTheme);
+
+  prefersDark.addEventListener('change', e => {
+    if (!localStorage.getItem('theme')) {
+      applyTheme(e.matches ? 'dark' : 'light');
+    }
+  });
 
   if (button) {
     button.addEventListener('click', () => {
       const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
       applyTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
+      if (newTheme === (prefersDark.matches ? 'dark' : 'light')) {
+        localStorage.removeItem('theme');
+      } else {
+        localStorage.setItem('theme', newTheme);
+      }
     });
   }
 };
