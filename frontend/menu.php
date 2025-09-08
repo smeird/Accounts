@@ -1,3 +1,15 @@
+<link id="app-fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style id="font-style">
+  :root {
+    --heading-font: 'Roboto', sans-serif;
+    --body-font: 'Inter', sans-serif;
+    --accent-font: 'Source Sans Pro', sans-serif;
+  }
+  body { font-family: var(--body-font); font-weight: 400; }
+  h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
+  button, .accent { font-family: var(--accent-font); font-weight: 300; }
+</style>
 <!-- Navigation menu shared across pages -->
 <div class="flex items-center space-x-2 mb-4">
   <img src="/favicon.png" alt="Finance Manager logo" class="h-8 w-8 rounded shadow" />
