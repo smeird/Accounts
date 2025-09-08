@@ -55,6 +55,18 @@ function scoreBadge(score){
     return `<span class="inline-block px-2 py-0.5 rounded text-xs ${colorClass} text-black">${s}</span>`;
 }
 
+
+function renderStars(score){
+    const s = parseInt(score, 10) || 0;
+    let stars = '';
+    for(let i = 0; i < 5; i++){
+        const cls = i < s ? 'text-yellow-500' : 'text-gray-300';
+        stars += `<i class="fas fa-star ${cls} text-xs"></i>`;
+    }
+    return stars;
+}
+
+
 async function loadProjects(){
     const res = await fetch('../php_backend/public/projects.php');
     const projects = await res.json();
@@ -107,15 +119,17 @@ async function loadProjects(){
             </tr>
             <tr>
                 <td class="pr-2 font-semibold">Expected Lifespan:</td><td>${p.expected_lifespan || ''}</td>
-                <td class="pr-2 font-semibold">Financial Benefit:</td><td>${p.benefit_financial || 0}</td>
+                <td class="pr-2 font-semibold">Financial Benefit:</td><td>${scoreBadge(p.benefit_financial)}</td>
             </tr>
             <tr>
-                <td class="pr-2 font-semibold">Quality Benefit:</td><td>${p.benefit_quality || 0}</td>
-                <td class="pr-2 font-semibold">Risk Benefit:</td><td>${p.benefit_risk || 0}</td>
+                <td class="pr-2 font-semibold">Quality Benefit:</td><td>${scoreBadge(p.benefit_quality)}</td>
+                <td class="pr-2 font-semibold">Risk Benefit:</td><td>${scoreBadge(p.benefit_risk)}</td>
             </tr>
             <tr>
-                <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${p.benefit_sustainability || 0}</td>
-                <td class="pr-2 font-semibold">Score:</td><td>${scoreBadge(p.score)}</td>
+
+                <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${scoreBadge(p.benefit_sustainability)}</td>
+                <td class="pr-2 font-semibold">Score:</td><td>${renderStars(p.score)}</td>
+
             </tr>
             <tr>
                 <td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td>
