@@ -11,6 +11,7 @@
         window.tailwind.config = {};
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
@@ -51,8 +52,11 @@ function renderStars(score){
     const s = parseInt(score, 10) || 0;
     let stars = '';
     for(let i = 0; i < 5; i++){
-        const cls = i < s ? 'text-yellow-500' : 'text-gray-300';
-        stars += `<i class="fas fa-star ${cls} text-xs"></i>`;
+        if(i < s){
+            stars += '<i class="fas fa-star text-yellow-500 text-xs"></i>';
+        } else {
+            stars += '<i class="far fa-star text-gray-300 text-xs"></i>';
+        }
     }
     return stars;
 }
