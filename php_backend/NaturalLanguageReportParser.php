@@ -53,9 +53,8 @@ class NaturalLanguageReportParser {
             $names[$table] = $list;
         }
 
-        $prompt = "Convert the following query into JSON {\"tag\",\"start\",\"end\",\"memo\",\"name\",\"description\",\"summary\"}. " .
+        $prompt = "Convert the following query into JSON {\"tag\",\"start\",\"end\",\"name\",\"description\",\"summary\"}. " .
             "Return tag as an array of tag names (use an empty array when none). " .
-            "Provide memo as text to match the memo field. " .
             "Include a short search name and a concise description. " .
             "The summary should be a short natural language description of the filters. " .
             "Use ISO dates and only the tag names listed.\n\n" .
@@ -142,7 +141,7 @@ class NaturalLanguageReportParser {
             'start' => $parsed['start'] ?? null,
             'end' => $parsed['end'] ?? null,
             'text' => null,
-            'memo' => $parsed['memo'] ?? null,
+            'memo' => null,
             'summary' => $parsed['summary'] ?? null,
             'name' => $parsed['name'] ?? null,
             'description' => $parsed['description'] ?? null,
@@ -215,12 +214,6 @@ class NaturalLanguageReportParser {
         } elseif (strpos($q, 'last month') !== false) {
             $filters['start'] = date('Y-m-d', strtotime('-1 month'));
             $filters['end'] = date('Y-m-d');
-        }
-
-        if (preg_match('/memo\s+"([^"]+)"/', $q, $m)) {
-            $filters['memo'] = $m[1];
-        } elseif (preg_match('/memo\s+([\w\s]+)/', $q, $m)) {
-            $filters['memo'] = trim($m[1]);
         }
 
         $filters['summary'] = self::makeSummary($filters);
