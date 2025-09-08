@@ -75,7 +75,20 @@ function getChartTheme(theme) {
 function applyChartTheme(theme) {
     const opts = getChartTheme(theme);
     Highcharts.setOptions(opts);
-    Highcharts.charts.forEach(c => { if (c) { c.update(opts, false); c.redraw(); } });
+    const update = {
+        colors: opts.colors,
+        chart: { backgroundColor: opts.chart.backgroundColor },
+        legend: { itemStyle: opts.legend.itemStyle },
+        title: opts.title,
+        xAxis: { labels: opts.xAxis.labels, title: opts.xAxis.title },
+        yAxis: { labels: opts.yAxis.labels, title: opts.yAxis.title }
+    };
+    Highcharts.charts.forEach(c => {
+        if (c) {
+            c.update(update, false);
+            c.redraw();
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
