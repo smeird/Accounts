@@ -4,7 +4,7 @@ import {hexToOklch, oklchToHex} from './colour.js';
 const state = { segments: [] };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const res = await fetch('../php_backend/public/palette.php', {cache: 'no-store'});
+  const res = await window.fetchNoCache('../php_backend/public/palette.php');
   const data = await res.json();
   state.segments = data.segments;
   document.getElementById('segment-count').textContent = state.segments.length;
