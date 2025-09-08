@@ -7,12 +7,14 @@ const initThemeToggle = () => {
   const applyTheme = theme => {
     if (theme === 'dark') {
       document.body.classList.add('dark');
+      document.documentElement.classList.add('dark');
       if (icon) {
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
       }
     } else {
       document.body.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
       if (icon) {
         icon.classList.remove('fa-sun');
         icon.classList.add('fa-moon');
@@ -26,7 +28,7 @@ const initThemeToggle = () => {
 
   if (button) {
     button.addEventListener('click', () => {
-      const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
+      const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
       applyTheme(newTheme);
       localStorage.setItem('theme', newTheme);
     });
