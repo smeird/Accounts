@@ -236,16 +236,11 @@
             try {
                 const resp = await fetch('../php_backend/public/nl_report.php?' + new URLSearchParams({ q: nl }).toString());
                 const filters = await resp.json();
-                if (filters.category) window.catChoices.setChoiceByValue(String(filters.category));
                 if (filters.tag) {
                     window.tagChoices.removeActiveItems();
                     const t = Array.isArray(filters.tag) ? filters.tag : [filters.tag];
                     t.forEach(id => window.tagChoices.setChoiceByValue(String(id)));
                 }
-                if (filters.group) window.groupChoices.setChoiceByValue(String(filters.group));
-                if (filters.segment) window.segmentChoices.setChoiceByValue(String(filters.segment));
-                document.getElementById('text').value = filters.text || '';
-                document.getElementById('memo').value = filters.memo || '';
                 document.getElementById('start').value = filters.start || '';
                 document.getElementById('end').value = filters.end || '';
                 currentReportName = filters.name || '';
