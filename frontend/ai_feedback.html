@@ -6,15 +6,15 @@
     <title>AI Feedback</title>
     <script>
         window.tailwind = window.tailwind || {};
-        window.tailwind.config = { darkMode: "class" };
+        window.tailwind.config = {};
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-sans dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
 <div class="flex min-h-screen">
-    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
     <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">AI Feedback</h1>
         <p class="mb-4">Request an AI-generated overview of your finances for the last 12 months.</p>
@@ -24,7 +24,7 @@
             </button>
             <div id="result" class="mt-4"></div>
             <div id="debug" class="mt-4 hidden">
-                <div class="bg-white p-4 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400">
                     <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
                     <p class="text-sm font-semibold">Prompt</p>
                     <pre id="debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
@@ -49,7 +49,7 @@ function renderFeedback(data){
     const highlights = data.highlights.map(h=>`<li>${escapeHtml(h)}</li>`).join('');
     const actions = data.actions.map(a=>`<li>${escapeHtml(a)}</li>`).join('');
     return `
-        <div class="bg-white p-4 rounded shadow border border-gray-400 space-y-4 dark:bg-gray-800 dark:border-gray-700">
+        <div class="bg-white p-4 rounded shadow border border-gray-400 space-y-4">
             <p>${escapeHtml(data.summary)}</p>
             <div>
                 <h3 class="font-semibold">Highlights</h3>

@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const helpBox = document.createElement('div');
     helpBox.id = 'input-help';
-    helpBox.className = 'absolute bg-white border p-2 rounded shadow hidden z-50 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100';
+    helpBox.className = 'absolute bg-white border p-2 rounded shadow hidden z-50 text-sm';
     document.body.appendChild(helpBox);
 
     // Display the help popover near the focused input

@@ -6,15 +6,15 @@
     <title>Graphs</title>
     <script>
         window.tailwind = window.tailwind || {};
-        window.tailwind.config = { darkMode: "class" };
+        window.tailwind.config = {};
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-sans dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-4">
             <h1 class="text-2xl font-semibold text-indigo-700">Graphs</h1>
             <p class="mb-4">Explore a collection of charts that illustrate your income and spending patterns. Choose a year to see how your finances evolve and compare categories or tags visually.</p>
@@ -40,22 +40,22 @@
                 </nav>
             </div>
 
-            <div id="income-sunburst" class="tab-content bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700"><div id="income-sunburst-chart" class="h-[80vh]" data-chart-desc="Sunburst chart of income by segment, category and tag."></div></div>
-            <div id="outgoing-sunburst" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="outgoing-sunburst-chart" class="h-[80vh]" data-chart-desc="Sunburst chart of outgoings by segment, category and tag."></div></div>
-            <div id="monthly-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="monthly-chart" class="h-[80vh]" data-chart-desc="Column chart of monthly spending totals."></div></div>
-            <div id="cumulative-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="cumulative-chart" class="h-[80vh]" data-chart-desc="Line chart of cumulative spending through the year."></div></div>
-            <div id="pie-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="pie-chart" class="h-[80vh]" data-chart-desc="Pie chart of spending by category."></div></div>
-            <div id="income-tag-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="income-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of income totals by tag."></div></div>
-            <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="outgoing-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of outgoing totals by tag."></div></div>
-            <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Bubble chart comparing monthly income and outgoings."></div></div>
-            <div id="stream-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="stream-chart" class="h-[80vh]" data-chart-desc="Stream graph of category spending over the year."></div></div>
+            <div id="income-sunburst" class="tab-content bg-white p-6 rounded shadow border border-gray-400"><div id="income-sunburst-chart" class="h-[80vh]" data-chart-desc="Sunburst chart of income by segment, category and tag."></div></div>
+            <div id="outgoing-sunburst" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="outgoing-sunburst-chart" class="h-[80vh]" data-chart-desc="Sunburst chart of outgoings by segment, category and tag."></div></div>
+            <div id="monthly-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="monthly-chart" class="h-[80vh]" data-chart-desc="Column chart of monthly spending totals."></div></div>
+            <div id="cumulative-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="cumulative-chart" class="h-[80vh]" data-chart-desc="Line chart of cumulative spending through the year."></div></div>
+            <div id="pie-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="pie-chart" class="h-[80vh]" data-chart-desc="Pie chart of spending by category."></div></div>
+            <div id="income-tag-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="income-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of income totals by tag."></div></div>
+            <div id="outgoing-tag-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="outgoing-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of outgoing totals by tag."></div></div>
+            <div id="scatter-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Bubble chart comparing monthly income and outgoings."></div></div>
+            <div id="stream-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="stream-chart" class="h-[80vh]" data-chart-desc="Stream graph of category spending over the year."></div></div>
 
-            <div id="area-range-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="area-range-chart" class="h-[80vh]" data-chart-desc="Area spline chart of min and max monthly spending."></div></div>
-            <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="network-graph" class="h-[80vh]" data-chart-desc="Network graph linking segments and categories."></div></div>
+            <div id="area-range-chart-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="area-range-chart" class="h-[80vh]" data-chart-desc="Area spline chart of min and max monthly spending."></div></div>
+            <div id="network-graph-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="network-graph" class="h-[80vh]" data-chart-desc="Network graph linking segments and categories."></div></div>
 
-            <div id="treegraph-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden dark:bg-gray-800 dark:border-gray-700"><div id="treegraph-chart" data-chart-desc="Tree graph of segments and categories."></div></div>
+            <div id="treegraph-container" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden"><div id="treegraph-chart" data-chart-desc="Tree graph of segments and categories."></div></div>
 
-            <div id="segment-section" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden space-y-4 dark:bg-gray-800 dark:border-gray-700">
+            <div id="segment-section" class="tab-content bg-white p-6 rounded shadow border border-gray-400 hidden space-y-4">
                 <h2 class="text-xl font-semibold">Segment Totals</h2>
                 <div id="segment-table"></div>
                 <div id="segment-chart" class="h-[80vh]" data-chart-desc="Column chart of segment totals."></div>

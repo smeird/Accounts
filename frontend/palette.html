@@ -6,18 +6,18 @@
   <title>Palette Settings</title>
   <script>
       window.tailwind = window.tailwind || {};
-      window.tailwind.config = { darkMode: "class" };
+      window.tailwind.config = {};
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-sans dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
   <div class="flex min-h-screen">
-    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
     <main class="flex-1 p-6">
       <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Palette Settings</h1>
 
-      <div class="bg-white p-6 rounded shadow border border-gray-400 space-y-4 dark:bg-gray-800 dark:border-gray-700">
+      <div class="bg-white p-6 rounded shadow border border-gray-400 space-y-4">
         <ul class="list-disc pl-5 text-gray-700">
           <li>Set segment colours using the picker beside each name. Ticking <em>Lock</em> keeps your choice.</li>
           <li>To reset a segment, untick its <em>Lock</em> box and press <strong>Refresh</strong>.</li>
