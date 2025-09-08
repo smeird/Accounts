@@ -18,6 +18,7 @@ const initThemeToggle = () => {
         icon.classList.add('fa-moon');
       }
     }
+    document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
   };
 
   const saved = localStorage.getItem('theme') || 'light';
