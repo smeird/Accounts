@@ -376,7 +376,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = main.querySelectorAll('section');
     if (sections.length > 0) {
       sections.forEach(section => {
-        section.classList.add('cards');
+        if (!section.hasAttribute('data-no-card')) {
+          section.classList.add('cards');
+        }
       });
     } else {
       const wrapper = document.createElement('section');
