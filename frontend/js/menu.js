@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
   utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg dark:bg-gray-800 dark:border-gray-500 dark:text-gray-100';
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">
-      <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white transition-shadow focus:shadow" />
+      <input type="text" name="value" placeholder="Search transactions" class="p-1 rounded text-black bg-white border-0 transition-shadow focus:shadow" />
       <button type="submit" class="ml-2"><i class="fas fa-search h-4 w-4"></i></button>
     </form>
     <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center">
