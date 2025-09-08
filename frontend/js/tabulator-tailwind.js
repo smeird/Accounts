@@ -38,10 +38,10 @@ function badgeFormatter(colorClasses) {
 function styleCalcRows(table) {
     const rows = table.element.querySelectorAll('.tabulator-calcs-row');
     rows.forEach(row => {
-        row.classList.add('bg-white', 'dark:bg-gray-800');
+        row.classList.add('bg-white');
         row.style.backgroundColor = '';
         row.querySelectorAll('.tabulator-cell').forEach(cell => {
-            cell.classList.add('bg-white', 'dark:bg-gray-800', 'dark:text-gray-100');
+            cell.classList.add('bg-white');
             cell.style.backgroundColor = '';
         });
     });
@@ -70,8 +70,7 @@ function tailwindTabulator(element, options) {
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
         const rowEl = row.getElement();
-        rowEl.classList.add('bg-white', 'hover:bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]',
-            'dark:bg-gray-800', 'dark:hover:bg-gray-700', 'dark:border-gray-700', 'dark:text-gray-100');
+        rowEl.classList.add('bg-white', 'hover:bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]');
         rowEl.classList.remove('tabulator-row-even', 'tabulator-row-odd');
         rowEl.style.borderTop = '0';
         rowEl.querySelectorAll('.tabulator-cell').forEach(cell => {
@@ -108,7 +107,7 @@ function tailwindTabulator(element, options) {
     el.style.setProperty('--tabulator-header-font-family', headingFont);
     el.style.setProperty('--tabulator-header-font-weight', '700');
     el.style.fontFamily = bodyFont;
-    el.style.colorScheme = 'light dark';
+    el.style.colorScheme = 'light';
 
 
     if (rowClickHandler) {
@@ -128,10 +127,10 @@ function tailwindTabulator(element, options) {
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.placeholder = 'Search';
-        searchInput.className = 'tabulator-search mb-2 p-2 border-0 rounded w-full dark:bg-gray-700 dark:text-gray-100';
+        searchInput.className = 'tabulator-search mb-2 p-2 border-0 rounded w-full';
         searchInput.style.fontFamily = accentFont;
         searchInput.style.fontWeight = '300';
-        searchInput.style.colorScheme = 'light dark';
+        searchInput.style.colorScheme = 'light';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         searchInput.addEventListener('input', function() {
             if (typeof table.search === 'function') {
@@ -158,11 +157,10 @@ function tailwindTabulator(element, options) {
     table.on('dataProcessed', function() {
         styleCalcRows(table);
     });
-    el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm', 'dark:bg-gray-800', 'dark:text-gray-100');
+    el.classList.add('border-0', 'rounded-lg', 'overflow-hidden', 'bg-white', 'shadow-sm');
     const header = el.querySelector('.tabulator-header');
     if (header) {
-        header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]', 'rounded-t-lg',
-            'dark:bg-gray-800', 'dark:border-gray-700', 'dark:text-gray-100');
+        header.classList.add('bg-white', 'border-b', 'border-gray-200', 'border-b-[0.5px]', 'rounded-t-lg');
         header.style.backgroundColor = '';
         header.querySelectorAll('.tabulator-col').forEach(col => {
             col.style.borderRight = '0';
@@ -173,8 +171,7 @@ function tailwindTabulator(element, options) {
     if (tableHolder) tableHolder.classList.add('rounded-b-lg');
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) {
-        paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg',
-            'dark:bg-gray-800', 'dark:border-gray-700', 'dark:text-gray-100');
+        paginator.classList.add('bg-white', 'border-t', 'border-gray-200', 'border-t-[0.5px]', 'p-2', 'rounded-b-lg');
         paginator.style.backgroundColor = '';
     }
     return table;

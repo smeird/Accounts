@@ -53,12 +53,11 @@ try {
     console.error('Failed to load colour palette', e);
 }
 
-function getChartTheme(theme) {
-    const dark = theme === 'dark';
-    const text = dark ? '#f3f4f6' : '#000000';
+function getChartTheme() {
+    const text = '#000000';
     return {
         colors: chartColors,
-        chart: { style: { fontFamily: 'Inter, sans-serif', color: text }, backgroundColor: dark ? '#1f2937' : '#ffffff' },
+        chart: { style: { fontFamily: 'Inter, sans-serif', color: text }, backgroundColor: '#ffffff' },
         credits: { enabled: false },
         legend: { enabled: true, itemStyle: { fontSize: '10px', color: text } },
         title: { style: { color: text } },
@@ -72,8 +71,8 @@ function getChartTheme(theme) {
     };
 }
 
-function applyChartTheme(theme) {
-    const opts = getChartTheme(theme);
+function applyChartTheme() {
+    const opts = getChartTheme();
     Highcharts.setOptions(opts);
     const update = {
         colors: opts.colors,
@@ -92,10 +91,8 @@ function applyChartTheme(theme) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    applyChartTheme(document.body.classList.contains('dark') ? 'dark' : 'light');
+    applyChartTheme();
 });
-
-document.addEventListener('themechange', e => applyChartTheme(e.detail));
 
 function getSegmentColor(name) {
     if (!name) name = 'Not Segmented';

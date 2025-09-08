@@ -7,7 +7,7 @@
     <title>Two-Factor Authentication</title>
     <script>
         window.tailwind = window.tailwind || {};
-        window.tailwind.config = { darkMode: "class" };
+        window.tailwind.config = {};
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,9 +18,9 @@
     <!-- Icons provided by Font Awesome loaded via menu.js -->
     <!-- Custom fonts handled via Tailwind utility classes -->
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-['Inter'] dark:from-gray-900 dark:to-gray-800 dark:text-gray-100" data-api-base="../php_backend/public">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-['Inter']" data-api-base="../php_backend/public">
     <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <div class="flex items-center mb-4">
                 <h1 class="font-['Montserrat'] text-2xl font-semibold flex-1 text-indigo-700"><i class="fas fa-shield-halved inline w-6 h-6 mr-2"></i>Two-Factor Authentication</h1>
@@ -28,7 +28,7 @@
             </div>
             <p class="mb-4">Set up TOTP-based authentication and verify your one-time codes.</p>
 
-            <div class="bg-white p-6 rounded shadow border border-gray-400 mb-6 dark:bg-gray-800 dark:border-gray-700">
+            <div class="bg-white p-6 rounded shadow border border-gray-400 mb-6">
                 <h2 class="font-['Montserrat'] text-xl mb-4">Setup</h2>
                 <form id="generate-form" class="space-y-4">
                     <input id="gen-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
@@ -39,7 +39,7 @@
 
             </div>
 
-            <div class="bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
+            <div class="bg-white p-6 rounded shadow border border-gray-400">
                 <h2 class="font-['Montserrat'] text-xl mb-4">Verify</h2>
                 <form id="verify-form" class="space-y-4">
                     <input id="ver-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">

@@ -7,7 +7,7 @@
     <title>Monthly Statement</title>
     <script>
         window.tailwind = window.tailwind || {};
-        window.tailwind.config = { darkMode: "class" };
+        window.tailwind.config = {};
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,13 +16,13 @@
 
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-sans dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Monthly Statement</h1>
             <p class="mb-4">Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.</p>
-            <div class="bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
+            <div class="bg-white p-6 rounded shadow border border-gray-400">
                 <form id="statement-form" class="flex flex-wrap items-end gap-4">
                     <div class="w-full sm:w-auto">
                         <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year</label>
@@ -40,44 +40,44 @@
                 </form>
             </div>
             <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <div id="income-card" class="bg-white p-4 rounded shadow border border-gray-400 text-center cursor-pointer dark:bg-gray-800 dark:border-gray-700">
+                <div id="income-card" class="bg-white p-4 rounded shadow border border-gray-400 text-center cursor-pointer">
                     <p class="text-gray-500">Income</p>
                     <p id="income-total" class="text-3xl font-bold">£0.00</p>
                 </div>
-                <div id="outgoings-card" class="bg-white p-4 rounded shadow border border-gray-400 text-center cursor-pointer dark:bg-gray-800 dark:border-gray-700">
+                <div id="outgoings-card" class="bg-white p-4 rounded shadow border border-gray-400 text-center cursor-pointer">
                     <p class="text-gray-500">Outgoings</p>
                     <p id="outgoings-total" class="text-3xl font-bold">£0.00</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center">
                     <p class="text-gray-500">Delta</p>
                     <p id="delta-total" class="text-3xl font-bold">£0.00</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center">
                     <p class="text-gray-500">Savings Rate</p>
                     <p id="savings-rate" class="text-3xl font-bold">0%</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center">
                     <p class="text-gray-500">Largest Expense Category</p>
                     <p id="largest-category" class="text-3xl font-bold">N/A</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center">
                     <p class="text-gray-500">Recurring vs One-off</p>
                     <p id="recurring-ratio" class="text-lg font-bold">Recurring: £0.00 (0%)<br>One-off: £0.00 (0%)</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center">
                     <p class="text-gray-500">Average Transaction Size</p>
                     <p id="avg-transaction" class="text-lg font-bold">Income: £0.00<br>Expenses: £0.00</p>
                 </div>
-                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-4 rounded shadow border border-gray-400 text-center">
                     <p class="text-gray-500">Days Until Negative Balance</p>
                     <p id="days-negative" class="text-3xl font-bold">N/A</p>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded shadow border border-gray-400 mt-4 dark:bg-gray-800 dark:border-gray-700">
+            <div class="bg-white p-6 rounded shadow border border-gray-400 mt-4">
                 <div id="transactions-grid"></div>
             </div>
             <div class="mt-4">
-                <div class="bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
+                <div class="bg-white p-6 rounded shadow border border-gray-400">
 
                     <div id="category-donut" style="height:500px;" data-chart-desc="Donut chart of spending by category for the selected month."></div>
 

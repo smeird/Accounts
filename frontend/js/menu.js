@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(cardLink);
   }
 
-  document.body.classList.add('pt-4', 'dark:from-gray-900', 'dark:to-gray-800', 'dark:text-gray-100');
+  document.body.classList.add('pt-4');
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
   const colorMap = {
@@ -73,8 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const styleInputs = (root = document) => {
     root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), select, textarea').forEach(el => {
       if (!el.classList.contains('styled-input')) {
-        el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'bg-white', 'border-gray-400',
-          'dark:bg-gray-700', 'dark:border-gray-600', 'dark:text-gray-100');
+        el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'bg-white', 'border-gray-400');
       }
     });
   };
@@ -201,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
       'overflow-y-auto',
       'z-40'
     );
-    menu.classList.add('dark:bg-gray-800', 'dark:border-gray-700');
 
     fetch('menu.php')
       .then(resp => resp.text())
@@ -297,24 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        let themeToggle = document.getElementById('theme-toggle');
-        if (!themeToggle) {
-          themeToggle = document.createElement('button');
-          themeToggle.id = 'theme-toggle';
-          themeToggle.setAttribute('aria-label', 'Toggle dark mode');
-          themeToggle.className = 'ml-auto p-2 rounded-full bg-indigo-600 text-white dark:bg-gray-700';
-          themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-        }
-        const userInfo = menu.querySelector('#user-info');
-        if (userInfo && !userInfo.contains(themeToggle)) {
-          userInfo.appendChild(themeToggle);
-        } else if (menu && !menu.contains(themeToggle)) {
-          menu.appendChild(themeToggle);
-        }
-        if (!document.querySelector('script[src="js/theme_toggle.js"]')) {
-          const themeScript = document.createElement('script');
-          themeScript.src = 'js/theme_toggle.js';
-          document.body.appendChild(themeScript);
         }
       })
       .catch(err => console.error('Menu load failed', err));
@@ -341,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const utility = document.createElement('div');
   utility.id = 'utility-bar';
 
-  utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg dark:bg-gray-800 dark:border-gray-500 dark:text-gray-100';
+  utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg';
 
   utility.innerHTML = `
     <form id="topbar-search" action="search.html" method="get" class="flex">

@@ -94,7 +94,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <title><?= htmlspecialchars($siteName) ?> Login</title>
     <script>
         window.tailwind = window.tailwind || {};
-        window.tailwind.config = { darkMode: "class" };
+        window.tailwind.config = {};
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -102,8 +102,8 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter'] dark:bg-gray-900 dark:text-gray-100">
-    <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
+<body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter']">
+    <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400">
         <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 block mx-auto rounded shadow" />
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1 text-center">AUTHENTICATION / <?= $needsToken ? 'TWO-FACTOR' : 'LOGIN' ?></div>
         <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 text-center <?= $text700 ?>"><?= $needsToken ? 'Enter Code' : 'Login' ?></h1>
@@ -132,7 +132,6 @@ $needsToken = isset($_SESSION['pending_user_id']);
             </form>
         <?php endif; ?>
     </div>
-    <script src="frontend/js/theme_toggle.js"></script>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/keyboard_hints.js"></script>
     <script src="frontend/js/page_help.js"></script>
