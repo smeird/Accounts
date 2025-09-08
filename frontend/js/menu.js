@@ -1,13 +1,11 @@
 // Dynamically loads the shared navigation menu into pages and ensures icon support.
-// Override fetch globally to bypass browser caching.
-const originalFetch = window.fetch;
-window.fetch = (input, init = {}) => {
+// Helper to bypass browser caching when needed.
+function fetchNoCache(input, init = {}) {
   init = init || {};
-  if (!init.cache) {
-    init.cache = 'no-store';
-  }
-  return originalFetch(input, init);
-};
+  init.cache = 'no-store';
+  return window.fetch(input, init);
+}
+window.fetchNoCache = fetchNoCache;
 
   if (!document.getElementById('cards-css')) {
     const cardLink = document.createElement('link');
@@ -111,7 +109,7 @@ window.fetch = (input, init = {}) => {
   const fontLink = document.getElementById('app-fonts');
   const fontStyle = document.getElementById('font-style');
 
-  fetch('../php_backend/public/font_settings.php')
+  fetchNoCache('../php_backend/public/font_settings.php')
     .then(r => r.json())
     .then(f => {
       const families = [
@@ -192,7 +190,7 @@ window.fetch = (input, init = {}) => {
       'z-40'
     );
 
-    fetch('menu.php')
+    fetchNoCache('menu.php')
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
@@ -206,7 +204,7 @@ window.fetch = (input, init = {}) => {
         const userEl = menu.querySelector('#current-user');
         const iconEl = menu.querySelector('#user-icon');
         if (userEl) {
-          fetch('../php_backend/public/current_user.php')
+          fetchNoCache('../php_backend/public/current_user.php')
             .then(r => (r.ok ? r.json() : Promise.reject()))
             .then(u => {
               userEl.textContent = u.username || 'Guest';
@@ -250,7 +248,7 @@ window.fetch = (input, init = {}) => {
           }
         }
         // Display counter for untagged transactions in menu
-        fetch('../php_backend/public/untagged_count.php')
+        fetchNoCache('../php_backend/public/untagged_count.php')
           .then(r => r.json())
           .then(data => {
             const total = Number(data.count || 0);
@@ -266,7 +264,7 @@ window.fetch = (input, init = {}) => {
 
         const releaseEls = document.querySelectorAll('#release-number');
         if (releaseEls.length > 0) {
-          fetch('../php_backend/public/version.php')
+          fetchNoCache('../php_backend/public/version.php')
             .then(r => r.json())
             .then(v => {
               const version = v.version || 'unknown';
@@ -327,7 +325,7 @@ window.fetch = (input, init = {}) => {
   document.body.appendChild(utility);
   const latestLink = document.getElementById('latest-statement-link');
   if (latestLink) {
-    fetch('../php_backend/public/transaction_months.php')
+    fetchNoCache('../php_backend/public/transaction_months.php')
       .then(r => r.json())
       .then(months => {
         if (months.length > 0) {

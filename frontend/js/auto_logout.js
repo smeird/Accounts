@@ -1,5 +1,5 @@
 // Logs out the user after a period of inactivity based on server settings.
-fetch('../php_backend/public/session_timeout.php')
+fetchNoCache('../php_backend/public/session_timeout.php')
   .then(r => {
     if (r.status === 401) {
       window.location.href = '../logout.php?timeout=1';
