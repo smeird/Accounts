@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (menu) {
     // Add responsive classes so the navigation can toggle on small screens
     menu.classList.add(
-      'hidden',
       'flex',
       'flex-col',
       'fixed',
