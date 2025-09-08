@@ -22,6 +22,7 @@ $fontSettings = Setting::getFonts();
 $fontHeading = $fontSettings['heading'];
 $fontBody = $fontSettings['body'];
 $fontAccent = $fontSettings['accent'];
+$fontAccentWeight = $fontSettings['accent_weight'];
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
@@ -52,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fontHeading = trim($_POST['font_heading'] ?? '');
     $fontBody = trim($_POST['font_body'] ?? '');
     $fontAccent = trim($_POST['font_accent'] ?? '');
+    $fontAccentWeight = trim($_POST['font_accent_weight'] ?? '');
     $siteName = trim($_POST['site_name'] ?? '');
     $newColorScheme = trim($_POST['color_scheme'] ?? '');
     Setting::set('openai_api_token', $openai);
@@ -90,6 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('font_accent', $fontAccent);
         Log::write('Updated accent font');
     }
+    if ($fontAccentWeight !== '') {
+        Setting::set('font_accent_weight', $fontAccentWeight);
+        Log::write('Updated accent font weight');
+    }
     if ($siteName !== '') {
         Setting::set('site_name', $siteName);
         Log::write('Updated site name');
@@ -123,11 +129,11 @@ $bg600 = "bg-{$colorScheme}-600";
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
-        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
+        body { font-family: '<?= htmlspecialchars($fontBody, ENT_QUOTES) ?>', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: '<?= htmlspecialchars($fontHeading, ENT_QUOTES) ?>', sans-serif; font-weight: 700; }
+        button, .accent { font-family: '<?= htmlspecialchars($fontAccent, ENT_QUOTES) ?>', sans-serif; font-weight: <?= htmlspecialchars($fontAccentWeight, ENT_QUOTES) ?>; }
         a { transition: color 0.2s ease; }
         a:hover { color: <?= $colorHex ?>; }
         button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
@@ -195,6 +201,12 @@ $bg600 = "bg-{$colorScheme}-600";
                     <?php foreach ($fontOptions as $opt): ?>
                         <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $fontAccent ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
                     <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Accent Font Weight:
+                <select name="font_accent_weight" class="border p-2 rounded w-full" data-help="Weight for buttons and accents">
+                    <option value="300" <?= $fontAccentWeight === '300' ? 'selected' : '' ?>>Light (300)</option>
+                    <option value="100" <?= $fontAccentWeight === '100' ? 'selected' : '' ?>>Very Thin (100)</option>
                 </select>
             </label>
             <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>

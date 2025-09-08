@@ -115,7 +115,7 @@ window.fetchNoCache = fetchNoCache;
       const families = [
         `family=${encodeURIComponent(f.heading)}:wght@700`,
         `family=${encodeURIComponent(f.body)}:wght@400`,
-        `family=${encodeURIComponent(f.accent)}:wght@300`
+        `family=${encodeURIComponent(f.accent)}:wght@${f.accent_weight || 300}`
       ];
       if (fontLink) {
         fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
@@ -129,7 +129,7 @@ window.fetchNoCache = fetchNoCache;
           }
           body { font-family: var(--body-font); font-weight: 400; }
           h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
-          button, .accent { font-family: var(--accent-font); font-weight: 300; }
+          button, .accent { font-family: var(--accent-font); font-weight: ${f.accent_weight || 300}; }
         `;
       }
       siteName = f.site_name || siteName;
