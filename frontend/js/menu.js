@@ -10,6 +10,15 @@ window.fetch = (input, init = {}) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  const cardStyle = document.createElement('style');
+  cardStyle.type = 'text/tailwindcss';
+  cardStyle.textContent = `
+    @layer components {
+      .cards { @apply bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700; }
+    }
+  `;
+  document.head.appendChild(cardStyle);
+
   document.body.classList.add('pt-4', 'dark:from-gray-900', 'dark:to-gray-800', 'dark:text-gray-100');
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
@@ -372,11 +381,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = main.querySelectorAll('section');
     if (sections.length > 0) {
       sections.forEach(section => {
-        section.classList.add('bg-white', 'p-6', 'rounded', 'shadow', 'border', 'border-gray-400', 'dark:bg-gray-800', 'dark:border-gray-700');
+        section.classList.add('cards');
       });
     } else {
       const wrapper = document.createElement('section');
-      wrapper.className = 'bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700';
+      wrapper.className = 'cards';
       while (main.firstChild) {
         wrapper.appendChild(main.firstChild);
       }
