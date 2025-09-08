@@ -127,7 +127,7 @@ function tailwindTabulator(element, options) {
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.placeholder = 'Search';
-        searchInput.className = 'tabulator-search mb-2 p-2 border rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100';
+        searchInput.className = 'tabulator-search mb-2 p-2 border-0 rounded w-full dark:bg-gray-700 dark:text-gray-100';
         searchInput.style.fontFamily = accentFont;
         searchInput.style.fontWeight = '300';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
