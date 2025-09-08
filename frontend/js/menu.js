@@ -299,10 +299,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const content = document.querySelector('body > div.flex');
   if (content) {
-    content.classList.add('h-screen', 'overflow-hidden');
+    // Ensure wrapper always uses column layout on small screens with a
+    // sidebar on larger displays so the menu and utility bar position
+    // consistently across pages.
+    content.classList.add('flex', 'flex-col', 'md:flex-row', 'min-h-screen', 'h-screen', 'overflow-hidden');
     const main = content.querySelector('main');
     if (main) {
-      main.classList.add('h-full', 'overflow-y-auto', 'md:ml-64', 'pt-16', 'md:pt-0');
+      main.classList.add('flex-1', 'min-w-0', 'h-full', 'overflow-y-auto', 'md:ml-64', 'pt-16', 'md:pt-0');
     }
   }
 
