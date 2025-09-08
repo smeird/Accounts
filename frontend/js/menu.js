@@ -9,7 +9,6 @@ window.fetch = (input, init = {}) => {
   return originalFetch(input, init);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
   if (!document.getElementById('cards-css')) {
     const cardLink = document.createElement('link');
     cardLink.id = 'cards-css';
@@ -108,16 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   ariaObserver.observe(document.body, {childList: true, subtree: true});
 
-  // Prepare font links
-  let fontLink = document.getElementById('app-fonts');
-  if (!fontLink) {
-    fontLink = document.createElement('link');
-    fontLink.id = 'app-fonts';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
-  }
-  const fontStyle = document.createElement('style');
-  document.head.appendChild(fontStyle);
+  // References to font resources defined in shared template
+  const fontLink = document.getElementById('app-fonts');
+  const fontStyle = document.getElementById('font-style');
 
   fetch('../php_backend/public/font_settings.php')
     .then(r => r.json())
@@ -127,12 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
         `family=${encodeURIComponent(f.body)}:wght@400`,
         `family=${encodeURIComponent(f.accent)}:wght@300`
       ];
-      fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
-      fontStyle.textContent = `
-        body { font-family: '${f.body}', sans-serif; font-weight: 400; }
-        h1, h2, h3, h4, h5, h6 { font-family: '${f.heading}', sans-serif; font-weight: 700; }
-        button, .accent { font-family: '${f.accent}', sans-serif; font-weight: 300; }
-      `;
+      if (fontLink) {
+        fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
+      }
+      if (fontStyle) {
+        fontStyle.textContent = `
+          :root {
+            --heading-font: '${f.heading}', sans-serif;
+            --body-font: '${f.body}', sans-serif;
+            --accent-font: '${f.accent}', sans-serif;
+          }
+          body { font-family: var(--body-font); font-weight: 400; }
+          h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
+          button, .accent { font-family: var(--accent-font); font-weight: 300; }
+        `;
+      }
       siteName = f.site_name || siteName;
       colorScheme = f.color_scheme || colorScheme;
       document.title = document.title.replace('Finance Manager', siteName);
@@ -147,12 +148,21 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => {
       console.error('Font load failed', err);
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
-      fontStyle.textContent = `
-        body { font-family: 'Inter', sans-serif; font-weight: 400; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Roboto', sans-serif; font-weight: 700; }
-        button, .accent { font-family: 'Source Sans Pro', sans-serif; font-weight: 300; }
-      `;
+      if (fontLink) {
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
+      }
+      if (fontStyle) {
+        fontStyle.textContent = `
+          :root {
+            --heading-font: 'Roboto', sans-serif;
+            --body-font: 'Inter', sans-serif;
+            --accent-font: 'Source Sans Pro', sans-serif;
+          }
+          body { font-family: var(--body-font); font-weight: 400; }
+          h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
+          button, .accent { font-family: var(--accent-font); font-weight: 300; }
+        `;
+      }
       applyColorScheme();
       applyIconColor();
     });
@@ -167,24 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(iconSvg);
   }
 
-  // Ensure every page uses the shared PNG favicon
-  if (!document.querySelector('link[rel="icon"]')) {
-    const iconSvg = document.createElement('link');
-    iconSvg.rel = 'icon';
-    iconSvg.type = 'image/png';
-    iconSvg.href = '/favicon.png';
-    iconSvg.sizes = 'any';
-    document.head.appendChild(iconSvg);
-  }
-
-  // Load Font Awesome so pages can display contextual icons
-  if (!document.getElementById('fa-css')) {
-    const fa = document.createElement('link');
-    fa.id = 'fa-css';
-    fa.rel = 'stylesheet';
-    fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
-    document.head.appendChild(fa);
-  }
 
   const menu = document.getElementById('menu');
   if (menu) {
@@ -386,4 +378,3 @@ document.addEventListener('DOMContentLoaded', () => {
   const tooltipScript = document.createElement('script');
   tooltipScript.src = 'js/tooltips.js';
   document.body.appendChild(tooltipScript);
-});
