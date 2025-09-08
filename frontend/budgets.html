@@ -19,9 +19,9 @@
     <!-- Font Awesome icons loaded via menu.js -->
 
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
+<body class="bg-gradient-to-b from-indigo-50 to-white font-sans dark:from-gray-900 dark:to-gray-800 dark:text-gray-100">
 <div class="flex min-h-screen">
-    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto dark:bg-gray-800 dark:border-gray-700"></nav>
     <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Budgets</h1>
         <p class="mb-4">Set monthly spending limits for categories and monitor progress. Use this page to plan ahead and see where you may need to adjust your spending.</p>
@@ -33,7 +33,7 @@
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded self-end">Set Budget</button>
             </form>
         </section>
-        <section class="bg-white p-6 rounded shadow border border-gray-400">
+        <section class="bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
             <h2 class="text-xl font-semibold mb-4">AI Budgeting</h2>
 
             <p class="mb-4">Send your savings goal and the last 12 months of category totals to the AI to propose next month's budgets and provide a brief explanation.</p>
@@ -57,7 +57,7 @@
             <h2 class="text-xl font-semibold mb-4">Current Budgets</h2>
             <div id="budget-table"></div>
         </section>
-        <section class="bg-white p-6 rounded shadow border border-gray-400">
+        <section class="bg-white p-6 rounded shadow border border-gray-400 dark:bg-gray-800 dark:border-gray-700">
             <h2 class="text-xl font-semibold mb-4">Budget Progress</h2>
             <div id="budget-chart" style="height:400px" data-chart-desc="Bullet chart comparing spending to budgets."></div>
         </section>
