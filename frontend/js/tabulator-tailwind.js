@@ -108,6 +108,7 @@ function tailwindTabulator(element, options) {
     el.style.setProperty('--tabulator-header-font-family', headingFont);
     el.style.setProperty('--tabulator-header-font-weight', '700');
     el.style.fontFamily = bodyFont;
+    el.style.colorScheme = 'light dark';
 
 
     if (rowClickHandler) {
@@ -130,6 +131,7 @@ function tailwindTabulator(element, options) {
         searchInput.className = 'tabulator-search mb-2 p-2 border-0 rounded w-full dark:bg-gray-700 dark:text-gray-100';
         searchInput.style.fontFamily = accentFont;
         searchInput.style.fontWeight = '300';
+        searchInput.style.colorScheme = 'light dark';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         searchInput.addEventListener('input', function() {
             if (typeof table.search === 'function') {
