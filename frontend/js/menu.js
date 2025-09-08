@@ -293,8 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
               });
             });
         }
-
-        }
       })
       .catch(err => console.error('Menu load failed', err));
   }
