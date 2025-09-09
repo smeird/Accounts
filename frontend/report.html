@@ -449,7 +449,9 @@
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(16);
         const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
-        const reportTitle = `${siteTitle} - Transaction Report`;
+        const reportTitle = (currentReportName && currentReportDesc)
+            ? `${currentReportName} - ${currentReportDesc}`
+            : `${siteTitle} - Transaction Report`;
         let titleX = 14;
         try {
             const res = await fetch('/favicon.png');
