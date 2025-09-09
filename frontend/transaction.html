@@ -12,6 +12,13 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome icons loaded via menu.js -->
+    <style>
+    @media print {
+        body { background: white; }
+        nav, h1, p, .no-print { display: none !important; }
+        .receipt { border: none; box-shadow: none; }
+    }
+    </style>
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white font-sans">
     <div class="flex min-h-screen">
@@ -41,7 +48,7 @@
             }
 
             const card = document.createElement('div');
-            card.className = 'relative bg-white p-6 rounded shadow border border-gray-400';
+            card.className = 'relative bg-white p-6 rounded shadow';
 
             function createBadge(text, colorClasses) {
                 const span = document.createElement('span');
@@ -70,27 +77,34 @@
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
-                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex"><dt class="font-semibold w-40">Transaction ID</dt><dd>${tx.id}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Account</dt><dd>${tx.account_name || ''}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Sort Code</dt><dd>${tx.sort_code || ''}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Account Number</dt><dd>${tx.account_number || ''}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Date</dt><dd>${tx.date}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Description</dt><dd>${tx.description}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Memo</dt><dd>${tx.memo || ''}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Amount</dt><dd>£${parseFloat(tx.amount).toFixed(2)}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">OFX Type</dt><dd>${tx.ofx_type || ''}</dd></div>
-                    ${tx.ofx_id ? `<div class="flex"><dt class="font-semibold w-40">OFX ID</dt><dd>${tx.ofx_id}</dd></div>` : ''}
-                    ${tx.bank_ofx_id ? `<div class="flex"><dt class="font-semibold w-40">Bank OFX ID</dt><dd>${tx.bank_ofx_id}</dd></div>` : ''}
-                    <div class="flex"><dt class="font-semibold w-40">Transfer</dt><dd>${tx.transfer_id ? '<span class="text-blue-600"><i class="fas fa-right-left inline w-4 h-4 mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</dd></div>
-                    <div class="flex"><dt class="font-semibold w-40">Category</dt><dd>${tx.category_name || 'None'}</dd></div>
-                </dl>
+                <div class="receipt font-mono text-sm max-w-xs mx-auto border border-dashed p-4 space-y-1">
+                    <div class="flex justify-between"><span class="font-semibold">Transaction ID</span><span>${tx.id}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Account</span><span>${tx.account_name || ''}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Sort Code</span><span>${tx.sort_code || ''}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Account Number</span><span>${tx.account_number || ''}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Date</span><span>${tx.date}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Description</span><span>${tx.description}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Memo</span><span>${tx.memo || ''}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Amount</span><span>£${parseFloat(tx.amount).toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">OFX Type</span><span>${tx.ofx_type || ''}</span></div>
+                    ${tx.ofx_id ? `<div class="flex justify-between"><span class="font-semibold">OFX ID</span><span>${tx.ofx_id}</span></div>` : ''}
+                    ${tx.bank_ofx_id ? `<div class="flex justify-between"><span class="font-semibold">Bank OFX ID</span><span>${tx.bank_ofx_id}</span></div>` : ''}
+                    <div class="flex justify-between"><span class="font-semibold">Transfer</span><span>${tx.transfer_id ? '<span class="text-blue-600"><i class="fas fa-right-left inline w-4 h-4 mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</span></div>
+                    <div class="flex justify-between"><span class="font-semibold">Category</span><span>${tx.category_name || 'None'}</span></div>
+                </div>
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
+                <div class="flex space-x-2 justify-center no-print">
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Save transaction">Save</button>
+                    <button type="button" id="print" class="bg-gray-600 text-white px-4 py-2 rounded" aria-label="Print receipt">Print Receipt</button>
+                </div>
             `;
             card.appendChild(form);
             container.appendChild(card);
+            const printBtn = form.querySelector('#print');
+            if (printBtn) {
+                printBtn.addEventListener('click', () => window.print());
+            }
             const tagInput = form.querySelector('#tag');
             if (tx.tag_name) {
                 tagInput.parentElement.classList.add('hidden');
