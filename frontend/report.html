@@ -205,7 +205,8 @@
             saved.forEach(r => {
                 const opt = document.createElement('option');
                 opt.value = r.id;
-                opt.textContent = r.name;
+                const label = r.description ? `${r.name} - ${r.description}` : r.name;
+                opt.textContent = label;
                 if (r.description) opt.title = r.description;
                 select.appendChild(opt);
             });
