@@ -27,6 +27,17 @@ class CategoryTag {
     }
 
     /**
+     * Return the category id currently linked to the given tag, or null if unassigned.
+     */
+    public static function getCategoryId(int $tagId): ?int {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT category_id FROM category_tags WHERE tag_id = :tag LIMIT 1');
+        $stmt->execute(['tag' => $tagId]);
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int)$id : null;
+    }
+
+    /**
      * Move a tag from one category to another atomically.
      */
     public static function move(int $oldCategoryId, int $newCategoryId, int $tagId): void {
