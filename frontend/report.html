@@ -449,9 +449,15 @@
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(16);
         const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
-        const reportTitle = (currentReportName && currentReportDesc)
-            ? `${currentReportName} - ${currentReportDesc}`
-            : `${siteTitle} - Transaction Report`;
+        let reportTitle;
+        let reportDesc;
+        if (currentReportName && currentReportDesc) {
+            reportTitle = currentReportName;
+            reportDesc = currentReportDesc;
+        } else {
+            reportTitle = siteTitle;
+            reportDesc = 'Transaction Report';
+        }
         let titleX = 14;
         try {
             const res = await fetch('/favicon.png');
@@ -467,7 +473,9 @@
             // Ignore icon errors and fall back to text-only header
         }
         doc.text(reportTitle, titleX, 12);
-        doc.setProperties({ title: reportTitle });
+        doc.setFontSize(8);
+        doc.text(reportDesc, titleX, 18);
+        doc.setProperties({ title: `${reportTitle} - ${reportDesc}` });
 
         // Description
         doc.setTextColor(0, 0, 0);
