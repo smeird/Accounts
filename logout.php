@@ -55,7 +55,6 @@ $bgHover = "hover:bg-{$colorScheme}-700";
         <p class="mb-4">You have been safely logged out of the <?= htmlspecialchars($siteName) ?>.</p>
         <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded font-['Source_Sans_Pro'] font-light transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
     </div>
-    <script src="frontend/js/keyboard_hints.js"></script>
     <script src="frontend/js/page_help.js"></script>
 </body>
 </html>
