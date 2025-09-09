@@ -114,7 +114,6 @@ $needsToken = isset($_SESSION['pending_user_id']);
         <?php endif; ?>
     </div>
     <script src="frontend/js/input_help.js"></script>
-    <script src="frontend/js/keyboard_hints.js"></script>
     <script src="frontend/js/page_help.js"></script>
 </body>
 </html>
