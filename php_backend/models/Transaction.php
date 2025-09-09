@@ -209,7 +209,7 @@ class Transaction {
 
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT t.`date`, t.`amount`, t.`description`, t.`memo`, '
+        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 'c.`name` AS category_name, tg.`name` AS tag_name, g.`name` AS group_name, s.`name` AS segment_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
