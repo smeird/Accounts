@@ -49,11 +49,18 @@ function scoreBadge(score){
 }
 
 
-function renderStars(score){
-    const s = parseInt(score, 10) || 0;
+function renderStars(score, minScore, maxScore){
+    const s = parseFloat(score) || 0;
+    const min = parseFloat(minScore) || 0;
+    const max = parseFloat(maxScore) || 0;
+    let starCount = 3;
+    if(max > min){
+        starCount = Math.round(((s - min) / (max - min)) * 4) + 1;
+    }
+    starCount = Math.max(1, Math.min(5, starCount));
     let stars = '';
     for(let i = 0; i < 5; i++){
-        if(i < s){
+        if(i < starCount){
             stars += '<i class="fas fa-star text-yellow-500 text-xs"></i>';
         } else {
             stars += '<i class="far fa-star text-gray-300 text-xs"></i>';
@@ -66,6 +73,9 @@ function renderStars(score){
 async function loadProjects(){
     const res = await fetch('../php_backend/public/projects.php');
     const projects = await res.json();
+    const scores = projects.map(p => parseFloat(p.score) || 0);
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
     const board = document.getElementById('projects-board');
     board.innerHTML = '';
     projects.forEach(p => {
@@ -124,7 +134,7 @@ async function loadProjects(){
             <tr>
 
                 <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${scoreBadge(p.benefit_sustainability)}</td>
-                <td class="pr-2 font-semibold">Score:</td><td>${renderStars(p.score)}</td>
+                <td class="pr-2 font-semibold">Score:</td><td>${renderStars(p.score, minScore, maxScore)}</td>
 
             </tr>
             <tr>
