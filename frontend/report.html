@@ -449,7 +449,21 @@
         doc.setFontSize(16);
         const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
         const reportTitle = `${siteTitle} - Transaction Report`;
-        doc.text(reportTitle, 14, 12);
+        let titleX = 14;
+        try {
+            const res = await fetch('/favicon.png');
+            const blob = await res.blob();
+            const iconData = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+            doc.addImage(iconData, 'PNG', 14, 2, 16, 16);
+            titleX = 34;
+        } catch (e) {
+            // Ignore icon errors and fall back to text-only header
+        }
+        doc.text(reportTitle, titleX, 12);
         doc.setProperties({ title: reportTitle });
 
         // Description
