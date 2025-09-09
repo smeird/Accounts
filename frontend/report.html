@@ -510,6 +510,30 @@
         doc.text('Generated on ' + new Date().toLocaleString(), 14, y);
         y += 8;
 
+        // Include charts before tables
+        let chartY = y;
+        const chartEl = document.getElementById('chart');
+        if (chartEl) {
+            const canvas = await html2canvas(chartEl, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pageWidth - 28;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
+            chartY += imgHeight + 10;
+        }
+
+        const catChartEl = document.getElementById('category-chart');
+        if (catChartEl) {
+            const canvas = await html2canvas(catChartEl, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pageWidth - 28;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
+            chartY += imgHeight + 10;
+        }
+
+        y = chartY;
+
         // Table
         const columns = window.reportTable.getColumns()
             .filter(col => col.getField() !== 'tag_name')
@@ -565,27 +589,6 @@
                 headStyles: { fillColor: [79, 70, 229], textColor: 255 },
                 alternateRowStyles: { fillColor: [243, 244, 246] }
             });
-        }
-
-        // Include the chart in the PDF
-        let chartY = ((doc.lastAutoTable && doc.lastAutoTable.finalY) || y) + 10;
-        const chartEl = document.getElementById('chart');
-        if (chartEl) {
-            const canvas = await html2canvas(chartEl, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = pageWidth - 28;
-            const imgHeight = canvas.height * imgWidth / canvas.width;
-            doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
-            chartY += imgHeight + 10;
-        }
-
-        const catChartEl = document.getElementById('category-chart');
-        if (catChartEl) {
-            const canvas = await html2canvas(catChartEl, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = pageWidth - 28;
-            const imgHeight = canvas.height * imgWidth / canvas.width;
-            doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
         }
 
         const blob = doc.output('blob');
