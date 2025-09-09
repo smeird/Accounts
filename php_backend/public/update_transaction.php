@@ -34,10 +34,6 @@ try {
     $tagChanged = false;
     $categoryChanged = false;
 
-    if ($categoryId !== null) {
-        Transaction::setCategory((int)$transactionId, $categoryId === '' ? null : (int)$categoryId);
-        $categoryChanged = true;
-    }
     if ($groupId !== null) {
 
         $newGroup = $groupId === '' ? null : (int)$groupId;
@@ -72,6 +68,24 @@ try {
         }
         Transaction::setTag((int)$transactionId, (int)$tagId);
         $tagChanged = true;
+    }
+
+    if ($categoryId !== null) {
+        $newCategory = $categoryId === '' ? null : (int)$categoryId;
+        if ($tagId) {
+            $current = CategoryTag::getCategoryId((int)$tagId);
+            if ($current !== $newCategory) {
+                if ($current !== null && $newCategory !== null) {
+                    CategoryTag::move($current, $newCategory, (int)$tagId);
+                } elseif ($current !== null && $newCategory === null) {
+                    CategoryTag::remove($current, (int)$tagId);
+                } elseif ($current === null && $newCategory !== null) {
+                    CategoryTag::add($newCategory, (int)$tagId);
+                }
+            }
+        }
+        Transaction::setCategory((int)$transactionId, $newCategory);
+        $categoryChanged = true;
     }
 
     $applied = $tagChanged ? Tag::applyToAccountTransactions((int)$accountId) : 0;

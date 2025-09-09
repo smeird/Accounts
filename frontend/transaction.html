@@ -40,8 +40,9 @@
     } else {
         Promise.all([
             fetch('../php_backend/public/transaction.php?id=' + id).then(r => r.json()),
-            fetch('../php_backend/public/groups.php').then(r => r.json())
-        ]).then(([tx, groups]) => {
+            fetch('../php_backend/public/groups.php').then(r => r.json()),
+            fetch('../php_backend/public/categories.php').then(r => r.json())
+        ]).then(([tx, groups, categories]) => {
             if (tx.error) {
                 container.textContent = 'Transaction not found.';
                 return;
@@ -93,6 +94,7 @@
                     <div class="flex justify-between"><span class="font-semibold">Category</span><span>${tx.category_name || 'None'}</span></div>
                 </div>
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
+                <label class="block">Category Group: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category group"></select></label>
                 <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 <div class="flex space-x-2 justify-center no-print">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Save transaction">Save</button>
@@ -110,6 +112,7 @@
                 tagInput.parentElement.classList.add('hidden');
             }
             const groupSel = form.querySelector('#group');
+            const catSel = form.querySelector('#category');
             tagInput.value = tx.tag_name || '';
             const blankGrp = document.createElement('option');
             blankGrp.value = '';
@@ -124,6 +127,25 @@
                     else if (!g.active) opt.disabled = true;
                     groupSel.appendChild(opt);
                 }
+            });
+            const blankCat = document.createElement('option');
+            blankCat.value = '';
+            blankCat.textContent = '-- None --';
+            catSel.appendChild(blankCat);
+            const segMap = {};
+            categories.forEach(c => {
+                const seg = c.segment_name || 'Unassigned';
+                if (!segMap[seg]) {
+                    const og = document.createElement('optgroup');
+                    og.label = seg;
+                    segMap[seg] = og;
+                    catSel.appendChild(og);
+                }
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                if (c.id == tx.category_id) opt.selected = true;
+                segMap[seg].appendChild(opt);
             });
             const newGrp = document.createElement('option');
             newGrp.value = '__new';
@@ -165,7 +187,9 @@
                     description: tx.description
                 };
                 if (groupSel.value !== '') payload.group_id = groupSel.value;
-                if (tagInput.value.trim() !== '') payload.tag_name = tagInput.value.trim();
+                if (catSel.value !== '') payload.category_id = catSel.value;
+                if (tx.tag_id) payload.tag_id = tx.tag_id;
+                else if (tagInput.value.trim() !== '') payload.tag_name = tagInput.value.trim();
 
                 fetch('../php_backend/public/update_transaction.php', {
                     method: 'POST',
