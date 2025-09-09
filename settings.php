@@ -216,5 +216,7 @@ $bg600 = "bg-{$colorScheme}-600";
     <script src="frontend/js/keyboard_hints.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
+    <script src="frontend/js/aria_tooltips.js"></script>
+    <script src="frontend/js/tooltips.js"></script>
 </body>
 </html>
