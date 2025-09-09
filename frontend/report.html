@@ -449,6 +449,12 @@
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(16);
         const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
+
+        const reportTitle = (currentReportName && currentReportDesc)
+            ? `${currentReportName} - ${currentReportDesc}`
+            : `${siteTitle} - Transaction Report`;
+        doc.text(reportTitle, 14, 12);
+
         const reportTitle = `${siteTitle} - Transaction Report`;
         let titleX = 14;
         try {
@@ -465,6 +471,7 @@
             // Ignore icon errors and fall back to text-only header
         }
         doc.text(reportTitle, titleX, 12);
+
         doc.setProperties({ title: reportTitle });
 
         // Description
