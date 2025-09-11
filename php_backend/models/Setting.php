@@ -32,7 +32,8 @@ class Setting {
      * Retrieve branding settings such as site name, colour scheme and fonts.
      *
      * @return array{site_name: string, color_scheme: string, heading_font: string,
-     *               body_font: string, table_font: string, chart_font: string}
+     *               body_font: string, table_font: string, chart_font: string,
+     *               accent_font_weight: string}
      */
     public static function getBrand(): array {
         return [
@@ -42,6 +43,7 @@ class Setting {
             'body_font'    => self::get('font_body')    ?? self::DEFAULT_FONT,
             'table_font'   => self::get('font_table')   ?? self::DEFAULT_FONT,
             'chart_font'   => self::get('font_chart')   ?? self::DEFAULT_FONT,
+            'accent_font_weight' => self::get('accent_font_weight') ?? '',
         ];
     }
 }

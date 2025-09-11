@@ -24,6 +24,7 @@ $headingFont = $brand['heading_font'];
 $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
 $chartFont = $brand['chart_font'];
+$accentWeight = $brand['accent_font_weight'];
 $colorMap = [
     'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
     'blue'   => ['600' => '#2563eb', '700' => '#1d4ed8'],
@@ -65,7 +66,8 @@ $bgHover = "hover:bg-{$colorScheme}-700";
         heading_font: <?= json_encode($headingFont) ?>,
         body_font: <?= json_encode($bodyFont) ?>,
         table_font: <?= json_encode($tableFont) ?>,
-        chart_font: <?= json_encode($chartFont) ?>
+        chart_font: <?= json_encode($chartFont) ?>,
+        accent_font_weight: <?= json_encode($accentWeight) ?>
       });
     </script>
 </body>

@@ -25,6 +25,7 @@
       body { font-family: var(--body-font, inherit); }
       h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font, inherit); }
       table, .tabulator, .tabulator * { font-family: var(--table-font, inherit); }
+      .accent { font-family: var(--accent-font, inherit); font-weight: var(--accent-font-weight, 300); }
     `;
     document.head.appendChild(style);
   }
@@ -35,6 +36,7 @@
     const body    = opts.body_font    || opts.font_body    || '';
     const table   = opts.table_font   || opts.font_table   || '';
     const chart   = opts.chart_font   || opts.font_chart   || '';
+    const accentW = opts.accent_font_weight || opts.font_accent_weight || '';
 
     [heading, body, table, chart].forEach(loadFont);
 
@@ -48,6 +50,7 @@
       root.style.setProperty('--tabulator-header-font-family', table);
     }
     if (chart) root.style.setProperty('--chart-font', chart);
+    if (accentW) root.style.setProperty('--accent-font-weight', accentW);
 
     ensureStyle();
     document.dispatchEvent(new Event('fonts-applied'));

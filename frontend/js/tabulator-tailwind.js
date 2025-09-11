@@ -96,10 +96,6 @@ function tailwindTabulator(element, options) {
     }
 
     const table = new Tabulator(element, options);
-    const rootStyles = getComputedStyle(document.documentElement);
-    const accentFont = rootStyles.getPropertyValue('--table-font')
-        || rootStyles.getPropertyValue('--accent-font')
-        || getComputedStyle(document.body).fontFamily;
     const el = table.element;
     el.style.colorScheme = 'light';
 
@@ -121,9 +117,7 @@ function tailwindTabulator(element, options) {
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.placeholder = 'Search';
-        searchInput.className = 'tabulator-search mb-2 p-2 border-0 rounded w-full';
-        searchInput.style.fontFamily = accentFont;
-        searchInput.style.fontWeight = '300';
+        searchInput.className = 'tabulator-search mb-2 p-2 border-0 rounded w-full accent';
         searchInput.style.colorScheme = 'light';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         searchInput.addEventListener('input', function() {

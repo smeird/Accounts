@@ -132,7 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         heading_font: <?= json_encode($brand['heading_font']) ?>,
         body_font: <?= json_encode($brand['body_font']) ?>,
         table_font: <?= json_encode($brand['table_font']) ?>,
-        chart_font: <?= json_encode($brand['chart_font']) ?>
+        chart_font: <?= json_encode($brand['chart_font']) ?>,
+        accent_font_weight: <?= json_encode($brand['accent_font_weight']) ?>
       });
     </script>
 
