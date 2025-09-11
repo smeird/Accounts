@@ -11,29 +11,26 @@
         window.tailwind.config = {};
     </script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+      <script src="https://cdn.tailwindcss.com"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
-
-    <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
-    <!-- Icons provided by Font Awesome loaded via menu.js -->
-    <!-- Custom fonts handled via Tailwind utility classes -->
+      <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
+      <!-- Icons provided by Font Awesome loaded via menu.js -->
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white font-['Inter']" data-api-base="../php_backend/public">
+<body class="bg-gradient-to-b from-indigo-50 to-white" data-api-base="../php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-white border-r p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <div class="flex items-center mb-4">
-                <h1 class="font-['Montserrat'] text-2xl font-semibold flex-1 text-indigo-700"><i class="fas fa-shield-halved inline w-6 h-6 mr-2"></i>Two-Factor Authentication</h1>
-                <button id="help-btn" class="text-indigo-600 font-['Source_Sans_Pro'] font-light"><i class="fas fa-question-circle inline w-5 h-5"></i></button>
+                <h1 class="text-2xl font-semibold flex-1 text-indigo-700"><i class="fas fa-shield-halved inline w-6 h-6 mr-2"></i>Two-Factor Authentication</h1>
+                <button id="help-btn" class="text-indigo-600 font-light"><i class="fas fa-question-circle inline w-5 h-5"></i></button>
             </div>
             <p class="mb-4">Set up TOTP-based authentication and verify your one-time codes.</p>
 
             <div class="bg-white p-6 rounded shadow border border-gray-400 mb-6">
-                <h2 class="font-['Montserrat'] text-xl mb-4">Setup</h2>
+                  <h2 class="text-xl mb-4">Setup</h2>
                 <form id="generate-form" class="space-y-4">
                     <input id="gen-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-['Source_Sans_Pro'] font-light"><i class="fas fa-qrcode inline w-4 h-4 mr-2"></i>Generate QR</button>
+                      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-qrcode inline w-4 h-4 mr-2"></i>Generate QR</button>
                 </form>
 
                 <div id="qr" class="mt-4 mx-auto"></div>
@@ -41,11 +38,11 @@
             </div>
 
             <div class="bg-white p-6 rounded shadow border border-gray-400">
-                <h2 class="font-['Montserrat'] text-xl mb-4">Verify</h2>
+                  <h2 class="text-xl mb-4">Verify</h2>
                 <form id="verify-form" class="space-y-4">
                     <input id="ver-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
                     <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-['Source_Sans_Pro'] font-light"><i class="fas fa-check inline w-4 h-4 mr-2"></i>Verify</button>
+                      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-check inline w-4 h-4 mr-2"></i>Verify</button>
                 </form>
             </div>
         </main>
