@@ -23,8 +23,15 @@
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Recurring Spend Detection</h1>
             <p class="mb-4">Run an analysis of the last 12 months to find subscriptions and other repeat expenses. The results highlight ongoing commitments so you know where money leaves your account regularly.</p>
             <button id="run-analysis" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4"><i class="fas fa-chart-line inline w-4 h-4 mr-2"></i>Run Analysis</button>
-            <div id="results-grid"></div>
-            <p id="total" class="mt-4 text-right"></p>
+            <h2 class="text-xl font-semibold mt-6 mb-2">Recurring Outgoings</h2>
+            <div id="outgoing-grid"></div>
+            <p id="outgoing-total" class="mt-2 text-right"></p>
+            <p id="outgoing-next" class="text-right"></p>
+
+            <h2 class="text-xl font-semibold mt-6 mb-2">Recurring Income</h2>
+            <div id="income-grid"></div>
+            <p id="income-total" class="mt-2 text-right"></p>
+            <p id="income-next" class="text-right"></p>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -38,23 +45,49 @@
         fetch('../php_backend/public/recurring_spend.php')
             .then(resp => resp.json())
             .then(data => {
-                const gridEl = document.getElementById('results-grid');
-                gridEl.innerHTML = '';
-                if(data.results && data.results.length){
-                    tailwindTabulator(gridEl, {
-                        data: data.results,
+                const outEl = document.getElementById('outgoing-grid');
+                const inEl = document.getElementById('income-grid');
+                outEl.innerHTML = '';
+                inEl.innerHTML = '';
+
+                if(data.outgoings && data.outgoings.results.length){
+                    tailwindTabulator(outEl, {
+                        data: data.outgoings.results,
                         layout: 'fitDataStretch',
                         columns: [
                             { title: 'Description', field: 'description' },
+                            { title: 'Day', field: 'day', hozAlign: 'right' },
                             { title: 'Occurrences', field: 'occurrences', hozAlign: 'right' },
+                            { title: 'Avg Amount', field: 'average', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } },
                             { title: 'Yearly Total', field: 'total', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } }
                         ]
                     });
-                    const total = data.results.reduce((sum, row) => sum + parseFloat(row.total), 0);
-                    document.getElementById('total').textContent = 'Total: ' + formatCurrency(total);
+                    document.getElementById('outgoing-total').textContent = 'Yearly total: ' + formatCurrency(data.outgoings.total);
+                    document.getElementById('outgoing-next').textContent = 'Next month estimate: ' + formatCurrency(data.outgoings.next_month);
                 } else {
-                    gridEl.innerHTML = 'No recurring spend found.';
-                    document.getElementById('total').textContent = '';
+                    outEl.innerHTML = 'No recurring outgoings found.';
+                    document.getElementById('outgoing-total').textContent = '';
+                    document.getElementById('outgoing-next').textContent = '';
+                }
+
+                if(data.income && data.income.results.length){
+                    tailwindTabulator(inEl, {
+                        data: data.income.results,
+                        layout: 'fitDataStretch',
+                        columns: [
+                            { title: 'Description', field: 'description' },
+                            { title: 'Day', field: 'day', hozAlign: 'right' },
+                            { title: 'Occurrences', field: 'occurrences', hozAlign: 'right' },
+                            { title: 'Avg Amount', field: 'average', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } },
+                            { title: 'Yearly Total', field: 'total', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } }
+                        ]
+                    });
+                    document.getElementById('income-total').textContent = 'Yearly total: ' + formatCurrency(data.income.total);
+                    document.getElementById('income-next').textContent = 'Next month estimate: ' + formatCurrency(data.income.next_month);
+                } else {
+                    inEl.innerHTML = 'No recurring income found.';
+                    document.getElementById('income-total').textContent = '';
+                    document.getElementById('income-next').textContent = '';
                 }
             });
     });
