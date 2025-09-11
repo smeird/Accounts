@@ -21,6 +21,31 @@ $timeout = Setting::get('session_timeout_minutes') ?? '0';
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
+$headingFont = $brand['heading_font'];
+$bodyFont = $brand['body_font'];
+$tableFont = $brand['table_font'];
+$chartFont = $brand['chart_font'];
+$fontOptions = ['' => 'Default',
+    'Arial' => 'Arial',
+    'Helvetica' => 'Helvetica',
+    'Times New Roman' => 'Times New Roman',
+    'Georgia' => 'Georgia',
+    'Courier New' => 'Courier New',
+    'Verdana' => 'Verdana',
+    'Trebuchet MS' => 'Trebuchet MS',
+    'Garamond' => 'Garamond',
+    'Roboto' => 'Roboto',
+    'Open Sans' => 'Open Sans',
+    'Lato' => 'Lato',
+    'Montserrat' => 'Montserrat',
+    'Poppins' => 'Poppins',
+    'Comic Sans MS' => 'Comic Sans MS',
+    'Bangers' => 'Bangers',
+    'Caveat' => 'Caveat',
+    'Dancing Script' => 'Dancing Script',
+    'Fredoka' => 'Fredoka',
+    'Pacifico' => 'Pacifico',
+];
 $colorOptions = ['indigo', 'blue', 'green', 'red', 'purple', 'teal', 'orange'];
 $colorMap = [
     'indigo' => '#4f46e5',
@@ -42,6 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $timeout = trim($_POST['session_timeout_minutes'] ?? '');
     $siteName = trim($_POST['site_name'] ?? '');
     $newColorScheme = trim($_POST['color_scheme'] ?? '');
+    $headingFont = trim($_POST['font_heading'] ?? '');
+    $bodyFont = trim($_POST['font_body'] ?? '');
+    $tableFont = trim($_POST['font_table'] ?? '');
+    $chartFont = trim($_POST['font_chart'] ?? '');
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -77,6 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $colorScheme = $newColorScheme;
         }
     }
+    Setting::set('font_heading', $headingFont);
+    Setting::set('font_body', $bodyFont);
+    Setting::set('font_table', $tableFont);
+    Setting::set('font_chart', $chartFont);
+    Log::write('Updated font settings');
     $message = 'Settings updated.';
 }
 
@@ -148,6 +182,34 @@ $bg600 = "bg-{$colorScheme}-600";
                     <?php endforeach; ?>
                 </select>
             </label>
+            <label class="block">Heading Font:
+                <select name="font_heading" class="border p-2 rounded w-full" data-help="Font for headings">
+                    <?php foreach ($fontOptions as $k => $v): ?>
+                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $headingFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Body Font:
+                <select name="font_body" class="border p-2 rounded w-full" data-help="Font for body text">
+                    <?php foreach ($fontOptions as $k => $v): ?>
+                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $bodyFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Table Font:
+                <select name="font_table" class="border p-2 rounded w-full" data-help="Font for tables">
+                    <?php foreach ($fontOptions as $k => $v): ?>
+                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $tableFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Chart Font:
+                <select name="font_chart" class="border p-2 rounded w-full" data-help="Font for charts">
+                    <?php foreach ($fontOptions as $k => $v): ?>
+                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $chartFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
             <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
     </div>
@@ -156,5 +218,14 @@ $bg600 = "bg-{$colorScheme}-600";
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($headingFont) ?>,
+        body_font: <?= json_encode($bodyFont) ?>,
+        table_font: <?= json_encode($tableFont) ?>,
+        chart_font: <?= json_encode($chartFont) ?>
+      });
+    </script>
 </body>
 </html>

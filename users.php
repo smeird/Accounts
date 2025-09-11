@@ -14,6 +14,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$brand = Setting::getBrand();
+
 $username = $_SESSION['username'] ?? '';
 $db = Database::getConnection();
 $has2fa = false;
@@ -124,6 +126,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($brand['heading_font']) ?>,
+        body_font: <?= json_encode($brand['body_font']) ?>,
+        table_font: <?= json_encode($brand['table_font']) ?>,
+        chart_font: <?= json_encode($brand['chart_font']) ?>
+      });
+    </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 

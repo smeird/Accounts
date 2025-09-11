@@ -55,14 +55,16 @@ try {
 
 function getChartTheme() {
     const text = '#000000';
+    const styles = getComputedStyle(document.documentElement);
+    const chartFont = styles.getPropertyValue('--chart-font').trim() || 'Inter, sans-serif';
     return {
         colors: chartColors,
-        chart: { style: { fontFamily: 'Inter, sans-serif', color: text }, backgroundColor: '#ffffff' },
+        chart: { style: { fontFamily: chartFont, color: text }, backgroundColor: '#ffffff' },
         credits: { enabled: false },
-        legend: { enabled: true, itemStyle: { fontSize: '10px', color: text } },
-        title: { style: { color: text } },
-        xAxis: { labels: { style: { color: text } }, title: { style: { color: text } } },
-        yAxis: { labels: { style: { color: text } }, title: { style: { color: text } } },
+        legend: { enabled: true, itemStyle: { fontSize: '10px', color: text, fontFamily: chartFont } },
+        title: { style: { color: text, fontFamily: chartFont } },
+        xAxis: { labels: { style: { color: text, fontFamily: chartFont } }, title: { style: { color: text, fontFamily: chartFont } } },
+        yAxis: { labels: { style: { color: text, fontFamily: chartFont } }, title: { style: { color: text, fontFamily: chartFont } } },
         plotOptions: {
             series: { showInLegend: true },
             pie: { showInLegend: true },
@@ -91,6 +93,10 @@ function applyChartTheme() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    applyChartTheme();
+});
+
+document.addEventListener('fonts-applied', () => {
     applyChartTheme();
 });
 
