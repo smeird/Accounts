@@ -20,6 +20,12 @@ if (isset($_GET['timeout'])) {
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
+$fonts = Setting::getFonts();
+$fontHeading = $fonts['heading'];
+$fontBody = $fonts['body'];
+$fontAccent = $fonts['accent'];
+$fontAccentWeight = $fonts['accent_weight'];
+$fontTable = $fonts['table'];
 $colorMap = [
     'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
     'blue'   => ['600' => '#2563eb', '700' => '#1d4ed8'],
@@ -46,14 +52,19 @@ $bgHover = "hover:bg-{$colorScheme}-700";
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&family=<?= urlencode($fontTable) ?>:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: '<?= htmlspecialchars($fontBody, ENT_QUOTES) ?>', sans-serif; font-weight: 400; }
+        h1, h2, h3, h4, h5, h6 { font-family: '<?= htmlspecialchars($fontHeading, ENT_QUOTES) ?>', sans-serif; font-weight: 700; }
+        button, .accent { font-family: '<?= htmlspecialchars($fontAccent, ENT_QUOTES) ?>', sans-serif; font-weight: <?= htmlspecialchars($fontAccentWeight, ENT_QUOTES) ?>; }
+    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gray-50 font-['Inter']">
+<body class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 text-center">
         <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 mx-auto rounded shadow" />
-        <h1 class="font-['Roboto'] text-2xl font-semibold mb-4 <?= $text700 ?>">Logged Out</h1>
+        <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">Logged Out</h1>
         <p class="mb-4">You have been safely logged out of the <?= htmlspecialchars($siteName) ?>.</p>
-        <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded font-['Source_Sans_Pro'] font-light transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
+        <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded accent transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
     </div>
     <script src="frontend/js/page_help.js"></script>
 </body>
