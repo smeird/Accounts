@@ -25,6 +25,7 @@ $headingFont = $brand['heading_font'];
 $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
 $chartFont = $brand['chart_font'];
+$accentWeight = $brand['accent_font_weight'];
 $fontOptions = ['' => 'Default',
     'Arial' => 'Arial',
     'Helvetica' => 'Helvetica',
@@ -46,6 +47,7 @@ $fontOptions = ['' => 'Default',
     'Fredoka' => 'Fredoka',
     'Pacifico' => 'Pacifico',
 ];
+$weightOptions = ['' => 'Default', '100' => 'Thin', '300' => 'Light', '700' => 'Bold'];
 $colorOptions = ['indigo', 'blue', 'green', 'red', 'purple', 'teal', 'orange'];
 $colorMap = [
     'indigo' => '#4f46e5',
@@ -71,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bodyFont = trim($_POST['font_body'] ?? '');
     $tableFont = trim($_POST['font_table'] ?? '');
     $chartFont = trim($_POST['font_chart'] ?? '');
+    $accentWeight = trim($_POST['accent_font_weight'] ?? '');
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -110,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Setting::set('font_body', $bodyFont);
     Setting::set('font_table', $tableFont);
     Setting::set('font_chart', $chartFont);
+    Setting::set('accent_font_weight', $accentWeight);
     Log::write('Updated font settings');
     $message = 'Settings updated.';
 }
@@ -210,6 +214,13 @@ $bg600 = "bg-{$colorScheme}-600";
                     <?php endforeach; ?>
                 </select>
             </label>
+            <label class="block">Accent Font Weight:
+                <select name="accent_font_weight" class="border p-2 rounded w-full" data-help="Weight for accent text like search inputs">
+                    <?php foreach ($weightOptions as $k => $v): ?>
+                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $accentWeight ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
             <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
     </div>
@@ -224,7 +235,8 @@ $bg600 = "bg-{$colorScheme}-600";
         heading_font: <?= json_encode($headingFont) ?>,
         body_font: <?= json_encode($bodyFont) ?>,
         table_font: <?= json_encode($tableFont) ?>,
-        chart_font: <?= json_encode($chartFont) ?>
+        chart_font: <?= json_encode($chartFont) ?>,
+        accent_font_weight: <?= json_encode($accentWeight) ?>
       });
       const fontChoices = <?= json_encode(array_keys($fontOptions)) ?>;
       fontChoices.forEach(f => { if (f) window.loadFont(f); });

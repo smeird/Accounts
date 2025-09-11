@@ -16,6 +16,7 @@ $headingFont = $brand['heading_font'];
 $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
 $chartFont = $brand['chart_font'];
+$accentWeight = $brand['accent_font_weight'];
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -117,7 +118,8 @@ $needsToken = isset($_SESSION['pending_user_id']);
         heading_font: <?= json_encode($headingFont) ?>,
         body_font: <?= json_encode($bodyFont) ?>,
         table_font: <?= json_encode($tableFont) ?>,
-        chart_font: <?= json_encode($chartFont) ?>
+        chart_font: <?= json_encode($chartFont) ?>,
+        accent_font_weight: <?= json_encode($accentWeight) ?>
       });
     </script>
 </body>
