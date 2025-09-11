@@ -70,3 +70,4 @@
 - Settings provide a table font option applied to all Tabulator tables.
 - Table font CSS variables (`--tabulator-*`) are set in the shared menu so Tabulator tables use the correct fonts during initial render.
 - Settings page offers additional funky font options: Bangers, Caveat, Dancing Script, Fredoka, Pacifico.
+- Settings allow selecting fonts for headings, body text, tables and charts with options ranging from modern to funky.

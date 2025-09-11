@@ -12,6 +12,10 @@ $db = Database::getConnection();
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $scheme = $brand['color_scheme'];
+$headingFont = $brand['heading_font'];
+$bodyFont = $brand['body_font'];
+$tableFont = $brand['table_font'];
+$chartFont = $brand['chart_font'];
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -107,5 +111,14 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($headingFont) ?>,
+        body_font: <?= json_encode($bodyFont) ?>,
+        table_font: <?= json_encode($tableFont) ?>,
+        chart_font: <?= json_encode($chartFont) ?>
+      });
+    </script>
 </body>
 </html>

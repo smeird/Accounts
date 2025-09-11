@@ -97,7 +97,9 @@ function tailwindTabulator(element, options) {
 
     const table = new Tabulator(element, options);
     const rootStyles = getComputedStyle(document.documentElement);
-    const accentFont = rootStyles.getPropertyValue('--accent-font') || getComputedStyle(document.body).fontFamily;
+    const accentFont = rootStyles.getPropertyValue('--table-font')
+        || rootStyles.getPropertyValue('--accent-font')
+        || getComputedStyle(document.body).fontFamily;
     const el = table.element;
     el.style.colorScheme = 'light';
 

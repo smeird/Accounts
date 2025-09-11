@@ -5,6 +5,7 @@ require_once __DIR__ . '/../Database.php';
 class Setting {
     private const DEFAULT_SITE_NAME = 'Finance Manager';
     private const DEFAULT_COLOR_SCHEME = 'indigo';
+    private const DEFAULT_FONT       = '';
 
     /**
      * Retrieve a setting value by name.
@@ -28,14 +29,19 @@ class Setting {
     }
 
     /**
-     * Retrieve branding settings such as site name and color scheme.
+     * Retrieve branding settings such as site name, colour scheme and fonts.
      *
-     * @return array{site_name: string, color_scheme: string}
+     * @return array{site_name: string, color_scheme: string, heading_font: string,
+     *               body_font: string, table_font: string, chart_font: string}
      */
     public static function getBrand(): array {
         return [
-            'site_name'    => self::get('site_name') ?? self::DEFAULT_SITE_NAME,
+            'site_name'    => self::get('site_name')    ?? self::DEFAULT_SITE_NAME,
             'color_scheme' => self::get('color_scheme') ?? self::DEFAULT_COLOR_SCHEME,
+            'heading_font' => self::get('font_heading') ?? self::DEFAULT_FONT,
+            'body_font'    => self::get('font_body')    ?? self::DEFAULT_FONT,
+            'table_font'   => self::get('font_table')   ?? self::DEFAULT_FONT,
+            'chart_font'   => self::get('font_chart')   ?? self::DEFAULT_FONT,
         ];
     }
 }

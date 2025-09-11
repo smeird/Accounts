@@ -20,6 +20,10 @@ if (isset($_GET['timeout'])) {
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
+$headingFont = $brand['heading_font'];
+$bodyFont = $brand['body_font'];
+$tableFont = $brand['table_font'];
+$chartFont = $brand['chart_font'];
 $colorMap = [
     'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
     'blue'   => ['600' => '#2563eb', '700' => '#1d4ed8'],
@@ -55,5 +59,14 @@ $bgHover = "hover:bg-{$colorScheme}-700";
         <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded accent transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
     </div>
     <script src="frontend/js/page_help.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($headingFont) ?>,
+        body_font: <?= json_encode($bodyFont) ?>,
+        table_font: <?= json_encode($tableFont) ?>,
+        chart_font: <?= json_encode($chartFont) ?>
+      });
+    </script>
 </body>
 </html>

@@ -105,11 +105,20 @@ window.fetchNoCache = fetchNoCache;
   });
   ariaObserver.observe(document.body, {childList: true, subtree: true});
 
+  function loadFontsModule(cb) {
+    if (window.applyFonts) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'js/fonts.js';
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+
   fetchNoCache('../php_backend/public/brand_settings.php')
     .then(r => r.json())
     .then(f => {
       siteName = f.site_name || siteName;
       colorScheme = f.color_scheme || colorScheme;
+      loadFontsModule(() => applyFonts(f));
       document.title = document.title.replace('Finance Manager', siteName);
       const landing = document.getElementById('landing-site-name');
       if (landing) landing.textContent = siteName;
