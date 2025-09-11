@@ -197,6 +197,25 @@ $db->exec("INSERT INTO transactions (account_id, date, amount, description, memo
 $memoFiltered = Transaction::filter(null, null, null, null, null, 'tea');
 assertEqual(1, count($memoFiltered), 'Transaction::filter filters by memo');
 
+// --- Recurring income/outgoing detection ---
+$db->exec('DELETE FROM transactions');
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES
+    (1, '2025-01-15', -100, 'Utility Co'),
+    (1, '2025-02-15', -110, 'Utility Co'),
+    (1, '2025-03-15', -90, 'Utility Co'),
+    (1, '2025-01-25', 2000, 'Employer'),
+    (1, '2025-02-25', 2100, 'Employer'),
+    (1, '2025-03-25', 2200, 'Employer')
+");
+$recSpend = Transaction::getRecurringSpend(false);
+$recIncome = Transaction::getRecurringSpend(true);
+assertEqual(1, count($recSpend), 'Recurring spend detected');
+assertEqual(1, count($recIncome), 'Recurring income detected');
+assertEqual(15, (int)$recSpend[0]['day'], 'Recurring spend day matched');
+assertEqual(25, (int)$recIncome[0]['day'], 'Recurring income day matched');
+assertEqual(300.0, (float)$recSpend[0]['total'], 'Recurring spend total summed');
+assertEqual(6300.0, (float)$recIncome[0]['total'], 'Recurring income total summed');
+$db->exec('DELETE FROM transactions');
 
 // --- Duplicate FITID test ---
 $first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');

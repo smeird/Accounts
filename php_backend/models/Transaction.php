@@ -1107,24 +1107,33 @@ class Transaction {
      *
      * @return array{description:string, occurrences:int, total:float}[]
      */
-    public static function getRecurringSpend(): array {
+    public static function getRecurringSpend(bool $income = false): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT `description`, COUNT(*) AS occurrences, SUM(`amount`) AS total '
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $dayExpr = $driver === 'sqlite' ? "CAST(STRFTIME('%d', `date`) AS INTEGER)" : 'DAY(`date`)';
+        $dateCond = $driver === 'sqlite'
+            ? "`date` >= DATE('now','-12 months')"
+            : '`date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)';
+        $sign = $income ? '>' : '<';
+        $sql = "SELECT `description`, $dayExpr AS `day`, COUNT(*) AS occurrences, "
+             . "SUM(`amount`) AS total, AVG(`amount`) AS average "
              . 'FROM `transactions` '
-             . 'WHERE `date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) '
-             . 'AND `amount` < 0 '
+             . 'WHERE ' . $dateCond . ' '
+             . 'AND `amount` ' . $sign . ' 0 '
              . 'AND `transfer_id` IS NULL '
              . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
-             . 'GROUP BY `description` '
+             . "GROUP BY `description`, $dayExpr "
              . 'HAVING COUNT(*) > 1 '
-             . 'ORDER BY total';
+             . 'ORDER BY `description`, `day`';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
+            $row['day'] = (int)$row['day'];
             $row['occurrences'] = (int)$row['occurrences'];
-            $row['total'] = -(float)$row['total'];
+            $row['total'] = abs((float)$row['total']);
+            $row['average'] = abs((float)$row['average']);
         }
         return $rows;
     }
