@@ -338,3 +338,7 @@ window.fetchNoCache = fetchNoCache;
   const tooltipScript = document.createElement('script');
   tooltipScript.src = 'js/tooltips.js';
   document.body.appendChild(tooltipScript);
+
+  const fullscreenScript = document.createElement('script');
+  fullscreenScript.src = 'js/chart_fullscreen.js';
+  document.body.appendChild(fullscreenScript);
