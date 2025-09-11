@@ -96,17 +96,16 @@ function tailwindTabulator(element, options) {
     }
 
     const table = new Tabulator(element, options);
-    const bodyFont = getComputedStyle(document.body).fontFamily;
-    const headingEl = document.querySelector('h1, h2, h3, h4, h5, h6');
-    const headingFont = headingEl ? getComputedStyle(headingEl).fontFamily : bodyFont;
+    const rootStyles = getComputedStyle(document.documentElement);
+    const tableFont = rootStyles.getPropertyValue('--table-font') || getComputedStyle(document.body).fontFamily;
     const accentEl = document.querySelector('button, .accent');
-    const accentFont = accentEl ? getComputedStyle(accentEl).fontFamily : bodyFont;
+    const accentFont = accentEl ? getComputedStyle(accentEl).fontFamily : tableFont;
     const el = table.element;
-    el.style.setProperty('--tabulator-font-family', bodyFont);
-    el.style.setProperty('--tabulator-row-font-family', bodyFont);
-    el.style.setProperty('--tabulator-header-font-family', headingFont);
+    el.style.setProperty('--tabulator-font-family', tableFont);
+    el.style.setProperty('--tabulator-row-font-family', tableFont);
+    el.style.setProperty('--tabulator-header-font-family', tableFont);
     el.style.setProperty('--tabulator-header-font-weight', '700');
-    el.style.fontFamily = bodyFont;
+    el.style.fontFamily = tableFont;
     el.style.colorScheme = 'light';
 
 
@@ -149,7 +148,7 @@ function tailwindTabulator(element, options) {
     table.on('tableBuilt', function() {
         const titles = el.querySelectorAll('.tabulator-col-title');
         titles.forEach(title => {
-            title.style.fontFamily = headingFont;
+            title.style.fontFamily = tableFont;
             title.style.fontWeight = '700';
         });
         styleCalcRows(table);

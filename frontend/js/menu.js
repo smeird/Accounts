@@ -115,7 +115,8 @@ window.fetchNoCache = fetchNoCache;
       const families = [
         `family=${encodeURIComponent(f.heading)}:wght@700`,
         `family=${encodeURIComponent(f.body)}:wght@400`,
-        `family=${encodeURIComponent(f.accent)}:wght@${f.accent_weight || 300}`
+        `family=${encodeURIComponent(f.accent)}:wght@${f.accent_weight || 300}`,
+        `family=${encodeURIComponent(f.table)}:wght@400`
       ];
       if (fontLink) {
         fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
@@ -126,6 +127,7 @@ window.fetchNoCache = fetchNoCache;
             --heading-font: '${f.heading}', sans-serif;
             --body-font: '${f.body}', sans-serif;
             --accent-font: '${f.accent}', sans-serif;
+            --table-font: '${f.table}', sans-serif;
           }
           body { font-family: var(--body-font); font-weight: 400; }
           h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
@@ -155,6 +157,7 @@ window.fetchNoCache = fetchNoCache;
             --heading-font: 'Roboto', sans-serif;
             --body-font: 'Inter', sans-serif;
             --accent-font: 'Source Sans Pro', sans-serif;
+            --table-font: 'Inter', sans-serif;
           }
           body { font-family: var(--body-font); font-weight: 400; }
           h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }

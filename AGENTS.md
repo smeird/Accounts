@@ -66,3 +66,4 @@
 ## Decisions
 - Sections use scroll-based fade-in; apply `opacity-0` initially and `frontend/js/scroll_animations.js` adds a `fade-in` class when in view.
 - Settings include an accent font weight option offering light (300) and very thin (100) styles.
+- Settings provide a table font option applied to all Tabulator tables.
