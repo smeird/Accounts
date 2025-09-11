@@ -226,6 +226,11 @@ $bg600 = "bg-{$colorScheme}-600";
         table_font: <?= json_encode($tableFont) ?>,
         chart_font: <?= json_encode($chartFont) ?>
       });
+      const fontChoices = <?= json_encode(array_keys($fontOptions)) ?>;
+      fontChoices.forEach(f => { if (f) window.loadFont(f); });
+      document.querySelectorAll('select[name^="font_"] option').forEach(opt => {
+        if (opt.value) opt.style.fontFamily = opt.value;
+      });
     </script>
-</body>
+  </body>
 </html>

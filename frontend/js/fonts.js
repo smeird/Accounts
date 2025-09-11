@@ -52,4 +52,5 @@
     ensureStyle();
     document.dispatchEvent(new Event('fonts-applied'));
   };
+  window.loadFont = loadFont;
 })();
