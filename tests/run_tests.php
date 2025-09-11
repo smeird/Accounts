@@ -197,6 +197,39 @@ $db->exec("INSERT INTO transactions (account_id, date, amount, description, memo
 $memoFiltered = Transaction::filter(null, null, null, null, null, 'tea');
 assertEqual(1, count($memoFiltered), 'Transaction::filter filters by memo');
 
+// --- Recurring income/outgoing detection ---
+$db->exec('DELETE FROM transactions');
+$now = time();
+$u1 = date('Y-m-15', strtotime('-3 months', $now));
+$u2 = date('Y-m-15', strtotime('-2 months', $now));
+$u3 = date('Y-m-15', strtotime('-1 month', $now));
+$e1 = date('Y-m-25', strtotime('-3 months', $now));
+$e2 = date('Y-m-25', strtotime('-2 months', $now));
+$e3 = date('Y-m-25', strtotime('-1 month', $now));
+$old1 = date('Y-m-d', strtotime('-7 months', $now));
+$old2 = date('Y-m-d', strtotime('-6 months', $now));
+
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES
+    (1, '$u1', -100, 'Utility Co'),
+    (1, '$u2', -110, 'Utility Co'),
+    (1, '$u3', -90, 'Utility Co'),
+    (1, '$e1', 2000, 'Employer'),
+    (1, '$e2', 2100, 'Employer'),
+    (1, '$e3', 2200, 'Employer'),
+    (1, '$old1', -30, 'OldService'),
+    (1, '$old2', -35, 'OldService')
+");
+$recSpend = Transaction::getRecurringSpend(false);
+$recIncome = Transaction::getRecurringSpend(true);
+assertEqual(1, count($recSpend), 'Recurring spend detected');
+assertEqual(1, count($recIncome), 'Recurring income detected');
+assertEqual(15, (int)$recSpend[0]['day'], 'Recurring spend day matched');
+assertEqual(25, (int)$recIncome[0]['day'], 'Recurring income day matched');
+assertEqual(300.0, (float)$recSpend[0]['total'], 'Recurring spend total summed');
+assertEqual(6300.0, (float)$recIncome[0]['total'], 'Recurring income total summed');
+assertEqual(90.0, (float)$recSpend[0]['last_amount'], 'Recurring spend last amount stored');
+assertEqual(2200.0, (float)$recIncome[0]['last_amount'], 'Recurring income last amount stored');
+$db->exec('DELETE FROM transactions');
 
 // --- Duplicate FITID test ---
 $first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');

@@ -1107,24 +1107,44 @@ class Transaction {
      *
      * @return array{description:string, occurrences:int, total:float}[]
      */
-    public static function getRecurringSpend(): array {
+    public static function getRecurringSpend(bool $income = false): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT `description`, COUNT(*) AS occurrences, SUM(`amount`) AS total '
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $dayExpr = $driver === 'sqlite' ? "CAST(STRFTIME('%d', `date`) AS INTEGER)" : 'DAY(`date`)';
+        $dateCond = $driver === 'sqlite'
+            ? "`date` >= DATE('now','-12 months')"
+            : '`date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)';
+        $recentCond = $driver === 'sqlite'
+            ? "MAX(`date`) >= DATE('now','-40 days')"
+            : 'MAX(`date`) >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)';
+        $sign = $income ? '>' : '<';
+        $sql = "SELECT `description`, $dayExpr AS `day`, COUNT(*) AS occurrences, "
+             . "SUM(`amount`) AS total, AVG(`amount`) AS average, MAX(`date`) AS last_date "
              . 'FROM `transactions` '
-             . 'WHERE `date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) '
-             . 'AND `amount` < 0 '
+             . 'WHERE ' . $dateCond . ' '
+             . 'AND `amount` ' . $sign . ' 0 '
              . 'AND `transfer_id` IS NULL '
              . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
-             . 'GROUP BY `description` '
-             . 'HAVING COUNT(*) > 1 '
-             . 'ORDER BY total';
+             . "GROUP BY `description`, $dayExpr "
+             . 'HAVING COUNT(*) > 1 AND ' . $recentCond . ' '
+             . 'ORDER BY `description`, `day`';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
+            $row['day'] = (int)$row['day'];
             $row['occurrences'] = (int)$row['occurrences'];
-            $row['total'] = -(float)$row['total'];
+            $row['total'] = abs((float)$row['total']);
+            $row['average'] = abs((float)$row['average']);
+            // fetch the most recent amount for next-month estimates
+            $stmtLast = $db->prepare('SELECT `amount` FROM `transactions` '
+                . 'WHERE `description` = :desc AND ' . $dayExpr . ' = :day '
+                . 'ORDER BY `date` DESC LIMIT 1');
+            $stmtLast->execute(['desc' => $row['description'], 'day' => $row['day']]);
+            $last = $stmtLast->fetchColumn();
+            $row['last_amount'] = $last !== false ? abs((float)$last) : $row['average'];
+            unset($row['last_date']);
         }
         return $rows;
     }
