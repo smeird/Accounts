@@ -2,6 +2,8 @@
 
 This repository now provides a simple PHP implementation for managing accounts and transactions.
 
+See the [project wiki](wiki/Home.md) for detailed documentation.
+
 ## How It Works
 
 ### Architecture
