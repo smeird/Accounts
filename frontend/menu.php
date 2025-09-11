@@ -5,6 +5,7 @@
     --heading-font: 'Roboto', sans-serif;
     --body-font: 'Inter', sans-serif;
     --accent-font: 'Source Sans Pro', sans-serif;
+    --table-font: 'Inter', sans-serif;
   }
   body { font-family: var(--body-font); font-weight: 400; }
   h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }

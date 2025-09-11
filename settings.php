@@ -23,6 +23,7 @@ $fontHeading = $fontSettings['heading'];
 $fontBody = $fontSettings['body'];
 $fontAccent = $fontSettings['accent'];
 $fontAccentWeight = $fontSettings['accent_weight'];
+$fontTable = $fontSettings['table'];
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
@@ -54,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fontBody = trim($_POST['font_body'] ?? '');
     $fontAccent = trim($_POST['font_accent'] ?? '');
     $fontAccentWeight = trim($_POST['font_accent_weight'] ?? '');
+    $fontTable = trim($_POST['font_table'] ?? '');
     $siteName = trim($_POST['site_name'] ?? '');
     $newColorScheme = trim($_POST['color_scheme'] ?? '');
     Setting::set('openai_api_token', $openai);
@@ -96,6 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('font_accent_weight', $fontAccentWeight);
         Log::write('Updated accent font weight');
     }
+    if ($fontTable !== '') {
+        Setting::set('font_table', $fontTable);
+        Log::write('Updated table font');
+    }
     if ($siteName !== '') {
         Setting::set('site_name', $siteName);
         Log::write('Updated site name');
@@ -129,7 +135,7 @@ $bg600 = "bg-{$colorScheme}-600";
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&family=<?= urlencode($fontTable) ?>:wght@400&display=swap" rel="stylesheet">
     <style>
         body { font-family: '<?= htmlspecialchars($fontBody, ENT_QUOTES) ?>', sans-serif; }
         h1, h2, h3, h4, h5, h6 { font-family: '<?= htmlspecialchars($fontHeading, ENT_QUOTES) ?>', sans-serif; font-weight: 700; }
@@ -200,6 +206,13 @@ $bg600 = "bg-{$colorScheme}-600";
                 <select name="font_accent" class="border p-2 rounded w-full" data-help="Font used for buttons and accents">
                     <?php foreach ($fontOptions as $opt): ?>
                         <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $fontAccent ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="block">Table Font:
+                <select name="font_table" class="border p-2 rounded w-full" data-help="Font used for tables">
+                    <?php foreach ($fontOptions as $opt): ?>
+                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $fontTable ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
                     <?php endforeach; ?>
                 </select>
             </label>

@@ -8,6 +8,7 @@ class Setting {
     private const DEFAULT_BODY_FONT = 'Inter';
     private const DEFAULT_ACCENT_FONT = 'Source Sans Pro';
     private const DEFAULT_ACCENT_WEIGHT = '300';
+    private const DEFAULT_TABLE_FONT = 'Inter';
     private const DEFAULT_SITE_NAME = 'Finance Manager';
     private const DEFAULT_COLOR_SCHEME = 'indigo';
 
@@ -35,7 +36,13 @@ class Setting {
     /**
      * Convenience accessor for the site's configured fonts with sensible defaults.
      *
-     * @return array{heading: string, body: string, accent: string, accent_weight: string}
+     * @return array{
+     *   heading: string,
+     *   body: string,
+     *   accent: string,
+     *   accent_weight: string,
+     *   table: string
+     * }
      */
     public static function getFonts(): array {
         return [
@@ -43,6 +50,7 @@ class Setting {
             'body'          => self::get('font_body') ?? self::DEFAULT_BODY_FONT,
             'accent'        => self::get('font_accent') ?? self::DEFAULT_ACCENT_FONT,
             'accent_weight' => self::get('font_accent_weight') ?? self::DEFAULT_ACCENT_WEIGHT,
+            'table'         => self::get('font_table') ?? self::DEFAULT_TABLE_FONT,
         ];
     }
 
