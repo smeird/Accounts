@@ -128,10 +128,15 @@ window.fetchNoCache = fetchNoCache;
             --body-font: '${f.body}', sans-serif;
             --accent-font: '${f.accent}', sans-serif;
             --table-font: '${f.table}', sans-serif;
+            --tabulator-font-family: var(--table-font);
+            --tabulator-row-font-family: var(--table-font);
+            --tabulator-header-font-family: var(--table-font);
+            --tabulator-header-font-weight: 700;
           }
           body { font-family: var(--body-font); font-weight: 400; }
           h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
           button, .accent { font-family: var(--accent-font); font-weight: ${f.accent_weight || 300}; }
+          .tabulator { font-family: var(--tabulator-font-family); }
         `;
       }
       siteName = f.site_name || siteName;
@@ -158,10 +163,15 @@ window.fetchNoCache = fetchNoCache;
             --body-font: 'Inter', sans-serif;
             --accent-font: 'Source Sans Pro', sans-serif;
             --table-font: 'Inter', sans-serif;
+            --tabulator-font-family: var(--table-font);
+            --tabulator-row-font-family: var(--table-font);
+            --tabulator-header-font-family: var(--table-font);
+            --tabulator-header-font-weight: 700;
           }
           body { font-family: var(--body-font); font-weight: 400; }
           h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
           button, .accent { font-family: var(--accent-font); font-weight: 300; }
+          .tabulator { font-family: var(--tabulator-font-family); }
         `;
       }
       applyColorScheme();
