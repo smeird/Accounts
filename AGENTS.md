@@ -62,6 +62,7 @@
 
 ## Documentation
 - README includes Mermaid diagrams to illustrate application architecture and request flow.
+- Project wiki pages are stored in the `wiki/` directory and mirror the GitHub wiki.
 
 ## Decisions
 - Sections use scroll-based fade-in; apply `opacity-0` initially and `frontend/js/scroll_animations.js` adds a `fade-in` class when in view.
