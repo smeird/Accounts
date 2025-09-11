@@ -30,7 +30,8 @@ $colorScheme = $brand['color_scheme'];
 $fontOptions = [
     'Roboto', 'Inter', 'Source Sans Pro', 'Montserrat', 'Open Sans', 'Lato',
     'Nunito', 'Poppins', 'Raleway', 'Work Sans', 'Quicksand',
-    'Karla', 'Fira Sans', 'Noto Sans'
+    'Karla', 'Fira Sans', 'Noto Sans', 'Bangers', 'Caveat', 'Dancing Script',
+    'Fredoka', 'Pacifico'
 ];
 $colorOptions = ['indigo', 'blue', 'green', 'red', 'purple', 'teal', 'orange'];
 $colorMap = [
