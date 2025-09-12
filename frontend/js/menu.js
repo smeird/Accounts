@@ -68,7 +68,7 @@ window.fetchNoCache = fetchNoCache;
   };
 
   const styleInputs = (root = document) => {
-    root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), select, textarea').forEach(el => {
+    root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not(.unstyled), select:not(.unstyled), textarea:not(.unstyled)').forEach(el => {
       if (!el.classList.contains('styled-input')) {
         el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'bg-white', 'border-gray-400');
       }
@@ -281,11 +281,12 @@ window.fetchNoCache = fetchNoCache;
   const utility = document.createElement('div');
   utility.id = 'utility-bar';
 
-  utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded-full border border-indigo-600 p-2 flex items-center space-x-4 z-50 transition-shadow hover:shadow-lg';
+  utility.className = 'fixed top-4 right-8 md:top-8 md:right-12 bg-white rounded border border-indigo-600 p-1 flex items-center space-x-2 z-50 transition-shadow hover:shadow-lg';
 
   utility.innerHTML = `
     <form id="quick-search-form" class="hidden md:flex items-center">
-      <input id="quick-search" type="search" placeholder="Search" aria-label="Search transactions" class="w-32 text-sm" />
+      <input id="quick-search" type="search" placeholder="Search" aria-label="Search transactions" class="unstyled w-32 text-sm p-1 border-0 focus:ring-0 focus:outline-none" />
+
     </form>
     <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center" aria-label="Latest monthly statement">
       <i class="fas fa-file-invoice h-4 w-4"></i>
