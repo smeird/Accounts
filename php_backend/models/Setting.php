@@ -23,9 +23,17 @@ class Setting {
      */
     public static function set(string $name, string $value): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO `settings` (`name`, `value`) VALUES (:name, :value)
-            ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)');
+
+        // Update the existing setting first to remain compatible across
+        // database engines like SQLite that lack MySQL's ON DUPLICATE KEY
+        // syntax. If no row is affected we insert a new one.
+        $stmt = $db->prepare('UPDATE `settings` SET `value` = :value WHERE `name` = :name');
         $stmt->execute(['name' => $name, 'value' => $value]);
+
+        if ($stmt->rowCount() === 0) {
+            $stmt = $db->prepare('INSERT INTO `settings` (`name`, `value`) VALUES (:name, :value)');
+            $stmt->execute(['name' => $name, 'value' => $value]);
+        }
     }
 
     /**
