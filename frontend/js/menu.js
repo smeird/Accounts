@@ -281,6 +281,7 @@ window.fetchNoCache = fetchNoCache;
   const utility = document.createElement('div');
   utility.id = 'utility-bar';
 
+
   utility.className = 'fixed top-2 right-2 md:top-8 md:right-12 bg-white rounded border border-indigo-600 p-1 flex items-center space-x-2 z-50 transition-shadow hover:shadow-lg';
 
   utility.innerHTML = `
@@ -291,6 +292,7 @@ window.fetchNoCache = fetchNoCache;
       <input id="quick-search" type="search" placeholder="Search" aria-label="Search transactions" class="unstyled w-24 md:w-32 text-sm p-1 border-0 focus:ring-0 focus:outline-none" />
     </form>
     <a id="latest-statement-link" href="monthly_statement.html" class="flex items-center" aria-label="Latest monthly statement">
+
       <i class="fas fa-file-invoice h-4 w-4"></i>
     </a>
   `;
@@ -309,6 +311,7 @@ window.fetchNoCache = fetchNoCache;
   }
 
   const quickSearchForm = document.getElementById('quick-search-form');
+
   const quickSearchToggle = document.getElementById('quick-search-toggle');
   if (quickSearchToggle && quickSearchForm) {
     quickSearchToggle.addEventListener('click', () => {
@@ -321,6 +324,7 @@ window.fetchNoCache = fetchNoCache;
       }
     });
   }
+
   if (quickSearchForm) {
     quickSearchForm.addEventListener('submit', e => {
       e.preventDefault();
@@ -328,10 +332,12 @@ window.fetchNoCache = fetchNoCache;
       if (term) {
         window.location.href = `search.html?value=${encodeURIComponent(term)}`;
       }
+
       if (quickSearchToggle && getComputedStyle(quickSearchToggle).display !== 'none') {
         quickSearchForm.classList.add('hidden');
         if (latestLink) latestLink.classList.remove('hidden');
       }
+
     });
   }
 
