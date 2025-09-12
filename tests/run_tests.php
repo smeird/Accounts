@@ -6,6 +6,7 @@ require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
 require_once __DIR__ . '/../php_backend/models/TransactionGroup.php';
 require_once __DIR__ . '/../php_backend/models/SavedReport.php';
+require_once __DIR__ . '/../php_backend/models/Setting.php';
 require_once __DIR__ . '/../php_backend/OfxParser.php';
 require_once __DIR__ . '/../php_backend/NaturalLanguageReportParser.php';
 
@@ -40,6 +41,10 @@ function assertEqual($expected, $actual, string $message) {
 
 // Database driver should be sqlite
 assertEqual('sqlite', $db->getAttribute(PDO::ATTR_DRIVER_NAME), 'Database driver is sqlite');
+
+// Settings should persist values
+Setting::set('accent_font_weight', '700');
+assertEqual('700', Setting::get('accent_font_weight'), 'Setting::set stores values');
 
 // Masked credit card numbers should have masking removed
 $maskedOfx = <<<OFX
@@ -231,7 +236,7 @@ assertEqual(300.0, (float)$recSpend[0]['total'], 'Recurring spend total summed')
 assertEqual(6300.0, (float)$recIncome[0]['total'], 'Recurring income total summed');
 assertEqual(90.0, (float)$recSpend[0]['last_amount'], 'Recurring spend last amount stored');
 assertEqual(2200.0, (float)$recIncome[0]['last_amount'], 'Recurring income last amount stored');
-n
+
 $db->exec('DELETE FROM transactions');
 
 // --- Duplicate FITID test ---
