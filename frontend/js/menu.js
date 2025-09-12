@@ -282,7 +282,7 @@ window.fetchNoCache = fetchNoCache;
   utility.id = 'utility-bar';
 
 
-  utility.className = 'fixed top-2 right-2 md:top-8 md:right-12 bg-white rounded border border-indigo-600 p-1 flex items-center space-x-2 z-50 transition-shadow hover:shadow-lg';
+  utility.className = 'fixed top-2 right-2 md:top-8 md:right-12 bg-white rounded border border-indigo-600 p-1 flex items-center space-x-2 z-50';
 
   utility.innerHTML = `
     <button id="quick-search-toggle" class="md:hidden p-1" aria-label="Search transactions">
