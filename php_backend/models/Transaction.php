@@ -1115,19 +1115,23 @@ class Transaction {
         $dateCond = $driver === 'sqlite'
             ? "`date` >= DATE('now','-12 months')"
             : '`date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)';
+
         $recentCond = $driver === 'sqlite'
             ? "MAX(`date`) >= DATE('now','-40 days')"
             : 'MAX(`date`) >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)';
         $sign = $income ? '>' : '<';
         $sql = "SELECT `description`, $dayExpr AS `day`, COUNT(*) AS occurrences, "
              . "SUM(`amount`) AS total, AVG(`amount`) AS average, MAX(`date`) AS last_date "
+
              . 'FROM `transactions` '
              . 'WHERE ' . $dateCond . ' '
              . 'AND `amount` ' . $sign . ' 0 '
              . 'AND `transfer_id` IS NULL '
              . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
              . "GROUP BY `description`, $dayExpr "
+
              . 'HAVING COUNT(*) > 1 AND ' . $recentCond . ' '
+
              . 'ORDER BY `description`, `day`';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);
@@ -1137,6 +1141,7 @@ class Transaction {
             $row['occurrences'] = (int)$row['occurrences'];
             $row['total'] = abs((float)$row['total']);
             $row['average'] = abs((float)$row['average']);
+
             // fetch the most recent amount for next-month estimates
             $stmtLast = $db->prepare('SELECT `amount` FROM `transactions` '
                 . 'WHERE `description` = :desc AND ' . $dayExpr . ' = :day '
@@ -1145,6 +1150,8 @@ class Transaction {
             $last = $stmtLast->fetchColumn();
             $row['last_amount'] = $last !== false ? abs((float)$last) : $row['average'];
             unset($row['last_date']);
+
+ 
         }
         return $rows;
     }

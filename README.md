@@ -83,7 +83,7 @@ Two PHP endpoints under `php_backend/public` handle TOTP setup and verification 
 - Highcharts is used for graphs, while Tabulator renders interactive tables.
 - Display all monetary values using the pound symbol (£) instead of the dollar sign ($).
 - Tailwind CSS provides the styling and Font Awesome supplies icons. Sections are wrapped in card components.
-- Headings use bold Roboto, body text uses Inter, and buttons or highlights use light Source Sans Pro.
+- The interface relies on browser-default fonts without specifying families.
 
 - Tabulator tables apply Tailwind utility classes for a consistent look and use the Simple theme.
 

@@ -33,7 +33,7 @@
 - Display monetary values with the pound symbol (£).
 - Style the frontend with Tailwind CSS. Wrap primary sections in white card components (`bg-white p-6 rounded shadow`).
 - Use Font Awesome for interface icons.
-- Headings should use bold Roboto, body text should use Inter, and buttons or highlights should use light Source Sans Pro.
+- Avoid hardcoding font families; rely on browser defaults.
 - Tabulator tables should apply Tailwind utility classes.
 - Provide popover help for form inputs using `data-help` attributes handled by `frontend/js/input_help.js`.
 - Ensure the site remains mobile-friendly: include `<meta name="viewport" content="width=device-width, initial-scale=1.0">` on
@@ -66,7 +66,8 @@
 
 ## Decisions
 - Sections use scroll-based fade-in; apply `opacity-0` initially and `frontend/js/scroll_animations.js` adds a `fade-in` class when in view.
-- Settings include an accent font weight option offering light (300) and very thin (100) styles.
+- Settings include an accent font weight option offering thin (100), light (300), and bold (700) styles.
 - Settings provide a table font option applied to all Tabulator tables.
 - Table font CSS variables (`--tabulator-*`) are set in the shared menu so Tabulator tables use the correct fonts during initial render.
 - Settings page offers additional funky font options: Bangers, Caveat, Dancing Script, Fredoka, Pacifico.
+- Settings allow selecting fonts for headings, body text, tables and charts with options ranging from modern to funky.

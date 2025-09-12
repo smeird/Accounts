@@ -14,6 +14,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$brand = Setting::getBrand();
+
 $username = $_SESSION['username'] ?? '';
 $db = Database::getConnection();
 $has2fa = false;
@@ -24,12 +26,6 @@ if ($username !== '') {
 }
 
 $message = '';
-$fonts = Setting::getFonts();
-$fontHeading = $fonts['heading'];
-$fontBody = $fonts['body'];
-$fontAccent = $fonts['accent'];
-$fontAccentWeight = $fonts['accent_weight'];
-$fontTable = $fonts['table'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($action === 'add') {
@@ -71,18 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
-    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&family=<?= urlencode($fontTable) ?>:wght@400&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome icons loaded via frontend/js/menu.js -->
-    <style>
-        body { font-family: '<?= htmlspecialchars($fontBody, ENT_QUOTES) ?>', sans-serif; font-weight: 400; }
-        h1, h2, h3, h4, h5, h6 { font-family: '<?= htmlspecialchars($fontHeading, ENT_QUOTES) ?>', sans-serif; font-weight: 700; }
-        button, .accent { font-family: '<?= htmlspecialchars($fontAccent, ENT_QUOTES) ?>', sans-serif; font-weight: <?= htmlspecialchars($fontAccentWeight, ENT_QUOTES) ?>; }
-        a { transition: color 0.2s ease; }
-        a:hover { color: #4f46e5; }
-        button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-    </style>
+      <!-- Font Awesome icons loaded via frontend/js/menu.js -->
+      <style>
+          a { transition: color 0.2s ease; }
+          a:hover { color: #4f46e5; }
+          button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
+          button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+      </style>
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
@@ -135,6 +126,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($brand['heading_font']) ?>,
+        body_font: <?= json_encode($brand['body_font']) ?>,
+        table_font: <?= json_encode($brand['table_font']) ?>,
+        chart_font: <?= json_encode($brand['chart_font']) ?>,
+        accent_font_weight: <?= json_encode($brand['accent_font_weight']) ?>
+      });
+    </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 

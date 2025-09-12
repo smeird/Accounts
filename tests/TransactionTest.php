@@ -47,6 +47,7 @@ class TransactionTest extends TestCase
 
     public function testRecurringIncomeAndSpendDetection(): void
     {
+
         $now = time();
         $u1 = date('Y-m-15', strtotime('-3 months', $now));
         $u2 = date('Y-m-15', strtotime('-2 months', $now));
@@ -68,6 +69,7 @@ class TransactionTest extends TestCase
             (1, '$old1', -30, 'OldService'),
             (1, '$old2', -35, 'OldService'),
             (1, '$oneOff', -50, 'One-off')
+
         ");
         $spend = Transaction::getRecurringSpend(false);
         $income = Transaction::getRecurringSpend(true);
@@ -83,5 +85,6 @@ class TransactionTest extends TestCase
         $this->assertEquals(2100.0, $income[0]['average']);
         $this->assertEquals(90.0, $spend[0]['last_amount']);
         $this->assertEquals(2200.0, $income[0]['last_amount']);
+
     }
 }

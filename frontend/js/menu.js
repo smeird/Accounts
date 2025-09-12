@@ -105,42 +105,20 @@ window.fetchNoCache = fetchNoCache;
   });
   ariaObserver.observe(document.body, {childList: true, subtree: true});
 
-  // References to font resources defined in shared template
-  const fontLink = document.getElementById('app-fonts');
-  const fontStyle = document.getElementById('font-style');
+  function loadFontsModule(cb) {
+    if (window.applyFonts) { cb(); return; }
+    const s = document.createElement('script');
+    s.src = 'js/fonts.js';
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
 
-  fetchNoCache('../php_backend/public/font_settings.php')
+  fetchNoCache('../php_backend/public/brand_settings.php')
     .then(r => r.json())
     .then(f => {
-      const families = [
-        `family=${encodeURIComponent(f.heading)}:wght@700`,
-        `family=${encodeURIComponent(f.body)}:wght@400`,
-        `family=${encodeURIComponent(f.accent)}:wght@${f.accent_weight || 300}`,
-        `family=${encodeURIComponent(f.table)}:wght@400`
-      ];
-      if (fontLink) {
-        fontLink.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
-      }
-      if (fontStyle) {
-        fontStyle.textContent = `
-          :root {
-            --heading-font: '${f.heading}', sans-serif;
-            --body-font: '${f.body}', sans-serif;
-            --accent-font: '${f.accent}', sans-serif;
-            --table-font: '${f.table}', sans-serif;
-            --tabulator-font-family: var(--table-font);
-            --tabulator-row-font-family: var(--table-font);
-            --tabulator-header-font-family: var(--table-font);
-            --tabulator-header-font-weight: 700;
-          }
-          body { font-family: var(--body-font); font-weight: 400; }
-          h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
-          button, .accent { font-family: var(--accent-font); font-weight: ${f.accent_weight || 300}; }
-          .tabulator { font-family: var(--tabulator-font-family); }
-        `;
-      }
       siteName = f.site_name || siteName;
       colorScheme = f.color_scheme || colorScheme;
+      loadFontsModule(() => applyFonts(f));
       document.title = document.title.replace('Finance Manager', siteName);
       const landing = document.getElementById('landing-site-name');
       if (landing) landing.textContent = siteName;
@@ -152,28 +130,7 @@ window.fetchNoCache = fetchNoCache;
       });
     })
     .catch(err => {
-      console.error('Font load failed', err);
-      if (fontLink) {
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Inter:wght@400&family=Source+Sans+Pro:wght@300&display=swap';
-      }
-      if (fontStyle) {
-        fontStyle.textContent = `
-          :root {
-            --heading-font: 'Roboto', sans-serif;
-            --body-font: 'Inter', sans-serif;
-            --accent-font: 'Source Sans Pro', sans-serif;
-            --table-font: 'Inter', sans-serif;
-            --tabulator-font-family: var(--table-font);
-            --tabulator-row-font-family: var(--table-font);
-            --tabulator-header-font-family: var(--table-font);
-            --tabulator-header-font-weight: 700;
-          }
-          body { font-family: var(--body-font); font-weight: 400; }
-          h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font); font-weight: 700; }
-          button, .accent { font-family: var(--accent-font); font-weight: 300; }
-          .tabulator { font-family: var(--tabulator-font-family); }
-        `;
-      }
+      console.error('Brand load failed', err);
       applyColorScheme();
       applyIconColor();
     });
@@ -381,3 +338,7 @@ window.fetchNoCache = fetchNoCache;
   const tooltipScript = document.createElement('script');
   tooltipScript.src = 'js/tooltips.js';
   document.body.appendChild(tooltipScript);
+
+  const fullscreenScript = document.createElement('script');
+  fullscreenScript.src = 'js/chart_fullscreen.js';
+  document.body.appendChild(fullscreenScript);

@@ -12,12 +12,11 @@ $db = Database::getConnection();
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $scheme = $brand['color_scheme'];
-$fonts = Setting::getFonts();
-$fontHeading = $fonts['heading'];
-$fontBody = $fonts['body'];
-$fontAccent = $fonts['accent'];
-$fontAccentWeight = $fonts['accent_weight'];
-$fontTable = $fonts['table'];
+$headingFont = $brand['heading_font'];
+$bodyFont = $brand['body_font'];
+$tableFont = $brand['table_font'];
+$chartFont = $brand['chart_font'];
+$accentWeight = $brand['accent_font_weight'];
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -76,13 +75,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&family=<?= urlencode($fontTable) ?>:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        body { font-family: '<?= htmlspecialchars($fontBody, ENT_QUOTES) ?>', sans-serif; font-weight: 400; }
-        h1, h2, h3, h4, h5, h6 { font-family: '<?= htmlspecialchars($fontHeading, ENT_QUOTES) ?>', sans-serif; font-weight: 700; }
-        button { font-family: '<?= htmlspecialchars($fontAccent, ENT_QUOTES) ?>', sans-serif; font-weight: <?= htmlspecialchars($fontAccentWeight, ENT_QUOTES) ?>; }
-    </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400">
@@ -119,5 +112,15 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($headingFont) ?>,
+        body_font: <?= json_encode($bodyFont) ?>,
+        table_font: <?= json_encode($tableFont) ?>,
+        chart_font: <?= json_encode($chartFont) ?>,
+        accent_font_weight: <?= json_encode($accentWeight) ?>
+      });
+    </script>
 </body>
 </html>

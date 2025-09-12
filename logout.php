@@ -20,12 +20,11 @@ if (isset($_GET['timeout'])) {
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];
-$fonts = Setting::getFonts();
-$fontHeading = $fonts['heading'];
-$fontBody = $fonts['body'];
-$fontAccent = $fonts['accent'];
-$fontAccentWeight = $fonts['accent_weight'];
-$fontTable = $fonts['table'];
+$headingFont = $brand['heading_font'];
+$bodyFont = $brand['body_font'];
+$tableFont = $brand['table_font'];
+$chartFont = $brand['chart_font'];
+$accentWeight = $brand['accent_font_weight'];
 $colorMap = [
     'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
     'blue'   => ['600' => '#2563eb', '700' => '#1d4ed8'],
@@ -52,12 +51,6 @@ $bgHover = "hover:bg-{$colorScheme}-700";
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=<?= urlencode($fontHeading) ?>:wght@700&family=<?= urlencode($fontBody) ?>:wght@400&family=<?= urlencode($fontAccent) ?>:wght@<?= urlencode($fontAccentWeight) ?>&family=<?= urlencode($fontTable) ?>:wght@400&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: '<?= htmlspecialchars($fontBody, ENT_QUOTES) ?>', sans-serif; font-weight: 400; }
-        h1, h2, h3, h4, h5, h6 { font-family: '<?= htmlspecialchars($fontHeading, ENT_QUOTES) ?>', sans-serif; font-weight: 700; }
-        button, .accent { font-family: '<?= htmlspecialchars($fontAccent, ENT_QUOTES) ?>', sans-serif; font-weight: <?= htmlspecialchars($fontAccentWeight, ENT_QUOTES) ?>; }
-    </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 text-center">
@@ -67,5 +60,15 @@ $bgHover = "hover:bg-{$colorScheme}-700";
         <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded accent transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
     </div>
     <script src="frontend/js/page_help.js"></script>
+    <script src="frontend/js/fonts.js"></script>
+    <script>
+      applyFonts({
+        heading_font: <?= json_encode($headingFont) ?>,
+        body_font: <?= json_encode($bodyFont) ?>,
+        table_font: <?= json_encode($tableFont) ?>,
+        chart_font: <?= json_encode($chartFont) ?>,
+        accent_font_weight: <?= json_encode($accentWeight) ?>
+      });
+    </script>
 </body>
 </html>

@@ -199,6 +199,7 @@ assertEqual(1, count($memoFiltered), 'Transaction::filter filters by memo');
 
 // --- Recurring income/outgoing detection ---
 $db->exec('DELETE FROM transactions');
+
 $now = time();
 $u1 = date('Y-m-15', strtotime('-3 months', $now));
 $u2 = date('Y-m-15', strtotime('-2 months', $now));
@@ -218,6 +219,7 @@ $db->exec("INSERT INTO transactions (account_id, date, amount, description) VALU
     (1, '$e3', 2200, 'Employer'),
     (1, '$old1', -30, 'OldService'),
     (1, '$old2', -35, 'OldService')
+
 ");
 $recSpend = Transaction::getRecurringSpend(false);
 $recIncome = Transaction::getRecurringSpend(true);
@@ -229,6 +231,7 @@ assertEqual(300.0, (float)$recSpend[0]['total'], 'Recurring spend total summed')
 assertEqual(6300.0, (float)$recIncome[0]['total'], 'Recurring income total summed');
 assertEqual(90.0, (float)$recSpend[0]['last_amount'], 'Recurring spend last amount stored');
 assertEqual(2200.0, (float)$recIncome[0]['last_amount'], 'Recurring income last amount stored');
+n
 $db->exec('DELETE FROM transactions');
 
 // --- Duplicate FITID test ---
