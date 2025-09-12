@@ -271,7 +271,7 @@ window.fetchNoCache = fetchNoCache;
 
   const toggle = document.createElement('button');
   toggle.id = 'menu-toggle';
-  toggle.className = 'fixed top-4 left-4 z-50 md:hidden bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full shadow';
+  toggle.className = 'fixed top-2 left-2 md:top-8 md:left-12 z-50 md:hidden bg-white rounded border border-indigo-600 p-2 shadow transition-shadow hover:shadow-lg';
   toggle.innerHTML = '<i class="fas fa-bars"></i>';
   toggle.addEventListener('click', () => {
     if (menu) menu.classList.toggle('hidden');
