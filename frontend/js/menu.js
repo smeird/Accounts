@@ -286,6 +286,7 @@ window.fetchNoCache = fetchNoCache;
   utility.innerHTML = `
     <form id="quick-search-form" class="hidden md:flex items-center">
       <input id="quick-search" type="search" placeholder="Search" aria-label="Search transactions" class="unstyled w-32 text-sm p-1 border-0 focus:ring-0 focus:outline-none" />
+
     </form>
     <a id="latest-statement-link" href="monthly_statement.html" class="hidden md:flex items-center" aria-label="Latest monthly statement">
       <i class="fas fa-file-invoice h-4 w-4"></i>
