@@ -14,14 +14,18 @@ try {
     $outNext = 0.0;
     foreach ($outgoings as $row) {
         $outTotal += (float)$row['total'];
-        $outNext += (float)$row['average'];
+
+        $outNext += (float)($row['last_amount'] ?? $row['average']);
+
     }
 
     $inTotal = 0.0;
     $inNext = 0.0;
     foreach ($income as $row) {
         $inTotal += (float)$row['total'];
-        $inNext += (float)$row['average'];
+
+        $inNext += (float)($row['last_amount'] ?? $row['average']);
+
     }
 
     echo json_encode([
