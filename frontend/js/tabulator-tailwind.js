@@ -122,9 +122,16 @@ function tailwindTabulator(element, options) {
         searchInput.className = 'tabulator-search glass-input mb-2 w-full';
         searchInput.style.colorScheme = 'light';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
+        let searchInProgress = false;
         searchInput.addEventListener('input', function() {
             if (typeof table.search === 'function') {
-                table.search(this.value, searchFields);
+                if (searchInProgress) return;
+                searchInProgress = true;
+                try {
+                    table.search(this.value, searchFields);
+                } finally {
+                    searchInProgress = false;
+                }
             } else {
                 const query = this.value.toLowerCase();
                 table.setFilter(function(data) {
