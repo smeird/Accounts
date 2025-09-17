@@ -68,19 +68,14 @@ function tailwindTabulator(element, options) {
     }
 
     const userRowFormatter = options.rowFormatter;
+    // Styling is handled with CSS classes to avoid expensive per-cell DOM
+    // updates when large data sets are rendered.
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
         const rowEl = row.getElement();
         rowEl.classList.remove('bg-white', 'hover:bg-white');
         rowEl.classList.add('glass-table-row');
         rowEl.classList.remove('tabulator-row-even', 'tabulator-row-odd');
-        rowEl.style.borderTop = '0';
-        rowEl.querySelectorAll('.tabulator-cell').forEach(cell => {
-            cell.style.borderRight = '0';
-            cell.style.borderLeft = '0';
-            cell.style.borderTop = '0';
-            cell.style.borderBottom = '0';
-        });
     };
     if (options.pagination === undefined) {
         options.pagination = 'local';
