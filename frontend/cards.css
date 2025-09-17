@@ -1,3 +1,4 @@
+
 /* Shared glassmorphism card styles matched to Tailwind utilities */
 .cards {
   --card-padding: 1.5rem;
@@ -12,14 +13,17 @@
     0 10px 15px -3px rgba(15, 23, 42, 0.1),
     0 4px 6px -4px rgba(15, 23, 42, 0.1); /* Tailwind shadow-lg */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+
 }
 
 .cards:hover {
   transform: translateY(-2px);
   box-shadow:
+
     0 0 0 1px rgba(255, 255, 255, 0.45),
     0 20px 25px -5px rgba(15, 23, 42, 0.15),
     0 10px 10px -5px rgba(15, 23, 42, 0.1); /* Tailwind shadow-xl */
+
 }
 
 .cards-tight {
