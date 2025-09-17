@@ -70,7 +70,7 @@ window.fetchNoCache = fetchNoCache;
   const styleInputs = (root = document) => {
     root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not(.unstyled), select:not(.unstyled), textarea:not(.unstyled)').forEach(el => {
       if (!el.classList.contains('styled-input')) {
-        el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'bg-white', 'border-gray-400');
+        el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'border-gray-400');
       }
     });
   };
