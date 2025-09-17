@@ -54,17 +54,38 @@ try {
 }
 
 function getChartTheme() {
-    const text = '#000000';
+    const text = '#0f172a';
     const styles = getComputedStyle(document.documentElement);
     const chartFont = styles.getPropertyValue('--chart-font').trim() || 'Inter, sans-serif';
+    const background = 'rgba(255, 255, 255, 0.14)';
+    const plotBackground = 'rgba(255, 255, 255, 0.05)';
+    const borderColor = 'rgba(255, 255, 255, 0.35)';
     return {
         colors: chartColors,
-        chart: { style: { fontFamily: chartFont, color: text }, backgroundColor: '#ffffff' },
+        chart: {
+            style: { fontFamily: chartFont, color: text },
+            backgroundColor: background,
+            plotBackgroundColor: plotBackground,
+            borderColor,
+            borderRadius: 12,
+            borderWidth: 1,
+            className: 'glass-chart'
+        },
         credits: { enabled: false },
-        legend: { enabled: true, itemStyle: { fontSize: '10px', color: text, fontFamily: chartFont } },
+        legend: {
+            enabled: true,
+            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            borderRadius: 12,
+            itemStyle: { fontSize: '10px', color: text, fontFamily: chartFont }
+        },
         title: { style: { color: text, fontFamily: chartFont } },
         xAxis: { labels: { style: { color: text, fontFamily: chartFont } }, title: { style: { color: text, fontFamily: chartFont } } },
         yAxis: { labels: { style: { color: text, fontFamily: chartFont } }, title: { style: { color: text, fontFamily: chartFont } } },
+        tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+            borderColor: 'rgba(148, 163, 184, 0.4)',
+            style: { color: '#F8FAFC', fontFamily: chartFont }
+        },
         plotOptions: {
             series: { showInLegend: true },
             pie: { showInLegend: true },
@@ -78,15 +99,30 @@ function applyChartTheme() {
     Highcharts.setOptions(opts);
     const update = {
         colors: opts.colors,
-        chart: { backgroundColor: opts.chart.backgroundColor },
-        legend: { itemStyle: opts.legend.itemStyle },
+        chart: {
+            backgroundColor: opts.chart.backgroundColor,
+            plotBackgroundColor: opts.chart.plotBackgroundColor,
+            className: opts.chart.className,
+            borderColor: opts.chart.borderColor,
+            borderRadius: opts.chart.borderRadius,
+            borderWidth: opts.chart.borderWidth
+        },
+        legend: {
+            itemStyle: opts.legend.itemStyle,
+            backgroundColor: opts.legend.backgroundColor,
+            borderRadius: opts.legend.borderRadius
+        },
         title: opts.title,
         xAxis: { labels: opts.xAxis.labels, title: opts.xAxis.title },
-        yAxis: { labels: opts.yAxis.labels, title: opts.yAxis.title }
+        yAxis: { labels: opts.yAxis.labels, title: opts.yAxis.title },
+        tooltip: opts.tooltip
     };
     Highcharts.charts.forEach(c => {
         if (c) {
             c.update(update, false);
+            if (opts.chart.className && c.container) {
+                c.container.classList.add(opts.chart.className);
+            }
             c.redraw();
         }
     });

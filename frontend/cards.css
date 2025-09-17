@@ -49,3 +49,119 @@
 .cards-rounded-full {
   --card-radius: 9999px;
 }
+
+/* Glassmorphism surfaces for data visualisations */
+.glass-surface {
+  background-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 18px 30px -15px rgba(15, 23, 42, 0.4);
+}
+
+.glass-input {
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 0.75rem;
+  color: #0f172a;
+  padding: 0.625rem 0.875rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 12px 25px -20px rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.glass-input::placeholder {
+  color: rgba(51, 65, 85, 0.65);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow:
+    0 0 0 2px rgba(99, 102, 241, 0.2),
+    0 20px 45px -18px rgba(79, 70, 229, 0.45);
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.glass-table {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.glass-table .tabulator-header,
+.glass-table .tabulator-tableholder,
+.glass-table .tabulator-footer,
+.glass-table .tabulator-paginator {
+  background-color: transparent;
+}
+
+.glass-table .tabulator-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.glass-table .tabulator-footer,
+.glass-table .tabulator-paginator {
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.glass-table-row {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  transition: background-color 0.2s ease;
+}
+
+.glass-table-row:hover {
+  background-color: rgba(255, 255, 255, 0.26) !important;
+}
+
+.glass-table-row .tabulator-cell {
+  background-color: transparent !important;
+  color: #0f172a;
+}
+
+.glass-table-row .tabulator-cell:first-child {
+  border-left: none !important;
+}
+
+.glass-table-row .tabulator-cell:last-child {
+  border-right: none !important;
+}
+
+.glass-table-row .tabulator-cell {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+.glass-table .tabulator-tableholder .tabulator-table {
+  background-color: transparent;
+}
+
+.glass-table .tabulator-calcs-row {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.glass-table .tabulator-calcs-row .tabulator-cell {
+  background-color: transparent !important;
+  color: #0f172a;
+}
+
+.highcharts-container.glass-chart {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 18px 30px -15px rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 0.75rem;
+}
+
+.highcharts-container.glass-chart svg {
+  border-radius: 0.75rem;
+}
