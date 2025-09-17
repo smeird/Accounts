@@ -89,6 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tableFont = trim($_POST['font_table'] ?? '');
     $chartFont = trim($_POST['font_chart'] ?? '');
     $accentWeight = trim($_POST['accent_font_weight'] ?? '');
+    if (!array_key_exists($accentWeight, $weightOptions)) {
+        $accentWeight = '';
+    }
     Setting::set('openai_api_token', $openai);
     Log::write('Updated OpenAI API token');
     if ($batch !== '') {
@@ -129,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Setting::set('font_table', $tableFont);
     Setting::set('font_chart', $chartFont);
     Setting::set('accent_font_weight', $accentWeight);
+    Setting::set('font_accent_weight', $accentWeight);
     Log::write('Updated font settings');
     $message = 'Settings updated.';
 }

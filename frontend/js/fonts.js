@@ -50,7 +50,11 @@
       root.style.setProperty('--tabulator-header-font-family', table);
     }
     if (chart) root.style.setProperty('--chart-font', chart);
-    if (accentW) root.style.setProperty('--accent-font-weight', accentW);
+    if (accentW) {
+      root.style.setProperty('--accent-font-weight', accentW);
+    } else {
+      root.style.removeProperty('--accent-font-weight');
+    }
 
     ensureStyle();
     document.dispatchEvent(new Event('fonts-applied'));
