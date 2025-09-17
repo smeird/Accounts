@@ -75,9 +75,6 @@ window.fetchNoCache = fetchNoCache;
     });
   };
 
-  // Apply 20% opacity to all page elements
-  document.documentElement.style.opacity = '0.9';
-
   // Copy aria-labels to data-tooltip attributes for custom tooltips
   const applyAriaTooltips = (root = document) => {
     root.querySelectorAll('[aria-label]').forEach(el => {
@@ -158,6 +155,16 @@ window.fetchNoCache = fetchNoCache;
       'left-0',
       'overflow-y-auto',
       'z-40'
+    );
+    menu.classList.remove('bg-white', 'border-r');
+    menu.classList.add(
+      'bg-gradient-to-b',
+      'from-white/80',
+      `to-${colorScheme}-100/30`,
+      'backdrop-blur-xl',
+      'border',
+      'border-white/40',
+      'shadow-2xl'
     );
 
     fetchNoCache('menu.php')
@@ -271,7 +278,7 @@ window.fetchNoCache = fetchNoCache;
 
   const toggle = document.createElement('button');
   toggle.id = 'menu-toggle';
-  toggle.className = 'fixed top-2 left-2 md:top-8 md:left-12 z-50 md:hidden bg-white rounded border border-indigo-600 p-2 shadow transition-shadow hover:shadow-lg';
+  toggle.className = `fixed top-2 left-2 md:top-8 md:left-12 z-50 md:hidden bg-gradient-to-r from-white/80 to-${colorScheme}-100/40 backdrop-blur border border-white/40 text-${colorScheme}-700 p-2 rounded-xl shadow-lg transition-all hover:from-white/90 hover:to-${colorScheme}-100/60 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-${colorScheme}-200`;
   toggle.innerHTML = '<i class="fas fa-bars"></i>';
   toggle.addEventListener('click', () => {
     if (menu) menu.classList.toggle('hidden');
@@ -282,7 +289,7 @@ window.fetchNoCache = fetchNoCache;
   utility.id = 'utility-bar';
 
 
-  utility.className = 'fixed top-2 right-2 md:top-8 md:right-12 bg-white rounded border border-indigo-600 p-1 flex items-center space-x-2 z-50';
+  utility.className = `fixed top-2 right-2 md:top-8 md:right-12 bg-gradient-to-r from-white/80 to-${colorScheme}-100/40 backdrop-blur border border-white/40 text-${colorScheme}-700 p-1 flex items-center space-x-2 z-50 rounded-xl shadow-lg transition-all hover:from-white/90 hover:to-${colorScheme}-100/60 hover:shadow-2xl`;
 
   utility.innerHTML = `
     <button id="quick-search-toggle" class="md:hidden p-1" aria-label="Search transactions">
