@@ -36,6 +36,15 @@ class Setting {
      *               accent_font_weight: string}
      */
     public static function getBrand(): array {
+        $accent = self::get('accent_font_weight');
+        if ($accent === null) {
+            $legacyAccent = self::get('font_accent_weight');
+            if ($legacyAccent !== null) {
+                $accent = $legacyAccent;
+                self::set('accent_font_weight', $legacyAccent);
+            }
+        }
+
         return [
             'site_name'    => self::get('site_name')    ?? self::DEFAULT_SITE_NAME,
             'color_scheme' => self::get('color_scheme') ?? self::DEFAULT_COLOR_SCHEME,
@@ -43,7 +52,7 @@ class Setting {
             'body_font'    => self::get('font_body')    ?? self::DEFAULT_FONT,
             'table_font'   => self::get('font_table')   ?? self::DEFAULT_FONT,
             'chart_font'   => self::get('font_chart')   ?? self::DEFAULT_FONT,
-            'accent_font_weight' => self::get('accent_font_weight') ?? '',
+            'accent_font_weight' => $accent ?? '',
         ];
     }
 }
