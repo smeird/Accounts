@@ -1,6 +1,7 @@
 <?php
 // Receives a PDF report upload and emails it to a configured address.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');

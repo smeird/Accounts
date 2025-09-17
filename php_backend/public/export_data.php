@@ -1,6 +1,7 @@
 <?php
 // Returns transactions within a date range as JSON for client-side export
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Log.php';
 

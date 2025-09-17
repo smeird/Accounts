@@ -1,21 +1,35 @@
 <?php
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../Totp.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../Database.php';
 
-
-ini_set('session.cookie_secure', '1');
-session_start();
 header('Content-Type: application/json');
-$input = json_decode(file_get_contents('php://input'), true);
-$username = $input['username'] ?? ($_SESSION['username'] ?? '');
+$input = json_decode(file_get_contents('php://input'), true) ?: [];
+$sessionUsername = $_SESSION['username'] ?? '';
+$requestedUsername = trim($input['username'] ?? '');
+$token = isset($input['token']) ? trim((string)$input['token']) : '';
 
-$token = isset($input['token']) ? (string)$input['token'] : '';
-if ($username === '' || trim($token) === '') {
-    Log::write("2FA verify missing fields for '$username'", 'ERROR');
+if ($sessionUsername === '') {
+    Log::write('2FA verify without session username', 'ERROR');
+    echo json_encode(['verified' => false, 'error' => 'Authentication required']);
+    exit;
+}
+
+if ($requestedUsername !== '' && $requestedUsername !== $sessionUsername) {
+    Log::write("2FA verify username mismatch for '$sessionUsername'", 'WARN');
+    echo json_encode(['verified' => false, 'error' => 'Username mismatch']);
+    exit;
+}
+
+if ($token === '') {
+    Log::write("2FA verify missing token for '$sessionUsername'", 'ERROR');
     echo json_encode(['verified' => false, 'error' => 'Missing fields']);
     exit;
 }
+
+$username = $sessionUsername;
 
 try {
     $db = Database::getConnection();
@@ -29,7 +43,6 @@ try {
 }
 
 if (!$secret) {
-
     Log::write("2FA verify unknown user '$username'", 'ERROR');
     echo json_encode(['verified' => false, 'error' => 'Unknown user']);
     exit;
@@ -38,4 +51,3 @@ if (!$secret) {
 $verified = Totp::verifyCode($secret, $token);
 Log::write("2FA verification for '$username': " . ($verified ? 'success' : 'failure'), $verified ? 'INFO' : 'ERROR');
 echo json_encode(['verified' => $verified]);
-?>

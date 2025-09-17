@@ -1,6 +1,7 @@
 <?php
 // Outputs the current git commit hash for version display without relying on shell_exec.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+// Public health-check endpoint intentionally skips require_api_auth().
 require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');
 $rootDir = dirname(__DIR__, 2);

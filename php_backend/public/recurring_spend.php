@@ -1,6 +1,7 @@
 <?php
 // API endpoint to analyse recurring income and spending over the past year.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Log.php';
 

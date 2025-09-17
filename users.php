@@ -1,9 +1,7 @@
 <?php
 // Simple user management page to add users, change passwords, and manage 2FA.
-ini_set('session.cookie_secure', '1');
-session_start();
+require_once __DIR__ . '/php_backend/auth.php';
 require_once __DIR__ . '/php_backend/models/User.php';
-require_once __DIR__ . '/php_backend/nocache.php';
 require_once __DIR__ . '/php_backend/Totp.php';
 require_once __DIR__ . '/php_backend/Database.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
@@ -13,6 +11,22 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit;
 }
+
+$timeoutSetting = (int) (Setting::get('session_timeout_minutes') ?? 0);
+if ($timeoutSetting > 0) {
+    $lastActivity = $_SESSION['last_activity'] ?? 0;
+    if ($lastActivity && (time() - $lastActivity) > $timeoutSetting * 60) {
+        Log::write('Session expired for user ' . $_SESSION['user_id'], 'WARN');
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_unset();
+            session_destroy();
+        }
+        header('Location: logout.php?timeout=1');
+        exit;
+    }
+}
+$_SESSION['last_activity'] = time();
 
 $brand = Setting::getBrand();
 

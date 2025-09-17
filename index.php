@@ -1,7 +1,5 @@
 <?php
-ini_set('session.cookie_secure', '1');
-session_start();
-require_once __DIR__ . '/php_backend/nocache.php';
+require_once __DIR__ . '/php_backend/auth.php';
 require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
 require_once __DIR__ . '/php_backend/Totp.php';
@@ -27,8 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute(['username' => $username]);
         $secret = $stmt->fetchColumn();
         if ($secret && Totp::verifyCode($secret, $token)) {
+            session_regenerate_id(true);
             $_SESSION['user_id'] = (int)$_SESSION['pending_user_id'];
             $_SESSION['username'] = $username;
+            $_SESSION['last_activity'] = time();
             unset($_SESSION['pending_user_id'], $_SESSION['pending_username']);
             Log::write("User '$username' passed 2FA");
             header('Location: frontend/index.html');
@@ -48,8 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['pending_user_id'] = $userId;
                 $_SESSION['pending_username'] = $username;
             } else {
+                session_regenerate_id(true);
                 $_SESSION['user_id'] = $userId;
                 $_SESSION['username'] = $username;
+                $_SESSION['last_activity'] = time();
                 Log::write("User '$username' logged in");
                 header('Location: frontend/index.html');
                 exit;

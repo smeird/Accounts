@@ -1,6 +1,7 @@
 <?php
 // API endpoint returning account summaries.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Account.php';
 require_once __DIR__ . '/../models/Log.php';
 

@@ -1,6 +1,7 @@
 <?php
 // Remove the IGNORE tag from a transaction so it appears in reports again.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/Log.php';

@@ -1,21 +1,28 @@
 <?php
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../Totp.php';
 require_once __DIR__ . '/../models/Log.php';
-
 require_once __DIR__ . '/../Database.php';
 
-
-ini_set('session.cookie_secure', '1');
-session_start();
 header('Content-Type: application/json');
-$input = json_decode(file_get_contents('php://input'), true);
-$username = $input['username'] ?? ($_SESSION['username'] ?? '');
+$input = json_decode(file_get_contents('php://input'), true) ?: [];
+$sessionUsername = $_SESSION['username'] ?? '';
+$requestedUsername = trim($input['username'] ?? '');
 
-if ($username === '') {
-    Log::write('2FA generate missing username', 'ERROR');
-    echo json_encode(['error' => 'Username required']);
+if ($sessionUsername === '') {
+    Log::write('2FA generate without session username', 'ERROR');
+    echo json_encode(['error' => 'Authentication required']);
     exit;
 }
+
+if ($requestedUsername !== '' && $requestedUsername !== $sessionUsername) {
+    Log::write("2FA generate username mismatch for '$sessionUsername'", 'WARN');
+    echo json_encode(['error' => 'Username mismatch']);
+    exit;
+}
+
+$username = $sessionUsername;
 
 try {
     $db = Database::getConnection();
@@ -34,8 +41,5 @@ try {
     exit;
 }
 
-
 $otpauth = Totp::getOtpAuthUri($username, $secret);
 echo json_encode(['secret' => $secret, 'otpauth' => $otpauth]);
-
-?>

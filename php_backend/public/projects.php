@@ -1,7 +1,8 @@
 <?php
 // REST API for managing home projects.
 require_once __DIR__ . '/../models/Project.php';
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
