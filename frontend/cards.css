@@ -105,6 +105,7 @@
 .glass-table-row {
   background-color: rgba(255, 255, 255, 0.18) !important;
   transition: background-color 0.2s ease;
+  border-top: none !important;
 }
 
 .glass-table-row:hover {
@@ -114,18 +115,10 @@
 .glass-table-row .tabulator-cell {
   background-color: transparent !important;
   color: #0f172a;
-}
-
-.glass-table-row .tabulator-cell:first-child {
-  border-left: none !important;
-}
-
-.glass-table-row .tabulator-cell:last-child {
-  border-right: none !important;
-}
-
-.glass-table-row .tabulator-cell {
+  border-top: none !important;
   border-bottom: 0.5px solid rgba(148, 163, 184, 0.18) !important;
+  border-left: none !important;
+  border-right: none !important;
 }
 
 .tabulator.glass-surface {
