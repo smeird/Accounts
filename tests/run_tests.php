@@ -231,7 +231,6 @@ assertEqual(300.0, (float)$recSpend[0]['total'], 'Recurring spend total summed')
 assertEqual(6300.0, (float)$recIncome[0]['total'], 'Recurring income total summed');
 assertEqual(90.0, (float)$recSpend[0]['last_amount'], 'Recurring spend last amount stored');
 assertEqual(2200.0, (float)$recIncome[0]['last_amount'], 'Recurring income last amount stored');
-n
 $db->exec('DELETE FROM transactions');
 
 // --- Duplicate FITID test ---
