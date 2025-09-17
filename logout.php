@@ -27,24 +27,16 @@ $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
 $chartFont = $brand['chart_font'];
 $accentWeight = $brand['accent_font_weight'];
-$colorMap = [
-    'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
-    'blue'   => ['600' => '#2563eb', '700' => '#1d4ed8'],
-    'green'  => ['600' => '#059669', '700' => '#047857'],
-    'red'    => ['600' => '#dc2626', '700' => '#b91c1c'],
-    'purple' => ['600' => '#9333ea', '700' => '#7e22ce'],
-    'teal'   => ['600' => '#0d9488', '700' => '#0f766e'],
-    'orange' => ['600' => '#ea580c', '700' => '#c2410c'],
-];
-$text700 = "text-{$colorScheme}-700";
-$bg600 = "bg-{$colorScheme}-600";
-$bgHover = "hover:bg-{$colorScheme}-700";
+$buttonClass = "bg-{$colorScheme}-500/90 hover:bg-{$colorScheme}-400/90";
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Logged Out</title>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <script>
@@ -54,14 +46,32 @@ $bgHover = "hover:bg-{$colorScheme}-700";
 
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="w-full max-w-sm bg-white p-6 rounded shadow border border-gray-400 text-center">
-        <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-24 w-24 mb-4 mx-auto rounded shadow" />
-        <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">Logged Out</h1>
-        <p class="mb-4">You have been safely logged out of the <?= htmlspecialchars($siteName) ?>.</p>
-        <a href="index.php" class="<?= $bg600 ?> <?= $bgHover ?> text-white px-4 py-2 rounded accent transition duration-100 transform hover:-translate-y-0.5 hover:shadow-lg">Return to Login</a>
+<body class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden">
+        <div class="absolute -top-32 -left-24 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/40 via-teal-400/30 to-transparent blur-3xl"></div>
+        <div class="absolute bottom-[-5rem] left-1/2 h-72 w-[32rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-white/20 via-white/10 to-transparent blur-[120px]"></div>
+        <div class="absolute top-1/2 right-[-6rem] h-96 w-96 -translate-y-1/2 rounded-full bg-gradient-to-tr from-sky-400/30 via-indigo-400/20 to-transparent blur-3xl"></div>
+    </div>
+    <div class="relative z-10 w-full max-w-md px-6">
+        <div class="relative overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-8 text-center shadow-[0_35px_60px_-15px_rgba(15,23,42,0.9)] backdrop-blur-2xl">
+            <div class="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-white/20 via-transparent to-white/5"></div>
+            <div class="absolute inset-[1px] -z-10 rounded-[1.45rem] border border-white/10"></div>
+            <div class="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/70">
+                <span>Session</span>
+                <span>Ended</span>
+            </div>
+            <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/30 bg-white/10 shadow-inner">
+                <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-12 w-12" />
+            </div>
+            <h1 class="mb-3 text-3xl font-semibold text-white">You've signed out</h1>
+            <p class="mb-6 text-sm text-white/80">Your <?= htmlspecialchars($siteName) ?> session has closed securely. You can return to the login screen whenever you're ready.</p>
+            <a href="index.php" aria-label="Return to the login page" class="inline-flex w-full items-center justify-center rounded-xl <?= $buttonClass ?> px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5" data-tooltip="Go back to the login screen">Return to Login</a>
+        </div>
     </div>
     <script src="frontend/js/page_help.js"></script>
+    <script src="frontend/js/overlay.js"></script>
+    <script src="frontend/js/aria_tooltips.js"></script>
+    <script src="frontend/js/tooltips.js"></script>
     <script src="frontend/js/fonts.js"></script>
     <script>
       applyFonts({
