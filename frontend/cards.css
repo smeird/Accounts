@@ -164,3 +164,17 @@
 .highcharts-container.glass-chart svg {
   border-radius: 0.75rem;
 }
+
+/*
+  Tables rendered inside cards already inherit the card's elevation. Remove
+  the additional drop shadow and soften the border highlight so stacked
+  surfaces don't show a bright white line at the top of the table.
+*/
+.cards .tabulator.glass-surface {
+  box-shadow: none;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.cards .tabulator.glass-surface:hover {
+  box-shadow: none;
+}
