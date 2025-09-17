@@ -61,6 +61,14 @@ $fontOptions = ['' => 'Default',
     'Dancing Script' => 'Dancing Script',
     'Fredoka' => 'Fredoka',
     'Pacifico' => 'Pacifico',
+    'Playfair Display' => 'Playfair Display',
+    'Merriweather' => 'Merriweather',
+    'Oswald' => 'Oswald',
+    'Raleway' => 'Raleway',
+    'Nunito' => 'Nunito',
+    'Quicksand' => 'Quicksand',
+    'Fjalla One' => 'Fjalla One',
+    'Source Serif Pro' => 'Source Serif Pro',
 ];
 $weightOptions = ['' => 'Default', '100' => 'Thin', '300' => 'Light', '700' => 'Bold'];
 $colorOptions = ['indigo', 'blue', 'green', 'red', 'purple', 'teal', 'orange'];
