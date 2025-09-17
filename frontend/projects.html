@@ -24,48 +24,69 @@
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Projects</h1>
         <p class="mb-4">Review your planned projects, explore costs and compare their priorities.</p>
 
-        <section class="cards space-y-6">
-            <div>
-                <h2 class="text-xl font-semibold mb-4">Budget Planning</h2>
-                <div class="flex items-end space-x-4">
-                    <label class="block">Annual Budget (£)<br><input type="number" id="annual-budget" class="border p-2 rounded" data-help="Total funds available"></label>
-                    <button id="apply-budget" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-filter mr-1"></i>Apply Budget</button>
+        <section class="grid gap-6 xl:grid-cols-3 auto-rows-min">
+            <div class="cards cards-snug flex flex-col space-y-6">
+                <div>
+                    <h2 class="text-xl font-semibold text-indigo-700">Budget Planning</h2>
+                    <p class="text-sm text-slate-600 mt-2">Filter the list to the initiatives that fit within your available annual funds.</p>
+                    <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <label class="flex-1 text-sm">
+                            <span class="block mb-1 font-medium text-slate-700">Annual Budget (£)</span>
+                            <input type="number" id="annual-budget" class="w-full" data-help="Total funds available">
+                        </label>
+                        <button id="apply-budget" class="bg-indigo-600 text-white px-4 py-2 rounded font-light sm:self-end" aria-label="Apply budget filter">
+                            <i class="fas fa-filter mr-2"></i>Apply Budget
+                        </button>
+                    </div>
+                </div>
+                <div class="border-t border-white/40 pt-4">
+                    <h2 class="text-xl font-semibold text-indigo-700">Chart Axes</h2>
+                    <p class="text-sm text-slate-600 mt-2">Choose which metrics to plot horizontally and vertically when comparing projects.</p>
+                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <label class="text-sm">
+                            <span class="block mb-1 font-medium text-slate-700">X Axis</span>
+                            <select id="x-axis" class="w-full" data-help="Field used for horizontal axis">
+                                <option value="cost_medium" selected>Cost (mid)</option>
+                                <option value="cost_low">Cost (low)</option>
+                                <option value="cost_high">Cost (high)</option>
+                                <option value="spent">Spent</option>
+                                <option value="benefit_quality">Quality</option>
+                                <option value="benefit_financial">Financial</option>
+                                <option value="benefit_risk">Risk</option>
+                                <option value="benefit_sustainability">Sustainability</option>
+                            </select>
+                        </label>
+                        <label class="text-sm">
+                            <span class="block mb-1 font-medium text-slate-700">Y Axis</span>
+                            <select id="y-axis" class="w-full" data-help="Field used for vertical axis">
+                                <option value="cost_medium">Cost (mid)</option>
+                                <option value="cost_low">Cost (low)</option>
+                                <option value="cost_high">Cost (high)</option>
+                                <option value="spent">Spent</option>
+                                <option value="benefit_quality" selected>Quality</option>
+                                <option value="benefit_financial">Financial</option>
+                                <option value="benefit_risk">Risk</option>
+                                <option value="benefit_sustainability">Sustainability</option>
+                            </select>
+                        </label>
+                    </div>
                 </div>
             </div>
-            <div>
-                <h2 class="text-xl font-semibold mb-4">Project Comparison</h2>
-                <div class="flex items-end space-x-4 mb-4">
-                    <label class="block">X Axis<br>
-                        <select id="x-axis" class="border p-2 rounded" data-help="Field used for horizontal axis">
-                            <option value="cost_medium" selected>Cost (mid)</option>
-                            <option value="cost_low">Cost (low)</option>
-                            <option value="cost_high">Cost (high)</option>
-                            <option value="spent">Spent</option>
-                            <option value="benefit_quality">Quality</option>
-                            <option value="benefit_financial">Financial</option>
-                            <option value="benefit_risk">Risk</option>
-                            <option value="benefit_sustainability">Sustainability</option>
-                        </select>
-                    </label>
-                    <label class="block">Y Axis<br>
-                        <select id="y-axis" class="border p-2 rounded" data-help="Field used for vertical axis">
-                            <option value="cost_medium">Cost (mid)</option>
-                            <option value="cost_low">Cost (low)</option>
-                            <option value="cost_high">Cost (high)</option>
-                            <option value="spent">Spent</option>
-                            <option value="benefit_quality" selected>Quality</option>
-                            <option value="benefit_financial">Financial</option>
-                            <option value="benefit_risk">Risk</option>
-                            <option value="benefit_sustainability">Sustainability</option>
-                        </select>
-                    </label>
+            <div class="cards xl:col-span-2">
+                <h2 class="text-xl font-semibold text-indigo-700">Project Comparison</h2>
+                <p class="text-sm text-slate-600 mt-2">Visualise how initiatives balance cost and value. Hover to inspect details for each project.</p>
+                <div id="project-bubble-chart" class="mt-6" style="height:600px" data-chart-desc="Bubble chart plotting chosen fields with bubble size representing score."></div>
+            </div>
+        </section>
+
+        <section class="cards cards-roomy">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold text-indigo-700">Project Priorities</h2>
+                    <p class="text-sm text-slate-600 mt-2">Review scoring, funding and costs to determine which projects to advance next.</p>
                 </div>
-                <div id="project-bubble-chart" style="height:800px" data-chart-desc="Bubble chart plotting chosen fields with bubble size representing score."></div>
             </div>
-            <div>
-                <h2 class="text-xl font-semibold mb-4">Project Priorities</h2>
-                <div id="projects-table"></div>
-            </div>
+            <div id="projects-table" class="glass-table mt-4"></div>
         </section>
     </main>
 </div>
@@ -105,7 +126,7 @@ function drawBubble(){
     }));
 
     Highcharts.chart('project-bubble-chart', {
-        chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy', height: 800 },
+        chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy', height: 600 },
         title: { text: `${xOpt.label} vs ${yOpt.label}` },
         xAxis: {
             title: { text: xOpt.label },
@@ -179,6 +200,9 @@ async function loadProjects(){
 
 document.getElementById('apply-budget').addEventListener('click',()=>{
     const budget = parseFloat(document.getElementById('annual-budget').value);
+    if(!projectTable){
+        return;
+    }
     if(isNaN(budget)){
         projectTable.clearFilter();
         return;
