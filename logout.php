@@ -65,7 +65,7 @@ $buttonClass = "bg-{$colorScheme}-500/90 hover:bg-{$colorScheme}-400/90";
             </div>
             <h1 class="mb-3 text-3xl font-semibold text-white">You've signed out</h1>
             <p class="mb-6 text-sm text-white/80">Your <?= htmlspecialchars($siteName) ?> session has closed securely. You can return to the login screen whenever you're ready.</p>
-            <a href="index.php" aria-label="Return to the login page" class="inline-flex w-full items-center justify-center rounded-xl <?= $buttonClass ?> px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5" data-tooltip="Go back to the login screen">Return to Login</a>
+            <a href="index.php" aria-label="Return to the login page" class="inline-flex w-full items-center justify-center rounded-xl <?= $buttonClass ?> px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5">Return to Login</a>
         </div>
     </div>
     <script src="frontend/js/page_help.js"></script>
