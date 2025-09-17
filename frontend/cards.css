@@ -37,16 +37,8 @@
   --card-padding: 2rem;
 }
 
-.cards-rounded-lg {
-  --card-radius: 0.75rem;
-}
-
 .cards-rounded-xl {
   --card-radius: 1.75rem;
-}
-
-.cards-rounded-full {
-  --card-radius: 9999px;
 }
 
 /* Glassmorphism surfaces for data visualisations */
