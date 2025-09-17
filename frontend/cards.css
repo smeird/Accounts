@@ -102,12 +102,12 @@
 }
 
 .glass-table .tabulator-header {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  border-bottom: 0.5px solid rgba(148, 163, 184, 0.35);
 }
 
 .glass-table .tabulator-footer,
 .glass-table .tabulator-paginator {
-  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  border-top: 0;
 }
 
 .glass-table-row {
@@ -133,7 +133,12 @@
 }
 
 .glass-table-row .tabulator-cell {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+  border-bottom: 0.5px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+.tabulator.glass-surface {
+  border: none;
+  box-shadow: 0 18px 30px -15px rgba(15, 23, 42, 0.4);
 }
 
 .glass-table .tabulator-tableholder .tabulator-table {
