@@ -55,7 +55,7 @@ const init = () => {
   overlay.className = 'fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4';
 
   const box = document.createElement('div');
-  box.className = 'bg-white p-6 rounded shadow border border-gray-400 max-w-md text-center';
+  box.className = 'cards max-w-md text-center';
   const text = document.createElement('p');
   text.textContent = helpText;
   const close = document.createElement('button');

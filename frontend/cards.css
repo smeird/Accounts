@@ -1,10 +1,47 @@
-/* Shared card component styles extracted from Tailwind utilities */
+/* Shared glassmorphism card styles matched to Tailwind utilities */
 .cards {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65));
-  padding: 1.5rem;
-  border-radius: 0.25rem;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  --card-padding: 1.5rem;
+  --card-radius: 1rem;
+  padding: var(--card-padding);
+  border-radius: var(--card-radius);
+  background-color: rgba(255, 255, 255, 0.15); /* Tailwind bg-white/15 */
+  backdrop-filter: blur(8px); /* Tailwind backdrop-blur */
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.4), /* Tailwind ring-1 ring-white/40 */
+    0 10px 15px -3px rgba(15, 23, 42, 0.1),
+    0 4px 6px -4px rgba(15, 23, 42, 0.1); /* Tailwind shadow-lg */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cards:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 20px 25px -5px rgba(15, 23, 42, 0.15),
+    0 10px 10px -5px rgba(15, 23, 42, 0.1); /* Tailwind shadow-xl */
+}
+
+.cards-tight {
+  --card-padding: 1rem;
+}
+
+.cards-snug {
+  --card-padding: 1.25rem;
+}
+
+.cards-roomy {
+  --card-padding: 2rem;
+}
+
+.cards-rounded-lg {
+  --card-radius: 0.75rem;
+}
+
+.cards-rounded-xl {
+  --card-radius: 1.5rem;
+}
+
+.cards-rounded-full {
+  --card-radius: 9999px;
 }
