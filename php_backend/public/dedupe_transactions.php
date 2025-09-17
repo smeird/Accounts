@@ -1,6 +1,7 @@
 <?php
 // Lists duplicate transactions and removes extras when requested.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Tag.php';

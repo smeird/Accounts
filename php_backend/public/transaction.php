@@ -1,6 +1,7 @@
 <?php
 // API endpoint returning a single transaction's details.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Log.php';
 

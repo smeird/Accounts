@@ -1,8 +1,6 @@
 <?php
 // Log out the current user and show confirmation page.
-ini_set('session.cookie_secure', '1');
-session_start();
-require_once __DIR__ . '/php_backend/nocache.php';
+require_once __DIR__ . '/php_backend/auth.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
 require_once __DIR__ . '/php_backend/models/Setting.php';
 
@@ -11,7 +9,11 @@ if (isset($_SESSION['user_id'])) {
     Log::write('User ' . $_SESSION['user_id'] . ' logged out' . $reason);
 }
 
-session_destroy();
+$_SESSION = [];
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_unset();
+    session_destroy();
+}
 
 if (isset($_GET['timeout'])) {
     header('Location: index.php');

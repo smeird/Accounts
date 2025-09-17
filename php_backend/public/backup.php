@@ -3,7 +3,8 @@
 // segments, transactions, budgets, projects, and settings via the `parts`
 // query parameter. User and account information is always included so a full
 // backup can be restored.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 

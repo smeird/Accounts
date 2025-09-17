@@ -1,14 +1,28 @@
 <?php
-ini_set('session.cookie_secure', '1');
-session_start();
+require_once __DIR__ . '/php_backend/auth.php';
 require_once __DIR__ . '/php_backend/models/Setting.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
-require_once __DIR__ . '/php_backend/nocache.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit;
 }
+
+$timeoutSetting = (int) (Setting::get('session_timeout_minutes') ?? 0);
+if ($timeoutSetting > 0) {
+    $lastActivity = $_SESSION['last_activity'] ?? 0;
+    if ($lastActivity && (time() - $lastActivity) > $timeoutSetting * 60) {
+        Log::write('Session expired for user ' . $_SESSION['user_id'], 'WARN');
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_unset();
+            session_destroy();
+        }
+        header('Location: logout.php?timeout=1');
+        exit;
+    }
+}
+$_SESSION['last_activity'] = time();
 
 $message = '';
 $openai = Setting::get('openai_api_token') ?? '';
@@ -17,7 +31,7 @@ $aiModel = Setting::get('ai_model') ?? 'gpt-5-nano';
 $aiTemp = Setting::get('ai_temperature') ?? '1';
 $aiDebug = Setting::get('ai_debug') === '1';
 $retention = Setting::get('log_retention_days') ?? '30';
-$timeout = Setting::get('session_timeout_minutes') ?? '0';
+$timeout = (string)$timeoutSetting;
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
 $colorScheme = $brand['color_scheme'];

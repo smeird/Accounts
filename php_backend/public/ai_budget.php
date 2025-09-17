@@ -1,6 +1,7 @@
 <?php
 // Endpoint that uses AI to set budgets based on past spending and a savings goal.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Budget.php';
 require_once __DIR__ . '/../models/Tag.php';

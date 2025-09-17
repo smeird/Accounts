@@ -1,6 +1,7 @@
 <?php
 // Runs 'git pull' to update the application to the latest version.
-require_once __DIR__ . '/../nocache.php';
+require_once __DIR__ . '/../auth.php';
+require_api_auth();
 require_once __DIR__ . '/../models/Log.php';
 header('Content-Type: application/json');
 // Determine the repository root. Start from the web server's document root if
