@@ -57,8 +57,8 @@ function getChartTheme() {
     const text = '#0f172a';
     const styles = getComputedStyle(document.documentElement);
     const chartFont = styles.getPropertyValue('--chart-font').trim() || 'Inter, sans-serif';
-    const background = 'rgba(255, 255, 255, 0.14)';
-    const plotBackground = 'rgba(255, 255, 255, 0.05)';
+    const background = 'rgba(255, 255, 255, 0)';
+    const plotBackground = 'rgba(255, 255, 255, 0)';
     const borderColor = 'rgba(255, 255, 255, 0.35)';
     return {
         colors: chartColors,
