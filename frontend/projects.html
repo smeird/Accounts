@@ -126,7 +126,14 @@ function drawBubble(){
     }));
 
     Highcharts.chart('project-bubble-chart', {
-        chart: { type: 'bubble', plotBorderWidth: 1, zoomType: 'xy', height: 600 },
+        chart: {
+            type: 'bubble',
+            plotBorderWidth: 1,
+            zoomType: 'xy',
+            height: 600,
+            backgroundColor: 'rgba(255,255,255,0)',
+            plotBackgroundColor: 'rgba(255,255,255,0)'
+        },
         title: { text: `${xOpt.label} vs ${yOpt.label}` },
         xAxis: {
             title: { text: xOpt.label },
