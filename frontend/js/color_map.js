@@ -69,7 +69,8 @@ function getChartTheme() {
             borderColor,
             borderRadius: 12,
             borderWidth: 1,
-            className: 'glass-chart'
+            className: 'glass-chart',
+            shadow: false
         },
         credits: { enabled: false },
         legend: {
@@ -87,9 +88,9 @@ function getChartTheme() {
             style: { color: '#F8FAFC', fontFamily: chartFont }
         },
         plotOptions: {
-            series: { showInLegend: true },
-            pie: { showInLegend: true },
-            sunburst: { showInLegend: true }
+            series: { showInLegend: true, shadow: false },
+            pie: { showInLegend: true, shadow: false },
+            sunburst: { showInLegend: true, shadow: false }
         }
     };
 }
@@ -105,7 +106,8 @@ function applyChartTheme() {
             className: opts.chart.className,
             borderColor: opts.chart.borderColor,
             borderRadius: opts.chart.borderRadius,
-            borderWidth: opts.chart.borderWidth
+            borderWidth: opts.chart.borderWidth,
+            shadow: opts.chart.shadow
         },
         legend: {
             itemStyle: opts.legend.itemStyle,
@@ -115,7 +117,12 @@ function applyChartTheme() {
         title: opts.title,
         xAxis: { labels: opts.xAxis.labels, title: opts.xAxis.title },
         yAxis: { labels: opts.yAxis.labels, title: opts.yAxis.title },
-        tooltip: opts.tooltip
+        tooltip: opts.tooltip,
+        plotOptions: {
+            series: { shadow: opts.plotOptions.series.shadow },
+            pie: { shadow: opts.plotOptions.pie.shadow },
+            sunburst: { shadow: opts.plotOptions.sunburst.shadow }
+        }
     };
     Highcharts.charts.forEach(c => {
         if (c) {
