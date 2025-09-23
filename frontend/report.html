@@ -57,7 +57,11 @@
             </div>
             <div id="results-grid" class="mt-4"></div>
             <div id="chart" class="mt-6 cards" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
-            <div id="category-chart" class="mt-6 cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by category."></div>
+            <div class="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div id="segment-chart" class="cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by segment."></div>
+                <div id="category-chart" class="cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by category."></div>
+                <div id="tag-chart" class="cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by tag."></div>
+            </div>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -287,9 +291,13 @@
         const gridEl = document.getElementById('results-grid');
         const chartContainer = document.getElementById('chart');
         const categoryChartContainer = document.getElementById('category-chart');
+        const segmentChartContainer = document.getElementById('segment-chart');
+        const tagChartContainer = document.getElementById('tag-chart');
         gridEl.innerHTML = '';
         chartContainer.innerHTML = '';
         categoryChartContainer.innerHTML = '';
+        segmentChartContainer.innerHTML = '';
+        tagChartContainer.innerHTML = '';
         window.reportTable = null;
         if (Array.isArray(data) && data.length) {
             window.reportTable = tailwindTabulator(gridEl, {
@@ -357,8 +365,57 @@
                     series: [{ name: 'Amount', data: pieData }]
                 });
             }
+
+            const segmentTotals = {};
+            data.forEach(row => {
+                const name = row.segment_name || 'Not Segmented';
+                const amount = Math.abs(parseFloat(row.amount));
+                segmentTotals[name] = (segmentTotals[name] || 0) + amount;
+            });
+            const segmentData = Object.keys(segmentTotals).map(name => ({
+                name,
+                y: segmentTotals[name],
+                color: getSegmentColor(name)
+            }));
+            if (segmentData.length) {
+                Highcharts.chart('segment-chart', {
+                    chart: { type: 'pie', backgroundColor: 'transparent' },
+                    title: { text: 'Totals by Segment' },
+                    tooltip: { pointFormatter: pieTooltip },
+                    legend: { enabled: false },
+                    series: [{ name: 'Amount', data: segmentData }]
+                });
+            }
+
+            const tagTotals = {};
+            data.forEach(row => {
+                const name = row.tag_name || 'Untagged';
+                const categoryName = row.category_name || 'Unspecified';
+                const amount = Math.abs(parseFloat(row.amount));
+                if (!tagTotals[name]) {
+                    tagTotals[name] = { total: 0, categoryName, categoryColor: getCategoryColor(categoryName) };
+                }
+                tagTotals[name].total += amount;
+            });
+            const tagData = Object.keys(tagTotals).map(name => ({
+                name,
+                y: tagTotals[name].total,
+                color: getTagColor(name, tagTotals[name].categoryName, tagTotals[name].categoryColor)
+            }));
+            if (tagData.length) {
+                Highcharts.chart('tag-chart', {
+                    chart: { type: 'pie', backgroundColor: 'transparent' },
+                    title: { text: 'Totals by Tag' },
+                    tooltip: { pointFormatter: pieTooltip },
+                    legend: { enabled: false },
+                    series: [{ name: 'Amount', data: tagData }]
+                });
+            }
         } else {
             gridEl.innerHTML = 'No transactions found.';
+            segmentChartContainer.innerHTML = '<div class="p-6 text-center text-sm text-gray-500">No segment totals to display.</div>';
+            categoryChartContainer.innerHTML = '<div class="p-6 text-center text-sm text-gray-500">No category totals to display.</div>';
+            tagChartContainer.innerHTML = '<div class="p-6 text-center text-sm text-gray-500">No tag totals to display.</div>';
         }
     }
 
