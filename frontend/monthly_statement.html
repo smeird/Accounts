@@ -21,7 +21,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Monthly Statement</h1>
+            <h1 id="page-title" class="text-2xl font-semibold mb-4 text-indigo-700">Monthly Statement</h1>
             <p class="mb-4">Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.</p>
             <div class="cards">
                 <form id="statement-form" class="flex flex-wrap items-end gap-4">
@@ -99,6 +99,7 @@ const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
 const form = document.getElementById('statement-form');
 const untaggedOnly = document.getElementById('untagged-only');
+const pageTitle = document.getElementById('page-title');
 let table;
 
 // fetch available transaction groups once
@@ -203,6 +204,12 @@ function loadTransactions(retry = false) {
     const month = parseInt(monthSelect.value);
     const year = parseInt(yearSelect.value);
     const untaggedParam = untaggedOnly.checked ? '&untagged=1' : '';
+    if (!Number.isNaN(month) && !Number.isNaN(year)) {
+        const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+        const titleText = `Monthly Statement - ${monthName} ${year}`;
+        pageTitle.textContent = titleText;
+        document.title = titleText;
+    }
 
     const prevDate = new Date(year, month - 1);
     prevDate.setMonth(prevDate.getMonth() - 1);
