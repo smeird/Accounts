@@ -165,3 +165,69 @@
 .cards .tabulator.glass-surface:hover {
   box-shadow: none;
 }
+
+/* Professional variant removes blur/glass in favour of neutral surfaces */
+.cards-professional,
+.theme-professional .cards {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.theme-professional .cards:hover,
+.cards-professional:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.theme-professional .glass-surface,
+.glass-surface-professional {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.theme-professional .glass-input,
+.glass-input-professional {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.theme-professional .glass-input:focus,
+.glass-input-professional:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.16);
+  background-color: #ffffff;
+}
+
+.theme-professional .glass-table-row,
+.glass-table-row-professional {
+  background-color: #ffffff !important;
+}
+
+.theme-professional .glass-table-row:hover,
+.glass-table-row-professional:hover {
+  background-color: #f8fafc !important;
+}
+
+.theme-professional .glass-table-row .tabulator-cell,
+.glass-table-row-professional .tabulator-cell {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.theme-professional .highcharts-container.glass-chart,
+.highcharts-container.glass-chart-professional {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

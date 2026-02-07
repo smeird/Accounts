@@ -15,6 +15,19 @@ window.fetchNoCache = fetchNoCache;
     document.head.appendChild(cardLink);
   }
 
+
+  if (!document.getElementById('theme-professional-css')) {
+    const themeLink = document.createElement('link');
+    themeLink.id = 'theme-professional-css';
+    themeLink.rel = 'stylesheet';
+    themeLink.href = 'css/theme-professional.css';
+    document.head.appendChild(themeLink);
+  }
+
+  const PROFESSIONAL_THEME_KEY = 'professionalThemeEnabled';
+  const professionalThemeEnabled = localStorage.getItem(PROFESSIONAL_THEME_KEY) === 'true';
+  document.body.classList.toggle('theme-professional', professionalThemeEnabled);
+
   document.body.classList.add('pt-4');
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
@@ -209,6 +222,26 @@ window.fetchNoCache = fetchNoCache;
             });
           }
         });
+
+        const themeWrap = document.createElement('div');
+        themeWrap.className = 'mt-4 p-3 rounded-lg border border-slate-200 bg-slate-50';
+        themeWrap.innerHTML = `
+          <label class="flex items-center justify-between gap-3 text-sm text-slate-700" for="professional-theme-toggle">
+            <span class="font-medium">Professional theme</span>
+            <input id="professional-theme-toggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600" aria-label="Toggle professional theme">
+          </label>
+        `;
+        menu.appendChild(themeWrap);
+        const themeToggle = document.getElementById('professional-theme-toggle');
+        if (themeToggle) {
+          themeToggle.checked = document.body.classList.contains('theme-professional');
+          themeToggle.addEventListener('change', () => {
+            const enabled = themeToggle.checked;
+            document.body.classList.toggle('theme-professional', enabled);
+            localStorage.setItem(PROFESSIONAL_THEME_KEY, String(enabled));
+          });
+        }
+
         // Hide menu after clicking a link on mobile
         menu.querySelectorAll('a').forEach(a =>
           a.addEventListener('click', () => menu.classList.add('hidden'))
