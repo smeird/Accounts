@@ -356,6 +356,10 @@ const attachSidebarSearchHandler = (root = document) => {
 
   const content = document.querySelector('body > div.flex');
   if (content) {
+    // Prevent the document itself from scrolling so only the main content
+    // panel owns vertical scrolling. This avoids double right-edge scrollbars.
+    document.body.classList.add('m-0', 'h-screen', 'overflow-hidden');
+
     // Ensure wrapper always uses column layout on small screens with a
     // sidebar on larger displays so the menu and utility bar position
     // consistently across pages.
