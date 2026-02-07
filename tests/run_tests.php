@@ -281,6 +281,19 @@ assertEqual(-50.0, (float)$linked[0]['from_amount'], 'Linked from amount stored'
 $candidatesAfter = Transaction::getTransferCandidates();
 assertEqual(0, count($candidatesAfter), 'No candidates after linking');
 
+// Auto-link transfer creation should support differing descriptions with opposite values
+$autoOutId = Transaction::create(1, '2024-09-04', -75.00, 'Current acc transfer out');
+$autoInId = Transaction::create(2, '2024-09-04', 75.00, 'Savings transfer in');
+$autoTransferIds = $db->query("SELECT transfer_id FROM transactions WHERE id IN ($autoOutId, $autoInId) ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+assertEqual(true, !empty($autoTransferIds[0]) && $autoTransferIds[0] == $autoTransferIds[1], 'Auto transfer linking matches equal and opposite amounts despite different descriptions');
+
+// Transfer candidate matching should tolerate minor float representation differences
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-05', -33.335, 'Rounding out'), (2, '2024-09-05', 33.3349, 'Rounding in')");
+$roundedCandidates = Transaction::getTransferCandidates();
+$roundedMatch = array_filter($roundedCandidates, function ($c) {
+    return $c['date'] === '2024-09-05';
+});
+assertEqual(1, count($roundedMatch), 'Transfer candidate detection allows equivalent opposite values to currency precision');
 
 // Same-account transactions cannot be manually linked as transfers
 $db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-02', -25, 'Internal move'), (1, '2024-09-02', 25, 'Internal move')");

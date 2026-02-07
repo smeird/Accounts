@@ -11,6 +11,18 @@ class Transaction {
     const TYPE_MAX_LENGTH = 50;
     const REF_MAX_LENGTH = 32;
     const CHECK_MAX_LENGTH = 20;
+
+    /**
+     * Determine whether two values are equal and opposite at currency precision.
+     */
+    private static function amountsAreOpposite(float $amountA, float $amountB): bool {
+        if (($amountA < 0 && $amountB <= 0) || ($amountA > 0 && $amountB >= 0)) {
+            return false;
+        }
+
+        return abs(round($amountA + $amountB, 2)) < 0.00001;
+    }
+
     /**
      * Insert a new transaction and attempt to auto-tag and link transfers.
      */
@@ -118,12 +130,12 @@ class Transaction {
         $id = (int)$db->lastInsertId();
 
         // Attempt to detect matching transfer (opposite entry in another account)
-        $matchStmt = $db->prepare('SELECT id FROM transactions WHERE account_id != :account AND `date` = :date AND `description` = :description AND `amount` = :oppAmount AND transfer_id IS NULL LIMIT 1');
+        $matchStmt = $db->prepare('SELECT id FROM transactions WHERE account_id != :account AND `date` = :date AND ABS(`amount` + :amount) < 0.005 AND `amount` * :amount < 0 AND transfer_id IS NULL ORDER BY CASE WHEN `description` = :description THEN 0 ELSE 1 END, id LIMIT 1');
         $matchStmt->execute([
             'account' => $account,
             'date' => $date,
             'description' => $description,
-            'oppAmount' => -$amount
+            'amount' => $amount
         ]);
         if ($row = $matchStmt->fetch(PDO::FETCH_ASSOC)) {
             $matchId = (int)$row['id'];
@@ -946,7 +958,8 @@ class Transaction {
              . 't1.date '
              . 'FROM `transactions` t1 '
              . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
-             . 'AND t1.`amount` = -t2.`amount` '
+             . 'AND ABS(t1.`amount` + t2.`amount`) < 0.005 '
+             . 'AND t1.`amount` * t2.`amount` < 0 '
              . 'AND t1.`id` < t2.`id` '
              . 'AND t1.`account_id` != t2.`account_id` '
              . 'JOIN `accounts` a1 ON t1.`account_id` = a1.`id` '
@@ -1019,7 +1032,7 @@ class Transaction {
         if ((int)$row1['account_id'] === (int)$row2['account_id']) {
             return false;
         }
-        if ((float)$row1['amount'] !== -(float)$row2['amount']) {
+        if (!self::amountsAreOpposite((float)$row1['amount'], (float)$row2['amount'])) {
             return false;
         }
 
@@ -1081,7 +1094,8 @@ class Transaction {
         $sql = 'SELECT t1.id AS id1, t2.id AS id2 '
              . 'FROM `transactions` t1 '
              . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
-             . 'AND t1.`amount` = -t2.`amount` '
+             . 'AND ABS(t1.`amount` + t2.`amount`) < 0.005 '
+             . 'AND t1.`amount` * t2.`amount` < 0 '
              . 'AND t1.`id` < t2.`id` '
              . 'AND t1.`account_id` != t2.`account_id` '
              . 'WHERE t1.`transfer_id` IS NULL '
