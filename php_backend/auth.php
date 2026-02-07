@@ -44,7 +44,7 @@ if (PHP_SAPI === 'cli') {
             http_response_code(403);
             exit;
         }
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
         http_response_code(204);
         exit;
