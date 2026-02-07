@@ -8,6 +8,8 @@ require_once __DIR__ . '/../php_backend/models/TransactionGroup.php';
 require_once __DIR__ . '/../php_backend/models/SavedReport.php';
 require_once __DIR__ . '/../php_backend/OfxParser.php';
 require_once __DIR__ . '/../php_backend/NaturalLanguageReportParser.php';
+require_once __DIR__ . '/../php_backend/models/TagAlias.php';
+require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -17,6 +19,7 @@ $db = Database::getConnection();
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, keyword TEXT, description TEXT);');
+$db->exec('CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT, match_type TEXT, active TINYINT DEFAULT 1);');
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, hue_deg REAL, base_l_pct REAL, base_c REAL, locked TINYINT);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER, shade_index INTEGER);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
@@ -113,6 +116,20 @@ assertEqual('Food', $tags[0]['name'] ?? null, 'Tag retrieved by all()');
 
 $match = Tag::findMatch('Visited the local supermarket yesterday');
 assertEqual($tagId, $match, 'Keyword match finds tag');
+
+TagAlias::create($tagId, 'tesco', 'contains', true);
+Tag::clearMatchCaches();
+$aliasMatch = Tag::findMatch('TESCO SUPERSTORE 1234');
+assertEqual($tagId, $aliasMatch, 'Alias contains match finds canonical tag');
+
+$ctxRows = [
+    ['tag_id' => $tagId, 'tag_name' => 'Food', 'alias' => 'Tesco'],
+];
+$ctx = AiTaggingPipeline::buildAliasAwareTagContext($ctxRows);
+$resolvedAlias = AiTaggingPipeline::resolveCanonicalTag('Tesco', $ctx['canonicalByName'], $ctx['aliasToCanonical']);
+assertEqual($tagId, $resolvedAlias['id'] ?? null, 'Model alias output resolves to canonical tag id');
+$resolvedUnknown = AiTaggingPipeline::resolveCanonicalTag('Unknown Vendor', $ctx['canonicalByName'], $ctx['aliasToCanonical']);
+assertEqual(null, $resolvedUnknown, 'Unknown alias does not resolve to canonical tag');
 
 $tag2 = Tag::create('Fuel', null, null);
 Tag::setKeywordIfMissing($tag2, 'petrol');

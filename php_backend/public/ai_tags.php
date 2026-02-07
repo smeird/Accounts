@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Log.php';
+require_once __DIR__ . '/../AiTaggingPipeline.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -31,13 +32,20 @@ if (!$txns) {
     exit;
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
+$tagContextRows = $db->query('SELECT t.id AS tag_id, t.name AS tag_name, ta.alias FROM tags t LEFT JOIN tag_aliases ta ON ta.tag_id = t.id AND ta.active = 1 ORDER BY t.name ASC, ta.id ASC')->fetchAll(PDO::FETCH_ASSOC);
+$tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2500);
 
 $txnMap = [];
+$aliasResolutions = [];
 
 $prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. ";
+$prompt .= "Aliases are examples that map to canonical tags. Always return the canonical tag name in the tag field, never an alias literal. ";
 $prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"} ";
 $prompt .= "or as an object {\"transactions\":[...]} containing that array. Do not return a single object.\n\n";
 
+if ($tagContext['text'] !== '') {
+    $prompt .= "Canonical tags with alias examples (alias -> canonical):\n" . $tagContext['text'] . "\n\n";
+}
 
 $prompt .= "Categories:\n";
 foreach ($categories as $c) {
@@ -159,13 +167,27 @@ foreach ($suggestions as $s) {
     if (!$txn) continue;
     $keyword = substr($txn['description'], 0, 100);
 
-    $tagId = Tag::getIdByName($tagName);
-    if ($tagId === null) {
-        $tagId = Tag::create($tagName, $keyword, $tagDesc);
-    } else {
+    $resolved = AiTaggingPipeline::resolveCanonicalTag((string)$tagName, $tagContext['canonicalByName'], $tagContext['aliasToCanonical']);
+    if ($resolved !== null) {
+        $tagId = (int)$resolved['id'];
+        $canonicalTagName = $resolved['name'];
+        if ($resolved['source'] === 'alias') {
+            $aliasResolutions[] = ['input' => $tagName, 'canonical' => $canonicalTagName, 'id' => $tagId];
+        }
+        $tagName = $canonicalTagName;
         Tag::setKeywordIfMissing($tagId, $keyword);
         if ($tagDesc) {
             Tag::setDescriptionIfMissing($tagId, $tagDesc);
+        }
+    } else {
+        $tagId = Tag::getIdByName($tagName);
+        if ($tagId === null) {
+            $tagId = Tag::create($tagName, $keyword, $tagDesc);
+        } else {
+            Tag::setKeywordIfMissing($tagId, $keyword);
+            if ($tagDesc) {
+                Tag::setDescriptionIfMissing($tagId, $tagDesc);
+            }
         }
     }
 
@@ -188,7 +210,13 @@ foreach ($suggestions as $s) {
 Log::write("AI tagged $processed transactions using $usage tokens");
  $out = ['processed' => $processed, 'tokens' => $usage];
  if ($debugMode) {
-     $out['debug'] = ['prompt' => $prompt, 'response' => $content];
+     $out['debug'] = [
+         'prompt' => $prompt,
+         'response' => $content,
+         'alias_context' => $tagContext['text'],
+         'alias_context_truncated' => $tagContext['truncated'],
+         'alias_resolutions' => $aliasResolutions,
+     ];
  }
  echo json_encode($out);
 // Self-check:
