@@ -295,12 +295,18 @@ const attachSidebarSearchHandler = (root = document) => {
           }
           const section = link.closest('div')?.querySelector('h3')?.textContent?.trim();
           const page = link.textContent.trim();
-          const heading = document.querySelector('main h1');
-          if (section && page && heading) {
-            const crumb = document.createElement('div');
-            crumb.textContent = `${section} / ${page}`;
-            crumb.className = `page-breadcrumb text-${colorScheme}-900`;
-            heading.insertAdjacentElement('afterend', crumb);
+          const main = document.querySelector('main.ops-main');
+          const breadcrumb = section && page ? `${section} / ${page}` : '';
+          if (breadcrumb && main && typeof window.updatePageHeader === 'function') {
+            window.updatePageHeader(main, { breadcrumb: breadcrumb });
+          } else {
+            const heading = document.querySelector('main h1');
+            if (breadcrumb && heading) {
+              const crumb = document.createElement('div');
+              crumb.textContent = breadcrumb;
+              crumb.className = `page-breadcrumb text-${colorScheme}-900`;
+              heading.insertAdjacentElement('afterend', crumb);
+            }
           }
         }
         // Display counter for untagged transactions in menu
