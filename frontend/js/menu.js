@@ -11,6 +11,20 @@ const apiBase = document.body?.dataset?.apiBase || '../php_backend/public';
 const frontendBase = document.body?.dataset?.menuBase || (window.location.pathname.includes('/frontend/') ? '' : 'frontend/');
 const resolveFrontendAsset = path => `${frontendBase}${path}`;
 
+const attachSidebarSearchHandler = (root = document) => {
+  const sidebarSearchForm = root.getElementById('sidebar-search-form');
+  if (!sidebarSearchForm || sidebarSearchForm.dataset.bound === 'true') return;
+
+  sidebarSearchForm.dataset.bound = 'true';
+  sidebarSearchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const term = root.getElementById('sidebar-search')?.value.trim();
+    if (term) {
+      window.location.href = `${resolveFrontendAsset('search.html')}?value=${encodeURIComponent(term)}`;
+    }
+  });
+};
+
   if (!document.getElementById('cards-css')) {
     const cardLink = document.createElement('link');
     cardLink.id = 'cards-css';
@@ -192,6 +206,7 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        attachSidebarSearchHandler(document);
         if (frontendBase === 'frontend/') {
           menu.querySelectorAll('a[href]').forEach(linkEl => {
             const href = linkEl.getAttribute('href') || '';
@@ -349,16 +364,7 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
   });
   document.body.appendChild(toggle);
 
-  const sidebarSearchForm = document.getElementById('sidebar-search-form');
-  if (sidebarSearchForm) {
-    sidebarSearchForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const term = document.getElementById('sidebar-search').value.trim();
-      if (term) {
-        window.location.href = `${resolveFrontendAsset('search.html')}?value=${encodeURIComponent(term)}`;
-      }
-    });
-  }
+  attachSidebarSearchHandler(document);
 
   // Apply Tailwind card styling to all sections or wrap main content in a card
   document.querySelectorAll('main').forEach(main => {
