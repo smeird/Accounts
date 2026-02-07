@@ -144,8 +144,9 @@ window.renderPageHeader(pageMain, {
                     <label class="block">Category Group: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category group"></select></label>
                     <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 </div>
-                <div class="flex space-x-2 justify-center no-print">
+                <div class="flex flex-wrap gap-2 justify-center no-print">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Save transaction">Save</button>
+                    <button type="button" id="mark-transfer" class="bg-blue-600 text-white px-4 py-2 rounded" aria-label="Mark transaction as transfer">Mark as Transfer</button>
                     <button type="button" id="print" class="bg-gray-600 text-white px-4 py-2 rounded" aria-label="Print receipt">Print Receipt</button>
                 </div>
             `;
@@ -155,6 +156,30 @@ window.renderPageHeader(pageMain, {
             const printBtn = form.querySelector('#print');
             if (printBtn) {
                 printBtn.addEventListener('click', () => window.print());
+            }
+            const markTransferBtn = form.querySelector('#mark-transfer');
+            if (markTransferBtn) {
+                if (tx.transfer_id) {
+                    markTransferBtn.disabled = true;
+                    markTransferBtn.classList.remove('bg-blue-600');
+                    markTransferBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    markTransferBtn.textContent = 'Already marked as transfer';
+                } else {
+                    markTransferBtn.addEventListener('click', () => {
+                        fetch('../php_backend/public/mark_transaction_transfer.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: tx.id })
+                        }).then(r => r.json()).then(res => {
+                            if (res && res.status === 'ok') {
+                                showMessage('Transaction marked as transfer');
+                                setTimeout(() => window.location.reload(), 500);
+                            } else {
+                                alert(res.error || 'Failed to mark transfer');
+                            }
+                        }).catch(() => alert('Failed to mark transfer'));
+                    });
+                }
             }
             const tagInput = form.querySelector('#tag');
             if (tx.tag_name) {
