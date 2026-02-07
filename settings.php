@@ -283,7 +283,12 @@ $bg600 = "bg-{$colorScheme}-600";
                 </select>
                 <p id="font-preview-weight" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Accent weight preview: Search, filters and highlights.</p>
             </label>
-                    <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
+                    <button
+                        type="submit"
+                        class="text-white px-4 py-2 rounded md:col-span-2"
+                        style="background-color: <?= htmlspecialchars($colorHex, ENT_QUOTES, 'UTF-8') ?>;"
+                        aria-label="Save Settings"
+                    ><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
                 </form>
                 </div>
             </section>
