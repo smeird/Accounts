@@ -3,6 +3,14 @@ body.theme-professional {
   background-color: #ffffff;
 }
 
+body.theme-professional.ops-body {
+  background-image: none;
+}
+
+.theme-professional .ops-main {
+  background-color: #ffffff;
+}
+
 .theme-professional .rounded-3xl {
   border-radius: 0.75rem !important;
 }
@@ -41,4 +49,17 @@ body.theme-professional {
 .theme-professional .text-indigo-700,
 .theme-professional .text-indigo-600 {
   color: #334155 !important;
+}
+
+.theme-professional .highcharts-container,
+.theme-professional .highcharts-container.glass-chart {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.theme-professional .highcharts-background,
+.theme-professional .highcharts-plot-background,
+.theme-professional .highcharts-plot-border {
+  stroke-width: 0 !important;
+  stroke: transparent !important;
 }
