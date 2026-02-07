@@ -209,5 +209,75 @@ class Tag {
         }
         return $total;
     }
+
+    /**
+     * Re-evaluate all transactions against current tag keywords and return remap counts.
+     *
+     * @param bool $applyChanges When true, transaction tag_id values are updated.
+     * @return array{updated:int,moves:array<int,array<string,mixed>>}
+     */
+    public static function remapAllTransactionsToCanonicalTags(bool $applyChanges = false): array {
+        $db = Database::getConnection();
+        $stmt = $db->query('SELECT `id`, `description`, `ofx_type`, `tag_id` FROM `transactions`');
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $moves = [];
+        $updated = 0;
+        $tagNames = self::getTagNamesById();
+
+        foreach ($rows as $tx) {
+            $currentTagId = $tx['tag_id'] !== null ? (int)$tx['tag_id'] : null;
+            $newTagId = self::findMatch($tx['description']);
+            if ($newTagId === null && $tx['ofx_type'] === 'INT') {
+                $newTagId = self::getInterestChargeId();
+            }
+
+            if ($newTagId === null || $currentTagId === $newTagId) {
+                continue;
+            }
+
+            $fromLabel = $currentTagId !== null && isset($tagNames[$currentTagId])
+                ? $tagNames[$currentTagId]
+                : 'Not Tagged';
+            $toLabel = isset($tagNames[$newTagId])
+                ? $tagNames[$newTagId]
+                : ('Tag #' . $newTagId);
+            $key = ($currentTagId !== null ? (string)$currentTagId : 'null') . '->' . (string)$newTagId;
+
+            if (!isset($moves[$key])) {
+                $moves[$key] = [
+                    'from_tag_id' => $currentTagId,
+                    'from_tag_name' => $fromLabel,
+                    'to_tag_id' => $newTagId,
+                    'to_tag_name' => $toLabel,
+                    'count' => 0,
+                ];
+            }
+            $moves[$key]['count']++;
+
+            if ($applyChanges) {
+                $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
+                $upd->execute(['tag' => $newTagId, 'id' => (int)$tx['id']]);
+                $updated += $upd->rowCount();
+            }
+        }
+
+        return ['updated' => $updated, 'moves' => array_values($moves)];
+    }
+
+    /**
+     * Fetch tag names indexed by tag id.
+     *
+     * @return array<int,string>
+     */
+    private static function getTagNamesById(): array {
+        $db = Database::getConnection();
+        $stmt = $db->query('SELECT `id`, `name` FROM `tags`');
+        $names = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $names[(int)$row['id']] = $row['name'];
+        }
+        return $names;
+    }
 }
 ?>
