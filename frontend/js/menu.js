@@ -11,6 +11,18 @@ const apiBase = document.body?.dataset?.apiBase || '../php_backend/public';
 const frontendBase = document.body?.dataset?.menuBase || (window.location.pathname.includes('/frontend/') ? '' : 'frontend/');
 const resolveFrontendAsset = path => `${frontendBase}${path}`;
 
+const applySharedPageHeaderLayout = () => {
+  document.querySelectorAll('main .page-header').forEach(header => {
+    header.classList.add('page-header-hero');
+    const next = header.nextElementSibling;
+    if (next && next.matches('p') && !next.classList.contains('page-subtitle')) {
+      next.classList.add('page-subtitle');
+    }
+  });
+};
+
+applySharedPageHeaderLayout();
+
   if (!document.getElementById('cards-css')) {
     const cardLink = document.createElement('link');
     cardLink.id = 'cards-css';
