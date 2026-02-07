@@ -134,7 +134,7 @@
     border: 1px solid #dbe3ef;
     border-radius: 0.75rem;
     overflow: hidden;
-    background: #ffffff;
+    background: transparent;
 }
 
 .ops-titlebar {
@@ -154,7 +154,7 @@
 .ops-table-content,
 .ops-chart-content {
     padding: 0.9rem;
-    background: #ffffff;
+    background: transparent;
 }
 
 .ops-chart-canvas {
@@ -162,11 +162,11 @@
 }
 
 
-/* Standard table presentation: opaque surfaces with high-contrast headers */
+/* Standard table presentation: parent surface controls background while headers stay high-contrast */
 .ops-standard-table {
     border: 1px solid #dbe3ef;
     border-radius: 0.75rem;
-    background: #ffffff;
+    background: transparent;
     box-shadow: 0 8px 20px -18px rgba(15, 23, 42, 0.55);
 }
 
