@@ -1,6 +1,7 @@
 <?php
 // Model for tag definitions and keyword-based tagging logic.
 require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/TagAlias.php';
 
 class Tag {
     /**
@@ -9,6 +10,21 @@ class Tag {
      * @var array|null
      */
     private static $keywordCache = null;
+
+    /**
+     * Cached active aliases to evaluate before keywords.
+     *
+     * @var array|null
+     */
+    private static $aliasCache = null;
+    /**
+     * Reset cached keywords and aliases.
+     */
+    public static function clearMatchCaches(): void {
+        self::$keywordCache = null;
+        self::$aliasCache = null;
+    }
+
     /**
      * Create a new tag optionally with a keyword for auto tagging.
      */
@@ -17,7 +33,7 @@ class Tag {
         $stmt = $db->prepare('INSERT INTO `tags` (`name`, `keyword`, `description`) VALUES (:name, :keyword, :description)');
         $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description]);
         $id = (int)$db->lastInsertId();
-        self::$keywordCache = null; // clear cache so new tag is recognised
+        self::clearMatchCaches();
         return $id;
     }
 
@@ -50,7 +66,7 @@ class Tag {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword, `description` = :description WHERE `id` = :id');
         $result = $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
-        self::$keywordCache = null; // keyword may have changed
+        self::clearMatchCaches();
         return $result;
     }
 
@@ -70,7 +86,7 @@ class Tag {
         // delete the tag itself
         $stmt = $db->prepare('DELETE FROM `tags` WHERE `id` = :id');
         $result = $stmt->execute(['id' => $id]);
-        self::$keywordCache = null; // tag removed
+        self::clearMatchCaches();
         return $result;
     }
 
@@ -89,6 +105,20 @@ class Tag {
      * Find a tag whose keyword appears in the provided text.
      */
     public static function findMatch(string $text): ?int {
+        if (self::$aliasCache === null) {
+            self::$aliasCache = TagAlias::activeMappings();
+        }
+
+        $normalizedText = strtolower(trim($text));
+        foreach (self::$aliasCache as $row) {
+            if ($row['match_type'] === 'exact' && $normalizedText === $row['alias_normalized']) {
+                return (int)$row['tag_id'];
+            }
+            if ($row['match_type'] !== 'exact' && stripos($text, $row['alias']) !== false) {
+                return (int)$row['tag_id'];
+            }
+        }
+
         if (self::$keywordCache === null) {
             $db = Database::getConnection();
             $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');
@@ -142,7 +172,7 @@ class Tag {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id AND (`keyword` IS NULL OR `keyword` = "")');
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
-        self::$keywordCache = null;
+        self::clearMatchCaches();
     }
 
     /**
@@ -152,7 +182,7 @@ class Tag {
         $db = Database::getConnection();
         $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id');
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
-        self::$keywordCache = null;
+        self::clearMatchCaches();
     }
 
     /**

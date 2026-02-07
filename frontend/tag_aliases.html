@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- Page for managing alias mappings to canonical tags -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Tag Aliases</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+</head>
+<body class="ops-body">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+            <p class="mb-4">Map multiple merchant descriptors to a single canonical tag so similar spending (for example Tesco and Aldi) is grouped consistently.</p>
+
+            <section class="cards cards-tight">
+                <form id="tag-alias-form" class="space-y-4">
+                    <label class="block">Alias
+                        <input type="text" id="alias" class="border p-2 rounded w-full" data-help="Descriptor to match in transaction descriptions, for example Tesco.">
+                    </label>
+                    <label class="block">Canonical Tag
+                        <select id="tag_id" class="border p-2 rounded w-full" data-help="Tag that should be applied when this alias matches."></select>
+                    </label>
+                    <label class="block">Match Type
+                        <select id="match_type" class="border p-2 rounded w-full" data-help="Contains matches text fragments; Exact only matches full descriptor.">
+                            <option value="contains">Contains</option>
+                            <option value="exact">Exact</option>
+                        </select>
+                    </label>
+                    <label class="inline-flex items-center gap-2" data-help="Disable an alias without deleting it.">
+                        <input type="checkbox" id="active" checked>
+                        <span>Active</span>
+                    </label>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Create tag alias">Create Alias</button>
+                </form>
+            </section>
+
+            <section class="mt-6 cards cards-tight">
+                <h2 class="text-xl font-semibold mb-2">Existing Aliases</h2>
+                <div id="tag-alias-table"></div>
+            </section>
+        </main>
+    </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Tag Aliases',
+    breadcrumb: 'Organisation',
+    subtitle: 'Create alias rules so multiple descriptors resolve to one canonical tag.'
+});
+</script>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js"></script>
+    <script src="js/tag_aliases.js"></script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

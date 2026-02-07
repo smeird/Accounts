@@ -38,6 +38,7 @@ sequenceDiagram
 - Explore yearly and monthly dashboards to analyse spending.
 - Visualise trends with interactive graphs.
 - Automatically tag transactions and propose budgets using AI.
+- Map multiple transaction descriptors to a canonical tag using tag aliases (for example `Tesco` and `Sainsbury's` can both map to `Supermarkets`).
 - Analyse recurring expenses and break down spending by segments and categories.
 - Secure access with two-factor authentication.
 
@@ -221,6 +222,13 @@ It allows running a report to list all transactions filtered by category, tag or
 Reports can be saved to the server with optional descriptions for reuse and removed when no longer needed.
 The page sends requests to `php_backend/public/report.php` which returns matching
 transactions as JSON.
+
+
+## Tag Aliases
+
+Tag aliases let you map many bank descriptors to one canonical tag without renaming the tag itself. For example, you can create aliases `Tesco`, `Sainsbury's`, and `Aldi` that all resolve to `Supermarkets`.
+
+Use `frontend/tag_aliases.html` to manage mappings and the backend endpoint `php_backend/public/tag_aliases.php` for CRUD operations.
 
 ## Running Tests
 
