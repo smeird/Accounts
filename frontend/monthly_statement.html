@@ -23,12 +23,6 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <header class="page-header">
-                <div>
-                    <h1 id="page-title" class="page-title">Monthly Statement</h1>
-                    <p class="page-subtitle">Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.</p>
-                </div>
-            </header>
             <div class="cards">
                 <form id="statement-form" class="flex flex-wrap items-end gap-4">
                     <div class="w-full sm:w-auto">
@@ -92,6 +86,7 @@
             </div>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
@@ -105,7 +100,11 @@ const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
 const form = document.getElementById('statement-form');
 const untaggedOnly = document.getElementById('untagged-only');
-const pageTitle = document.getElementById('page-title');
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Monthly Statement',
+    subtitle: 'Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.'
+});
 let table;
 
 // fetch available transaction groups once
@@ -213,7 +212,7 @@ function loadTransactions(retry = false) {
     if (!Number.isNaN(month) && !Number.isNaN(year)) {
         const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
         const titleText = `Monthly Statement - ${monthName} ${year}`;
-        pageTitle.textContent = titleText;
+        window.updatePageHeader(pageMain, { title: titleText });
         document.title = titleText;
     }
 
