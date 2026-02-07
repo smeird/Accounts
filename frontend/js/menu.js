@@ -356,14 +356,7 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
   utility.className = `fixed top-2 right-2 md:top-8 md:right-12 bg-gradient-to-r from-white/80 to-${colorScheme}-100/40 backdrop-blur border border-white/40 text-${colorScheme}-700 p-1 flex items-center space-x-2 z-50 rounded-xl shadow-lg transition-all hover:from-white/90 hover:to-${colorScheme}-100/60 hover:shadow-2xl`;
 
   utility.innerHTML = `
-    <button id="quick-search-toggle" class="md:hidden p-1" aria-label="Search transactions">
-      <i class="fas fa-search h-4 w-4"></i>
-    </button>
-    <form id="quick-search-form" class="hidden md:flex items-center">
-      <input id="quick-search" type="search" placeholder="Search" aria-label="Search transactions" class="unstyled w-24 md:w-32 text-sm p-1 border-0 focus:ring-0 focus:outline-none" />
-    </form>
     <a id="latest-statement-link" href="monthly_statement.html" class="flex items-center" aria-label="Latest monthly statement">
-
       <i class="fas fa-file-invoice h-4 w-4"></i>
     </a>
   `;
@@ -392,34 +385,14 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
       .catch(err => console.error('Latest statement load failed', err));
   }
 
-  const quickSearchForm = document.getElementById('quick-search-form');
-
-  const quickSearchToggle = document.getElementById('quick-search-toggle');
-  if (quickSearchToggle && quickSearchForm) {
-    quickSearchToggle.addEventListener('click', () => {
-      const hidden = quickSearchForm.classList.toggle('hidden');
-      if (!hidden) {
-        document.getElementById('quick-search').focus();
-        if (latestLink) latestLink.classList.add('hidden');
-      } else if (latestLink) {
-        latestLink.classList.remove('hidden');
-      }
-    });
-  }
-
-  if (quickSearchForm) {
-    quickSearchForm.addEventListener('submit', e => {
+  const sidebarSearchForm = document.getElementById('sidebar-search-form');
+  if (sidebarSearchForm) {
+    sidebarSearchForm.addEventListener('submit', e => {
       e.preventDefault();
-      const term = document.getElementById('quick-search').value.trim();
+      const term = document.getElementById('sidebar-search').value.trim();
       if (term) {
         window.location.href = `search.html?value=${encodeURIComponent(term)}`;
       }
-
-      if (quickSearchToggle && getComputedStyle(quickSearchToggle).display !== 'none') {
-        quickSearchForm.classList.add('hidden');
-        if (latestLink) latestLink.classList.remove('hidden');
-      }
-
     });
   }
 

@@ -7,6 +7,13 @@
 <span id="release-number" class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded mt-1">v0.0.0</span>
   </div>
 </div>
+<form id="sidebar-search-form" class="mb-4" aria-label="Search transactions">
+  <label for="sidebar-search" class="sr-only">Search transactions</label>
+  <div class="relative">
+    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+    <input id="sidebar-search" type="search" placeholder="Search" aria-label="Search transactions" class="unstyled w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+  </div>
+</form>
 <div class="space-y-4">
   <div class="group">
     <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Start Here</h3>
