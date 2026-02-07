@@ -46,8 +46,7 @@ window.fetchNoCache = fetchNoCache;
     hoverStyle.textContent = `
       a { transition: color 0.2s ease; }
       a:hover { color: ${colors[600]}; }
-      button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
-      button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+      button { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease; }
     `;
   };
 
@@ -156,15 +155,20 @@ window.fetchNoCache = fetchNoCache;
       'overflow-y-auto',
       'z-40'
     );
-    menu.classList.remove('bg-white', 'border-r');
-    menu.classList.add(
+    menu.classList.remove(
       'bg-gradient-to-b',
       'from-white/80',
-      `to-${colorScheme}-100/30`,
       'backdrop-blur-xl',
       'border',
       'border-white/40',
-      'shadow-2xl'
+      'shadow-2xl',
+      `to-${colorScheme}-100/30`
+    );
+    menu.classList.add(
+      'bg-white',
+      'border-r',
+      'border-slate-200',
+      'shadow-sm'
     );
 
     fetchNoCache('menu.php')
@@ -214,6 +218,18 @@ window.fetchNoCache = fetchNoCache;
         const current = location.pathname.split('/').pop();
         const link = menu.querySelector(`a[href="${current}"]`);
         if (link) {
+          link.classList.add(
+            'border-l-2',
+            `border-${colorScheme}-600`,
+            'font-medium',
+            'text-gray-900',
+            `bg-${colorScheme}-50`
+          );
+          const activeIcon = link.querySelector('i');
+          if (activeIcon) {
+            activeIcon.classList.remove('text-slate-400');
+            activeIcon.classList.add(`text-${colorScheme}-600`);
+          }
           const section = link.closest('div')?.querySelector('h3')?.textContent?.trim();
           const page = link.textContent.trim();
           const heading = document.querySelector('main h1');
