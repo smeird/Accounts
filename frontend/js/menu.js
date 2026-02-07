@@ -11,17 +11,19 @@ const apiBase = document.body?.dataset?.apiBase || '../php_backend/public';
 const frontendBase = document.body?.dataset?.menuBase || (window.location.pathname.includes('/frontend/') ? '' : 'frontend/');
 const resolveFrontendAsset = path => `${frontendBase}${path}`;
 
-const applySharedPageHeaderLayout = () => {
-  document.querySelectorAll('main .page-header').forEach(header => {
-    header.classList.add('page-header-hero');
-    const next = header.nextElementSibling;
-    if (next && next.matches('p') && !next.classList.contains('page-subtitle')) {
-      next.classList.add('page-subtitle');
+const attachSidebarSearchHandler = (root = document) => {
+  const sidebarSearchForm = root.getElementById('sidebar-search-form');
+  if (!sidebarSearchForm || sidebarSearchForm.dataset.bound === 'true') return;
+
+  sidebarSearchForm.dataset.bound = 'true';
+  sidebarSearchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const term = root.getElementById('sidebar-search')?.value.trim();
+    if (term) {
+      window.location.href = `${resolveFrontendAsset('search.html')}?value=${encodeURIComponent(term)}`;
     }
   });
 };
-
-applySharedPageHeaderLayout();
 
   if (!document.getElementById('cards-css')) {
     const cardLink = document.createElement('link');
@@ -204,6 +206,7 @@ applySharedPageHeaderLayout();
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        attachSidebarSearchHandler(document);
         if (frontendBase === 'frontend/') {
           menu.querySelectorAll('a[href]').forEach(linkEl => {
             const href = linkEl.getAttribute('href') || '';
@@ -361,16 +364,7 @@ applySharedPageHeaderLayout();
   });
   document.body.appendChild(toggle);
 
-  const sidebarSearchForm = document.getElementById('sidebar-search-form');
-  if (sidebarSearchForm) {
-    sidebarSearchForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const term = document.getElementById('sidebar-search').value.trim();
-      if (term) {
-        window.location.href = `${resolveFrontendAsset('search.html')}?value=${encodeURIComponent(term)}`;
-      }
-    });
-  }
+  attachSidebarSearchHandler(document);
 
   // Apply Tailwind card styling to all sections or wrap main content in a card
   document.querySelectorAll('main').forEach(main => {
