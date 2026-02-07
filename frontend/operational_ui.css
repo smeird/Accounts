@@ -40,7 +40,8 @@
     text-align: left;
     font-size: 200% !important;
     line-height: 1.2;
-    color: var(--segment-1-base, #4338ca);
+    color: var(--page-title-color, var(--brand-color-700, #4338ca));
+    font-family: var(--heading-font, inherit);
 }
 
 .page-header-hero {
