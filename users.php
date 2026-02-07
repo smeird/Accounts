@@ -89,13 +89,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
+<body class="bg-gray-50" data-api-base="php_backend/public">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+            <section class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
         <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">User Management</h1>
         <p class="mb-4">Add new users, update your password, or manage two-factor authentication from this page.</p>
-        <p class="mb-4"><a href="logout.php" class="text-indigo-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-indigo-600 hover:underline">Home</a></p>
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
@@ -134,6 +136,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </form>
         </div>
+            </section>
+        </main>
     </div>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
@@ -154,5 +158,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script src="frontend/js/2fa.js"></script>
+    <script src="frontend/js/menu.js"></script>
 </body>
 </html>
