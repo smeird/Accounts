@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
+    <link rel="stylesheet" href="frontend/operational_ui.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
       <!-- Font Awesome icons loaded via frontend/js/menu.js -->
@@ -90,15 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="bg-gray-50" data-api-base="php_backend/public">
+<body class="ops-body" data-api-base="php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <section class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
-        <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
-        <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
-        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">User Management</h1>
-        <p class="mb-4">Add new users, update your password, or manage two-factor authentication from this page.</p>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+            <section class="max-w-2xl mx-auto">
+        <header class="page-header">
+            <div>
+                <h1 class="text-2xl font-semibold text-indigo-700 page-title">User Management</h1>
+                <p class="page-subtitle">Add new users, update your password, or manage two-factor authentication from this page.</p>
+            </div>
+        </header>
+        <div class="cards cards-solid border border-gray-400">
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
@@ -137,9 +141,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </form>
         </div>
+        </div>
             </section>
-        </main>
-    </div>
         </main>
     </div>
     <script src="frontend/js/menu.js"></script>
@@ -162,6 +165,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script src="frontend/js/2fa.js"></script>
-    <script src="frontend/js/menu.js"></script>
 </body>
 </html>
