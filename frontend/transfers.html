@@ -22,15 +22,17 @@
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
             <section class="cards cards-tight">
-                <h1 class="text-2xl font-semibold mb-4 flex items-center justify-between text-indigo-700">
-                    Detected Transfers
-
-                    <span class="space-x-2">
-                        <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist</button>
-                        <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All</button>
-                    </span>
-
-                </h1>
+                            <header class="page-header">
+                <h1 class="text-2xl font-semibold mb-4 flex items-center justify-between text-indigo-700 page-title">
+                                    Detected Transfers
+                
+                                    <span class="space-x-2">
+                                        <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist</button>
+                                        <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All</button>
+                                    </span>
+                
+                                </h1>
+            </header>
                 <p class="mb-4">Manage possible transfers between accounts and mark them so they don't count toward income or outgoings.</p>
                 <div id="transfers-table"></div>
             </section>

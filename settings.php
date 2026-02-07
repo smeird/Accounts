@@ -168,6 +168,7 @@ $bg600 = "bg-{$colorScheme}-600";
 
       <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
+    <link rel="stylesheet" href="frontend/operational_ui.css">
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <style>
           a { transition: color 0.2s ease; }
@@ -176,15 +177,18 @@ $bg600 = "bg-{$colorScheme}-600";
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="bg-gray-50" data-api-base="php_backend/public">
+<body class="ops-body" data-api-base="php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6">
-            <section class="max-w-4xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
-                <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
-                <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
-                <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>
-                <p class="mb-4">Adjust application configuration values.</p>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+            <section class="max-w-4xl mx-auto">
+                <header class="page-header">
+                    <div>
+                        <h1 class="text-2xl font-semibold <?= $text700 ?> page-title">System Settings</h1>
+                        <p class="page-subtitle">Adjust application configuration values.</p>
+                    </div>
+                </header>
+                <div class="cards cards-solid border border-gray-400">
                 <?php if ($message): ?>
                     <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
                 <?php endif; ?>
@@ -262,6 +266,7 @@ $bg600 = "bg-{$colorScheme}-600";
             </label>
                     <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
                 </form>
+                </div>
             </section>
         </main>
     </div>
