@@ -258,6 +258,17 @@
     background: #eef2ff !important;
 }
 
+/* Dashboard pages keep table body surfaces transparent so page cards show through. */
+.dashboard-page .ops-standard-table .tabulator-tableholder,
+.dashboard-page .ops-standard-table .tabulator-tableholder .tabulator-table,
+.dashboard-page .ops-standard-table .tabulator-footer,
+.dashboard-page .ops-standard-table .tabulator-paginator,
+.dashboard-page .ops-table-row,
+.dashboard-page .ops-table-row:nth-child(even),
+.dashboard-page .ops-table-row:hover {
+    background: transparent !important;
+}
+
 .ops-standard-table .tabulator-calcs-row,
 .ops-standard-table .tabulator-calcs-row .tabulator-cell {
     background: #e2e8f0 !important;
