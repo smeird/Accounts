@@ -27,15 +27,26 @@ if (!$pairs) {
 try {
 
     $updated = 0;
+    $rejected = 0;
     foreach ($pairs as $p) {
-        if (is_array($p) && count($p) === 2) {
-            if (Transaction::linkTransfer((int)$p[0], (int)$p[1])) {
-                $updated++;
-            }
+        if (!is_array($p) || count($p) !== 2 || !Transaction::linkTransfer((int)$p[0], (int)$p[1])) {
+            $rejected++;
+            continue;
         }
+        $updated++;
     }
 
-    echo json_encode(['status' => 'ok', 'updated' => $updated]);
+    if ($rejected > 0) {
+        http_response_code(400);
+        echo json_encode([
+            'error' => 'One or more transfer pairs could not be linked. Ensure each pair is in different accounts, has opposite amounts, and is not linked to another transfer.',
+            'updated' => $updated,
+            'rejected' => $rejected
+        ]);
+        exit;
+    }
+
+    echo json_encode(['status' => 'ok', 'updated' => $updated, 'rejected' => $rejected]);
 } catch (Exception $e) {
     http_response_code(500);
     Log::write('Mark transfer error: ' . $e->getMessage(), 'ERROR');

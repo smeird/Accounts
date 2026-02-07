@@ -27,7 +27,7 @@ try {
         echo json_encode(['status' => 'ok']);
     } else {
         http_response_code(400);
-        echo json_encode(['error' => 'Unable to link transactions']);
+        echo json_encode(['error' => 'Unable to link transactions. Ensure they are in different accounts, have opposite amounts, and are not linked to another transfer.']);
     }
 } catch (Exception $e) {
     http_response_code(500);
