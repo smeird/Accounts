@@ -50,13 +50,13 @@ const attachSidebarSearchHandler = (root = document) => {
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
   const colorMap = {
-    indigo: {600: '#4f46e5', 700: '#4338ca'},
-    blue:   {600: '#2563eb', 700: '#1d4ed8'},
-    green:  {600: '#059669', 700: '#047857'},
-    red:    {600: '#dc2626', 700: '#b91c1c'},
-    purple: {600: '#9333ea', 700: '#7e22ce'},
-    teal:   {600: '#0d9488', 700: '#0f766e'},
-    orange: {600: '#ea580c', 700: '#c2410c'},
+    indigo: {600: '#4f46e5', 700: '#4338ca', gradient: 'linear-gradient(160deg, #4f46e5 0%, #ffffff 100%)'},
+    blue:   {600: '#2563eb', 700: '#1d4ed8', gradient: 'linear-gradient(160deg, #2563eb 0%, #ffffff 100%)'},
+    green:  {600: '#059669', 700: '#047857', gradient: 'linear-gradient(160deg, #059669 0%, #ffffff 100%)'},
+    red:    {600: '#dc2626', 700: '#b91c1c', gradient: 'linear-gradient(160deg, #dc2626 0%, #ffffff 100%)'},
+    purple: {600: '#9333ea', 700: '#7e22ce', gradient: 'linear-gradient(160deg, #9333ea 0%, #ffffff 100%)'},
+    teal:   {600: '#0d9488', 700: '#0f766e', gradient: 'linear-gradient(160deg, #0d9488 0%, #ffffff 100%)'},
+    orange: {600: '#ea580c', 700: '#c2410c', gradient: 'linear-gradient(160deg, #ea580c 0%, #ffffff 100%)'},
     sunset: {600: '#f97316', 700: '#ec4899', gradient: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)'},
     ocean: {600: '#0891b2', 700: '#2563eb', gradient: 'linear-gradient(135deg, #0891b2 0%, #2563eb 100%)'},
     'violet-rose': {600: '#8b5cf6', 700: '#e11d48', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #e11d48 100%)'}
@@ -203,12 +203,7 @@ const attachSidebarSearchHandler = (root = document) => {
       'shadow-2xl',
       `to-${colorScheme}-100/30`
     );
-    menu.classList.add(
-      'bg-white',
-      'border-r',
-      'border-slate-200',
-      'shadow-sm'
-    );
+    menu.classList.add('menu-surface', 'border-r');
 
     fetchNoCache(resolveFrontendAsset('menu.php'))
       .then(resp => resp.text())
