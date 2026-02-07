@@ -269,6 +269,7 @@ const attachSidebarSearchHandler = (root = document) => {
             const enabled = themeToggle.checked;
             document.body.classList.toggle('theme-professional', enabled);
             localStorage.setItem(PROFESSIONAL_THEME_KEY, String(enabled));
+            document.dispatchEvent(new CustomEvent('theme-changed', { detail: { professional: enabled } }));
           });
         }
 

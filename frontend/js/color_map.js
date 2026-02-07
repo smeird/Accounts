@@ -54,6 +54,7 @@ try {
 }
 
 function getChartTheme() {
+    const isProfessionalTheme = document.body.classList.contains('theme-professional');
     const text = '#0f172a';
     const styles = getComputedStyle(document.documentElement);
     const chartFont = styles.getPropertyValue('--chart-font').trim() || 'Inter, sans-serif';
@@ -66,15 +67,18 @@ function getChartTheme() {
             backgroundColor: background,
             plotBackgroundColor: plotBackground,
             borderColor: 'transparent',
+            plotBorderColor: 'transparent',
+            plotBorderWidth: 0,
             borderRadius: 12,
             borderWidth: 0,
-            className: 'glass-chart',
+            className: isProfessionalTheme ? 'glass-chart-professional' : 'glass-chart',
             shadow: false
         },
         credits: { enabled: false },
         legend: {
             enabled: true,
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            borderWidth: 0,
             borderRadius: 12,
             itemStyle: { fontSize: '10px', color: text, fontFamily: chartFont }
         },
@@ -104,6 +108,8 @@ function applyChartTheme() {
             plotBackgroundColor: opts.chart.plotBackgroundColor,
             className: opts.chart.className,
             borderColor: opts.chart.borderColor,
+            plotBorderColor: opts.chart.plotBorderColor,
+            plotBorderWidth: opts.chart.plotBorderWidth,
             borderRadius: opts.chart.borderRadius,
             borderWidth: opts.chart.borderWidth,
             shadow: opts.chart.shadow
@@ -111,6 +117,7 @@ function applyChartTheme() {
         legend: {
             itemStyle: opts.legend.itemStyle,
             backgroundColor: opts.legend.backgroundColor,
+            borderWidth: opts.legend.borderWidth,
             borderRadius: opts.legend.borderRadius
         },
         title: opts.title,
@@ -139,6 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('fonts-applied', () => {
+    applyChartTheme();
+});
+
+document.addEventListener('theme-changed', () => {
     applyChartTheme();
 });
 
@@ -180,6 +191,7 @@ window.chartColors = chartColors;
 window.getSegmentColor = getSegmentColor;
 window.getCategoryColor = getCategoryColor;
 window.getTagColor = getTagColor;
+window.applyChartTheme = applyChartTheme;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-chart-desc]').forEach(el => {
