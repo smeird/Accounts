@@ -176,17 +176,19 @@ $bg600 = "bg-{$colorScheme}-600";
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
-    <div class="max-w-4xl mx-auto cards cards-solid border border-gray-400">
-        <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
-        <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
-        <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>
-        <p class="mb-4">Adjust application configuration values.</p>
-        <p class="mb-4"><a href="logout.php" class="<?= $text600 ?> hover:underline">Logout</a> | <a href="frontend/index.html" class="<?= $text600 ?> hover:underline">Home</a></p>
-        <?php if ($message): ?>
-            <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
-        <?php endif; ?>
-        <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<body class="bg-gray-50" data-api-base="php_backend/public">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+            <section class="max-w-4xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
+                <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
+                <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
+                <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>
+                <p class="mb-4">Adjust application configuration values.</p>
+                <?php if ($message): ?>
+                    <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
+                <?php endif; ?>
+                <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label class="block">OpenAI API Token:
                 <input type="text" name="openai_api_token" value="<?= htmlspecialchars($openai) ?>" class="border p-2 rounded w-full" data-help="Token used for AI tagging">
             </label>
@@ -253,8 +255,10 @@ $bg600 = "bg-{$colorScheme}-600";
                     <?php endforeach; ?>
                 </select>
             </label>
-            <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
-        </form>
+                    <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
+                </form>
+            </section>
+        </main>
     </div>
         </main>
     </div>
@@ -279,5 +283,6 @@ $bg600 = "bg-{$colorScheme}-600";
         if (opt.value) opt.style.fontFamily = opt.value;
       });
     </script>
+    <script src="frontend/js/menu.js"></script>
   </body>
 </html>

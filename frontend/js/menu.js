@@ -7,11 +7,15 @@ function fetchNoCache(input, init = {}) {
 }
 window.fetchNoCache = fetchNoCache;
 
+const apiBase = document.body?.dataset?.apiBase || '../php_backend/public';
+const frontendBase = document.body?.dataset?.menuBase || (window.location.pathname.includes('/frontend/') ? '' : 'frontend/');
+const resolveFrontendAsset = path => `${frontendBase}${path}`;
+
   if (!document.getElementById('cards-css')) {
     const cardLink = document.createElement('link');
     cardLink.id = 'cards-css';
     cardLink.rel = 'stylesheet';
-    cardLink.href = 'cards.css';
+    cardLink.href = resolveFrontendAsset('cards.css');
     document.head.appendChild(cardLink);
   }
 
@@ -20,7 +24,7 @@ window.fetchNoCache = fetchNoCache;
     const themeLink = document.createElement('link');
     themeLink.id = 'theme-professional-css';
     themeLink.rel = 'stylesheet';
-    themeLink.href = 'css/theme-professional.css';
+    themeLink.href = resolveFrontendAsset('css/theme-professional.css');
     document.head.appendChild(themeLink);
   }
 
@@ -117,12 +121,12 @@ window.fetchNoCache = fetchNoCache;
   function loadFontsModule(cb) {
     if (window.applyFonts) { cb(); return; }
     const s = document.createElement('script');
-    s.src = 'js/fonts.js';
+    s.src = resolveFrontendAsset('js/fonts.js');
     s.onload = cb;
     document.head.appendChild(s);
   }
 
-  fetchNoCache('../php_backend/public/brand_settings.php')
+  fetchNoCache(`${apiBase}/brand_settings.php`)
     .then(r => r.json())
     .then(f => {
       siteName = f.site_name || siteName;
@@ -184,10 +188,21 @@ window.fetchNoCache = fetchNoCache;
       'shadow-sm'
     );
 
-    fetchNoCache('menu.php')
+    fetchNoCache(resolveFrontendAsset('menu.php'))
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
+        if (frontendBase === 'frontend/') {
+          menu.querySelectorAll('a[href]').forEach(linkEl => {
+            const href = linkEl.getAttribute('href') || '';
+            if (!href || href.startsWith('http://') || href.startsWith('https://') || href.startsWith('#') || href.startsWith('/')) return;
+            if (href.startsWith('../')) {
+              linkEl.setAttribute('href', href.replace(/^\.\.\//, ''));
+            } else {
+              linkEl.setAttribute('href', resolveFrontendAsset(href));
+            }
+          });
+        }
         const titleEl = menu.querySelector('#site-title');
         if (titleEl) titleEl.textContent = siteName;
         menu.querySelectorAll('img[alt="Finance Manager logo"]').forEach(img => {
@@ -198,7 +213,7 @@ window.fetchNoCache = fetchNoCache;
         const userEl = menu.querySelector('#current-user');
         const iconEl = menu.querySelector('#user-icon');
         if (userEl) {
-          fetchNoCache('../php_backend/public/current_user.php')
+          fetchNoCache(`${apiBase}/current_user.php`)
             .then(r => (r.ok ? r.json() : Promise.reject()))
             .then(u => {
               userEl.textContent = u.username || 'Guest';
@@ -274,7 +289,7 @@ window.fetchNoCache = fetchNoCache;
           }
         }
         // Display counter for untagged transactions in menu
-        fetchNoCache('../php_backend/public/untagged_count.php')
+        fetchNoCache(`${apiBase}/untagged_count.php`)
           .then(r => r.json())
           .then(data => {
             const total = Number(data.count || 0);
@@ -290,7 +305,7 @@ window.fetchNoCache = fetchNoCache;
 
         const releaseEls = document.querySelectorAll('#release-number');
         if (releaseEls.length > 0) {
-          fetchNoCache('../php_backend/public/version.php')
+          fetchNoCache(`${apiBase}/version.php`)
             .then(r => r.json())
             .then(v => {
               const version = v.version || 'unknown';
@@ -355,7 +370,7 @@ window.fetchNoCache = fetchNoCache;
   document.body.appendChild(utility);
   const latestLink = document.getElementById('latest-statement-link');
   if (latestLink) {
-    fetchNoCache('../php_backend/public/transaction_months.php')
+    fetchNoCache(`${apiBase}/transaction_months.php`)
       .then(r => r.json())
       .then(months => {
         if (months.length > 0) {
@@ -419,17 +434,17 @@ window.fetchNoCache = fetchNoCache;
 
   // Load page help overlay on every page
   const helpScript = document.createElement('script');
-  helpScript.src = 'js/page_help.js';
+  helpScript.src = resolveFrontendAsset('js/page_help.js');
   document.body.appendChild(helpScript);
 
   const logoutScript = document.createElement('script');
-  logoutScript.src = 'js/auto_logout.js';
+  logoutScript.src = resolveFrontendAsset('js/auto_logout.js');
   document.body.appendChild(logoutScript);
 
   const tooltipScript = document.createElement('script');
-  tooltipScript.src = 'js/tooltips.js';
+  tooltipScript.src = resolveFrontendAsset('js/tooltips.js');
   document.body.appendChild(tooltipScript);
 
   const fullscreenScript = document.createElement('script');
-  fullscreenScript.src = 'js/chart_fullscreen.js';
+  fullscreenScript.src = resolveFrontendAsset('js/chart_fullscreen.js');
   document.body.appendChild(fullscreenScript);
