@@ -262,7 +262,7 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
           a.addEventListener('click', () => menu.classList.add('hidden'))
         );
 
-        // Build breadcrumb text above the page title
+        // Build breadcrumb text underneath the page title
         const current = location.pathname.split('/').pop();
         const link = menu.querySelector(`a[href="${current}"]`);
         if (link) {
@@ -283,9 +283,9 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
           const heading = document.querySelector('main h1');
           if (section && page && heading) {
             const crumb = document.createElement('div');
-            crumb.textContent = `${section} / ${page}`.toUpperCase();
-            crumb.className = `uppercase text-${colorScheme}-900 text-[0.6rem] mb-1`;
-            heading.before(crumb);
+            crumb.textContent = `${section} / ${page}`;
+            crumb.className = `page-breadcrumb text-${colorScheme}-900`;
+            heading.insertAdjacentElement('afterend', crumb);
           }
         }
         // Display counter for untagged transactions in menu
