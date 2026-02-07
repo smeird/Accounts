@@ -14,30 +14,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="operational_ui.css">
     <!-- Font Awesome icons loaded via menu.js -->
 
 </head>
 <body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+    <main class="ops-main flex-1 min-w-0 overflow-x-auto">
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Budgets</h1>
         <p class="mb-4">Set monthly spending limits for categories and monitor progress. Use this page to plan ahead and see where you may need to adjust your spending.</p>
-        <section>
-            <form id="budget-form" class="md:flex md:space-x-4 space-y-4 md:space-y-0">
-                <label class="block">Month<br><input type="month" id="month" class="border p-2 rounded" data-help="Month for the budget"></label>
-                <label class="block">Category<br><select id="category" class="border p-2 rounded" data-help="Category to assign the budget"></select></label>
-                <label class="block">Amount (£)<br><input type="number" step="0.01" id="amount" class="border p-2 rounded" data-help="Budget amount in pounds"></label>
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded self-end">Set Budget</button>
+        <section class="ops-section">
+            <form id="budget-form" class="ops-form-grid cols-4">
+                <label class="ops-field" for="month">
+                    <span class="ops-label">Month</span>
+                    <input type="month" id="month" class="ops-input" data-help="Month for the budget">
+                    <span class="ops-help">The budget period that new values apply to.</span>
+                </label>
+                <label class="ops-field" for="category">
+                    <span class="ops-label">Category</span>
+                    <select id="category" class="ops-select" data-help="Category to assign the budget"></select>
+                    <span class="ops-help">Choose the spending category to constrain.</span>
+                </label>
+                <label class="ops-field" for="amount">
+                    <span class="ops-label">Amount (£)</span>
+                    <input type="number" step="0.01" id="amount" class="ops-input" data-help="Budget amount in pounds">
+                    <span class="ops-help">Set the monthly budget amount in pounds.</span>
+                </label>
+                <button type="submit" class="ops-btn-primary" aria-label="Set budget">Set Budget</button>
             </form>
         </section>
-        <section class="cards space-y-4">
-            <h2 class="text-xl font-semibold">AI Budgeting</h2>
+        <section class="ops-section cards space-y-4">
+            <h2 class="ops-heading">AI Budgeting</h2>
 
             <p>Send your savings goal and the last 12 months of category totals to the AI to propose next month's budgets and provide a brief explanation.</p>
-            <form id="ai-form" class="md:flex md:space-x-4 space-y-4 md:space-y-0">
-                <label class="block">Savings Goal (£)<br><input type="number" step="0.01" id="goal" class="border p-2 rounded" data-help="Monthly amount you want to save. The AI uses this plus a year of history to set budgets."></label>
-                <button id="ai-run" type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded self-end"><i class="fas fa-robot inline w-4 h-4 mr-1"></i>Generate Budgets</button>
+            <form id="ai-form" class="ops-form-grid cols-3">
+                <label class="ops-field" for="goal">
+                    <span class="ops-label">Savings Goal (£)</span>
+                    <input type="number" step="0.01" id="goal" class="ops-input" data-help="Monthly amount you want to save. The AI uses this plus a year of history to set budgets.">
+                    <span class="ops-help">Target amount you want left over after monthly spending.</span>
+                </label>
+                <button id="ai-run" type="submit" class="ops-btn-primary" aria-label="Generate budgets with AI"><i class="fas fa-robot inline w-4 h-4"></i>Generate Budgets</button>
             </form>
             <div id="ai-result" class="mt-4"></div>
             <div id="ai-debug" class="hidden">
@@ -51,13 +68,17 @@
             </div>
 
         </section>
-        <section>
-            <h2 class="text-xl font-semibold mb-4">Current Budgets</h2>
-            <div id="budget-table"></div>
+        <section class="ops-table-block">
+            <div class="ops-titlebar"><h2>Current Budgets</h2></div>
+            <div class="ops-table-content">
+                <div id="budget-table"></div>
+            </div>
         </section>
-        <section class="cards">
-            <h2 class="text-xl font-semibold mb-4">Budget Progress</h2>
-            <div id="budget-chart" style="height:400px" data-chart-desc="Bullet chart comparing spending to budgets."></div>
+        <section class="ops-chart-block">
+            <div class="ops-titlebar"><h2>Budget Progress</h2></div>
+            <div class="ops-chart-content">
+                <div id="budget-chart" class="ops-chart-canvas" data-chart-desc="Bullet chart comparing spending to budgets."></div>
+            </div>
         </section>
     </main>
 </div>

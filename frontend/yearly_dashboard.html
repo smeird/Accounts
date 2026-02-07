@@ -14,39 +14,67 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="operational_ui.css">
 
 </head>
 <body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Yearly Dashboard</h1>
             <p class="mb-4">Analyse totals for a single year through charts and tables to understand how income and spending evolved month by month.</p>
-            <label for="year-select" class="block">Year:
-                <select id="year-select" class="border p-2 rounded w-full" data-help="Select year to display"></select>
-            </label>
+            <section class="ops-section">
+                <form class="ops-form-grid cols-2" aria-label="Yearly dashboard filters">
+                    <label for="year-select" class="ops-field"><span class="ops-label">Year</span>
+                        <select id="year-select" class="ops-select" data-help="Select year to display"></select>
+                        <span class="ops-help">Choose which year to visualize across all tables and charts.</span>
+                    </label>
+                </form>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Tag Totals</h2>
-            <div id="tags-table" class="mt-2"></div>
-            <div id="tags-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of tag totals for selected year."></div>
+            <section class="ops-table-block">
+                <div class="ops-titlebar"><h2>Tag Totals</h2></div>
+                <div class="ops-table-content"><div id="tags-table"></div></div>
+            </section>
+            <section class="ops-chart-block">
+                <div class="ops-titlebar"><h2>Tag Totals Chart</h2></div>
+                <div class="ops-chart-content"><div id="tags-chart" class="ops-chart-canvas" data-chart-desc="Column chart of tag totals for selected year."></div></div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Category Totals</h2>
-            <div id="categories-table" class="mt-2"></div>
-            <div id="categories-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of category totals for selected year."></div>
+            <section class="ops-table-block">
+                <div class="ops-titlebar"><h2>Category Totals</h2></div>
+                <div class="ops-table-content"><div id="categories-table"></div></div>
+            </section>
+            <section class="ops-chart-block">
+                <div class="ops-titlebar"><h2>Category Totals Chart</h2></div>
+                <div class="ops-chart-content"><div id="categories-chart" class="ops-chart-canvas" data-chart-desc="Column chart of category totals for selected year."></div></div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Category & Tag Breakdown</h2>
-            <div id="category-tag-sunburst" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div id="category-tag-income" style="height:400px" data-chart-desc="Sunburst chart of income by category and tag for selected year."></div>
-                <div id="category-tag-outgoings" style="height:400px" data-chart-desc="Sunburst chart of outgoings by category and tag for selected year."></div>
-            </div>
+            <section class="ops-chart-block">
+                <div class="ops-titlebar"><h2>Category & Tag Breakdown</h2></div>
+                <div id="category-tag-sunburst" class="ops-chart-content grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="category-tag-income" class="ops-chart-canvas" data-chart-desc="Sunburst chart of income by category and tag for selected year."></div>
+                    <div id="category-tag-outgoings" class="ops-chart-canvas" data-chart-desc="Sunburst chart of outgoings by category and tag for selected year."></div>
+                </div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Segment Totals</h2>
-            <div id="segments-table" class="mt-2"></div>
-            <div id="segments-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of segment totals for selected year."></div>
+            <section class="ops-table-block">
+                <div class="ops-titlebar"><h2>Segment Totals</h2></div>
+                <div class="ops-table-content"><div id="segments-table"></div></div>
+            </section>
+            <section class="ops-chart-block">
+                <div class="ops-titlebar"><h2>Segment Totals Chart</h2></div>
+                <div class="ops-chart-content"><div id="segments-chart" class="ops-chart-canvas" data-chart-desc="Column chart of segment totals for selected year."></div></div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Group Totals</h2>
-            <div id="groups-table" class="mt-2"></div>
-            <div id="groups-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of group totals for selected year."></div>
+            <section class="ops-table-block">
+                <div class="ops-titlebar"><h2>Group Totals</h2></div>
+                <div class="ops-table-content"><div id="groups-table"></div></div>
+            </section>
+            <section class="ops-chart-block">
+                <div class="ops-titlebar"><h2>Group Totals Chart</h2></div>
+                <div class="ops-chart-content"><div id="groups-chart" class="ops-chart-canvas" data-chart-desc="Column chart of group totals for selected year."></div></div>
+            </section>
         </main>
     </div>
     <script src="js/menu.js"></script>
@@ -188,14 +216,14 @@
         fetch('../php_backend/public/yearly_dashboard.php?year=' + year)
             .then(resp => resp.json())
             .then(data => {
-                buildTable('tags-table', data.tags, 'bg-indigo-200 text-indigo-800');
+                buildTable('tags-table', data.tags, 'bg-slate-200 text-slate-800');
                 buildChart('tags-chart', 'Tag Totals ' + year, data.tags);
-                buildTable('categories-table', data.categories, 'bg-green-200 text-green-800');
+                buildTable('categories-table', data.categories, 'bg-slate-200 text-slate-800');
                 buildChart('categories-chart', 'Category Totals ' + year, data.categories, d => getCategoryColor(d.name, d.segment_name));
                 buildSunburstCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
-                buildTable('segments-table', data.segments, 'bg-yellow-200 text-yellow-800');
+                buildTable('segments-table', data.segments, 'bg-slate-200 text-slate-800');
                 buildChart('segments-chart', 'Segment Totals ' + year, data.segments, d => getSegmentColor(d.name));
-                buildTable('groups-table', data.groups, 'bg-purple-200 text-purple-800');
+                buildTable('groups-table', data.groups, 'bg-slate-200 text-slate-800');
                 buildChart('groups-chart', 'Group Totals ' + year, data.groups);
             });
     }
