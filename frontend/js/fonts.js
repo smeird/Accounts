@@ -26,6 +26,7 @@
       h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font, inherit); }
       table, .tabulator, .tabulator * { font-family: var(--table-font, inherit); }
       .accent { font-family: var(--accent-font, inherit); font-weight: var(--accent-font-weight, 300); }
+      .page-title { font-weight: var(--accent-font-weight, inherit); }
       input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
       select,
       textarea,
