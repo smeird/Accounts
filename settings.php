@@ -75,7 +75,18 @@ $fontOptions = ['' => 'Default',
     'Source Serif Pro' => 'Source Serif Pro',
 ];
 $weightOptions = ['' => 'Default', '100' => 'Thin', '300' => 'Light', '700' => 'Bold'];
-$colorOptions = ['indigo', 'blue', 'green', 'red', 'purple', 'teal', 'orange'];
+$colorOptions = [
+    'indigo',
+    'blue',
+    'green',
+    'red',
+    'purple',
+    'teal',
+    'orange',
+    'sunset',
+    'ocean',
+    'violet-rose',
+];
 $colorMap = [
     'indigo' => '#4f46e5',
     'blue'   => '#2563eb',
@@ -84,6 +95,14 @@ $colorMap = [
     'purple' => '#9333ea',
     'teal'   => '#0d9488',
     'orange' => '#ea580c',
+    'sunset' => '#f97316',
+    'ocean' => '#0891b2',
+    'violet-rose' => '#8b5cf6',
+];
+$colorLabels = [
+    'sunset' => 'Sunset (Orange → Pink)',
+    'ocean' => 'Ocean (Cyan → Blue)',
+    'violet-rose' => 'Violet Rose (Violet → Rose)',
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -132,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('site_name', $siteName);
         Log::write('Updated site name');
     }
-    if ($newColorScheme !== '') {
+    if ($newColorScheme !== '' && in_array($newColorScheme, $colorOptions, true)) {
         if ($newColorScheme !== $colorScheme) {
             Setting::set('color_scheme', $newColorScheme);
             Log::write('Updated color scheme');
@@ -220,7 +239,7 @@ $bg600 = "bg-{$colorScheme}-600";
             <label class="block">Color Scheme:
                 <select name="color_scheme" class="border p-2 rounded w-full" data-help="Primary Tailwind color">
                     <?php foreach ($colorOptions as $opt): ?>
-                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $colorScheme ? 'selected' : '' ?>><?= ucfirst($opt) ?></option>
+                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $colorScheme ? 'selected' : '' ?>><?= htmlspecialchars($colorLabels[$opt] ?? ucfirst($opt)) ?></option>
                     <?php endforeach; ?>
                 </select>
             </label>
