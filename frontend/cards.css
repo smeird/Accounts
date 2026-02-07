@@ -218,6 +218,33 @@
   background-color: #f8fafc !important;
 }
 
+/* Reusable page header pattern
+ * <header class="app-page-header">
+ *   <h1 class="app-page-title">Page Title</h1>
+ *   <p class="app-page-subtitle">Optional summary text.</p>
+ *   <div class="app-page-header-actions">Optional buttons</div>
+ * </header>
+ */
+.app-page-header {
+  margin-bottom: 1.5rem;
+}
+
+.app-page-title {
+  color: #4338ca;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.app-page-subtitle {
+  margin-top: 0.5rem;
+  color: #334155;
+}
+
+.app-page-header-actions {
+  margin-top: 0.75rem;
+}
+
 .theme-professional .glass-table-row .tabulator-cell,
 .glass-table-row-professional .tabulator-cell {
   border-bottom: 1px solid #e2e8f0 !important;

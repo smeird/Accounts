@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>User Management</title>
     <script>
         window.tailwind = window.tailwind || {};
@@ -80,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
+    <link rel="stylesheet" href="frontend/cards.css">
 
       <!-- Font Awesome icons loaded via frontend/js/menu.js -->
       <style>
@@ -90,12 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </style>
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
+    <main class="max-w-2xl mx-auto space-y-6">
+        <header class="app-page-header">
+            <h1 class="app-page-title">User Management</h1>
+            <p class="app-page-subtitle">Add new users, update your password, or manage two-factor authentication from this page.</p>
+            <div class="app-page-header-actions"><a href="logout.php" class="text-indigo-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-indigo-600 hover:underline">Home</a></div>
+        </header>
+        <section class="bg-white p-6 rounded shadow border border-gray-400">
         <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
-        <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
-        <h1 class="text-2xl font-semibold mb-4 text-indigo-700">User Management</h1>
-        <p class="mb-4">Add new users, update your password, or manage two-factor authentication from this page.</p>
-        <p class="mb-4"><a href="logout.php" class="text-indigo-600 hover:underline">Logout</a> | <a href="frontend/index.html" class="text-indigo-600 hover:underline">Home</a></p>
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
@@ -134,7 +138,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </form>
         </div>
-    </div>
+        </section>
+    </main>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>

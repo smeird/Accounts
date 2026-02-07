@@ -157,6 +157,7 @@ $bg600 = "bg-{$colorScheme}-600";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>System Settings</title>
     <script>
         window.tailwind = window.tailwind || {};
@@ -165,6 +166,7 @@ $bg600 = "bg-{$colorScheme}-600";
 
       <script src="https://cdn.tailwindcss.com"></script>
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
+      <link rel="stylesheet" href="frontend/cards.css">
       <style>
           a { transition: color 0.2s ease; }
           a:hover { color: <?= $colorHex ?>; }
@@ -173,12 +175,14 @@ $bg600 = "bg-{$colorScheme}-600";
       </style>
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
+    <main class="max-w-4xl mx-auto space-y-6">
+        <header class="app-page-header">
+            <h1 class="app-page-title <?= $text700 ?>">System Settings</h1>
+            <p class="app-page-subtitle">Adjust application configuration values.</p>
+            <div class="app-page-header-actions"><a href="logout.php" class="<?= $text600 ?> hover:underline">Logout</a> | <a href="frontend/index.html" class="<?= $text600 ?> hover:underline">Home</a></div>
+        </header>
+        <section class="bg-white p-6 rounded shadow border border-gray-400">
         <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
-        <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
-        <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>
-        <p class="mb-4">Adjust application configuration values.</p>
-        <p class="mb-4"><a href="logout.php" class="<?= $text600 ?> hover:underline">Logout</a> | <a href="frontend/index.html" class="<?= $text600 ?> hover:underline">Home</a></p>
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
@@ -251,7 +255,8 @@ $bg600 = "bg-{$colorScheme}-600";
             </label>
             <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
-    </div>
+        </section>
+    </main>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
