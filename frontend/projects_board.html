@@ -22,6 +22,37 @@
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Project Board</h1>
         <p class="mb-4">Browse all active projects in a card layout.</p>
 
+        <section class="bg-white p-6 rounded shadow space-y-4">
+            <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+                <label class="flex-1">
+                    <span class="block text-sm font-semibold mb-1">Search Projects</span>
+                    <input id="project-search" type="text" placeholder="Search name or description" class="w-full border border-gray-300 rounded px-3 py-2" aria-label="Search projects by name or description">
+                </label>
+                <label>
+                    <span class="block text-sm font-semibold mb-1">Funding Source</span>
+                    <select id="funding-filter" class="border border-gray-300 rounded px-3 py-2 min-w-40" aria-label="Filter projects by funding source">
+                        <option value="">All funding</option>
+                    </select>
+                </label>
+                <label>
+                    <span class="block text-sm font-semibold mb-1">Sort</span>
+                    <select id="project-sort" class="border border-gray-300 rounded px-3 py-2 min-w-40" aria-label="Sort projects by score or risk">
+                        <option value="score_desc">Score: high to low</option>
+                        <option value="score_asc">Score: low to high</option>
+                        <option value="risk_desc">Risk: high to low</option>
+                        <option value="risk_asc">Risk: low to high</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="flex flex-wrap gap-2" id="status-filters">
+                <button type="button" class="status-chip px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700" data-filter="high_risk" aria-label="Filter to high risk projects">High Risk</button>
+                <button type="button" class="status-chip px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700" data-filter="over_budget" aria-label="Filter to over budget projects">Over Budget</button>
+            </div>
+
+            <div class="flex flex-wrap gap-2" id="summary-chips"></div>
+        </section>
+
         <section class="cards">
             <div id="projects-board" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
@@ -71,14 +102,81 @@ function renderStars(score, minScore, maxScore){
 
 
 async function loadProjects(){
+    // Client-side filtering keeps the existing render pipeline simple; add query params in projects.php for larger datasets.
     const res = await fetch('../php_backend/public/projects.php');
     const projects = await res.json();
-    const scores = projects.map(p => parseFloat(p.score) || 0);
-    const minScore = Math.min(...scores);
-    const maxScore = Math.max(...scores);
+    const searchInput = document.getElementById('project-search');
+    const fundingFilter = document.getElementById('funding-filter');
+    const sortSelect = document.getElementById('project-sort');
     const board = document.getElementById('projects-board');
-    board.innerHTML = '';
-    projects.forEach(p => {
+    const summary = document.getElementById('summary-chips');
+    const statusChips = Array.from(document.querySelectorAll('.status-chip'));
+
+    const fundingSources = Array.from(new Set(projects.map(p => (p.funding_source || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+    fundingFilter.innerHTML = '<option value="">All funding</option>';
+    fundingSources.forEach(source => {
+        const option = document.createElement('option');
+        option.value = source;
+        option.textContent = source;
+        fundingFilter.appendChild(option);
+    });
+
+    function isHighRisk(project){
+        return (parseInt(project.benefit_risk, 10) || 0) >= 4;
+    }
+
+    function isOverBudget(project){
+        return (parseFloat(project.spent) || 0) > (parseFloat(project.cost_medium) || 0);
+    }
+
+    function updateSummary(filteredProjects){
+        const totalMidCost = filteredProjects.reduce((sum, p) => sum + (parseFloat(p.cost_medium) || 0), 0);
+        const totalSpent = filteredProjects.reduce((sum, p) => sum + (parseFloat(p.spent) || 0), 0);
+        summary.innerHTML = `
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Projects: ${filteredProjects.length}</span>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Total Mid Cost: ${fmtMoney(totalMidCost)}</span>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Total Spent: ${fmtMoney(totalSpent)}</span>
+        `;
+    }
+
+    function applyFiltersAndRender(){
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const funding = fundingFilter.value;
+        const sortValue = sortSelect.value;
+        const activeStatusFilters = statusChips.filter(chip => chip.dataset.active === '1').map(chip => chip.dataset.filter);
+
+        let filteredProjects = projects.filter(project => {
+            const name = (project.name || '').toLowerCase();
+            const description = (project.description || '').toLowerCase();
+            const matchesSearch = !searchTerm || name.includes(searchTerm) || description.includes(searchTerm);
+            const matchesFunding = !funding || (project.funding_source || '') === funding;
+            const matchesStatus = activeStatusFilters.every(filter => {
+                if(filter === 'high_risk') return isHighRisk(project);
+                if(filter === 'over_budget') return isOverBudget(project);
+                return true;
+            });
+            return matchesSearch && matchesFunding && matchesStatus;
+        });
+
+        filteredProjects = filteredProjects.slice().sort((a, b) => {
+            const scoreA = parseFloat(a.score) || 0;
+            const scoreB = parseFloat(b.score) || 0;
+            const riskA = parseFloat(a.benefit_risk) || 0;
+            const riskB = parseFloat(b.benefit_risk) || 0;
+            if(sortValue === 'score_asc') return scoreA - scoreB;
+            if(sortValue === 'risk_desc') return riskB - riskA;
+            if(sortValue === 'risk_asc') return riskA - riskB;
+            return scoreB - scoreA;
+        });
+
+        updateSummary(filteredProjects);
+
+        const scores = filteredProjects.map(p => parseFloat(p.score) || 0);
+        const minScore = scores.length ? Math.min(...scores) : 0;
+        const maxScore = scores.length ? Math.max(...scores) : 0;
+
+        board.innerHTML = '';
+        filteredProjects.forEach(p => {
         const card = document.createElement('div');
         card.className = 'cards cards-tight flex flex-col space-y-2';
 
@@ -176,6 +274,28 @@ async function loadProjects(){
 
         board.appendChild(card);
     });
+
+        if(!filteredProjects.length){
+            board.innerHTML = '<div class="bg-white p-6 rounded shadow text-sm text-gray-600">No projects match the selected filters.</div>';
+        }
+    }
+
+    searchInput.addEventListener('input', applyFiltersAndRender);
+    fundingFilter.addEventListener('change', applyFiltersAndRender);
+    sortSelect.addEventListener('change', applyFiltersAndRender);
+    statusChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const active = chip.dataset.active === '1';
+            chip.dataset.active = active ? '0' : '1';
+            chip.classList.toggle('bg-gray-200', active);
+            chip.classList.toggle('text-gray-700', active);
+            chip.classList.toggle('bg-indigo-600', !active);
+            chip.classList.toggle('text-white', !active);
+            applyFiltersAndRender();
+        });
+    });
+
+    applyFiltersAndRender();
 }
 
 loadProjects();
