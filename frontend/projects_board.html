@@ -15,6 +15,30 @@
 
     <link rel="stylesheet" href="operational_ui.css">
 
+    <style>
+        .project-board-layout-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: inherit;
+            color: inherit;
+            background: transparent;
+        }
+
+        .project-board-layout-table th,
+        .project-board-layout-table td {
+            padding: 0.15rem 0;
+            border: 0;
+            vertical-align: top;
+            background: transparent;
+            text-align: left;
+        }
+
+        .project-board-layout-table th {
+            width: 20%;
+            font-weight: 600;
+        }
+    </style>
+
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
 <body class="ops-body">
@@ -217,7 +241,7 @@ async function loadProjects(){
         details.appendChild(rationale);
 
         const table = document.createElement('table');
-        table.className = 'ops-native-table';
+        table.className = 'project-board-layout-table';
         table.innerHTML = `
             <tbody>
                 <tr>
