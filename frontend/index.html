@@ -12,6 +12,8 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="operational_ui.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <meta property="og:title" content="Finance Manager">
     <meta property="og:description" content="Manage your finances with budgets, reports and more.">
@@ -23,10 +25,10 @@
       }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="ops-body">
     <div class="flex flex-col md:flex-row min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
             <section class="mb-8" data-no-card="true">
                 <div class="rounded-xl bg-white text-slate-900 shadow-sm border border-slate-200">
                     <div class="grid gap-8 p-8 md:grid-cols-2 md:p-10 items-start">

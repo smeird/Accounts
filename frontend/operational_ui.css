@@ -1,3 +1,9 @@
+/* Shared canonical authenticated-page background */
+.ops-body {
+    min-height: 100vh;
+    background-image: linear-gradient(to bottom, #c7d2fe, #f1f5f9, #ffffff);
+}
+
 /* Shared operational UI patterns for dashboard and planning screens */
 .ops-main {
     padding: 1.5rem;
@@ -104,13 +110,13 @@
     border: 1px solid #dbe3ef;
     border-radius: 0.75rem;
     overflow: hidden;
-    background: #f8fafc;
+    background: #ffffff;
 }
 
 .ops-titlebar {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #e2e8f0;
-    background: #eef2ff;
+    background: #e2e8f0;
 }
 
 .ops-titlebar h2,
@@ -124,9 +130,103 @@
 .ops-table-content,
 .ops-chart-content {
     padding: 0.9rem;
-    background: #f8fafc;
+    background: #ffffff;
 }
 
 .ops-chart-canvas {
     min-height: 400px;
+}
+
+
+/* Standard table presentation: opaque surfaces with high-contrast headers */
+.ops-standard-table {
+    border: 1px solid #dbe3ef;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 8px 20px -18px rgba(15, 23, 42, 0.55);
+}
+
+.ops-standard-table .tabulator-header {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.ops-standard-table .tabulator-header .tabulator-col {
+    background: transparent;
+    color: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.ops-standard-table .tabulator-tableholder,
+.ops-standard-table .tabulator-tableholder .tabulator-table,
+.ops-standard-table .tabulator-footer,
+.ops-standard-table .tabulator-paginator {
+    background: #ffffff;
+}
+
+.ops-standard-table .tabulator-cell {
+    font-size: 0.8125rem;
+    color: #1e293b;
+    border-color: #e2e8f0;
+}
+
+.ops-table-row {
+    background: #ffffff !important;
+}
+
+.ops-table-row:nth-child(even) {
+    background: #f8fafc !important;
+}
+
+.ops-table-row:hover {
+    background: #eef2ff !important;
+}
+
+.ops-standard-table .tabulator-calcs-row,
+.ops-standard-table .tabulator-calcs-row .tabulator-cell {
+    background: #e2e8f0 !important;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.ops-table-paginator {
+    border-top: 1px solid #e2e8f0;
+}
+
+.ops-native-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #dbe3ef;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    font-size: 0.8125rem;
+    color: #1e293b;
+    background: #ffffff;
+}
+
+.ops-native-table th,
+.ops-native-table td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+
+.ops-native-table th {
+    width: 20%;
+    background: #e2e8f0;
+    color: #0f172a;
+    font-weight: 700;
+    text-align: left;
+}
+
+.ops-native-table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.ops-native-table tbody tr:hover td {
+    background: #e2e8f0;
 }

@@ -11,15 +11,19 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 </head>
-<body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
+<body class="ops-body">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Ignored Transactions</h1>
             <p class="mb-4">Transactions tagged with <strong>IGNORE</strong> are hidden from dashboards and reports. Use this page to review and restore them.</p>
-            <div id="ignored-table"></div>
+            <section class="cards cards-tight">
+                <div id="ignored-table"></div>
+            </section>
         </main>
     </div>
     <script src="js/menu.js"></script>

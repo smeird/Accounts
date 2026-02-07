@@ -13,24 +13,32 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <link rel="stylesheet" href="operational_ui.css">
+
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 
 </head>
-<body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
+<body class="ops-body">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6">
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Search Transactions</h1>
             <p class="mb-4">Find specific transactions using keywords and view the results below. Quick searches help you jump straight to the entries you need.</p>
+            <section class="cards cards-tight">
             <form id="search-form" class="space-y-4">
                 <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
                 <input type="number" step="0.01" id="min-amount" placeholder="Min Amount (£)" class="border p-2 rounded w-full" data-help="Minimum amount to match">
                 <input type="number" step="0.01" id="max-amount" placeholder="Max Amount (£)" class="border p-2 rounded w-full" data-help="Maximum amount to match">
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Search</button>
             </form>
-            <div id="results-grid" class="mt-4"></div>
-            <p id="total" class="mt-4"></p>
-            <div id="results-chart" class="mt-6" style="height:400px" data-chart-desc="Column chart showing spending totals from search results."></div>
+            </section>
+            <section class="cards cards-tight mt-4">
+                <div id="results-grid"></div>
+                <p id="total" class="mt-4"></p>
+            </section>
+            <section class="cards cards-tight mt-6">
+                <div id="results-chart" style="height:400px" data-chart-desc="Column chart showing spending totals from search results."></div>
+            </section>
         </main>
     </div>
     <script src="js/menu.js"></script>

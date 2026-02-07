@@ -47,6 +47,9 @@ $fontOptions = ['' => 'Default',
     'Georgia' => 'Georgia',
     'Courier New' => 'Courier New',
     'JetBrains Mono' => 'JetBrains Mono',
+    'Fira Code' => 'Fira Code',
+    'Source Code Pro' => 'Source Code Pro',
+    'IBM Plex Mono' => 'IBM Plex Mono',
     'Verdana' => 'Verdana',
     'Trebuchet MS' => 'Trebuchet MS',
     'Garamond' => 'Garamond',
@@ -164,6 +167,7 @@ $bg600 = "bg-{$colorScheme}-600";
     </script>
 
       <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="frontend/cards.css">
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <style>
           a { transition: color 0.2s ease; }
@@ -256,6 +260,9 @@ $bg600 = "bg-{$colorScheme}-600";
             </section>
         </main>
     </div>
+        </main>
+    </div>
+    <script src="frontend/js/menu.js"></script>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>

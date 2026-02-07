@@ -13,16 +13,18 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <link rel="stylesheet" href="operational_ui.css">
+
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
+<body class="ops-body">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+    <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Project Board</h1>
         <p class="mb-4">Browse all active projects in a card layout.</p>
 
-        <section class="bg-white p-6 rounded shadow space-y-4">
+        <section class="cards cards-solid cards-tight space-y-4">
             <div class="flex flex-col lg:flex-row lg:items-end gap-3">
                 <label class="flex-1">
                     <span class="block text-sm font-semibold mb-1">Search Projects</span>
@@ -207,38 +209,38 @@ async function loadProjects(){
         details.appendChild(rationale);
 
         const table = document.createElement('table');
-        table.className = 'text-xs w-full';
+        table.className = 'ops-native-table';
         table.innerHTML = `
-            <tr>
-                <td class="pr-2 font-semibold">Cost Low:</td><td>${fmtMoney(p.cost_low)}</td>
-                <td class="pr-2 font-semibold">Cost Medium:</td><td>${fmtMoney(p.cost_medium)}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Cost High:</td><td>${fmtMoney(p.cost_high)}</td>
-                <td class="pr-2 font-semibold">Funding:</td><td>${p.funding_source || ''}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Recurring Cost:</td><td>${fmtMoney(p.recurring_cost)}</td>
-                <td class="pr-2 font-semibold">Estimated Time:</td><td>${p.estimated_time || ''}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Expected Lifespan:</td><td>${p.expected_lifespan || ''}</td>
-                <td class="pr-2 font-semibold">Financial Benefit:</td><td>${scoreBadge(p.benefit_financial)}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Quality Benefit:</td><td>${scoreBadge(p.benefit_quality)}</td>
-                <td class="pr-2 font-semibold">Risk Benefit:</td><td>${scoreBadge(p.benefit_risk)}</td>
-            </tr>
-            <tr>
-
-                <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${scoreBadge(p.benefit_sustainability)}</td>
-                <td class="pr-2 font-semibold">Score:</td><td>${renderStars(p.score, minScore, maxScore)}</td>
-
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td>
-                <td class="pr-2 font-semibold">Risks:</td><td>${p.risks || ''}</td>
-            </tr>
+            <tbody>
+                <tr>
+                    <th scope="row">Cost Low</th><td>${fmtMoney(p.cost_low)}</td>
+                    <th scope="row">Cost Medium</th><td>${fmtMoney(p.cost_medium)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Cost High</th><td>${fmtMoney(p.cost_high)}</td>
+                    <th scope="row">Funding</th><td>${p.funding_source || ''}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Recurring Cost</th><td>${fmtMoney(p.recurring_cost)}</td>
+                    <th scope="row">Estimated Time</th><td>${p.estimated_time || ''}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Expected Lifespan</th><td>${p.expected_lifespan || ''}</td>
+                    <th scope="row">Financial Benefit</th><td>${scoreBadge(p.benefit_financial)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Quality Benefit</th><td>${scoreBadge(p.benefit_quality)}</td>
+                    <th scope="row">Risk Benefit</th><td>${scoreBadge(p.benefit_risk)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Sustainability Benefit</th><td>${scoreBadge(p.benefit_sustainability)}</td>
+                    <th scope="row">Score</th><td>${renderStars(p.score, minScore, maxScore)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Dependencies</th><td>${p.dependencies || ''}</td>
+                    <th scope="row">Risks</th><td>${p.risks || ''}</td>
+                </tr>
+            </tbody>
         `;
         details.appendChild(table);
         card.appendChild(details);
@@ -276,7 +278,7 @@ async function loadProjects(){
     });
 
         if(!filteredProjects.length){
-            board.innerHTML = '<div class="bg-white p-6 rounded shadow text-sm text-gray-600">No projects match the selected filters.</div>';
+            board.innerHTML = '<div class="cards cards-solid cards-tight text-sm text-gray-600">No projects match the selected filters.</div>';
         }
     }
 
