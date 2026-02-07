@@ -1,3 +1,9 @@
+/* Shared canonical authenticated-page background */
+.ops-body {
+    min-height: 100vh;
+    background-image: linear-gradient(to bottom, #c7d2fe, #f1f5f9, #ffffff);
+}
+
 /* Shared operational UI patterns for dashboard and planning screens */
 .ops-main {
     padding: 1.5rem;

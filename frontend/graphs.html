@@ -11,12 +11,14 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 </head>
-<body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
+<body class="ops-body">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-4">
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-4">
             <h1 class="text-2xl font-semibold text-indigo-700">Graphs</h1>
             <p class="mb-4">Explore a collection of charts that illustrate your income and spending patterns. Choose a year to see how your finances evolve and compare categories or tags visually.</p>
             <label for="year-select" class="block">Year:
