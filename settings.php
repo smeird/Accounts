@@ -47,6 +47,9 @@ $fontOptions = ['' => 'Default',
     'Georgia' => 'Georgia',
     'Courier New' => 'Courier New',
     'JetBrains Mono' => 'JetBrains Mono',
+    'Fira Code' => 'Fira Code',
+    'Source Code Pro' => 'Source Code Pro',
+    'IBM Plex Mono' => 'IBM Plex Mono',
     'Verdana' => 'Verdana',
     'Trebuchet MS' => 'Trebuchet MS',
     'Garamond' => 'Garamond',
@@ -253,6 +256,9 @@ $bg600 = "bg-{$colorScheme}-600";
             <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
     </div>
+        </main>
+    </div>
+    <script src="frontend/js/menu.js"></script>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
