@@ -21,13 +21,16 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+            <section id="transfer-feedback" class="hidden cards cards-tight" role="status" aria-live="polite">
+                <p id="transfer-feedback-text" class="text-sm"></p>
+            </section>
             <section class="cards cards-tight">
 <div id="transfers-table"></div>
             </section>
             <section class="cards cards-tight">
                 <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
                     Marked Transfers
-                    <button id="undo-all" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-rotate-left inline w-4 h-4 mr-1"></i>Undo All</button>
+                    <button id="undo-all" class="bg-red-600 text-white px-3 py-1 rounded text-sm" aria-label="Undo all marked transfers"><i class="fas fa-rotate-left inline w-4 h-4 mr-1"></i>Undo All</button>
                 </h2>
                 <div id="linked-table"></div>
             </section>
@@ -36,7 +39,7 @@
                 <form id="link-form" class="space-y-4">
                     <input type="number" id="id1" placeholder="First transaction ID" class="border p-2 rounded w-full" data-help="ID of the first transaction">
                     <input type="number" id="id2" placeholder="Second transaction ID" class="border p-2 rounded w-full" data-help="ID of the matching transaction">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-link inline w-4 h-4 mr-2"></i>Link</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Link selected transactions as transfer"><i class="fas fa-link inline w-4 h-4 mr-2"></i>Link</button>
                 </form>
             </section>
         </main>
@@ -59,6 +62,31 @@ window.renderPageHeader(pageMain, {
 
     let transfersTable = null;
     let linkedTable = null;
+    const feedbackCard = document.getElementById('transfer-feedback');
+    const feedbackText = document.getElementById('transfer-feedback-text');
+    const assistButton = document.getElementById('assist-btn');
+    const markAllButton = document.getElementById('mark-all');
+    const undoAllButton = document.getElementById('undo-all');
+    const linkForm = document.getElementById('link-form');
+
+    function showFeedback(type, message){
+        feedbackCard.classList.remove('hidden', 'bg-green-50', 'bg-red-50', 'bg-blue-50', 'text-green-800', 'text-red-800', 'text-blue-800');
+        if(type === 'success'){
+            feedbackCard.classList.add('bg-green-50', 'text-green-800');
+        } else if(type === 'error') {
+            feedbackCard.classList.add('bg-red-50', 'text-red-800');
+        } else {
+            feedbackCard.classList.add('bg-blue-50', 'text-blue-800');
+        }
+        feedbackText.textContent = message;
+    }
+
+    function setButtonBusy(button, isBusy, busyText, normalHtml){
+        button.disabled = isBusy;
+        button.classList.toggle('opacity-60', isBusy);
+        button.classList.toggle('cursor-not-allowed', isBusy);
+        button.innerHTML = isBusy ? `<i class="fas fa-spinner fa-spin inline w-4 h-4 mr-1"></i>${busyText}` : normalHtml;
+    }
 
     function renderTransfers(data){
         if(transfersTable){
@@ -82,7 +110,7 @@ window.renderPageHeader(pageMain, {
     }
 
     function markTransfers(pairs){
-        fetch('../php_backend/public/mark_transfer.php', {
+        return fetch('../php_backend/public/mark_transfer.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pairs: pairs })
@@ -93,9 +121,13 @@ window.renderPageHeader(pageMain, {
             if(res.status === 'ok') {
                 loadCandidates();
                 loadTransfers();
+                showFeedback('success', `${pairs.length} transfer pair${pairs.length === 1 ? '' : 's'} marked successfully.`);
             } else {
-                alert(res.error || 'Failed to mark transfers');
+                showFeedback('error', res.error || 'Failed to mark transfers.');
             }
+        })
+        .catch(() => {
+            showFeedback('error', 'Unable to mark transfers due to a network or server error.');
         });
     }
 
@@ -129,7 +161,7 @@ window.renderPageHeader(pageMain, {
     }
 
     function unmarkTransfers(ids){
-        fetch('../php_backend/public/unmark_transfer.php', {
+        return fetch('../php_backend/public/unmark_transfer.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ids: ids })
@@ -139,47 +171,75 @@ window.renderPageHeader(pageMain, {
             if(res.status === 'ok'){
                 loadTransfers();
                 loadCandidates();
+                showFeedback('success', `${ids.length} transfer mark${ids.length === 1 ? '' : 's'} removed.`);
             } else {
-                alert(res.error || 'Failed to undo transfers');
+                showFeedback('error', res.error || 'Failed to undo transfers.');
             }
+        })
+        .catch(() => {
+            showFeedback('error', 'Unable to undo transfers due to a network or server error.');
         });
     }
 
 
     function loadCandidates(){
 
+        setButtonBusy(assistButton, true, 'Assisting...', '<i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist');
         fetch('../php_backend/public/assist_transfers.php', { method: 'POST' })
         .then(resp => resp.json())
         .then(res => {
             if(res.status === 'ok') {
 
                 renderTransfers(res.candidates);
+                showFeedback('success', `Found ${res.candidates.length} possible transfer pair${res.candidates.length === 1 ? '' : 's'}.`);
 
             } else {
-                alert(res.error || 'Assist failed');
+                showFeedback('error', res.error || 'Assist failed.');
             }
+        })
+        .catch(() => {
+            showFeedback('error', 'Unable to fetch transfer suggestions due to a network or server error.');
+        })
+        .finally(() => {
+            setButtonBusy(assistButton, false, 'Assisting...', '<i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist');
         });
 
     }
 
-    document.getElementById('assist-btn').addEventListener('click', loadCandidates);
+    assistButton.addEventListener('click', loadCandidates);
 
-    document.getElementById('mark-all').addEventListener('click', function(){
+    markAllButton.addEventListener('click', function(){
         if(!transfersTable) return;
        const pairs = transfersTable.getData().map(r => [r.from_id, r.to_id]);
-       if(pairs.length){ markTransfers(pairs); }
+       if(pairs.length){
+            setButtonBusy(markAllButton, true, 'Marking...', '<i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All');
+            markTransfers(pairs).finally(() => {
+                setButtonBusy(markAllButton, false, 'Marking...', '<i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All');
+            });
+        } else {
+            showFeedback('info', 'There are no suggested transfers to mark right now. Click Assist to refresh suggestions.');
+        }
 
     });
-    document.getElementById('undo-all').addEventListener('click', function(){
+    undoAllButton.addEventListener('click', function(){
         if(!linkedTable) return;
         const ids = linkedTable.getData().map(r => r.from_id);
-        if(ids.length){ unmarkTransfers(ids); }
+        if(ids.length){
+            setButtonBusy(undoAllButton, true, 'Undoing...', '<i class="fas fa-rotate-left inline w-4 h-4 mr-1"></i>Undo All');
+            unmarkTransfers(ids).finally(() => {
+                setButtonBusy(undoAllButton, false, 'Undoing...', '<i class="fas fa-rotate-left inline w-4 h-4 mr-1"></i>Undo All');
+            });
+        } else {
+            showFeedback('info', 'There are no marked transfers to undo.');
+        }
     });
 
-    document.getElementById('link-form').addEventListener('submit', function(e){
+    linkForm.addEventListener('submit', function(e){
         e.preventDefault();
         const id1 = document.getElementById('id1').value;
         const id2 = document.getElementById('id2').value;
+        const linkButton = linkForm.querySelector('button[type="submit"]');
+        setButtonBusy(linkButton, true, 'Linking...', '<i class="fas fa-link inline w-4 h-4 mr-2"></i>Link');
         fetch('../php_backend/public/link_transfer.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -188,10 +248,19 @@ window.renderPageHeader(pageMain, {
         .then(resp => resp.json())
         .then(res => {
             if (res.status === 'ok') {
-                location.reload();
+                showFeedback('success', 'Transfer link created successfully. Refreshing data...');
+                loadTransfers();
+                loadCandidates();
+                linkForm.reset();
             } else {
-                alert(res.error || 'Failed to link transactions');
+                showFeedback('error', res.error || 'Failed to link transactions.');
             }
+        })
+        .catch(() => {
+            showFeedback('error', 'Unable to link transactions due to a network or server error.');
+        })
+        .finally(() => {
+            setButtonBusy(linkButton, false, 'Linking...', '<i class="fas fa-link inline w-4 h-4 mr-2"></i>Link');
         });
     });
 
