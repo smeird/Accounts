@@ -164,6 +164,7 @@ $bg600 = "bg-{$colorScheme}-600";
     </script>
 
       <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="frontend/cards.css">
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <style>
           a { transition: color 0.2s ease; }
@@ -173,7 +174,7 @@ $bg600 = "bg-{$colorScheme}-600";
       </style>
 </head>
 <body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
+    <div class="max-w-4xl mx-auto cards cards-solid border border-gray-400">
         <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
         <h1 class="text-2xl font-semibold mb-4 <?= $text700 ?>">System Settings</h1>
