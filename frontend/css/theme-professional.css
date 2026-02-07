@@ -1,6 +1,6 @@
 /* Optional professional theme layer with restrained surfaces and spacing */
 body.theme-professional {
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .theme-professional .rounded-3xl {
@@ -21,7 +21,7 @@ body.theme-professional {
 .theme-professional .bg-gradient-to-l,
 .theme-professional .bg-gradient-to-t {
   background-image: none !important;
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
 }
 
 .theme-professional .ops-btn-primary,
