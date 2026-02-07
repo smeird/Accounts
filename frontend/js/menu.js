@@ -50,16 +50,16 @@ const attachSidebarSearchHandler = (root = document) => {
   let colorScheme = 'indigo';
   let siteName = 'Finance Manager';
   const colorMap = {
-    indigo: {600: '#4f46e5', 700: '#4338ca', gradient: 'linear-gradient(160deg, #4f46e5 0%, #ffffff 100%)'},
-    blue:   {600: '#2563eb', 700: '#1d4ed8', gradient: 'linear-gradient(160deg, #2563eb 0%, #ffffff 100%)'},
-    green:  {600: '#059669', 700: '#047857', gradient: 'linear-gradient(160deg, #059669 0%, #ffffff 100%)'},
-    red:    {600: '#dc2626', 700: '#b91c1c', gradient: 'linear-gradient(160deg, #dc2626 0%, #ffffff 100%)'},
-    purple: {600: '#9333ea', 700: '#7e22ce', gradient: 'linear-gradient(160deg, #9333ea 0%, #ffffff 100%)'},
-    teal:   {600: '#0d9488', 700: '#0f766e', gradient: 'linear-gradient(160deg, #0d9488 0%, #ffffff 100%)'},
-    orange: {600: '#ea580c', 700: '#c2410c', gradient: 'linear-gradient(160deg, #ea580c 0%, #ffffff 100%)'},
-    sunset: {600: '#f97316', 700: '#ec4899', gradient: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)'},
-    ocean: {600: '#0891b2', 700: '#2563eb', gradient: 'linear-gradient(135deg, #0891b2 0%, #2563eb 100%)'},
-    'violet-rose': {600: '#8b5cf6', 700: '#e11d48', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #e11d48 100%)'}
+    indigo: {600: '#4f46e5', 700: '#4338ca', gradient: 'linear-gradient(160deg, rgba(79, 70, 229, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    blue:   {600: '#2563eb', 700: '#1d4ed8', gradient: 'linear-gradient(160deg, rgba(37, 99, 235, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    green:  {600: '#059669', 700: '#047857', gradient: 'linear-gradient(160deg, rgba(5, 150, 105, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    red:    {600: '#dc2626', 700: '#b91c1c', gradient: 'linear-gradient(160deg, rgba(220, 38, 38, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    purple: {600: '#9333ea', 700: '#7e22ce', gradient: 'linear-gradient(160deg, rgba(147, 51, 234, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    teal:   {600: '#0d9488', 700: '#0f766e', gradient: 'linear-gradient(160deg, rgba(13, 148, 136, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    orange: {600: '#ea580c', 700: '#c2410c', gradient: 'linear-gradient(160deg, rgba(234, 88, 12, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
+    sunset: {600: '#f97316', 700: '#ec4899', gradient: 'linear-gradient(135deg, rgba(249, 115, 22, 0.16) 0%, rgba(236, 72, 153, 0.12) 52%, rgba(255, 255, 255, 0.98) 100%)'},
+    ocean: {600: '#0891b2', 700: '#2563eb', gradient: 'linear-gradient(135deg, rgba(8, 145, 178, 0.16) 0%, rgba(37, 99, 235, 0.12) 52%, rgba(255, 255, 255, 0.98) 100%)'},
+    'violet-rose': {600: '#8b5cf6', 700: '#e11d48', gradient: 'linear-gradient(135deg, rgba(139, 92, 246, 0.16) 0%, rgba(225, 29, 72, 0.12) 52%, rgba(255, 255, 255, 0.98) 100%)'}
   };
 
   const hoverStyle = document.createElement('style');
