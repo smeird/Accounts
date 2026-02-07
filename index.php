@@ -17,6 +17,20 @@ $chartFont = $brand['chart_font'];
 $accentWeight = $brand['accent_font_weight'];
 $error = '';
 
+$brandPalette = [
+    'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
+    'blue' => ['600' => '#2563eb', '700' => '#1d4ed8'],
+    'green' => ['600' => '#059669', '700' => '#047857'],
+    'red' => ['600' => '#dc2626', '700' => '#b91c1c'],
+    'purple' => ['600' => '#9333ea', '700' => '#7e22ce'],
+    'teal' => ['600' => '#0d9488', '700' => '#0f766e'],
+    'orange' => ['600' => '#ea580c', '700' => '#c2410c'],
+    'sunset' => ['600' => '#f97316', '700' => '#ec4899'],
+    'ocean' => ['600' => '#0891b2', '700' => '#2563eb'],
+    'violet-rose' => ['600' => '#8b5cf6', '700' => '#e11d48']
+];
+$buttonColors = $brandPalette[$scheme] ?? $brandPalette['indigo'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_SESSION['pending_user_id'])) {
         $username = $_SESSION['pending_username'] ?? '';
@@ -78,6 +92,18 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .brand-action-btn {
+            background-color: <?= htmlspecialchars($buttonColors['600']) ?>;
+            color: #ffffff;
+        }
+
+        .brand-action-btn:hover,
+        .brand-action-btn:focus-visible {
+            background-color: <?= htmlspecialchars($buttonColors['700']) ?>;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
     <div class="relative isolate min-h-screen overflow-hidden">
@@ -131,7 +157,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                             <label class="block text-sm font-semibold text-slate-700">Code
                                 <input type="text" name="token" autocomplete="one-time-code" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm focus:border-<?= $scheme ?>-500 focus:outline-none focus:ring-2 focus:ring-<?= $scheme ?>-200" data-help="Enter your 6-digit code">
                             </label>
-                            <button type="submit" aria-label="Verify code" class="w-full rounded-xl bg-<?= $scheme ?>-600 py-3 text-base font-semibold text-white shadow-md shadow-slate-300 transition duration-150 hover:bg-<?= $scheme ?>-700">Verify</button>
+                            <button type="submit" aria-label="Verify code" class="brand-action-btn w-full rounded-xl py-3 text-base font-semibold shadow-md shadow-slate-300 transition duration-150">Verify</button>
                         </form>
                     <?php else: ?>
                         <form method="post" class="space-y-4" id="login-form" autocomplete="on">
@@ -141,7 +167,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                             <label class="block text-sm font-semibold text-slate-700">Password
                                 <input type="password" name="password" autocomplete="current-password" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm focus:border-<?= $scheme ?>-500 focus:outline-none focus:ring-2 focus:ring-<?= $scheme ?>-200" data-help="Enter your password">
                             </label>
-                            <button type="submit" aria-label="Log in" class="w-full rounded-xl bg-<?= $scheme ?>-600 py-3 text-base font-semibold text-white shadow-md shadow-slate-300 transition duration-150 hover:bg-<?= $scheme ?>-700">Login</button>
+                            <button type="submit" aria-label="Log in" class="brand-action-btn w-full rounded-xl py-3 text-base font-semibold shadow-md shadow-slate-300 transition duration-150">Login</button>
                         </form>
                     <?php endif; ?>
                 </section>
