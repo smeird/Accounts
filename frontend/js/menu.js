@@ -355,7 +355,7 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
       e.preventDefault();
       const term = document.getElementById('sidebar-search').value.trim();
       if (term) {
-        window.location.href = `search.html?value=${encodeURIComponent(term)}`;
+        window.location.href = `${resolveFrontendAsset('search.html')}?value=${encodeURIComponent(term)}`;
       }
     });
   }
