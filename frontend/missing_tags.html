@@ -41,8 +41,66 @@ window.renderPageHeader(pageMain, {
     <script src="js/tabulator-tailwind.js"></script>
     <script>
     let table;
+    let tags = [];
+
+    async function fetchTags() {
+        const res = await fetch('../php_backend/public/tags.php');
+        tags = await res.json();
+    }
+
+    async function createTagForDescription(description) {
+        const name = prompt('New tag name', description);
+        if (!name) return;
+        await fetch('../php_backend/public/tags.php', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({name: name, keyword: description})
+        });
+        showMessage('Tag created');
+    }
+
+    async function createAliasForDescription(description) {
+        if (!tags.length) {
+            await fetchTags();
+        }
+
+        const available = tags.map((tag) => tag.name).sort((a, b) => a.localeCompare(b));
+        const tagName = prompt(`Create alias "${description}" for which existing tag?\n\nAvailable tags:\n${available.join('\n')}`);
+        if (!tagName) return;
+
+        const selectedTag = tags.find((tag) => tag.name.toLowerCase() === tagName.trim().toLowerCase());
+        if (!selectedTag) {
+            showMessage('Tag not found. Please use an existing tag name.');
+            return;
+        }
+
+        const aliasRes = await fetch('../php_backend/public/tag_aliases.php', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                alias: description,
+                tag_id: selectedTag.id,
+                match_type: 'contains',
+                active: true
+            })
+        });
+        const aliasData = await aliasRes.json();
+        if (!aliasRes.ok) {
+            showMessage(aliasData.error || 'Unable to create alias');
+            return;
+        }
+
+        await fetch('../php_backend/public/tags.php', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({action: 'remap_aliases', dry_run: false})
+        });
+        showMessage('Tag alias created');
+    }
+
     // Retrieve untagged transaction summaries and display them
     async function loadUntagged(){
+        await fetchTags();
         const res = await fetch('../php_backend/public/untagged_transactions.php');
         const data = await res.json();
         if (table) {
@@ -65,16 +123,20 @@ window.renderPageHeader(pageMain, {
                     { title: 'Memo', field: 'memo' },
                     { title: 'Count', field: 'count', hozAlign: 'right', sorter: 'number' },
                     { title: 'Amount', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' },
-                    { title: 'Action', formatter: () => '<button class="bg-indigo-600 text-white px-2 py-1 rounded">Auto Tag</button>', width: 120, align: 'center', cellClick: async (e, cell) => {
+                    { title: 'Action', formatter: () => (
+                        '<div class="flex gap-2">'
+                        + '<button class="bg-indigo-600 text-white px-2 py-1 rounded js-create-tag" aria-label="Create new tag">New Tag</button>'
+                        + '<button class="bg-slate-700 text-white px-2 py-1 rounded js-create-alias" aria-label="Create tag alias">Alias</button>'
+                        + '</div>'
+                    ), width: 230, align: 'center', cellClick: async (e, cell) => {
                         const desc = cell.getRow().getData().description;
-                        const name = prompt('Tag Name', desc);
-                        if (!name) return;
-                        await fetch('../php_backend/public/tags.php', {
-                            method: 'POST',
-                            headers: {'Content-Type':'application/json'},
-                            body: JSON.stringify({name: name, keyword: desc})
-                        });
-                        showMessage('Tag created');
+                        if (e.target.classList.contains('js-create-alias')) {
+                            await createAliasForDescription(desc);
+                        } else if (e.target.classList.contains('js-create-tag')) {
+                            await createTagForDescription(desc);
+                        } else {
+                            return;
+                        }
                         loadUntagged();
                     }}
                 ]
