@@ -22,10 +22,11 @@
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
 <p class="mb-4">Run background tasks like auto-tagging, category or segment assignment. These automated processes tidy your data so reports stay accurate without manual effort.</p>
             <div class="space-x-4">
-                <button id="tagging-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-tags inline w-4 h-4 mr-1"></i>Run Tagging</button>
-                <button id="categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-folder-open inline w-4 h-4 mr-1"></i>Apply Categories</button>
-                <button id="segments-btn" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-chart-pie inline w-4 h-4 mr-1"></i>Apply Segments</button>
-                <button id="clear-btn" class="bg-red-600 text-white px-4 py-2 rounded"><i class="fas fa-broom inline w-4 h-4 mr-1"></i>Clear Tags/Categories/Segments</button>
+                <button id="tagging-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Run automatic tagging"><i class="fas fa-tags inline w-4 h-4 mr-1"></i>Run Tagging</button>
+                <button id="categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Apply categories"><i class="fas fa-folder-open inline w-4 h-4 mr-1"></i>Apply Categories</button>
+                <button id="segments-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Apply segments"><i class="fas fa-chart-pie inline w-4 h-4 mr-1"></i>Apply Segments</button>
+                <button id="tag-aliases-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Open tag aliases"><i class="fas fa-code-branch inline w-4 h-4 mr-1"></i>Tag Aliases</button>
+                <button id="clear-btn" class="bg-red-600 text-white px-4 py-2 rounded" aria-label="Clear tags categories and segments"><i class="fas fa-broom inline w-4 h-4 mr-1"></i>Clear Tags/Categories/Segments</button>
             </div>
             <div id="progress-container" class="w-full bg-gray-200 h-2 mt-4 rounded hidden">
                 <div id="progress-bar" class="h-full bg-indigo-600 w-0"></div>
@@ -85,6 +86,9 @@ window.renderPageHeader(pageMain, {
     document.getElementById('tagging-btn').addEventListener('click', ()=>run('tagging'));
     document.getElementById('categories-btn').addEventListener('click', ()=>run('categories'));
     document.getElementById('segments-btn').addEventListener('click', ()=>run('segments'));
+    document.getElementById('tag-aliases-btn').addEventListener('click', () => {
+        window.location.href = 'tag_aliases.html';
+    });
     document.getElementById('clear-btn').addEventListener('click', ()=>run('clear'));
     </script>
     <script src="js/overlay.js"></script>
