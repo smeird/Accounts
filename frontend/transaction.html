@@ -15,10 +15,40 @@
     <link rel="stylesheet" href="operational_ui.css">
     <!-- Font Awesome icons loaded via menu.js -->
     <style>
+    .receipt-paper {
+        position: relative;
+        background: linear-gradient(180deg, #fffef9 0%, #fffdf4 100%);
+        border: 1px solid #e5dcc2;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    }
+    .receipt-paper::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -10px;
+        height: 10px;
+        background: repeating-linear-gradient(-45deg, #ede3c9 0 8px, #fffdf4 8px 16px);
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+    .meta-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.28rem 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        border-radius: 9999px;
+        border: 1px solid transparent;
+    }
+    .meta-pill i { font-size: 0.7rem; }
     @media print {
         body { background: white; }
         nav, h1, p, .no-print { display: none !important; }
-        .receipt { border: none; box-shadow: none; }
+        .receipt-paper { border: none; box-shadow: none; }
+        .receipt-paper::after { display: none; }
     }
     </style>
 </head>
@@ -58,49 +88,56 @@ window.renderPageHeader(pageMain, {
             }
 
             const card = document.createElement('div');
-            card.className = 'cards';
+            card.className = 'cards cards-tight';
 
-            function createBadge(text, colorClasses) {
-                const span = document.createElement('span');
-                span.textContent = text;
-                span.className = `inline-block px-2 py-1 text-xs font-semibold rounded ${colorClasses}`;
-                return span;
-            }
-
-            const badges = document.createElement('div');
-            badges.className = 'absolute top-2 right-2 flex flex-col space-y-2 items-end';
-
-            function addBadge(value, color) {
-                if (!value) return;
+            function createMetaPill(icon, label, value, colorClasses) {
                 const link = document.createElement('a');
                 link.href = `search.html?value=${encodeURIComponent(value)}`;
-                link.appendChild(createBadge(value, color));
-                badges.appendChild(link);
+                link.className = `meta-pill ${colorClasses}`;
+                link.setAttribute('aria-label', `Search for ${label} ${value}`);
+                link.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${value}</span>`;
+                return link;
             }
 
-            addBadge(tx.tag_name, 'bg-indigo-200 text-indigo-800');
-            addBadge(tx.category_name, 'bg-green-200 text-green-800');
-            addBadge(tx.segment_name, 'bg-yellow-200 text-yellow-800');
+            const metaChips = document.createElement('div');
+            metaChips.className = 'flex flex-wrap gap-2';
 
-            card.appendChild(badges);
+            function addMetaPill(icon, label, value, color) {
+                if (!value) return;
+                metaChips.appendChild(createMetaPill(icon, label, value, color));
+            }
+
+            addMetaPill('fa-tag', 'tag', tx.tag_name, 'bg-indigo-50 text-indigo-700 border-indigo-200');
+            addMetaPill('fa-folder-open', 'category', tx.category_name, 'bg-emerald-50 text-emerald-700 border-emerald-200');
+            addMetaPill('fa-diagram-project', 'segment', tx.segment_name, 'bg-amber-50 text-amber-700 border-amber-200');
 
             const form = document.createElement('form');
             form.className = 'space-y-4';
             form.innerHTML = `
-                <div class="receipt font-mono text-sm max-w-xs mx-auto border border-dashed p-4 space-y-1">
-                    <div class="flex justify-between"><span class="font-semibold">Transaction ID</span><span>${tx.id}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Account</span><span>${tx.account_name || ''}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Sort Code</span><span>${tx.sort_code || ''}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Account Number</span><span>${tx.account_number || ''}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Date</span><span>${tx.date}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Description</span><span>${tx.description}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Memo</span><span>${tx.memo || ''}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Amount</span><span>£${parseFloat(tx.amount).toFixed(2)}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">OFX Type</span><span>${tx.ofx_type || ''}</span></div>
-                    ${tx.ofx_id ? `<div class="flex justify-between"><span class="font-semibold">OFX ID</span><span>${tx.ofx_id}</span></div>` : ''}
-                    ${tx.bank_ofx_id ? `<div class="flex justify-between"><span class="font-semibold">Bank OFX ID</span><span>${tx.bank_ofx_id}</span></div>` : ''}
-                    <div class="flex justify-between"><span class="font-semibold">Transfer</span><span>${tx.transfer_id ? '<span class="text-blue-600"><i class="fas fa-right-left inline w-4 h-4 mr-1"></i>Yes – ignored in KPI, income and expense totals (ID ' + tx.transfer_id + ')</span>' : 'No'}</span></div>
-                    <div class="flex justify-between"><span class="font-semibold">Category</span><span>${tx.category_name || 'None'}</span></div>
+                <div class="receipt-paper max-w-xl mx-auto p-6 sm:p-8 space-y-4 text-slate-700">
+                    <div class="text-center border-b border-dashed border-amber-300 pb-3">
+                        <p class="uppercase tracking-[0.25em] text-xs text-slate-500">Transaction receipt</p>
+                        <p class="text-sm text-slate-500">Reference #${tx.id}</p>
+                    </div>
+                    <div class="font-mono text-sm space-y-2">
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Account</span><span class="text-right">${tx.account_name || ''}</span></div>
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Sort Code</span><span class="text-right">${tx.sort_code || ''}</span></div>
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Account Number</span><span class="text-right">${tx.account_number || ''}</span></div>
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Date</span><span class="text-right">${tx.date}</span></div>
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Description</span><span class="text-right">${tx.description}</span></div>
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Memo</span><span class="text-right">${tx.memo || ''}</span></div>
+                        <div class="flex justify-between gap-3 border-y border-dashed border-amber-300 py-2 mt-2">
+                            <span class="font-semibold uppercase tracking-wide">Total</span><span class="text-right font-semibold">£${parseFloat(tx.amount).toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between gap-3"><span class="font-semibold">OFX Type</span><span class="text-right">${tx.ofx_type || ''}</span></div>
+                        ${tx.ofx_id ? `<div class="flex justify-between gap-3"><span class="font-semibold">OFX ID</span><span class="text-right">${tx.ofx_id}</span></div>` : ''}
+                        ${tx.bank_ofx_id ? `<div class="flex justify-between gap-3"><span class="font-semibold">Bank OFX ID</span><span class="text-right">${tx.bank_ofx_id}</span></div>` : ''}
+                        <div class="flex justify-between gap-3"><span class="font-semibold">Transfer</span><span class="text-right">${tx.transfer_id ? '<span class="text-blue-700"><i class="fas fa-right-left inline w-4 h-4 mr-1" aria-hidden="true"></i>Yes (ID ' + tx.transfer_id + ')</span>' : 'No'}</span></div>
+                    </div>
+                    <div class="pt-2 border-t border-dashed border-amber-300 space-y-2">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assigned labels</p>
+                        <div id="assigned-meta" class="flex flex-wrap gap-2"></div>
+                    </div>
                 </div>
                 <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
                 <label class="block">Category Group: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category group"></select></label>
@@ -110,6 +147,7 @@ window.renderPageHeader(pageMain, {
                     <button type="button" id="print" class="bg-gray-600 text-white px-4 py-2 rounded" aria-label="Print receipt">Print Receipt</button>
                 </div>
             `;
+            form.querySelector('#assigned-meta').appendChild(metaChips);
             card.appendChild(form);
             container.appendChild(card);
             const printBtn = form.querySelector('#print');
