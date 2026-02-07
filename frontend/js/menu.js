@@ -384,12 +384,28 @@ const attachSidebarSearchHandler = (root = document) => {
         }
       });
     } else {
+      const pageHeader = main.querySelector(':scope > header.page-header');
       const wrapper = document.createElement('section');
       wrapper.className = 'cards';
-      while (main.firstChild) {
-        wrapper.appendChild(main.firstChild);
+
+      const nodesToWrap = [];
+      main.childNodes.forEach(node => {
+        if (node !== pageHeader) {
+          nodesToWrap.push(node);
+        }
+      });
+
+      nodesToWrap.forEach(node => {
+        wrapper.appendChild(node);
+      });
+
+      if (wrapper.childNodes.length > 0) {
+        if (pageHeader) {
+          pageHeader.insertAdjacentElement('afterend', wrapper);
+        } else {
+          main.appendChild(wrapper);
+        }
       }
-      main.appendChild(wrapper);
     }
   });
 
