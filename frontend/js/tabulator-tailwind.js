@@ -39,7 +39,7 @@ function styleCalcRows(table) {
     const rows = table.element.querySelectorAll('.tabulator-calcs-row');
     rows.forEach(row => {
         row.classList.remove('bg-white');
-        row.classList.add('glass-table-row');
+        row.classList.add('ops-table-row');
         row.style.backgroundColor = '';
         row.querySelectorAll('.tabulator-cell').forEach(cell => {
             cell.classList.remove('bg-white');
@@ -74,7 +74,7 @@ function tailwindTabulator(element, options) {
         if (userRowFormatter) userRowFormatter(row);
         const rowEl = row.getElement();
         rowEl.classList.remove('bg-white', 'hover:bg-white');
-        rowEl.classList.add('glass-table-row');
+        rowEl.classList.add('ops-table-row');
         rowEl.classList.remove('tabulator-row-even', 'tabulator-row-odd');
     };
     if (options.pagination === undefined) {
@@ -114,7 +114,7 @@ function tailwindTabulator(element, options) {
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.placeholder = 'Search';
-        searchInput.className = 'tabulator-search glass-input mb-2 w-full';
+        searchInput.className = 'tabulator-search ops-input mb-2 w-full';
         searchInput.style.colorScheme = 'light';
         tableEl.parentNode.insertBefore(searchInput, tableEl);
         let searchInProgress = false;
@@ -144,7 +144,7 @@ function tailwindTabulator(element, options) {
     table.on('dataProcessed', function() {
         styleCalcRows(table);
     });
-    el.classList.add('border-0', 'rounded-xl', 'overflow-hidden', 'glass-table', 'glass-surface');
+    el.classList.add('border-0', 'rounded-xl', 'overflow-hidden', 'ops-standard-table');
     const header = el.querySelector('.tabulator-header');
     if (header) {
         header.classList.remove('bg-white');
@@ -160,7 +160,7 @@ function tailwindTabulator(element, options) {
     const paginator = el.querySelector('.tabulator-paginator');
     if (paginator) {
         paginator.classList.remove('bg-white');
-        paginator.classList.add('p-2', 'rounded-b-lg');
+        paginator.classList.add('p-2', 'rounded-b-lg', 'ops-table-paginator');
         paginator.style.backgroundColor = '';
     }
     return table;

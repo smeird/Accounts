@@ -209,38 +209,38 @@ async function loadProjects(){
         details.appendChild(rationale);
 
         const table = document.createElement('table');
-        table.className = 'text-xs w-full';
+        table.className = 'ops-native-table';
         table.innerHTML = `
-            <tr>
-                <td class="pr-2 font-semibold">Cost Low:</td><td>${fmtMoney(p.cost_low)}</td>
-                <td class="pr-2 font-semibold">Cost Medium:</td><td>${fmtMoney(p.cost_medium)}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Cost High:</td><td>${fmtMoney(p.cost_high)}</td>
-                <td class="pr-2 font-semibold">Funding:</td><td>${p.funding_source || ''}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Recurring Cost:</td><td>${fmtMoney(p.recurring_cost)}</td>
-                <td class="pr-2 font-semibold">Estimated Time:</td><td>${p.estimated_time || ''}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Expected Lifespan:</td><td>${p.expected_lifespan || ''}</td>
-                <td class="pr-2 font-semibold">Financial Benefit:</td><td>${scoreBadge(p.benefit_financial)}</td>
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Quality Benefit:</td><td>${scoreBadge(p.benefit_quality)}</td>
-                <td class="pr-2 font-semibold">Risk Benefit:</td><td>${scoreBadge(p.benefit_risk)}</td>
-            </tr>
-            <tr>
-
-                <td class="pr-2 font-semibold">Sustainability Benefit:</td><td>${scoreBadge(p.benefit_sustainability)}</td>
-                <td class="pr-2 font-semibold">Score:</td><td>${renderStars(p.score, minScore, maxScore)}</td>
-
-            </tr>
-            <tr>
-                <td class="pr-2 font-semibold">Dependencies:</td><td>${p.dependencies || ''}</td>
-                <td class="pr-2 font-semibold">Risks:</td><td>${p.risks || ''}</td>
-            </tr>
+            <tbody>
+                <tr>
+                    <th scope="row">Cost Low</th><td>${fmtMoney(p.cost_low)}</td>
+                    <th scope="row">Cost Medium</th><td>${fmtMoney(p.cost_medium)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Cost High</th><td>${fmtMoney(p.cost_high)}</td>
+                    <th scope="row">Funding</th><td>${p.funding_source || ''}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Recurring Cost</th><td>${fmtMoney(p.recurring_cost)}</td>
+                    <th scope="row">Estimated Time</th><td>${p.estimated_time || ''}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Expected Lifespan</th><td>${p.expected_lifespan || ''}</td>
+                    <th scope="row">Financial Benefit</th><td>${scoreBadge(p.benefit_financial)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Quality Benefit</th><td>${scoreBadge(p.benefit_quality)}</td>
+                    <th scope="row">Risk Benefit</th><td>${scoreBadge(p.benefit_risk)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Sustainability Benefit</th><td>${scoreBadge(p.benefit_sustainability)}</td>
+                    <th scope="row">Score</th><td>${renderStars(p.score, minScore, maxScore)}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Dependencies</th><td>${p.dependencies || ''}</td>
+                    <th scope="row">Risks</th><td>${p.risks || ''}</td>
+                </tr>
+            </tbody>
         `;
         details.appendChild(table);
         card.appendChild(details);
