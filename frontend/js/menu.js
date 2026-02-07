@@ -368,6 +368,17 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
     </a>
   `;
   document.body.appendChild(utility);
+
+  if (content) {
+    const main = content.querySelector('main');
+    if (main) {
+      // Preserve existing mobile spacing while reserving desktop room for the
+      // injected utility bar so page titles do not sit underneath it.
+      main.classList.add('md:pt-20');
+      main.classList.remove('md:pt-0');
+    }
+  }
+
   const latestLink = document.getElementById('latest-statement-link');
   if (latestLink) {
     fetchNoCache(`${apiBase}/transaction_months.php`)
