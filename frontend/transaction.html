@@ -44,6 +44,21 @@
         border: 1px solid transparent;
     }
     .meta-pill i { font-size: 0.7rem; }
+    .tx-action-btn {
+        height: 2.6rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0 1rem;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .tx-action-btn--save { background: #4f46e5; }
+    .tx-action-btn--transfer { background: #2563eb; }
+    .tx-action-btn--print { background: #475569; }
+    .tx-action-btn--disabled { background: #94a3b8; cursor: not-allowed; }
     @media print {
         body { background: white; }
         nav, h1, p, .no-print { display: none !important; }
@@ -145,9 +160,9 @@ window.renderPageHeader(pageMain, {
                     <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 </div>
                 <div class="flex flex-wrap gap-2 justify-center no-print">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Save transaction">Save</button>
-                    <button type="button" id="mark-transfer" class="bg-blue-600 text-white px-4 py-2 rounded" aria-label="Mark transaction as transfer">Mark as Transfer</button>
-                    <button type="button" id="print" class="bg-gray-600 text-white px-4 py-2 rounded" aria-label="Print receipt">Print Receipt</button>
+                    <button type="submit" class="tx-action-btn tx-action-btn--save" aria-label="Save transaction">Save</button>
+                    <button type="button" id="mark-transfer" class="tx-action-btn tx-action-btn--transfer" aria-label="Mark transaction as transfer">Mark as Transfer</button>
+                    <button type="button" id="print" class="tx-action-btn tx-action-btn--print" aria-label="Print receipt">Print Receipt</button>
                 </div>
             `;
             form.querySelector('#assigned-meta').appendChild(metaChips);
@@ -161,8 +176,8 @@ window.renderPageHeader(pageMain, {
             if (markTransferBtn) {
                 if (tx.transfer_id) {
                     markTransferBtn.disabled = true;
-                    markTransferBtn.classList.remove('bg-blue-600');
-                    markTransferBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    markTransferBtn.classList.remove('tx-action-btn--transfer');
+                    markTransferBtn.classList.add('tx-action-btn--disabled');
                     markTransferBtn.textContent = 'Already marked as transfer';
                 } else {
                     markTransferBtn.addEventListener('click', () => {
