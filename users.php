@@ -79,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="frontend/operational_ui.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
       <!-- Font Awesome icons loaded via frontend/js/menu.js -->
@@ -89,7 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
+<body class="ops-body" data-api-base="php_backend/public">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
         <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
@@ -135,6 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
+        </main>
+    </div>
+    <script src="frontend/js/menu.js"></script>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>

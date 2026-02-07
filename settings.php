@@ -164,6 +164,7 @@ $bg600 = "bg-{$colorScheme}-600";
     </script>
 
       <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="frontend/operational_ui.css">
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <style>
           a { transition: color 0.2s ease; }
@@ -172,7 +173,10 @@ $bg600 = "bg-{$colorScheme}-600";
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
+<body class="ops-body" data-api-base="php_backend/public">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
     <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
         <i class="fas fa-cogs <?= $text600 ?> text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase <?= $text900 ?> text-[0.6rem] mb-1">ADMIN TOOLS / SYSTEM SETTINGS</div>
@@ -252,6 +256,9 @@ $bg600 = "bg-{$colorScheme}-600";
             <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
         </form>
     </div>
+        </main>
+    </div>
+    <script src="frontend/js/menu.js"></script>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
