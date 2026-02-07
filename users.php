@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="frontend/operational_ui.css">
+    <link rel="stylesheet" href="frontend/cards.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
       <!-- Font Awesome icons loaded via frontend/js/menu.js -->
@@ -90,11 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="ops-body" data-api-base="php_backend/public">
-    <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow border border-gray-400">
+<body class="min-h-screen bg-gray-50 p-6" data-api-base="php_backend/public">
+    <div class="max-w-2xl mx-auto cards cards-solid border border-gray-400">
         <i class="fas fa-piggy-bank text-indigo-600 text-6xl mb-4 block mx-auto"></i>
         <div class="uppercase text-indigo-900 text-[0.6rem] mb-1">ADMIN TOOLS / MANAGE USERS</div>
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">User Management</h1>
@@ -121,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <h2 class="text-xl font-semibold mt-6 mb-2">Two-Factor Authentication</h2>
         <p class="mb-4"><?= $has2fa ? '2FA is enabled for your account.' : '2FA is not enabled. Generate a secret to enable it.' ?></p>
-        <div class="bg-white p-4 rounded shadow border border-gray-400 space-y-4 mb-6">
+        <div class="cards cards-solid cards-tight border border-gray-400 space-y-4 mb-6">
             <form id="generate-form" class="space-y-4">
                 <input type="hidden" id="gen-username" value="<?= htmlspecialchars($username) ?>">
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-qrcode inline w-4 h-4 mr-2"></i>Generate QR</button>

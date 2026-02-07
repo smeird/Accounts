@@ -24,7 +24,7 @@
         <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Project Board</h1>
         <p class="mb-4">Browse all active projects in a card layout.</p>
 
-        <section class="bg-white p-6 rounded shadow space-y-4">
+        <section class="cards cards-solid cards-tight space-y-4">
             <div class="flex flex-col lg:flex-row lg:items-end gap-3">
                 <label class="flex-1">
                     <span class="block text-sm font-semibold mb-1">Search Projects</span>
@@ -278,7 +278,7 @@ async function loadProjects(){
     });
 
         if(!filteredProjects.length){
-            board.innerHTML = '<div class="bg-white p-6 rounded shadow text-sm text-gray-600">No projects match the selected filters.</div>';
+            board.innerHTML = '<div class="cards cards-solid cards-tight text-sm text-gray-600">No projects match the selected filters.</div>';
         }
     }
 

@@ -24,12 +24,14 @@
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Manage Tags</h1>
             <p class="mb-4">Create new tags and manage existing ones for categorising transactions. Tags act like labels that make reports and searches more meaningful.</p>
+            <section class="cards cards-tight">
             <form id="tag-form" class="space-y-4">
                 <label class="block">Tag Name<br><input type="text" id="tag-name" class="border p-2 rounded w-full" data-help="Name for the tag"></label>
                 <label class="block">Keyword (for auto tagging)<br><input type="text" id="tag-keyword" class="border p-2 rounded w-full" data-help="Keyword used to auto-tag transactions"></label>
                 <label class="block">Description<br><textarea id="tag-description" class="border p-2 rounded w-full" data-help="Description for the tag"></textarea></label>
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Create Tag</button>
             </form>
+            </section>
             <div class="mt-6 cards cards-tight">
                 <h2 class="text-xl font-semibold mb-2">Existing Tags</h2>
                 <div id="tag-table"></div>

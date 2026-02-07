@@ -25,27 +25,37 @@
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">All Years Dashboard</h1>
             <p class="mb-4">Compare financial totals across every recorded year to reveal long-term trends and patterns in your finances.</p>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Tag Totals</h2>
-            <div id="tags-table" class="mt-2"></div>
-            <div id="tags-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of tag totals across all years."></div>
+            <section class="cards cards-tight mt-6">
+                <h2 class="text-xl font-semibold mb-2">Tag Totals</h2>
+                <div id="tags-table"></div>
+                <div id="tags-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of tag totals across all years."></div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Category Totals</h2>
-            <div id="categories-table" class="mt-2"></div>
-            <div id="categories-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of category totals across all years."></div>
+            <section class="cards cards-tight mt-6">
+                <h2 class="text-xl font-semibold mb-2">Category Totals</h2>
+                <div id="categories-table"></div>
+                <div id="categories-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of category totals across all years."></div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Category & Tag Breakdown</h2>
-            <div id="category-tag-sunburst" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div id="category-tag-income" style="height:400px" data-chart-desc="Sunburst chart of income by category and tag over all years."></div>
-                <div id="category-tag-outgoings" style="height:400px" data-chart-desc="Sunburst chart of outgoings by category and tag over all years."></div>
-            </div>
+            <section class="cards cards-tight mt-6">
+                <h2 class="text-xl font-semibold mb-2">Category & Tag Breakdown</h2>
+                <div id="category-tag-sunburst" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="category-tag-income" style="height:400px" data-chart-desc="Sunburst chart of income by category and tag over all years."></div>
+                    <div id="category-tag-outgoings" style="height:400px" data-chart-desc="Sunburst chart of outgoings by category and tag over all years."></div>
+                </div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Segment Totals</h2>
-            <div id="segments-table" class="mt-2"></div>
-            <div id="segments-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of segment totals across all years."></div>
+            <section class="cards cards-tight mt-6">
+                <h2 class="text-xl font-semibold mb-2">Segment Totals</h2>
+                <div id="segments-table"></div>
+                <div id="segments-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of segment totals across all years."></div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Group Totals</h2>
-            <div id="groups-table" class="mt-2"></div>
-            <div id="groups-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of group totals across all years."></div>
+            <section class="cards cards-tight mt-6">
+                <h2 class="text-xl font-semibold mb-2">Group Totals</h2>
+                <div id="groups-table"></div>
+                <div id="groups-chart" class="mt-4" style="height:400px" data-chart-desc="Column chart of group totals across all years."></div>
+            </section>
         </main>
     </div>
     <script src="js/menu.js"></script>

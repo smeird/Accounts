@@ -22,15 +22,19 @@
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
             <h1 class="text-2xl font-semibold mb-4 text-indigo-700">Manage Segments</h1>
             <p class="mb-4">Create segments to group categories for broader analysis. Drag categories between segments to adjust their grouping.</p>
+            <section class="cards cards-tight">
             <form id="segment-form" class="space-y-4">
                 <label class="block">Segment Name<br><input type="text" id="segment-name" class="border p-2 rounded w-full" data-help="Name for the segment"></label>
                 <label class="block">Description<br><textarea id="segment-description" class="border p-2 rounded w-full" data-help="Description for the segment"></textarea></label>
                 <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Create Segment</button>
             </form>
-            <div id="segment-layout" class="mt-6 flex items-start gap-4">
+            </section>
+            <section class="cards mt-6">
+                <div id="segment-layout" class="flex items-start gap-4">
                 <div id="unassigned" class="flex-shrink-0"></div>
                 <div id="segment-container" class="flex-1 flex gap-4 overflow-x-auto items-start"></div>
-            </div>
+                </div>
+            </section>
         </main>
     </div>
     <script src="js/menu.js"></script>

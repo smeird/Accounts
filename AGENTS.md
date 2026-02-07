@@ -65,6 +65,7 @@
 - Project wiki pages are stored in the `wiki/` directory and mirror the GitHub wiki.
 
 ## Decisions
+- Surface system standardised to `cards` (default glass) and `cards cards-solid` (solid) variants. Use `cards cards-tight` for comparable forms/tables/charts and reserve `cards cards-solid` for dense filter/control areas that need stronger contrast.
 - Sections use scroll-based fade-in; apply `opacity-0` initially and `frontend/js/scroll_animations.js` adds a `fade-in` class when in view.
 - Settings include an accent font weight option offering thin (100), light (300), and bold (700) styles.
 - Settings provide a table font option applied to all Tabulator tables.
