@@ -20,10 +20,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Backup &amp; Restore</h1>
-            </header>
-            <p class="mb-4">Create backups of your data or restore from an earlier snapshot. Use the tools below to download a copy of your information or load a previous backup.</p>
+<p class="mb-4">Create backups of your data or restore from an earlier snapshot. Use the tools below to download a copy of your information or load a previous backup.</p>
             <section class="cards space-y-4">
                 <h2 class="text-xl font-semibold">Download Backup</h2>
 
@@ -56,6 +53,15 @@
         </main>
     </div>
 
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Backup & Restore',
+    breadcrumb: 'Data Management',
+    subtitle: 'Create backups of your data, restore previous snapshots, and keep your records safe.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>

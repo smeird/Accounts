@@ -21,10 +21,7 @@
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-                    <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Project Board</h1>
-            </header>
-        <p class="mb-4">Browse all active projects in a card layout.</p>
+<p class="mb-4">Browse all active projects in a card layout.</p>
 
         <section class="cards cards-solid cards-tight space-y-4">
             <div class="flex flex-col lg:flex-row lg:items-end gap-3">
@@ -63,7 +60,16 @@
     </main>
 </div>
 
-<script src="js/menu.js"></script>
+<script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Project Board',
+    breadcrumb: 'Projects',
+    subtitle: 'View active projects as cards with key status details and quick actions.'
+});
+</script>
+    <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script>
 function fmtMoney(v){

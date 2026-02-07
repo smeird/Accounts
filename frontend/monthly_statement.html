@@ -87,6 +87,14 @@
         </main>
     </div>
     <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Monthly Statement',
+    breadcrumb: 'Transactions / Statements',
+    subtitle: 'Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
@@ -100,11 +108,6 @@ const monthSelect = document.getElementById('month');
 const yearSelect = document.getElementById('year');
 const form = document.getElementById('statement-form');
 const untaggedOnly = document.getElementById('untagged-only');
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Monthly Statement',
-    subtitle: 'Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.'
-});
 let table;
 
 // fetch available transaction groups once

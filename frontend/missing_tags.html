@@ -21,15 +21,21 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Missing Tags</h1>
-            </header>
-            <p class="mb-4">Identify transactions that have not yet been tagged so you can assign categories before they slip through your reports.</p>
+<p class="mb-4">Identify transactions that have not yet been tagged so you can assign categories before they slip through your reports.</p>
             <section class="cards cards-tight">
                 <div id="untagged-table"></div>
             </section>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Missing Tags',
+    breadcrumb: 'Transactions / Data Quality',
+    subtitle: 'Find transactions that still need tags so reports stay accurate.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>

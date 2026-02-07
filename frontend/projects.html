@@ -23,10 +23,7 @@
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-                    <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Projects</h1>
-            </header>
-        <p class="mb-4">Review your planned projects, explore costs and compare their priorities.</p>
+<p class="mb-4">Review your planned projects, explore costs and compare their priorities.</p>
 
         <section class="grid gap-6 xl:grid-cols-3 auto-rows-min">
             <div class="cards cards-snug flex flex-col space-y-6">
@@ -95,7 +92,16 @@
     </main>
 </div>
 
-<script src="js/menu.js"></script>
+<script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Projects',
+    breadcrumb: 'Projects',
+    subtitle: 'Manage active projects, update details, and track outcomes.'
+});
+</script>
+    <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
 <script src="js/tabulator-tailwind.js"></script>

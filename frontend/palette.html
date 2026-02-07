@@ -6,9 +6,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Palette Settings</title>
   <script>
-      window.tailwind = window.tailwind || {};
-      window.tailwind.config = {};
-  </script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -18,11 +18,7 @@
   <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                  <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Palette Settings</h1>
-            </header>
-
-      <div class="cards space-y-4">
+<div class="cards space-y-4">
         <ul class="list-disc pl-5 text-gray-700">
           <li>Set segment colours using the picker beside each name. Ticking <em>Lock</em> keeps your choice.</li>
           <li>To reset a segment, untick its <em>Lock</em> box and press <strong>Refresh</strong>.</li>
@@ -37,7 +33,16 @@
       </div>
     </main>
   </div>
-  <script src="js/menu.js"></script>
+  <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Palette Settings',
+    breadcrumb: 'Settings / Appearance',
+    subtitle: 'Adjust chart and interface palette behaviour using hue, lightness, and chroma controls.'
+});
+</script>
+    <script src="js/menu.js"></script>
   <script src="js/input_help.js"></script>
   <script src="js/overlay.js"></script>
   <script type="module" src="js/palette_ui.js"></script>

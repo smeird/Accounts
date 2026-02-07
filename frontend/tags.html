@@ -22,10 +22,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Manage Tags</h1>
-            </header>
-            <p class="mb-4">Create new tags and manage existing ones for categorising transactions. Tags act like labels that make reports and searches more meaningful.</p>
+<p class="mb-4">Create new tags and manage existing ones for categorising transactions. Tags act like labels that make reports and searches more meaningful.</p>
             <section class="cards cards-tight">
             <form id="tag-form" class="space-y-4">
                 <label class="block">Tag Name<br><input type="text" id="tag-name" class="border p-2 rounded w-full" data-help="Name for the tag"></label>
@@ -40,6 +37,15 @@
             </div>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Manage Tags',
+    breadcrumb: 'Transactions / Configuration',
+    subtitle: 'Create and update tags used to classify transactions.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>

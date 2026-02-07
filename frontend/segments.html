@@ -20,10 +20,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Manage Segments</h1>
-            </header>
-            <p class="mb-4">Create segments to group categories for broader analysis. Drag categories between segments to adjust their grouping.</p>
+<p class="mb-4">Create segments to group categories for broader analysis. Drag categories between segments to adjust their grouping.</p>
             <section class="cards cards-tight">
             <form id="segment-form" class="space-y-4">
                 <label class="block">Segment Name<br><input type="text" id="segment-name" class="border p-2 rounded w-full" data-help="Name for the segment"></label>
@@ -39,6 +36,15 @@
             </section>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Manage Segments',
+    breadcrumb: 'Transactions / Configuration',
+    subtitle: 'Maintain spending segments used for deeper analysis and reporting.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/segment_drag.js"></script>

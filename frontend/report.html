@@ -23,10 +23,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Transaction Reports</h1>
-            </header>
-            <p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
+<p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
             <form id="report-form" class="cards cards-tight grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label class="block md:col-span-3">Ask in plain English:
                     <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
@@ -68,6 +65,15 @@
             </div>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Transaction Reports',
+    breadcrumb: 'Reports & Analysis',
+    subtitle: 'Build and save transaction reports with charts and category breakdowns.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>

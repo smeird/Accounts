@@ -22,10 +22,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Search Transactions</h1>
-            </header>
-            <p class="mb-4">Find specific transactions using keywords and view the results below. Quick searches help you jump straight to the entries you need.</p>
+<p class="mb-4">Find specific transactions using keywords and view the results below. Quick searches help you jump straight to the entries you need.</p>
             <section class="cards cards-tight">
             <form id="search-form" class="space-y-4">
                 <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
@@ -43,6 +40,15 @@
             </section>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Search Transactions',
+    breadcrumb: 'Transactions',
+    subtitle: 'Search across transactions using flexible filters and keywords.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
