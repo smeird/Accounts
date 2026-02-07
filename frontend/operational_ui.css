@@ -1,0 +1,132 @@
+/* Shared operational UI patterns for dashboard and planning screens */
+.ops-main {
+    padding: 1.5rem;
+}
+
+.ops-main > * + * {
+    margin-top: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .ops-main {
+        padding: 2rem;
+    }
+
+    .ops-main > * + * {
+        margin-top: 2rem;
+    }
+}
+
+.ops-section {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .ops-section {
+        padding: 1.5rem;
+    }
+}
+
+.ops-heading {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+}
+
+.ops-form-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+@media (min-width: 768px) {
+    .ops-form-grid.cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .ops-form-grid.cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ops-form-grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.ops-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ops-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.ops-help {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.ops-input,
+.ops-select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    color: #1f2937;
+    background: #ffffff;
+}
+
+.ops-btn-primary {
+    height: 2.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0 1rem;
+    background: #4f46e5;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.ops-table-block,
+.ops-chart-block {
+    border: 1px solid #dbe3ef;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.ops-titlebar {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #eef2ff;
+}
+
+.ops-titlebar h2,
+.ops-titlebar h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.ops-table-content,
+.ops-chart-content {
+    padding: 0.9rem;
+    background: #f8fafc;
+}
+
+.ops-chart-canvas {
+    min-height: 400px;
+}
