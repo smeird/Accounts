@@ -59,16 +59,15 @@ function getChartTheme() {
     const chartFont = styles.getPropertyValue('--chart-font').trim() || 'Inter, sans-serif';
     const background = 'rgba(255, 255, 255, 0)';
     const plotBackground = 'rgba(255, 255, 255, 0)';
-    const borderColor = 'rgba(255, 255, 255, 0.35)';
     return {
         colors: chartColors,
         chart: {
             style: { fontFamily: chartFont, color: text },
             backgroundColor: background,
             plotBackgroundColor: plotBackground,
-            borderColor,
+            borderColor: 'transparent',
             borderRadius: 12,
-            borderWidth: 1,
+            borderWidth: 0,
             className: 'glass-chart',
             shadow: false
         },
@@ -88,8 +87,8 @@ function getChartTheme() {
             style: { color: '#F8FAFC', fontFamily: chartFont }
         },
         plotOptions: {
-            series: { showInLegend: true, shadow: false },
-            pie: { showInLegend: true, shadow: false },
+            series: { showInLegend: true, shadow: false, borderWidth: 0 },
+            pie: { showInLegend: true, shadow: false, borderWidth: 0 },
             sunburst: { showInLegend: true, shadow: false }
         }
     };
@@ -119,8 +118,8 @@ function applyChartTheme() {
         yAxis: { labels: opts.yAxis.labels, title: opts.yAxis.title },
         tooltip: opts.tooltip,
         plotOptions: {
-            series: { shadow: opts.plotOptions.series.shadow },
-            pie: { shadow: opts.plotOptions.pie.shadow },
+            series: { shadow: opts.plotOptions.series.shadow, borderWidth: opts.plotOptions.series.borderWidth },
+            pie: { shadow: opts.plotOptions.pie.shadow, borderWidth: opts.plotOptions.pie.borderWidth },
             sunburst: { shadow: opts.plotOptions.sunburst.shadow }
         }
     };
