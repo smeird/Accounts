@@ -94,12 +94,13 @@ const attachSidebarSearchHandler = (root = document) => {
       if (icon.closest('header')) return;
       const parent = icon.closest('button, a');
       const parentClasses = parent ? Array.from(parent.classList) : [];
-      const coloredBg = parentClasses.some(c => c.startsWith('bg-') && c !== 'bg-white');
+      const hasExplicitParentText = parentClasses.some(c => c.startsWith('text-'));
+      const darkBg = parentClasses.some(c => /^(bg-(?:black|gray|slate|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[5-9]00)$/.test(c));
       const hasColor = Array.from(icon.classList).some(c => c.startsWith('text-'));
-      if (coloredBg) {
+      if (darkBg && !hasExplicitParentText) {
         icon.classList.forEach(c => { if (c.startsWith('text-')) icon.classList.remove(c); });
         icon.classList.add('text-white');
-      } else if (!hasColor) {
+      } else if (!hasColor && !hasExplicitParentText) {
         icon.classList.add(`text-${colorScheme}-600`);
       }
     });
