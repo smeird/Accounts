@@ -1,7 +1,7 @@
 /* Shared canonical authenticated-page background */
 .ops-body {
     min-height: 100vh;
-    background-image: linear-gradient(to bottom, #c7d2fe, #f1f5f9, #ffffff);
+    background-image: var(--brand-gradient, linear-gradient(to bottom, #c7d2fe, #f1f5f9, #ffffff));
 }
 
 /* Shared operational UI patterns for dashboard and planning screens */
@@ -50,7 +50,7 @@
     padding: 1.5rem;
     border-radius: 1.5rem;
     border: 1px solid rgba(191, 219, 254, 0.8);
-    background: linear-gradient(145deg, rgba(224, 231, 255, 0.88), rgba(219, 234, 254, 0.65));
+    background: var(--brand-gradient, linear-gradient(145deg, rgba(224, 231, 255, 0.88), rgba(219, 234, 254, 0.65)));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 

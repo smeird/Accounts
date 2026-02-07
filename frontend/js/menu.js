@@ -56,7 +56,10 @@ const attachSidebarSearchHandler = (root = document) => {
     red:    {600: '#dc2626', 700: '#b91c1c'},
     purple: {600: '#9333ea', 700: '#7e22ce'},
     teal:   {600: '#0d9488', 700: '#0f766e'},
-    orange: {600: '#ea580c', 700: '#c2410c'}
+    orange: {600: '#ea580c', 700: '#c2410c'},
+    sunset: {600: '#f97316', 700: '#ec4899', gradient: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)'},
+    ocean: {600: '#0891b2', 700: '#2563eb', gradient: 'linear-gradient(135deg, #0891b2 0%, #2563eb 100%)'},
+    'violet-rose': {600: '#8b5cf6', 700: '#e11d48', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #e11d48 100%)'}
   };
 
   const hoverStyle = document.createElement('style');
@@ -78,6 +81,7 @@ const attachSidebarSearchHandler = (root = document) => {
     cssRoot.style.setProperty('--brand-color-600', colors[600]);
     cssRoot.style.setProperty('--brand-color-700', colors[700]);
     cssRoot.style.setProperty('--page-title-color', colors[700]);
+    cssRoot.style.setProperty('--brand-gradient', colors.gradient || `linear-gradient(135deg, ${colors[600]} 0%, ${colors[700]} 100%)`);
     hoverStyle.textContent = `
       a { transition: color 0.2s ease; }
       a:hover { color: ${colors[600]}; }
