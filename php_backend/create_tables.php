@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS transaction_groups;
 DROP TABLE IF EXISTS category_tags;
+DROP TABLE IF EXISTS tag_aliases;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS budgets;
 DROP TABLE IF EXISTS projects;
@@ -140,6 +141,20 @@ CREATE TABLE IF NOT EXISTS tags (
     description TEXT DEFAULT NULL
 );
 
+CREATE TABLE IF NOT EXISTS tag_aliases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tag_id INT NOT NULL,
+    alias VARCHAR(150) NOT NULL,
+    alias_normalized VARCHAR(150) NOT NULL,
+    match_type ENUM('exact', 'contains') NOT NULL DEFAULT 'contains',
+    active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_alias_normalized (alias_normalized),
+    KEY idx_tag_aliases_tag_id (tag_id),
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS category_tags (
     category_id INT NOT NULL,
     tag_id INT NOT NULL,
@@ -201,6 +216,66 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'description'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `tags` ADD COLUMN `description` TEXT DEFAULT NULL");
+}
+
+// Ensure tag_aliases table exists for descriptor-to-tag mapping
+$result = $db->query("SHOW TABLES LIKE 'tag_aliases'");
+if ($result->rowCount() === 0) {
+    $db->exec("CREATE TABLE `tag_aliases` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `tag_id` INT NOT NULL,
+        `alias` VARCHAR(150) NOT NULL,
+        `alias_normalized` VARCHAR(150) NOT NULL,
+        `match_type` ENUM('exact','contains') NOT NULL DEFAULT 'contains',
+        `active` TINYINT(1) DEFAULT 1,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY `unique_alias_normalized` (`alias_normalized`),
+        KEY `idx_tag_aliases_tag_id` (`tag_id`),
+        FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+    )");
+}
+
+// Ensure alias_normalized column exists in tag_aliases
+$result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'alias_normalized'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `alias_normalized` VARCHAR(150) NOT NULL DEFAULT ''");
+}
+
+// Ensure match_type column exists in tag_aliases
+$result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'match_type'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `match_type` ENUM('exact','contains') NOT NULL DEFAULT 'contains'");
+}
+
+// Ensure active column exists in tag_aliases
+$result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'active'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `active` TINYINT(1) DEFAULT 1");
+}
+
+// Ensure timestamps exist in tag_aliases
+$result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'created_at'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+}
+
+$result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'updated_at'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+}
+
+// Backfill normalized aliases and enforce uniqueness/indexing
+$db->exec("UPDATE `tag_aliases` SET `alias_normalized` = LOWER(TRIM(`alias`)) WHERE `alias_normalized` = '' OR `alias_normalized` IS NULL");
+
+$result = $db->query("SHOW INDEX FROM `tag_aliases` WHERE Key_name = 'unique_alias_normalized'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD UNIQUE KEY `unique_alias_normalized` (`alias_normalized`)");
+}
+
+$result = $db->query("SHOW INDEX FROM `tag_aliases` WHERE Key_name = 'idx_tag_aliases_tag_id'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD KEY `idx_tag_aliases_tag_id` (`tag_id`)");
 }
 
 // Ensure description column exists in categories

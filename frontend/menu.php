@@ -70,6 +70,7 @@
     <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Organise Data</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
         <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="tags.html"><i class="fas fa-tags w-4 text-center text-slate-400"></i> Manage Tags</a></li>
+        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="tag_aliases.html"><i class="fas fa-link w-4 text-center text-slate-400"></i> Tag Aliases</a></li>
         <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="ai_tags.html"><i class="fas fa-robot w-4 text-center text-slate-400"></i> AI Tags</a></li>
         <li>
           <a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="missing_tags.html">
