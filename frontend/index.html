@@ -23,44 +23,44 @@
       }
     </style>
 </head>
-<body class="bg-gradient-to-b from-indigo-200 via-slate-100 to-white">
+<body class="bg-slate-50">
     <div class="flex flex-col md:flex-row min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="flex-1 min-w-0 overflow-x-auto p-6">
             <section class="mb-8" data-no-card="true">
-                <div class="rounded-3xl bg-slate-900 text-white shadow-xl">
+                <div class="rounded-xl bg-white text-slate-900 shadow-sm border border-slate-200">
                     <div class="grid gap-8 p-8 md:grid-cols-2 md:p-10 items-start">
                         <div class="space-y-5">
-                            <span class="inline-flex items-center gap-2 self-start rounded-full border border-slate-700 bg-slate-800 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-slate-200">
-                                <i class="fas fa-shield-alt text-slate-200" aria-hidden="true"></i>
+                            <span class="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-slate-600">
+                                <i class="fas fa-shield-alt text-slate-600" aria-hidden="true"></i>
                                 Financial operations overview
                             </span>
                             <h1 class="text-4xl font-semibold leading-tight md:text-5xl">Operational visibility for <span id="landing-site-name">Finance Manager</span></h1>
-                            <p class="text-base text-slate-200">Track account activity, reconcile imports, and review reporting in one place. The platform is designed for consistent financial controls and clear audit trails.</p>
+                            <p class="text-base text-slate-600">Track account activity, reconcile imports, and review reporting in one place. The platform is designed for consistent financial controls and clear audit trails.</p>
                             <div class="flex flex-wrap gap-3">
-                                <a href="upload.html" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-slate-900 shadow transition hover:bg-slate-100" aria-label="Upload transactions">
+                                <a href="upload.html" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-indigo-700" aria-label="Upload transactions">
                                     Upload Transactions
                                 </a>
-                                <a href="monthly_dashboard.html" class="inline-flex items-center justify-center rounded-full border border-slate-400 bg-transparent px-6 py-3 text-base font-semibold text-white transition hover:bg-slate-800" aria-label="View financial dashboards">
+                                <a href="monthly_dashboard.html" class="inline-flex items-center justify-center rounded-full border border-slate-400 bg-transparent px-6 py-3 text-base font-semibold text-indigo-700 transition hover:bg-slate-100" aria-label="View financial dashboards">
                                     View Dashboard
                                 </a>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl border border-slate-700 bg-slate-800 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Accounts tracked</p>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Accounts tracked</p>
                                 <p id="landing-stat-accounts" class="mt-1 text-3xl font-semibold" aria-live="polite">0</p>
-                                <p class="mt-1 text-sm text-slate-300">Current workspace coverage</p>
+                                <p class="mt-1 text-sm text-slate-500">Current workspace coverage</p>
                             </div>
-                            <div class="rounded-2xl border border-slate-700 bg-slate-800 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Transactions recorded</p>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Transactions recorded</p>
                                 <p id="landing-stat-transactions" class="mt-1 text-3xl font-semibold" aria-live="polite">0</p>
-                                <p class="mt-1 text-sm text-slate-300">Ready for reconciliation checks</p>
+                                <p class="mt-1 text-sm text-slate-500">Ready for reconciliation checks</p>
                             </div>
-                            <div class="rounded-2xl border border-slate-700 bg-slate-800 p-4 sm:col-span-2">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-300">Tags available</p>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tags available</p>
                                 <p id="landing-stat-tags" class="mt-1 text-3xl font-semibold" aria-live="polite">0</p>
-                                <p class="mt-1 text-sm text-slate-300">Supports consistent categorisation and reporting</p>
+                                <p class="mt-1 text-sm text-slate-500">Supports consistent categorisation and reporting</p>
                             </div>
                         </div>
                     </div>
