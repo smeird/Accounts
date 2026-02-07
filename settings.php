@@ -221,45 +221,48 @@ $bg600 = "bg-{$colorScheme}-600";
                 </select>
             </label>
             <label class="block">Heading Font:
-                <select name="font_heading" class="border p-2 rounded w-full" data-help="Font for headings">
+                <select name="font_heading" class="border p-2 rounded w-full" data-help="Font for headings" data-preview-target="font-preview-heading">
                     <?php foreach ($fontOptions as $k => $v): ?>
                         <option value="<?= htmlspecialchars($k) ?>" <?= $k === $headingFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <p id="font-preview-heading" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Heading preview: The quick brown fox jumps over £1,234.56.</p>
             </label>
             <label class="block">Body Font:
-                <select name="font_body" class="border p-2 rounded w-full" data-help="Font for body text">
+                <select name="font_body" class="border p-2 rounded w-full" data-help="Font for body text" data-preview-target="font-preview-body">
                     <?php foreach ($fontOptions as $k => $v): ?>
                         <option value="<?= htmlspecialchars($k) ?>" <?= $k === $bodyFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <p id="font-preview-body" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Body preview: Your settings save this font across the app.</p>
             </label>
             <label class="block">Table Font:
-                <select name="font_table" class="border p-2 rounded w-full" data-help="Font for tables">
+                <select name="font_table" class="border p-2 rounded w-full" data-help="Font for tables" data-preview-target="font-preview-table">
                     <?php foreach ($fontOptions as $k => $v): ?>
                         <option value="<?= htmlspecialchars($k) ?>" <?= $k === $tableFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <p id="font-preview-table" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Table preview: Category | Amount | Month.</p>
             </label>
             <label class="block">Chart Font:
-                <select name="font_chart" class="border p-2 rounded w-full" data-help="Font for charts">
+                <select name="font_chart" class="border p-2 rounded w-full" data-help="Font for charts" data-preview-target="font-preview-chart">
                     <?php foreach ($fontOptions as $k => $v): ?>
                         <option value="<?= htmlspecialchars($k) ?>" <?= $k === $chartFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <p id="font-preview-chart" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Chart preview: Q1 25% · Q2 35% · Q3 40%.</p>
             </label>
             <label class="block">Accent Font Weight:
-                <select name="accent_font_weight" class="border p-2 rounded w-full" data-help="Weight for accent text like search inputs">
+                <select name="accent_font_weight" class="border p-2 rounded w-full" data-help="Weight for accent text like search inputs" data-preview-target="font-preview-weight">
                     <?php foreach ($weightOptions as $k => $v): ?>
                         <option value="<?= htmlspecialchars($k) ?>" <?= $k === $accentWeight ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <p id="font-preview-weight" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Accent weight preview: Search, filters and highlights.</p>
             </label>
                     <button type="submit" class="<?= $bg600 ?> text-white px-4 py-2 rounded md:col-span-2" aria-label="Save Settings"><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
                 </form>
             </section>
-        </main>
-    </div>
         </main>
     </div>
     <script src="frontend/js/menu.js"></script>
@@ -282,7 +285,36 @@ $bg600 = "bg-{$colorScheme}-600";
       document.querySelectorAll('select[name^="font_"] option').forEach(opt => {
         if (opt.value) opt.style.fontFamily = opt.value;
       });
+
+      const updateFontPreview = (selectElement) => {
+        if (!selectElement || !selectElement.dataset.previewTarget) {
+            return;
+        }
+        const previewElement = document.getElementById(selectElement.dataset.previewTarget);
+        if (!previewElement) {
+            return;
+        }
+        previewElement.style.fontFamily = selectElement.value || '';
+      };
+
+      document.querySelectorAll('select[name^="font_"]').forEach(selectElement => {
+        updateFontPreview(selectElement);
+        selectElement.addEventListener('change', () => updateFontPreview(selectElement));
+      });
+
+      const weightSelect = document.querySelector('select[name="accent_font_weight"]');
+      const weightPreview = document.getElementById('font-preview-weight');
+      const updateWeightPreview = () => {
+        if (!weightSelect || !weightPreview) {
+            return;
+        }
+        weightPreview.style.fontWeight = weightSelect.value || '';
+      };
+
+      updateWeightPreview();
+      if (weightSelect) {
+        weightSelect.addEventListener('change', updateWeightPreview);
+      }
     </script>
-    <script src="frontend/js/menu.js"></script>
   </body>
 </html>
