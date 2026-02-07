@@ -349,42 +349,6 @@ const resolveFrontendAsset = path => `${frontendBase}${path}`;
   });
   document.body.appendChild(toggle);
 
-  const utility = document.createElement('div');
-  utility.id = 'utility-bar';
-
-
-  utility.className = `fixed top-2 right-2 md:top-8 md:right-12 bg-gradient-to-r from-white/80 to-${colorScheme}-100/40 backdrop-blur border border-white/40 text-${colorScheme}-700 p-1 flex items-center space-x-2 z-50 rounded-xl shadow-lg transition-all hover:from-white/90 hover:to-${colorScheme}-100/60 hover:shadow-2xl`;
-
-  utility.innerHTML = `
-    <a id="latest-statement-link" href="monthly_statement.html" class="flex items-center" aria-label="Latest monthly statement">
-      <i class="fas fa-file-invoice h-4 w-4"></i>
-    </a>
-  `;
-  document.body.appendChild(utility);
-
-  if (content) {
-    const main = content.querySelector('main');
-    if (main) {
-      // Preserve existing mobile spacing while reserving desktop room for the
-      // injected utility bar so page titles do not sit underneath it.
-      main.classList.add('md:pt-20');
-      main.classList.remove('md:pt-0');
-    }
-  }
-
-  const latestLink = document.getElementById('latest-statement-link');
-  if (latestLink) {
-    fetchNoCache(`${apiBase}/transaction_months.php`)
-      .then(r => r.json())
-      .then(months => {
-        if (months.length > 0) {
-          const { year, month } = months[0];
-          latestLink.href = `monthly_statement.html?year=${year}&month=${month}`;
-        }
-      })
-      .catch(err => console.error('Latest statement load failed', err));
-  }
-
   const sidebarSearchForm = document.getElementById('sidebar-search-form');
   if (sidebarSearchForm) {
     sidebarSearchForm.addEventListener('submit', e => {
