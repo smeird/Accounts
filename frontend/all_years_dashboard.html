@@ -23,10 +23,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">All Years Dashboard</h1>
-            </header>
-            <p class="mb-4">Compare financial totals across every recorded year to reveal long-term trends and patterns in your finances.</p>
+<p class="mb-4">Compare financial totals across every recorded year to reveal long-term trends and patterns in your finances.</p>
 
             <section class="cards cards-tight mt-6">
                 <h2 class="text-xl font-semibold mb-2">Tag Totals</h2>
@@ -61,6 +58,15 @@
             </section>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'All Years Dashboard',
+    breadcrumb: 'Dashboards / Multi-year',
+    subtitle: 'Compare trends across every available year to spot long-term spending and income patterns.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js"></script>

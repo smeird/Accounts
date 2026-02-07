@@ -22,10 +22,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Manage Groups</h1>
-            </header>
-            <p class="mb-4">Create groups to collect related categories for reporting and analysis. Grouping similar categories helps you see broader spending patterns.</p>
+<p class="mb-4">Create groups to collect related categories for reporting and analysis. Grouping similar categories helps you see broader spending patterns.</p>
             <section class="cards cards-tight">
             <form id="group-form" class="space-y-4">
                 <label class="block">Group Name<br><input type="text" id="group-name" class="border p-2 rounded w-full" data-help="Name for the group"></label>
@@ -39,6 +36,15 @@
             </div>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Manage Groups',
+    breadcrumb: 'Transactions / Configuration',
+    subtitle: 'Create and edit transaction groups used for organisation and reporting.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>

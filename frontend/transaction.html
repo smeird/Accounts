@@ -26,13 +26,18 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Transaction Details</h1>
-            </header>
-            <p class="mb-4">Review or edit the information for a single transaction. Changes here immediately update dashboards, reports and budgets.</p>
-            <div id="transaction-details" class="mt-4"></div>
+<div id="transaction-details" class="mt-4"></div>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Transaction Details',
+    breadcrumb: 'Transactions',
+    subtitle: 'Review or edit the information for a single transaction. Changes here immediately update dashboards, reports and budgets.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script>

@@ -21,17 +21,23 @@
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-                    <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">Archived Projects</h1>
-            </header>
-        <p class="mb-4">Review projects that have been archived. Restore any project to make it active again.</p>
+<p class="mb-4">Review projects that have been archived. Restore any project to make it active again.</p>
         <section class="cards">
             <div id="archived-projects-table"></div>
         </section>
     </main>
 </div>
 
-<script src="js/menu.js"></script>
+<script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Archived Projects',
+    breadcrumb: 'Projects',
+    subtitle: 'Review archived projects and restore them when needed.'
+});
+</script>
+    <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
 <script src="js/tabulator-tailwind.js"></script>

@@ -20,21 +20,9 @@
 <body class="ops-body">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto p-6 space-y-6">
             <section class="cards cards-tight">
-                            <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 flex items-center justify-between text-indigo-700 page-title">
-                                    Detected Transfers
-                
-                                    <span class="space-x-2">
-                                        <button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist</button>
-                                        <button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All</button>
-                                    </span>
-                
-                                </h1>
-            </header>
-                <p class="mb-4">Manage possible transfers between accounts and mark them so they don't count toward income or outgoings.</p>
-                <div id="transfers-table"></div>
+<div id="transfers-table"></div>
             </section>
             <section class="cards cards-tight">
                 <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
@@ -53,6 +41,16 @@
             </section>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Detected Transfers',
+    breadcrumb: 'Transactions / Data Quality',
+    subtitle: "Manage possible transfers between accounts and mark them so they don't count toward income or outgoings.",
+    actions: '<span class="space-x-2"><button id="assist-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm" aria-label="Assist with transfer matching"><i class="fas fa-magic inline w-4 h-4 mr-1"></i>Assist</button><button id="mark-all" class="bg-green-600 text-white px-3 py-1 rounded text-sm" aria-label="Mark all detected transfers"><i class="fas fa-check-double inline w-4 h-4 mr-1"></i>Mark All</button></span>'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>

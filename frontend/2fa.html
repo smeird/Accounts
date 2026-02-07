@@ -22,15 +22,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <div class="flex items-center mb-4">
-                            <header class="page-header">
-                <h1 class="text-2xl font-semibold flex-1 text-indigo-700 page-title"><i class="fas fa-shield-halved inline w-6 h-6 mr-2"></i>Two-Factor Authentication</h1>
-            </header>
-                <button id="help-btn" class="text-indigo-600 font-light"><i class="fas fa-question-circle inline w-5 h-5"></i></button>
-            </div>
-            <p class="mb-4">Set up TOTP-based authentication and verify your one-time codes.</p>
-
-            <div class="cards mb-6">
+<div class="cards mb-6">
                   <h2 class="text-xl mb-4">Setup</h2>
                 <form id="generate-form" class="space-y-4">
                     <input id="gen-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
@@ -51,6 +43,16 @@
             </div>
         </main>
     </div>
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Two-Factor Authentication',
+    breadcrumb: 'Security',
+    subtitle: 'Set up TOTP-based authentication and verify your one-time codes.',
+    actions: '<button id="help-btn" class="text-indigo-600 font-light" aria-label="Open help"><i class="fas fa-question-circle inline w-5 h-5"></i></button>'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>

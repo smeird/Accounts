@@ -19,10 +19,7 @@
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-4">
-                        <header class="page-header">
-                <h1 class="text-2xl font-semibold text-indigo-700 page-title">Graphs</h1>
-            </header>
-            <p class="mb-4">Explore a collection of charts that illustrate your income and spending patterns. Choose a year to see how your finances evolve and compare categories or tags visually.</p>
+<p class="mb-4">Explore a collection of charts that illustrate your income and spending patterns. Choose a year to see how your finances evolve and compare categories or tags visually.</p>
             <label for="year-select" class="block">Year:
                 <select id="year-select" class="border p-2 rounded w-full"></select>
             </label>
@@ -68,6 +65,15 @@
         </main>
     </div>
 
+    <script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'Graphs',
+    breadcrumb: 'Reports & Analysis',
+    subtitle: 'Visualise transaction data through interactive charts.'
+});
+</script>
     <script src="js/menu.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>

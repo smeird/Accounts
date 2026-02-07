@@ -19,10 +19,7 @@
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-                    <header class="page-header">
-                <h1 class="text-2xl font-semibold mb-4 text-indigo-700 page-title">AI Tags</h1>
-            </header>
-        <p class="mb-4">Configure OpenAI and automatically tag transactions.</p>
+<p class="mb-4">Configure OpenAI and automatically tag transactions.</p>
 
         <section>
             <h2 class="text-xl font-semibold mb-2">OpenAI Token</h2>
@@ -49,7 +46,16 @@
         </section>
     </main>
 </div>
-<script src="js/menu.js"></script>
+<script src="js/page_header.js"></script>
+    <script>
+const pageMain = document.querySelector('main.ops-main');
+window.renderPageHeader(pageMain, {
+    title: 'AI Tags',
+    breadcrumb: 'AI',
+    subtitle: 'Use AI to suggest tags for uncategorised transactions and apply them in bulk.'
+});
+</script>
+    <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script src="js/overlay.js"></script>
 <script>
