@@ -74,6 +74,10 @@ const attachSidebarSearchHandler = (root = document) => {
       });
     }
     const colors = colorMap[colorScheme] || colorMap.indigo;
+    const cssRoot = document.documentElement;
+    cssRoot.style.setProperty('--brand-color-600', colors[600]);
+    cssRoot.style.setProperty('--brand-color-700', colors[700]);
+    cssRoot.style.setProperty('--page-title-color', colors[700]);
     hoverStyle.textContent = `
       a { transition: color 0.2s ease; }
       a:hover { color: ${colors[600]}; }
