@@ -999,16 +999,37 @@ class Transaction {
      */
     public static function linkTransfer(int $id1, int $id2): bool {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `amount` FROM `transactions` WHERE `id` IN (?, ?)');
+        $stmt = $db->prepare('SELECT `id`, `account_id`, `amount`, `transfer_id` FROM `transactions` WHERE `id` IN (?, ?)');
         $stmt->execute([$id1, $id2]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if (count($rows) !== 2) {
             return false;
         }
-        if ((float)$rows[0]['amount'] !== -(float)$rows[1]['amount']) {
+
+        $byId = [];
+        foreach ($rows as $row) {
+            $byId[(int)$row['id']] = $row;
+        }
+        if (!isset($byId[$id1]) || !isset($byId[$id2])) {
             return false;
         }
+
+        $row1 = $byId[$id1];
+        $row2 = $byId[$id2];
+        if ((int)$row1['account_id'] === (int)$row2['account_id']) {
+            return false;
+        }
+        if ((float)$row1['amount'] !== -(float)$row2['amount']) {
+            return false;
+        }
+
         $tid = min($id1, $id2);
+        $transfer1 = $row1['transfer_id'] === null ? null : (int)$row1['transfer_id'];
+        $transfer2 = $row2['transfer_id'] === null ? null : (int)$row2['transfer_id'];
+        if (($transfer1 !== null && $transfer1 !== $tid) || ($transfer2 !== null && $transfer2 !== $tid)) {
+            return false;
+        }
+
         $upd = $db->prepare('UPDATE `transactions` SET `transfer_id` = :tid WHERE `id` IN (:a, :b)');
         return $upd->execute(['tid' => $tid, 'a' => $id1, 'b' => $id2]);
     }

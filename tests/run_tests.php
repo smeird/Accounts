@@ -281,6 +281,26 @@ assertEqual(-50.0, (float)$linked[0]['from_amount'], 'Linked from amount stored'
 $candidatesAfter = Transaction::getTransferCandidates();
 assertEqual(0, count($candidatesAfter), 'No candidates after linking');
 
+
+// Same-account transactions cannot be manually linked as transfers
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-02', -25, 'Internal move'), (1, '2024-09-02', 25, 'Internal move')");
+$sameAccountIds = $db->query("SELECT id FROM transactions WHERE date = '2024-09-02' ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+$sameAccountLinked = Transaction::linkTransfer((int)$sameAccountIds[0], (int)$sameAccountIds[1]);
+assertEqual(false, $sameAccountLinked, 'Manual transfer linking rejects same-account pair');
+$sameAccountTransferCount = (int)$db->query("SELECT COUNT(*) FROM transactions WHERE id IN ({$sameAccountIds[0]}, {$sameAccountIds[1]}) AND transfer_id IS NOT NULL")->fetchColumn();
+assertEqual(0, $sameAccountTransferCount, 'Rejected same-account pair remains unlinked');
+
+
+// Transactions already linked to a different transfer cannot be relinked
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-03', -40, 'Move out A'), (2, '2024-09-03', -40, 'Move out B'), (3, '2024-09-03', 40, 'Move in')");
+$relinkIds = $db->query("SELECT id FROM transactions WHERE date = '2024-09-03' ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+$initialLink = Transaction::linkTransfer((int)$relinkIds[1], (int)$relinkIds[2]);
+assertEqual(true, $initialLink, 'Initial inter-account manual link succeeds');
+$relinkAttempt = Transaction::linkTransfer((int)$relinkIds[0], (int)$relinkIds[2]);
+assertEqual(false, $relinkAttempt, 'Manual transfer linking rejects relinking to different transfer');
+$originalTransferId = $db->query("SELECT transfer_id FROM transactions WHERE id = {$relinkIds[2]}")->fetchColumn();
+assertEqual((int)$relinkIds[1], (int)$originalTransferId, 'Original transfer link remains deterministic after failed relink');
+
 // --- Link preview test ---
 $sample = 'file://' . realpath(__DIR__ . '/../sample_data/link_preview.html');
 $_GET['url'] = $sample;
