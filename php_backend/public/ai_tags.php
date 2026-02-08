@@ -184,6 +184,7 @@ foreach ($suggestions as $s) {
         if ($tagId === null) {
             $tagId = Tag::create($tagName, $keyword, $tagDesc);
         } else {
+            // getIdByName performs normalized lookup to prevent duplicate tags.
             Tag::setKeywordIfMissing($tagId, $keyword);
             if ($tagDesc) {
                 Tag::setDescriptionIfMissing($tagId, $tagDesc);

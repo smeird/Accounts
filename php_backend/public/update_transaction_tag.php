@@ -38,6 +38,7 @@ try {
         } else {
             $tagId = $existing;
             Tag::setKeyword((int)$tagId, $description);
+            Log::write("Reused existing tag $tagName via normalized lookup");
         }
     } else {
         Tag::setKeyword((int)$tagId, $description);

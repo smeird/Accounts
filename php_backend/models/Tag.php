@@ -29,12 +29,41 @@ class Tag {
      * Create a new tag optionally with a keyword for auto tagging.
      */
     public static function create(string $name, ?string $keyword = null, ?string $description = null): int {
+        $normalizedName = self::normalizeName($name);
+        if ($normalizedName === '') {
+            throw new InvalidArgumentException('Tag name must not be empty');
+        }
+
+        $existingId = self::getIdByNormalizedName($normalizedName);
+        if ($existingId !== null) {
+            return $existingId;
+        }
+
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `keyword`, `description`) VALUES (:name, :keyword, :description)');
-        $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description]);
+        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `name_normalized`, `keyword`, `description`) VALUES (:name, :name_normalized, :keyword, :description)');
+        try {
+            $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description]);
+        } catch (PDOException $e) {
+            $existingId = self::getIdByNormalizedName($normalizedName);
+            if ($existingId !== null) {
+                return $existingId;
+            }
+            throw $e;
+        }
         $id = (int)$db->lastInsertId();
         self::clearMatchCaches();
         return $id;
+    }
+
+    /**
+     * Normalize a tag name by trimming, lowercasing, and collapsing whitespace.
+     */
+    public static function normalizeName(string $name): string {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return '';
+        }
+        return strtolower(preg_replace('/\s+/', ' ', $trimmed));
     }
 
     /**
@@ -63,9 +92,14 @@ class Tag {
      * Update a tag's name, keyword and description.
      */
     public static function update(int $id, string $name, ?string $keyword = null, ?string $description = null): bool {
+        $normalizedName = self::normalizeName($name);
+        if ($normalizedName === '') {
+            throw new InvalidArgumentException('Tag name must not be empty');
+        }
+
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `keyword` = :keyword, `description` = :description WHERE `id` = :id');
-        $result = $stmt->execute(['name' => $name, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
+        $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `name_normalized` = :name_normalized, `keyword` = :keyword, `description` = :description WHERE `id` = :id');
+        $result = $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
         self::clearMatchCaches();
         return $result;
     }
@@ -136,9 +170,20 @@ class Tag {
      * Look up a tag's id by its exact name.
      */
     public static function getIdByName(string $name): ?int {
+        $normalizedName = self::normalizeName($name);
+        if ($normalizedName === '') {
+            return null;
+        }
+        return self::getIdByNormalizedName($normalizedName);
+    }
+
+    /**
+     * Look up a tag's id by normalized name.
+     */
+    public static function getIdByNormalizedName(string $normalizedName): ?int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id` FROM `tags` WHERE `name` = :name LIMIT 1');
-        $stmt->execute(['name' => $name]);
+        $stmt = $db->prepare('SELECT `id` FROM `tags` WHERE `name_normalized` = :name_normalized LIMIT 1');
+        $stmt->execute(['name_normalized' => $normalizedName]);
         $id = $stmt->fetchColumn();
         return $id !== false ? (int)$id : null;
     }
