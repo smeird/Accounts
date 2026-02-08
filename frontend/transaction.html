@@ -95,8 +95,9 @@ window.renderPageHeader(pageMain, {
         Promise.all([
             fetch('../php_backend/public/transaction.php?id=' + id).then(r => r.json()),
             fetch('../php_backend/public/groups.php').then(r => r.json()),
-            fetch('../php_backend/public/categories.php').then(r => r.json())
-        ]).then(([tx, groups, categories]) => {
+            fetch('../php_backend/public/categories.php').then(r => r.json()),
+            fetch('../php_backend/public/tags.php').then(r => r.json())
+        ]).then(([tx, groups, categories, tags]) => {
             if (tx.error) {
                 container.textContent = 'Transaction not found.';
                 return;
@@ -155,7 +156,14 @@ window.renderPageHeader(pageMain, {
                     </div>
                 </div>
                 <div class="pt-6 space-y-4">
-                    <label class="block">Tag: <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Enter a new tag name to auto-tag similar transactions"></label>
+                    <div>
+                        <label for="tag-select" class="block font-medium">Tag (select existing or create new)</label>
+                        <p class="text-sm text-slate-500 mb-2">Choose an existing tag from the list, or type a new name below if no match exists.</p>
+                        <select id="tag-select" class="border p-2 rounded w-full" data-help="Choose an existing tag name to reuse it">
+                            <option value="">-- Select existing tag --</option>
+                        </select>
+                    </div>
+                    <label for="tag" class="block">New tag name (only for new tags): <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Only fill this in when you need to create a brand new tag"></label>
                     <label class="block">Category Group: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category group"></select></label>
                     <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
                 </div>
@@ -197,12 +205,27 @@ window.renderPageHeader(pageMain, {
                 }
             }
             const tagInput = form.querySelector('#tag');
-            if (tx.tag_name) {
-                tagInput.parentElement.classList.add('hidden');
-            }
+            const tagSelect = form.querySelector('#tag-select');
             const groupSel = form.querySelector('#group');
             const catSel = form.querySelector('#category');
-            tagInput.value = tx.tag_name || '';
+            const tagByName = {};
+            tags.forEach(tag => {
+                const opt = document.createElement('option');
+                opt.value = tag.id;
+                opt.textContent = tag.name;
+                tagSelect.appendChild(opt);
+                tagByName[(tag.name || '').toLowerCase()] = String(tag.id);
+            });
+            if (tx.tag_id) {
+                tagSelect.value = String(tx.tag_id);
+            } else if (tx.tag_name) {
+                const matchingTagId = tagByName[tx.tag_name.toLowerCase()];
+                if (matchingTagId) {
+                    tagSelect.value = matchingTagId;
+                } else {
+                    tagInput.value = tx.tag_name;
+                }
+            }
             const blankGrp = document.createElement('option');
             blankGrp.value = '';
             blankGrp.textContent = '-- None --';
@@ -277,8 +300,13 @@ window.renderPageHeader(pageMain, {
                 };
                 if (groupSel.value !== '') payload.group_id = groupSel.value;
                 if (catSel.value !== '') payload.category_id = catSel.value;
-                if (tx.tag_id) payload.tag_id = tx.tag_id;
-                else if (tagInput.value.trim() !== '') payload.tag_name = tagInput.value.trim();
+                const selectedTagId = tagSelect.value;
+                const enteredTagName = tagInput.value.trim();
+                if (selectedTagId !== '') {
+                    payload.tag_id = selectedTagId;
+                } else if (enteredTagName !== '') {
+                    payload.tag_name = enteredTagName;
+                }
 
                 fetch('../php_backend/public/update_transaction.php', {
                     method: 'POST',
