@@ -5,6 +5,7 @@ require_api_auth();
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
+require_once __DIR__ . '/../models/Segment.php';
 require_once __DIR__ . '/../models/TransactionGroup.php';
 require_once __DIR__ . '/../models/Log.php';
 
@@ -92,13 +93,15 @@ try {
 
     $applied = $tagChanged ? Tag::applyToAccountTransactions((int)$accountId) : 0;
     $categorised = ($tagChanged || $categoryChanged) ? CategoryTag::applyToAccountTransactions((int)$accountId) : 0;
+    $segmented = ($tagChanged || $categoryChanged) ? Segment::applyToTransactions() : 0;
 
     echo json_encode([
         'status' => 'ok',
         'tag_id' => $tagId ? (int)$tagId : null,
         'group_id' => $groupId === '' ? null : ($groupId !== null ? (int)$groupId : null),
         'auto_tagged' => $applied,
-        'auto_categorised' => $categorised
+        'auto_categorised' => $categorised,
+        'auto_segmented' => $segmented
     ]);
 } catch (Exception $e) {
     http_response_code(500);

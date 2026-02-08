@@ -5,6 +5,7 @@ require_api_auth();
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
+require_once __DIR__ . '/../models/Segment.php';
 require_once __DIR__ . '/../models/Log.php';
 
 header('Content-Type: application/json');
@@ -48,12 +49,14 @@ try {
 
     $applied = Tag::applyToAccountTransactions((int)$accountId);
     $categorised = CategoryTag::applyToAccountTransactions((int)$accountId);
+    $segmented = Segment::applyToTransactions();
 
     echo json_encode([
         'status' => 'ok',
         'tag_id' => (int)$tagId,
         'auto_tagged' => $applied,
         'auto_categorised' => $categorised,
+        'auto_segmented' => $segmented,
     ]);
 } catch (Exception $e) {
     http_response_code(500);
