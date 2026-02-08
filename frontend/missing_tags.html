@@ -160,28 +160,38 @@ window.renderPageHeader(pageMain, {
             return;
         }
 
-        const aliasRes = await fetch('../php_backend/public/tag_aliases.php', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({
-                alias: description,
-                tag_id: selectedTag.id,
-                match_type: 'contains',
-                active: true
-            })
-        });
-        const aliasData = await aliasRes.json();
-        if (!aliasRes.ok) {
-            showMessage(aliasData.error || 'Unable to create alias');
-            return;
-        }
+        try {
+            const aliasRes = await fetch('../php_backend/public/tag_aliases.php', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    alias: description,
+                    tag_id: selectedTag.id,
+                    match_type: 'contains',
+                    active: true
+                })
+            });
+            const aliasData = await aliasRes.json();
+            if (!aliasRes.ok) {
+                showMessage(aliasData.error || 'Unable to create alias', 'error');
+                return;
+            }
 
-        await fetch('../php_backend/public/tags.php', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({action: 'remap_aliases', dry_run: false})
-        });
-        showMessage('Tag alias created');
+            const taggingRes = await fetch('../php_backend/public/run_processes.php', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({action: 'tagging'})
+            });
+            const taggingData = await taggingRes.json();
+            if (!taggingRes.ok) {
+                showMessage(taggingData.error || 'Alias saved but tagging failed', 'error');
+                return;
+            }
+
+            showMessage(`Tag alias created and tagging run (${taggingData.tagged || 0} transactions updated)`);
+        } catch (error) {
+            showMessage('Unable to save alias right now', 'error');
+        }
     }
 
     // Retrieve untagged transaction summaries and display them
