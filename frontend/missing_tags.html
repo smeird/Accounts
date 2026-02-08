@@ -109,7 +109,12 @@ window.renderPageHeader(pageMain, {
 
             const close = (tagId) => {
                 modal.remove();
-                resolve(availableTags.find((tag) => tag.id === Number(tagId)) || null);
+                if (!tagId) {
+                    resolve(null);
+                    return;
+                }
+                const selectedTag = availableTags.find((tag) => String(tag.id) === String(tagId)) || null;
+                resolve(selectedTag);
             };
 
             modal.addEventListener('click', (event) => {
