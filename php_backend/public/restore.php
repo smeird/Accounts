@@ -1,6 +1,6 @@
 <?php
 
-// Restores users, accounts, settings, segments, categories, tags, groups,
+// Restores users, accounts, settings, segments, categories, tags (including tag aliases), groups,
 // transactions, budgets, and projects from an uploaded gzipped JSON backup.
 
 require_once __DIR__ . '/../auth.php';
@@ -80,6 +80,7 @@ try {
     $db->exec('SET FOREIGN_KEY_CHECKS=0');
     if (isset($data['category_tags'])) $db->exec('TRUNCATE TABLE category_tags');
     if (isset($data['transactions'])) $db->exec('TRUNCATE TABLE transactions');
+    if (isset($data['tag_aliases'])) $db->exec('TRUNCATE TABLE tag_aliases');
     if (isset($data['tags'])) $db->exec('TRUNCATE TABLE tags');
     if (isset($data['categories'])) $db->exec('TRUNCATE TABLE categories');
     if (isset($data['segments'])) $db->exec('TRUNCATE TABLE segments');
@@ -150,6 +151,27 @@ try {
         $stmtTag = $db->prepare('INSERT INTO tags (id, name, keyword, description) VALUES (:id, :name, :keyword, :description)');
         foreach ($data['tags'] as $row) {
             $stmtTag->execute(['id' => $row['id'], 'name' => $row['name'], 'keyword' => $row['keyword'], 'description' => $row['description'] ?? null]);
+        }
+    }
+
+    if (isset($data['tag_aliases'])) {
+        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :created_at, :updated_at)');
+        foreach ($data['tag_aliases'] as $row) {
+            $alias = trim((string)($row['alias'] ?? ''));
+            if ($alias === '') {
+                continue;
+            }
+
+            $stmtAlias->execute([
+                'id' => $row['id'],
+                'tag_id' => $row['tag_id'],
+                'alias' => $alias,
+                'alias_normalized' => $row['alias_normalized'] ?? strtolower($alias),
+                'match_type' => ($row['match_type'] ?? 'contains') === 'exact' ? 'exact' : 'contains',
+                'active' => isset($row['active']) ? (int)$row['active'] : 1,
+                'created_at' => $row['created_at'] ?? null,
+                'updated_at' => $row['updated_at'] ?? null,
+            ]);
         }
     }
 
