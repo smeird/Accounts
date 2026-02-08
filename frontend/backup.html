@@ -44,7 +44,7 @@
             </section>
             <section class="cards space-y-4">
                 <h2 class="text-xl font-semibold">Restore Backup</h2>
-                <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags, groups, segments, projects, budgets, or settings.</p>
+                <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags (including tag aliases), groups, segments, projects, budgets, or settings.</p>
                 <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="file" id="backup-file" name="backup_file" accept="application/gzip,application/json" required data-help="Choose a previously downloaded compressed backup file">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-upload inline w-4 h-4 mr-2"></i>Restore</button>

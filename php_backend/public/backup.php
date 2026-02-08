@@ -1,5 +1,5 @@
 <?php
-// Exports selected data as JSON. Allows selecting categories, tags, groups,
+// Exports selected data as JSON. Allows selecting categories, tags (including tag aliases), groups,
 // segments, transactions, budgets, projects, and settings via the `parts`
 // query parameter. User and account information is always included so a full
 // backup can be restored.
@@ -46,6 +46,7 @@ try {
     }
     if (in_array('tags', $parts)) {
         $data['tags'] = $getAll('SELECT id, name, keyword, description FROM tags ORDER BY id');
+        $data['tag_aliases'] = $getAll('SELECT id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at FROM tag_aliases ORDER BY id');
     }
     if (in_array('categories', $parts) || in_array('tags', $parts)) {
         $data['category_tags'] = $getAll('SELECT category_id, tag_id FROM category_tags ORDER BY category_id, tag_id');
