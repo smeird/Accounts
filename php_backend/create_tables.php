@@ -137,8 +137,10 @@ CREATE TABLE IF NOT EXISTS segment_categories (
 CREATE TABLE IF NOT EXISTS tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    name_normalized VARCHAR(100) DEFAULT NULL,
     keyword VARCHAR(100) DEFAULT NULL,
-    description TEXT DEFAULT NULL
+    description TEXT DEFAULT NULL,
+    UNIQUE KEY unique_tag_name_normalized (name_normalized)
 );
 
 CREATE TABLE IF NOT EXISTS tag_aliases (
@@ -216,6 +218,58 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'description'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `tags` ADD COLUMN `description` TEXT DEFAULT NULL");
+}
+
+// Ensure name_normalized column exists in tags
+$result = $db->query("SHOW COLUMNS FROM `tags` LIKE 'name_normalized'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tags` ADD COLUMN `name_normalized` VARCHAR(100) DEFAULT NULL");
+}
+
+// Backfill normalized tag names and safely merge duplicates
+$tagRows = $db->query('SELECT `id`, `name`, `name_normalized` FROM `tags`')->fetchAll(PDO::FETCH_ASSOC);
+$updateNormalizedTagName = $db->prepare('UPDATE `tags` SET `name_normalized` = :normalized WHERE `id` = :id');
+foreach ($tagRows as $tagRow) {
+    if ($tagRow['name_normalized'] !== null && trim($tagRow['name_normalized']) !== '') {
+        continue;
+    }
+    $normalizedTagName = strtolower(trim(preg_replace('/\s+/', ' ', (string)$tagRow['name'])));
+    $updateNormalizedTagName->execute(['normalized' => $normalizedTagName, 'id' => (int)$tagRow['id']]);
+}
+
+$duplicateRows = $db->query("SELECT `name_normalized` FROM `tags` WHERE `name_normalized` IS NOT NULL AND `name_normalized` != '' GROUP BY `name_normalized` HAVING COUNT(*) > 1")->fetchAll(PDO::FETCH_COLUMN);
+if (!empty($duplicateRows)) {
+    $moveTransactions = $db->prepare('UPDATE `transactions` SET `tag_id` = :keep_id WHERE `tag_id` = :drop_id');
+    $copyAliases = $db->prepare('INSERT IGNORE INTO `tag_aliases` (`tag_id`, `alias`, `alias_normalized`, `match_type`, `active`, `created_at`, `updated_at`) SELECT :keep_id, `alias`, `alias_normalized`, `match_type`, `active`, `created_at`, `updated_at` FROM `tag_aliases` WHERE `tag_id` = :drop_id');
+    $deleteAliases = $db->prepare('DELETE FROM `tag_aliases` WHERE `tag_id` = :drop_id');
+    $copyCategoryTag = $db->prepare('INSERT IGNORE INTO `category_tags` (`category_id`, `tag_id`) SELECT `category_id`, :keep_id FROM `category_tags` WHERE `tag_id` = :drop_id');
+    $deleteCategoryTag = $db->prepare('DELETE FROM `category_tags` WHERE `tag_id` = :drop_id');
+    $deleteTag = $db->prepare('DELETE FROM `tags` WHERE `id` = :drop_id');
+
+    foreach ($duplicateRows as $normalizedName) {
+        $stmt = $db->prepare('SELECT `id` FROM `tags` WHERE `name_normalized` = :normalized ORDER BY `id` ASC');
+        $stmt->execute(['normalized' => $normalizedName]);
+        $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        if (count($ids) < 2) {
+            continue;
+        }
+
+        $keepId = (int)$ids[0];
+        for ($i = 1; $i < count($ids); $i++) {
+            $dropId = (int)$ids[$i];
+            $moveTransactions->execute(['keep_id' => $keepId, 'drop_id' => $dropId]);
+            $copyAliases->execute(['keep_id' => $keepId, 'drop_id' => $dropId]);
+            $deleteAliases->execute(['drop_id' => $dropId]);
+            $copyCategoryTag->execute(['keep_id' => $keepId, 'drop_id' => $dropId]);
+            $deleteCategoryTag->execute(['drop_id' => $dropId]);
+            $deleteTag->execute(['drop_id' => $dropId]);
+        }
+    }
+}
+
+$result = $db->query("SHOW INDEX FROM `tags` WHERE Key_name = 'unique_tag_name_normalized'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tags` ADD UNIQUE KEY `unique_tag_name_normalized` (`name_normalized`)");
 }
 
 // Ensure tag_aliases table exists for descriptor-to-tag mapping

@@ -48,11 +48,29 @@ if ($method === 'POST') {
         exit;
     }
     try {
-        $id = Tag::create($name, $keyword, $description);
+        $existingId = Tag::getIdByName($name);
+        $created = false;
+        if ($existingId !== null) {
+            $id = $existingId;
+            if ($keyword !== null && $keyword !== '') {
+                Tag::setKeywordIfMissing($id, $keyword);
+            }
+            if ($description) {
+                Tag::setDescriptionIfMissing($id, $description);
+            }
+        } else {
+            $id = Tag::create($name, $keyword, $description);
+            $created = true;
+        }
+
         $tagged = Tag::applyToAllTransactions();
         $categorised = CategoryTag::applyToAllTransactions();
-        Log::write("Created tag $name; retagged $tagged transactions; categorised $categorised transactions");
-        echo json_encode(['id' => $id, 'tagged' => $tagged, 'categorised' => $categorised]);
+        if ($created) {
+            Log::write("Created tag $name; retagged $tagged transactions; categorised $categorised transactions");
+        } else {
+            Log::write("Reused existing tag $name; retagged $tagged transactions; categorised $categorised transactions");
+        }
+        echo json_encode(['id' => $id, 'created' => $created, 'tagged' => $tagged, 'categorised' => $categorised]);
     } catch (Exception $e) {
         http_response_code(500);
         Log::write('Tag error: ' . $e->getMessage(), 'ERROR');
