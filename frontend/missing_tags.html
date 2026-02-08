@@ -43,6 +43,96 @@ window.renderPageHeader(pageMain, {
     let table;
     let tags = [];
 
+    function normaliseTagText(value) {
+        return (value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function findSuggestedTag(description, availableTags) {
+        const descriptionText = normaliseTagText(description);
+        if (!descriptionText) return null;
+
+        const descriptionTokens = descriptionText.split(' ').filter(Boolean);
+        let bestTag = null;
+        let bestScore = 0;
+
+        availableTags.forEach((tag) => {
+            const tagText = normaliseTagText(tag.name);
+            if (!tagText) return;
+
+            let score = 0;
+            if (descriptionText === tagText) {
+                score += 100;
+            }
+            if (descriptionText.includes(tagText) || tagText.includes(descriptionText)) {
+                score += 50;
+            }
+
+            const matchedTokens = descriptionTokens.filter((token) => token.length > 2 && tagText.includes(token));
+            score += matchedTokens.length * 5;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestTag = tag;
+            }
+        });
+
+        return bestScore > 0 ? bestTag : null;
+    }
+
+    function pickTagForAlias(aliasText, availableTags) {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50';
+
+            const options = availableTags
+                .map((tag) => `<option value="${tag.id}">${tag.name}</option>`)
+                .join('');
+
+            modal.innerHTML = `
+                <div class="bg-white w-full max-w-md rounded shadow-lg p-4">
+                    <h2 class="text-lg font-semibold mb-2">Create Alias</h2>
+                    <p class="text-sm text-slate-700 mb-3">Choose an existing tag for <strong>${aliasText}</strong>.</p>
+                    <label class="block text-sm font-medium text-slate-700 mb-1" for="alias-tag-select">Existing tag</label>
+                    <select id="alias-tag-select" class="w-full border rounded p-2 text-sm" aria-label="Select existing tag for alias">
+                        ${options}
+                    </select>
+                    <div class="mt-4 flex justify-end gap-2">
+                        <button type="button" class="px-3 py-1 rounded border" data-action="cancel" aria-label="Cancel alias creation">Cancel</button>
+                        <button type="button" class="px-3 py-1 rounded bg-indigo-600 text-white" data-action="save" aria-label="Save alias">Save Alias</button>
+                    </div>
+                </div>
+            `;
+
+            const close = (tagId) => {
+                modal.remove();
+                resolve(availableTags.find((tag) => tag.id === Number(tagId)) || null);
+            };
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal || event.target.dataset.action === 'cancel') {
+                    close(null);
+                }
+                if (event.target.dataset.action === 'save') {
+                    const selectedValue = modal.querySelector('#alias-tag-select').value;
+                    close(selectedValue);
+                }
+            });
+
+            document.body.appendChild(modal);
+
+            const select = modal.querySelector('#alias-tag-select');
+            const suggestedTag = findSuggestedTag(aliasText, availableTags);
+            if (suggestedTag) {
+                select.value = String(suggestedTag.id);
+            }
+            select.focus();
+        });
+    }
+
     async function fetchTags() {
         const res = await fetch('../php_backend/public/tags.php');
         tags = await res.json();
@@ -64,13 +154,9 @@ window.renderPageHeader(pageMain, {
             await fetchTags();
         }
 
-        const available = tags.map((tag) => tag.name).sort((a, b) => a.localeCompare(b));
-        const tagName = prompt(`Create alias "${description}" for which existing tag?\n\nAvailable tags:\n${available.join('\n')}`);
-        if (!tagName) return;
-
-        const selectedTag = tags.find((tag) => tag.name.toLowerCase() === tagName.trim().toLowerCase());
+        const availableTags = tags.slice().sort((a, b) => a.name.localeCompare(b.name));
+        const selectedTag = await pickTagForAlias(description, availableTags);
         if (!selectedTag) {
-            showMessage('Tag not found. Please use an existing tag name.');
             return;
         }
 
