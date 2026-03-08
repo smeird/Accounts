@@ -19,3 +19,8 @@
 **Task:** Expand `frontend/js/upload.test.js` to cover edge cases for user-agent detection (iPhone, iPad, empty/undefined UA, and case-insensitive inputs).
 
 **Why:** The current test only checks one macOS and one Windows user agent, leaving the known false-positive risk and fallback behavior untested.
+
+## 5) Test runner bug fix task
+**Task:** Refactor the link preview test in `tests/run_tests.php` so it does not include the authenticated endpoint file directly (for example, by extracting metadata parsing into a reusable function/class and testing that unit instead).
+
+**Why:** Running `php tests/run_tests.php` currently exits before reporting PASS/FAIL lines because the `link_preview.php` include triggers API auth flow (`require_api_auth()`), which can terminate execution during test setup.
