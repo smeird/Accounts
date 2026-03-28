@@ -58,7 +58,7 @@ try {
         $data['segments'] = $getAll('SELECT id, name, description FROM segments ORDER BY id');
     }
     if (in_array('transactions', $parts)) {
-        $data['transactions'] = $getAll('SELECT id, account_id, date, amount, description, memo, category_id, tag_id, group_id, transfer_id, ofx_id, bank_ofx_id FROM transactions ORDER BY id');
+        $data['transactions'] = $getAll('SELECT id, account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id, ofx_id, ofx_type, bank_ofx_id FROM transactions ORDER BY id');
     }
     if (in_array('budgets', $parts)) {
         $data['budgets'] = $getAll('SELECT category_id, month, year, amount FROM budgets ORDER BY category_id, year, month');
