@@ -33,6 +33,14 @@ if (!$txns) {
     exit;
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
+$normalizedCategoryMap = [];
+foreach ($categories as $category) {
+    $normalizedName = strtolower(trim((string)($category['name'] ?? '')));
+    if ($normalizedName === '') {
+        continue;
+    }
+    $normalizedCategoryMap[$normalizedName] = (int)$category['id'];
+}
 $tagContextRows = $db->query('SELECT t.id AS tag_id, t.name AS tag_name, ta.alias FROM tags t LEFT JOIN tag_aliases ta ON ta.tag_id = t.id AND ta.active = 1 ORDER BY t.name ASC, ta.id ASC')->fetchAll(PDO::FETCH_ASSOC);
 $tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2500);
 
@@ -131,6 +139,7 @@ function createLearnedAlias(PDO $db, int $tagId, string $alias): array {
 $prompt = "You are a financial assistant. For each transaction provide a short canonical tag and an optional brief description for that tag. If the transaction details are ambiguous, use a generic canonical tag name. ";
 $prompt .= "Aliases are examples that map to canonical tags. Always return the canonical tag name in the tag field, never an alias literal. ";
 $prompt .= "Prioritise canonical tag selection accuracy over other metadata. Category is optional metadata and may be omitted. ";
+$prompt .= "If you provide category, use canonical category names as reference guidance only; tagging should still proceed even when category is uncertain. ";
 $prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"optional category name\"} ";
 $prompt .= "or as an object {\"transactions\":[...]} containing that array. Do not return a single object.\n\n";
 
@@ -138,7 +147,7 @@ if ($tagContext['text'] !== '') {
     $prompt .= "Canonical tags with alias examples (alias -> canonical):\n" . $tagContext['text'] . "\n\n";
 }
 
-$prompt .= "Categories:\n";
+$prompt .= "Canonical category references (optional, use only when confident):\n";
 foreach ($categories as $c) {
     $prompt .= "- {$c['name']}\n";
 }
@@ -309,16 +318,17 @@ foreach ($suggestions as $s) {
 
     $catId = CategoryTag::getCategoryId((int)$tagId);
     if ($catId === null && $catName) {
-        $stmt = $db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
-        $stmt->execute(['name' => $catName]);
-        $fallbackCatId = $stmt->fetchColumn();
-        if ($fallbackCatId !== false) {
+        $normalizedCategory = strtolower(trim((string)$catName));
+        $fallbackCatId = $normalizedCategoryMap[$normalizedCategory] ?? null;
+        if ($fallbackCatId !== null) {
             try {
                 CategoryTag::add((int)$fallbackCatId, (int)$tagId);
             } catch (Exception $e) {
                 // Tag may already be assigned; ignore
             }
             $catId = CategoryTag::getCategoryId((int)$tagId);
+        } else {
+            Log::write("AI category unresolved for tag_id={$tagId}, tx_id={$txId}: '{$catName}'", 'DEBUG');
         }
     }
 
