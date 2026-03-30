@@ -38,9 +38,10 @@ $tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2
 $txnMap = [];
 $aliasResolutions = [];
 
-$prompt = "You are a financial assistant. For each transaction provide a short tag, a brief description for the tag and one of the provided categories. If the transaction details are ambiguous, use a generic tag name. ";
+$prompt = "You are a financial assistant. For each transaction provide a short canonical tag and an optional brief description for that tag. If the transaction details are ambiguous, use a generic canonical tag name. ";
 $prompt .= "Aliases are examples that map to canonical tags. Always return the canonical tag name in the tag field, never an alias literal. ";
-$prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"category name\"} ";
+$prompt .= "Prioritise canonical tag selection accuracy over other metadata. Category is optional metadata and may be omitted. ";
+$prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"optional category name\"} ";
 $prompt .= "or as an object {\"transactions\":[...]} containing that array. Do not return a single object.\n\n";
 
 if ($tagContext['text'] !== '') {
@@ -142,7 +143,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 if (is_array($suggestions)) {
     if (isset($suggestions['transactions']) && is_array($suggestions['transactions'])) {
         $suggestions = $suggestions['transactions'];
-    } elseif (isset($suggestions['id']) && isset($suggestions['tag']) && isset($suggestions['category'])) {
+    } elseif (isset($suggestions['id']) && isset($suggestions['tag'])) {
         $suggestions = [$suggestions];
     }
 
@@ -161,7 +162,7 @@ foreach ($suggestions as $s) {
     $catName = $s['category'] ?? null;
     $tagDesc = $s['description'] ?? null;
 
-    if (!$txId || !$tagName || !$catName) continue;
+    if (!$txId || !$tagName) continue;
 
     $txn = $txnMap[$txId] ?? null;
     if (!$txn) continue;
@@ -192,19 +193,28 @@ foreach ($suggestions as $s) {
         }
     }
 
-    $stmt = $db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
-    $stmt->execute(['name' => $catName]);
-    $catId = $stmt->fetchColumn();
-    if ($catId === false) continue;
-
-    try {
-        CategoryTag::add((int)$catId, (int)$tagId);
-    } catch (Exception $e) {
-        // Tag may already be assigned; ignore
+    $catId = CategoryTag::getCategoryId((int)$tagId);
+    if ($catId === null && $catName) {
+        $stmt = $db->prepare('SELECT id FROM categories WHERE name = :name LIMIT 1');
+        $stmt->execute(['name' => $catName]);
+        $fallbackCatId = $stmt->fetchColumn();
+        if ($fallbackCatId !== false) {
+            try {
+                CategoryTag::add((int)$fallbackCatId, (int)$tagId);
+            } catch (Exception $e) {
+                // Tag may already be assigned; ignore
+            }
+            $catId = CategoryTag::getCategoryId((int)$tagId);
+        }
     }
 
-    $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL');
-    $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
+    if ($catId !== null) {
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL');
+        $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
+    } else {
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL');
+        $upd->execute(['tag' => $tagId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
+    }
     $processed += $upd->rowCount();
 }
 
