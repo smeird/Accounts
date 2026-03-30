@@ -4,6 +4,7 @@ require_once __DIR__ . '/../auth.php';
 require_api_auth();
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Tag.php';
+require_once __DIR__ . '/../models/TagAlias.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Log.php';
@@ -37,6 +38,95 @@ $tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2
 
 $txnMap = [];
 $aliasResolutions = [];
+$learnedAliases = [];
+
+/**
+ * Build a conservative descriptor string from transaction fields for alias learning.
+ */
+function buildAliasDescriptor(array $txn): string {
+    $parts = [];
+    if (!empty($txn['description'])) {
+        $parts[] = trim((string)$txn['description']);
+    }
+    if (!empty($txn['memo'])) {
+        $parts[] = trim((string)$txn['memo']);
+    }
+    return trim(implode(' ', array_filter($parts, function ($part) {
+        return $part !== '';
+    })));
+}
+
+/**
+ * Exclude low-signal alias candidates.
+ */
+function isValidLearnedAlias(string $alias): bool {
+    $alias = trim($alias);
+    if ($alias === '') {
+        return false;
+    }
+    if (strlen($alias) < 4 || strlen($alias) > 150) {
+        return false;
+    }
+    if (preg_match('/^\d+(?:[\s\-\._]?\d+)*$/', $alias)) {
+        return false;
+    }
+    if (preg_match('/^[\W_]+$/u', $alias)) {
+        return false;
+    }
+
+    $genericWords = [
+        'payment', 'purchase', 'transfer', 'transaction', 'card', 'debit', 'credit',
+        'cash', 'online', 'bank', 'account', 'pending', 'charge', 'refund'
+    ];
+    $normalized = TagAlias::normalizeAlias($alias);
+    if (in_array($normalized, $genericWords, true)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Persist alias safely, handling duplicate-key conflicts gracefully.
+ */
+function createLearnedAlias(PDO $db, int $tagId, string $alias): array {
+    $alias = trim($alias);
+    $normalized = TagAlias::normalizeAlias($alias);
+    $result = [
+        'alias' => $alias,
+        'alias_normalized' => $normalized,
+        'tag_id' => $tagId,
+        'status' => 'ignored',
+        'reason' => null,
+    ];
+
+    if ($normalized === '') {
+        $result['reason'] = 'empty_normalized';
+        return $result;
+    }
+
+    try {
+        TagAlias::create($tagId, $alias, 'contains', true);
+        $result['status'] = 'created';
+        return $result;
+    } catch (PDOException $e) {
+        // 23000 is SQLSTATE integrity constraint violation (e.g., duplicate key).
+        if (($e->getCode() === '23000' || $e->getCode() === 23000) && stripos($e->getMessage(), 'duplicate') !== false) {
+            $upd = $db->prepare('UPDATE tag_aliases SET tag_id = :tag_id, alias = :alias, match_type = :match_type, active = 1 WHERE alias_normalized = :alias_normalized');
+            $upd->execute([
+                'tag_id' => $tagId,
+                'alias' => $alias,
+                'match_type' => 'contains',
+                'alias_normalized' => $normalized,
+            ]);
+            $result['status'] = $upd->rowCount() > 0 ? 'updated' : 'unchanged';
+            return $result;
+        }
+        $result['status'] = 'error';
+        $result['reason'] = $e->getMessage();
+        return $result;
+    }
+}
 
 $prompt = "You are a financial assistant. For each transaction provide a short canonical tag and an optional brief description for that tag. If the transaction details are ambiguous, use a generic canonical tag name. ";
 $prompt .= "Aliases are examples that map to canonical tags. Always return the canonical tag name in the tag field, never an alias literal. ";
@@ -169,9 +259,11 @@ foreach ($suggestions as $s) {
     $keyword = substr($txn['description'], 0, 100);
 
     $resolved = AiTaggingPipeline::resolveCanonicalTag((string)$tagName, $tagContext['canonicalByName'], $tagContext['aliasToCanonical']);
+    $modelTagText = trim((string)$tagName);
     if ($resolved !== null) {
         $tagId = (int)$resolved['id'];
         $canonicalTagName = $resolved['name'];
+        $canonicalDiffers = strcasecmp($modelTagText, (string)$canonicalTagName) !== 0;
         if ($resolved['source'] === 'alias') {
             $aliasResolutions[] = ['input' => $tagName, 'canonical' => $canonicalTagName, 'id' => $tagId];
         }
@@ -179,6 +271,28 @@ foreach ($suggestions as $s) {
         Tag::setKeywordIfMissing($tagId, $keyword);
         if ($tagDesc) {
             Tag::setDescriptionIfMissing($tagId, $tagDesc);
+        }
+
+        if ($resolved['source'] === 'alias' || $canonicalDiffers) {
+            $aliasCandidate = buildAliasDescriptor($txn);
+            if (isValidLearnedAlias($aliasCandidate)) {
+                $learned = createLearnedAlias($db, (int)$tagId, $aliasCandidate);
+                $learned['tx_id'] = (int)$txId;
+                $learned['canonical'] = $canonicalTagName;
+                $learned['trigger'] = $resolved['source'] === 'alias' ? 'resolved_from_alias' : 'mapped_to_canonical';
+                $learnedAliases[] = $learned;
+                if ($learned['status'] === 'created' || $learned['status'] === 'updated') {
+                    Log::write("AI learned tag alias '{$learned['alias']}' for canonical tag '{$canonicalTagName}' (tag_id={$tagId}, trigger={$learned['trigger']}, status={$learned['status']})");
+                }
+            } else {
+                $learnedAliases[] = [
+                    'tx_id' => (int)$txId,
+                    'canonical' => $canonicalTagName,
+                    'alias' => $aliasCandidate,
+                    'status' => 'filtered',
+                    'trigger' => $resolved['source'] === 'alias' ? 'resolved_from_alias' : 'mapped_to_canonical',
+                ];
+            }
         }
     } else {
         $tagId = Tag::getIdByName($tagName);
@@ -219,6 +333,9 @@ foreach ($suggestions as $s) {
 }
 
 Log::write("AI tagged $processed transactions using $usage tokens");
+if (!empty($learnedAliases)) {
+    Log::write('AI alias learning summary: ' . json_encode($learnedAliases));
+}
  $out = ['processed' => $processed, 'tokens' => $usage];
  if ($debugMode) {
      $out['debug'] = [
@@ -227,6 +344,7 @@ Log::write("AI tagged $processed transactions using $usage tokens");
          'alias_context' => $tagContext['text'],
          'alias_context_truncated' => $tagContext['truncated'],
          'alias_resolutions' => $aliasResolutions,
+         'learned_aliases' => $learnedAliases,
      ];
  }
  echo json_encode($out);
