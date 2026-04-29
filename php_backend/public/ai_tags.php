@@ -33,13 +33,90 @@ if (!$txns) {
     exit;
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
+
+/**
+ * Normalize category names for robust matching.
+ */
+function normalizeCategoryName(string $name): string {
+    $name = strtolower(trim($name));
+    if ($name == '') {
+        return '';
+    }
+    $name = preg_replace('/[[:punct:]]+/u', ' ', $name);
+    $name = preg_replace('/\s+/u', ' ', $name);
+    return trim($name);
+}
+
+/**
+ * Build token list from normalized category name.
+ */
+function categoryTokens(string $normalizedName): array {
+    if ($normalizedName === '') {
+        return [];
+    }
+    return array_values(array_filter(explode(' ', $normalizedName), function ($token) {
+        return $token !== '';
+    }));
+}
+
+/**
+ * Resolve category with strict token similarity fallback.
+ */
+function resolveCategoryId(string $categoryName, array $normalizedCategoryMap, array $categoryTokenMap, float $strictThreshold = 0.92): array {
+    $normalized = normalizeCategoryName($categoryName);
+    if ($normalized === '') {
+        return ['id' => null, 'normalized' => $normalized, 'closest' => null, 'score' => 0.0, 'matched' => false, 'method' => null];
+    }
+
+    if (isset($normalizedCategoryMap[$normalized])) {
+        return ['id' => (int)$normalizedCategoryMap[$normalized], 'normalized' => $normalized, 'closest' => $normalized, 'score' => 1.0, 'matched' => true, 'method' => 'normalized_exact'];
+    }
+
+    $inputTokens = categoryTokens($normalized);
+    if (empty($inputTokens)) {
+        return ['id' => null, 'normalized' => $normalized, 'closest' => null, 'score' => 0.0, 'matched' => false, 'method' => null];
+    }
+
+    $inputSet = array_fill_keys($inputTokens, true);
+    $best = ['id' => null, 'normalized' => null, 'score' => 0.0];
+
+    foreach ($categoryTokenMap as $candidate) {
+        $candidateTokens = $candidate['tokens'];
+        if (empty($candidateTokens)) {
+            continue;
+        }
+        $candidateSet = array_fill_keys($candidateTokens, true);
+        $intersection = count(array_intersect_key($inputSet, $candidateSet));
+        $union = count($inputSet + $candidateSet);
+        if ($union === 0) {
+            continue;
+        }
+        $score = $intersection / $union;
+        if ($score > $best['score']) {
+            $best = ['id' => (int)$candidate['id'], 'normalized' => $candidate['normalized'], 'score' => $score];
+        }
+    }
+
+    if ($best['id'] !== null && $best['score'] >= $strictThreshold) {
+        return ['id' => $best['id'], 'normalized' => $normalized, 'closest' => $best['normalized'], 'score' => $best['score'], 'matched' => true, 'method' => 'token_similarity'];
+    }
+
+    return ['id' => null, 'normalized' => $normalized, 'closest' => $best['normalized'], 'score' => $best['score'], 'matched' => false, 'method' => 'token_similarity'];
+}
+
 $normalizedCategoryMap = [];
+$categoryTokenMap = [];
 foreach ($categories as $category) {
-    $normalizedName = strtolower(trim((string)($category['name'] ?? '')));
+    $normalizedName = normalizeCategoryName((string)($category['name'] ?? ''));
     if ($normalizedName === '') {
         continue;
     }
     $normalizedCategoryMap[$normalizedName] = (int)$category['id'];
+    $categoryTokenMap[] = [
+        'id' => (int)$category['id'],
+        'normalized' => $normalizedName,
+        'tokens' => categoryTokens($normalizedName),
+    ];
 }
 $tagContextRows = $db->query('SELECT t.id AS tag_id, t.name AS tag_name, ta.alias FROM tags t LEFT JOIN tag_aliases ta ON ta.tag_id = t.id AND ta.active = 1 ORDER BY t.name ASC, ta.id ASC')->fetchAll(PDO::FETCH_ASSOC);
 $tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2500);
@@ -255,6 +332,9 @@ if (!is_array($suggestions)) {
 }
 
 $processed = 0;
+$categoryMapped = 0;
+$categoryUnresolved = 0;
+$unresolvedCategorySuggestions = [];
 foreach ($suggestions as $s) {
     $txId = $s['id'] ?? null;
     $tagName = $s['tag'] ?? null;
@@ -318,17 +398,27 @@ foreach ($suggestions as $s) {
 
     $catId = CategoryTag::getCategoryId((int)$tagId);
     if ($catId === null && $catName) {
-        $normalizedCategory = strtolower(trim((string)$catName));
-        $fallbackCatId = $normalizedCategoryMap[$normalizedCategory] ?? null;
-        if ($fallbackCatId !== null) {
+        $categoryResolution = resolveCategoryId((string)$catName, $normalizedCategoryMap, $categoryTokenMap);
+        if ($categoryResolution['matched'] && $categoryResolution['id'] !== null) {
             try {
-                CategoryTag::add((int)$fallbackCatId, (int)$tagId);
+                CategoryTag::add((int)$categoryResolution['id'], (int)$tagId);
+                $categoryMapped++;
             } catch (Exception $e) {
                 // Tag may already be assigned; ignore
             }
             $catId = CategoryTag::getCategoryId((int)$tagId);
         } else {
-            Log::write("AI category unresolved for tag_id={$tagId}, tx_id={$txId}: '{$catName}'", 'DEBUG');
+            $categoryUnresolved++;
+            $unresolved = [
+                'tx_id' => (int)$txId,
+                'tag_id' => (int)$tagId,
+                'suggested' => (string)$catName,
+                'normalized' => $categoryResolution['normalized'],
+                'closest' => $categoryResolution['closest'],
+                'similarity' => round((float)$categoryResolution['score'], 4),
+            ];
+            $unresolvedCategorySuggestions[] = $unresolved;
+            Log::write('AI category unresolved: ' . json_encode($unresolved), 'DEBUG');
         }
     }
 
@@ -346,7 +436,7 @@ Log::write("AI tagged $processed transactions using $usage tokens");
 if (!empty($learnedAliases)) {
     Log::write('AI alias learning summary: ' . json_encode($learnedAliases));
 }
- $out = ['processed' => $processed, 'tokens' => $usage];
+ $out = ['processed' => $processed, 'tokens' => $usage, 'category_mapped' => $categoryMapped, 'category_unresolved' => $categoryUnresolved];
  if ($debugMode) {
      $out['debug'] = [
          'prompt' => $prompt,
@@ -355,6 +445,7 @@ if (!empty($learnedAliases)) {
          'alias_context_truncated' => $tagContext['truncated'],
          'alias_resolutions' => $aliasResolutions,
          'learned_aliases' => $learnedAliases,
+         'unresolved_categories' => $unresolvedCategorySuggestions,
      ];
  }
  echo json_encode($out);
