@@ -509,12 +509,10 @@ window.renderPageHeader(pageMain, {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margins = { left: 14, right: 14 };
+        const totalPagesExp = '{total_pages_count_string}';
 
-        // Header
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, pageWidth, 20, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
         const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
         let reportTitle;
         let reportDesc;
@@ -525,23 +523,50 @@ window.renderPageHeader(pageMain, {
             reportTitle = siteTitle;
             reportDesc = 'Transaction Report';
         }
-        let titleX = 14;
+
+        let iconData = null;
         try {
             const res = await fetch('/favicon.png');
             const blob = await res.blob();
-            const iconData = await new Promise(resolve => {
+            iconData = await new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
                 reader.readAsDataURL(blob);
             });
-            doc.addImage(iconData, 'PNG', 14, 2, 16, 16);
-            titleX = 34;
         } catch (e) {
             // Ignore icon errors and fall back to text-only header
         }
-        doc.text(reportTitle, titleX, 12);
-        doc.setFontSize(8);
-        doc.text(reportDesc, titleX, 18);
+
+        const generatedAt = new Date().toLocaleString();
+
+        function drawPageChrome(pdfDoc, meta) {
+            const pageNum = pdfDoc.internal.getNumberOfPages();
+            pdfDoc.setFillColor(79, 70, 229);
+            pdfDoc.rect(0, 0, pageWidth, 20, 'F');
+            pdfDoc.setTextColor(255, 255, 255);
+            pdfDoc.setFontSize(16);
+
+            let titleX = margins.left;
+            if (meta.icon) {
+                pdfDoc.addImage(meta.icon, 'PNG', margins.left, 2, 16, 16);
+                titleX = margins.left + 20;
+            }
+
+            pdfDoc.text(meta.title, titleX, 12);
+            pdfDoc.setFontSize(8);
+            pdfDoc.text(meta.subtitle, titleX, 18);
+
+            const footerY = pageHeight - 8;
+            const dividerY = pageHeight - 14;
+            pdfDoc.setDrawColor(226, 232, 240);
+            pdfDoc.line(margins.left, dividerY, pageWidth - margins.right, dividerY);
+            pdfDoc.setTextColor(75, 85, 99);
+            pdfDoc.setFontSize(8);
+            pdfDoc.text(`Generated ${meta.generatedAt}`, margins.left, footerY);
+            pdfDoc.text(`Page ${pageNum} of ${totalPagesExp}`, pageWidth - margins.right, footerY, { align: 'right' });
+        }
+
+        drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt });
         doc.setProperties({ title: `${reportTitle} - ${reportDesc}` });
 
         // Description
@@ -574,7 +599,7 @@ window.renderPageHeader(pageMain, {
             doc.text(wrapped, 14, y);
             y += wrapped.length * 6;
         }
-        doc.text('Generated on ' + new Date().toLocaleString(), 14, y);
+        doc.text('Generated on ' + generatedAt, 14, y);
         y += 8;
 
         // Include charts before tables
@@ -621,6 +646,8 @@ window.renderPageHeader(pageMain, {
 
         doc.autoTable({
             startY: y,
+            margin: { left: margins.left, right: margins.right, top: 26, bottom: 18 },
+            didDrawPage: () => drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt }),
             head: [columns.map(c => c.header)],
             body,
             foot,
@@ -650,12 +677,18 @@ window.renderPageHeader(pageMain, {
         if (summary.length) {
             doc.autoTable({
                 startY: doc.lastAutoTable.finalY + 10,
+                margin: { left: margins.left, right: margins.right, top: 26, bottom: 18 },
+                didDrawPage: () => drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt }),
                 head: [['Type', 'Name', 'Total']],
                 body: summary.map(r => [r.type, r.name, '£' + r.total.toFixed(2)]),
                 theme: 'grid',
                 headStyles: { fillColor: [79, 70, 229], textColor: 255 },
                 alternateRowStyles: { fillColor: [243, 244, 246] }
             });
+        }
+
+        if (typeof doc.putTotalPages === 'function') {
+            doc.putTotalPages(totalPagesExp);
         }
 
         const blob = doc.output('blob');
