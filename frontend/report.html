@@ -514,14 +514,18 @@ window.renderPageHeader(pageMain, {
         const totalPagesExp = '{total_pages_count_string}';
 
         const siteTitle = document.querySelector('#site-title')?.textContent?.trim() || 'Accounts';
-        let reportTitle;
+        const reportTitle = `${siteTitle} — Transaction Report`;
         let reportDesc;
+        let reportSource;
+        let reportIdLabel;
         if (currentReportName && currentReportDesc) {
-            reportTitle = currentReportName;
-            reportDesc = currentReportDesc;
+            reportDesc = `${currentReportName} — ${currentReportDesc}`;
+            reportSource = 'Saved Report';
+            reportIdLabel = document.getElementById('saved-reports').value || 'Unknown';
         } else {
-            reportTitle = siteTitle;
-            reportDesc = 'Transaction Report';
+            reportDesc = 'Ad hoc report';
+            reportSource = 'On-the-fly';
+            reportIdLabel = 'N/A';
         }
 
         let iconData = null;
@@ -578,7 +582,7 @@ window.renderPageHeader(pageMain, {
         }
 
         drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt });
-        doc.setProperties({ title: `${reportTitle} - ${reportDesc}` });
+        doc.setProperties({ title: reportTitle });
         const pageMeta = { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt };
 
         // Description
@@ -586,6 +590,12 @@ window.renderPageHeader(pageMain, {
         doc.setFontSize(11);
         let y = 26;
         doc.text('This report summarises transactions matching your selected filters.', 14, y);
+        y += 6;
+
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Report ID: ${reportIdLabel}`, 14, y);
+        doc.text(`Source: ${reportSource}`, pageWidth - margins.right, y, { align: 'right' });
         y += 6;
 
         const startVal = document.getElementById('start').value;
