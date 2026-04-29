@@ -28,6 +28,13 @@ $message = '';
 $openai = Setting::get('openai_api_token') ?? '';
 $batch = Setting::get('ai_tag_batch_size') ?? '20';
 $aiModel = Setting::get('ai_model') ?? 'gpt-5-nano';
+$recommendedModels = [
+    'gpt-5',
+    'gpt-5-mini',
+    'gpt-5-nano',
+    'o4-mini',
+    'o3',
+];
 $aiTemp = Setting::get('ai_temperature') ?? '1';
 $aiDebug = Setting::get('ai_debug') === '1';
 $retention = Setting::get('log_retention_days') ?? '30';
@@ -219,7 +226,18 @@ $bg600 = "bg-{$colorScheme}-600";
                 <input type="number" name="ai_tag_batch_size" value="<?= htmlspecialchars($batch) ?>" class="border p-2 rounded w-full" data-help="How many transactions to submit for AI tagging at once">
             </label>
             <label class="block">AI Model:
-                <input type="text" name="ai_model" value="<?= htmlspecialchars($aiModel) ?>" class="border p-2 rounded w-full" data-help="Model name for OpenAI responses">
+                <select id="ai-model-select" class="border p-2 rounded w-full" data-help="Choose from recommended models or models available to your API token">
+                    <?php foreach ($recommendedModels as $modelOption): ?>
+                        <option value="<?= htmlspecialchars($modelOption) ?>" <?= $modelOption === $aiModel ? 'selected' : '' ?>><?= htmlspecialchars($modelOption) ?></option>
+                    <?php endforeach; ?>
+                    <?php if (!in_array($aiModel, $recommendedModels, true) && $aiModel !== ''): ?>
+                        <option value="<?= htmlspecialchars($aiModel) ?>" selected><?= htmlspecialchars($aiModel) ?> (Saved)</option>
+                    <?php endif; ?>
+                    <option value="__custom__">Custom model…</option>
+                </select>
+                <input type="text" id="ai-model-input" name="ai_model" value="<?= htmlspecialchars($aiModel) ?>" class="border p-2 rounded w-full mt-2" data-help="Model name for OpenAI responses">
+                <button type="button" id="refresh-models" class="mt-2 text-sm px-3 py-1 border rounded" aria-label="Refresh available AI models">Refresh available models</button>
+                <p id="ai-model-status" class="text-xs text-gray-600 mt-1"></p>
             </label>
             <label class="block">AI Temperature:
                 <input type="number" step="0.1" name="ai_temperature" value="<?= htmlspecialchars($aiTemp) ?>" class="border p-2 rounded w-full" data-help="Creativity level for AI responses">
@@ -343,6 +361,70 @@ $bg600 = "bg-{$colorScheme}-600";
       updateWeightPreview();
       if (weightSelect) {
         weightSelect.addEventListener('change', updateWeightPreview);
+      }
+
+      const modelSelect = document.getElementById('ai-model-select');
+      const modelInput = document.getElementById('ai-model-input');
+      const refreshModelsBtn = document.getElementById('refresh-models');
+      const modelStatus = document.getElementById('ai-model-status');
+
+      const syncModelSelect = () => {
+        if (!modelSelect || !modelInput) {
+            return;
+        }
+        const hasOption = Array.from(modelSelect.options).some(option => option.value === modelInput.value);
+        modelSelect.value = hasOption ? modelInput.value : '__custom__';
+      };
+
+      if (modelSelect && modelInput) {
+        modelSelect.addEventListener('change', () => {
+            if (modelSelect.value !== '__custom__') {
+                modelInput.value = modelSelect.value;
+            }
+        });
+        modelInput.addEventListener('input', syncModelSelect);
+        syncModelSelect();
+      }
+
+      const renderModelOptions = (models) => {
+        if (!modelSelect || !Array.isArray(models)) {
+            return;
+        }
+        const selectedValue = modelInput ? modelInput.value : '';
+        const staticValues = <?= json_encode($recommendedModels) ?>;
+        const merged = Array.from(new Set(staticValues.concat(models))).sort();
+        modelSelect.innerHTML = '';
+        merged.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            if (model === selectedValue) {
+                option.selected = true;
+            }
+            modelSelect.appendChild(option);
+        });
+        const customOption = document.createElement('option');
+        customOption.value = '__custom__';
+        customOption.textContent = 'Custom model…';
+        modelSelect.appendChild(customOption);
+        syncModelSelect();
+      };
+
+      if (refreshModelsBtn) {
+        refreshModelsBtn.addEventListener('click', async () => {
+            if (modelStatus) modelStatus.textContent = 'Loading models…';
+            try {
+                const res = await fetch('php_backend/public/ai_models.php');
+                const data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || 'Failed to load models');
+                }
+                renderModelOptions(data.models || []);
+                if (modelStatus) modelStatus.textContent = 'Model list updated.';
+            } catch (error) {
+                if (modelStatus) modelStatus.textContent = error.message;
+            }
+        });
       }
     </script>
   </body>
