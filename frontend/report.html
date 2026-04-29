@@ -566,8 +566,20 @@ window.renderPageHeader(pageMain, {
             pdfDoc.text(`Page ${pageNum} of ${totalPagesExp}`, pageWidth - margins.right, footerY, { align: 'right' });
         }
 
+        function ensureSpace(pdfDoc, currentY, neededHeight, meta) {
+            const footerReserve = 18;
+            const contentBottom = pageHeight - footerReserve;
+            if (currentY + neededHeight <= contentBottom) {
+                return currentY;
+            }
+            pdfDoc.addPage();
+            drawPageChrome(pdfDoc, meta);
+            return 26;
+        }
+
         drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt });
         doc.setProperties({ title: `${reportTitle} - ${reportDesc}` });
+        const pageMeta = { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt };
 
         // Description
         doc.setTextColor(0, 0, 0);
@@ -630,13 +642,14 @@ window.renderPageHeader(pageMain, {
         y += 8;
 
         // Include charts before tables
-        let chartY = y;
+        let chartY = ensureSpace(doc, y, 80, pageMeta);
         const chartEl = document.getElementById('chart');
         if (chartEl) {
             const canvas = await html2canvas(chartEl, { scale: 2 });
             const imgData = canvas.toDataURL('image/png');
             const imgWidth = pageWidth - 28;
             const imgHeight = canvas.height * imgWidth / canvas.width;
+            chartY = ensureSpace(doc, chartY, imgHeight + 10, pageMeta);
             doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
             chartY += imgHeight + 10;
         }
@@ -647,6 +660,7 @@ window.renderPageHeader(pageMain, {
             const imgData = canvas.toDataURL('image/png');
             const imgWidth = pageWidth - 28;
             const imgHeight = canvas.height * imgWidth / canvas.width;
+            chartY = ensureSpace(doc, chartY, imgHeight + 10, pageMeta);
             doc.addImage(imgData, 'PNG', 14, chartY, imgWidth, imgHeight);
             chartY += imgHeight + 10;
         }
@@ -696,10 +710,11 @@ window.renderPageHeader(pageMain, {
             return '';
         })];
 
+        y = ensureSpace(doc, y, 20, pageMeta);
         doc.autoTable({
             startY: y,
             margin: { left: margins.left, right: margins.right, top: 26, bottom: 18 },
-            didDrawPage: () => drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt }),
+            didDrawPage: () => drawPageChrome(doc, pageMeta),
             head: [columns.map(c => c.header)],
             body,
             foot,
@@ -730,10 +745,11 @@ window.renderPageHeader(pageMain, {
         addSummary('segment_name', 'Segment');
 
         if (summary.length) {
+            const summaryStartY = ensureSpace(doc, doc.lastAutoTable.finalY + 10, 20, pageMeta);
             doc.autoTable({
-                startY: doc.lastAutoTable.finalY + 10,
+                startY: summaryStartY,
                 margin: { left: margins.left, right: margins.right, top: 26, bottom: 18 },
-                didDrawPage: () => drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt }),
+                didDrawPage: () => drawPageChrome(doc, pageMeta),
                 head: [['Type', 'Name', 'Total']],
                 body: summary.map(r => [r.type, r.name, formatCurrency(r.total)]),
                 theme: 'grid',
