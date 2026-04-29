@@ -662,12 +662,37 @@ window.renderPageHeader(pageMain, {
             }));
         const data = window.reportTable.getData();
 
-        // Calculate totals for the main table
+        // Calculate totals and table styles for the main table
         const totalAmount = data.reduce((sum, row) => sum + parseFloat(row.amount || 0), 0);
-        const body = data.map(row => columns.map(c => row[c.dataKey]));
+        const isCurrencyColumn = field => /amount|total|balance|value/i.test(field);
+        const formatCurrency = value => {
+            const numeric = parseFloat(value);
+            return Number.isFinite(numeric) ? `£${numeric.toFixed(2)}` : '£0.00';
+        };
+
+        const body = data.map(row => columns.map(c => {
+            const value = row[c.dataKey];
+            return isCurrencyColumn(c.dataKey) ? formatCurrency(value) : (value ?? '');
+        }));
+
+        const descriptionColumnIndex = columns.findIndex(c => c.dataKey === 'description');
+        const memoColumnIndex = columns.findIndex(c => c.dataKey === 'memo');
+        const columnStyles = {};
+        if (descriptionColumnIndex >= 0) {
+            columnStyles[descriptionColumnIndex] = { cellWidth: 50, overflow: 'linebreak' };
+        }
+        if (memoColumnIndex >= 0) {
+            columnStyles[memoColumnIndex] = { cellWidth: 46, overflow: 'linebreak' };
+        }
+        columns.forEach((c, index) => {
+            if (isCurrencyColumn(c.dataKey)) {
+                columnStyles[index] = { ...(columnStyles[index] || {}), halign: 'right' };
+            }
+        });
+
         const foot = [columns.map(c => {
             if (c.dataKey === 'description') return 'Total';
-            if (c.dataKey === 'amount') return '£' + totalAmount.toFixed(2);
+            if (isCurrencyColumn(c.dataKey)) return formatCurrency(totalAmount);
             return '';
         })];
 
@@ -679,9 +704,12 @@ window.renderPageHeader(pageMain, {
             body,
             foot,
             theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
-            footStyles: { fillColor: [226, 232, 240], textColor: 0, fontStyle: 'bold' },
-            alternateRowStyles: { fillColor: [243, 244, 246] }
+            styles: { fontSize: 8.8, cellPadding: { top: 1.8, right: 2.2, bottom: 1.8, left: 2.2 }, lineWidth: 0.1, lineColor: [203, 213, 225], overflow: 'linebreak' },
+            columnStyles,
+            headStyles: { fillColor: [55, 48, 163], textColor: 255, fontStyle: 'bold', lineWidth: 0.1 },
+            footStyles: { fillColor: [226, 232, 240], textColor: 15, fontStyle: 'bold', lineWidth: 0.1 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            showHead: 'everyPage'
         });
 
         // Summary table (totals by category, tag, group, and segment)
@@ -707,10 +735,16 @@ window.renderPageHeader(pageMain, {
                 margin: { left: margins.left, right: margins.right, top: 26, bottom: 18 },
                 didDrawPage: () => drawPageChrome(doc, { title: reportTitle, subtitle: reportDesc, icon: iconData, generatedAt }),
                 head: [['Type', 'Name', 'Total']],
-                body: summary.map(r => [r.type, r.name, '£' + r.total.toFixed(2)]),
+                body: summary.map(r => [r.type, r.name, formatCurrency(r.total)]),
                 theme: 'grid',
-                headStyles: { fillColor: [79, 70, 229], textColor: 255 },
-                alternateRowStyles: { fillColor: [243, 244, 246] }
+                styles: { fontSize: 8.9, cellPadding: { top: 1.8, right: 2.2, bottom: 1.8, left: 2.2 }, lineWidth: 0.1, lineColor: [203, 213, 225], overflow: 'linebreak' },
+                columnStyles: {
+                    1: { cellWidth: 78, overflow: 'linebreak' },
+                    2: { halign: 'right', cellWidth: 30 }
+                },
+                headStyles: { fillColor: [55, 48, 163], textColor: 255, fontStyle: 'bold', lineWidth: 0.1 },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                showHead: 'everyPage'
             });
         }
 
