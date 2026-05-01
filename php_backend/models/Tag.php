@@ -167,6 +167,18 @@ class Tag {
     }
 
     /**
+     * Combine description and memo text so alias/keyword matching can use both.
+     */
+    public static function buildMatchText(string $description, ?string $memo = null): string {
+        $description = trim($description);
+        $memo = $memo !== null ? trim($memo) : '';
+        if ($memo === '') {
+            return $description;
+        }
+        return $description . ' ' . $memo;
+    }
+
+    /**
      * Look up a tag's id by its exact name.
      */
     public static function getIdByName(string $name): ?int {
@@ -254,16 +266,16 @@ class Tag {
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `description`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL');
+        $stmt = $db->prepare('SELECT `id`, `description`, `memo`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL');
         $stmt->execute(['acc' => $accountId]);
+        $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
         $updated = 0;
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $tx) {
-            $tagId = self::findMatch($tx['description']);
+            $tagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']));
             if ($tagId === null && $tx['ofx_type'] === 'INT') {
                 $tagId = self::getInterestChargeId();
             }
             if ($tagId !== null) {
-                $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
                 $upd->execute(['tag' => $tagId, 'id' => $tx['id']]);
                 $updated++;
             }
@@ -293,7 +305,7 @@ class Tag {
      */
     public static function remapAllTransactionsToCanonicalTags(bool $applyChanges = false): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `description`, `ofx_type`, `tag_id` FROM `transactions`');
+        $stmt = $db->query('SELECT `id`, `description`, `memo`, `ofx_type`, `tag_id` FROM `transactions`');
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $moves = [];
@@ -302,7 +314,7 @@ class Tag {
 
         foreach ($rows as $tx) {
             $currentTagId = $tx['tag_id'] !== null ? (int)$tx['tag_id'] : null;
-            $newTagId = self::findMatch($tx['description']);
+            $newTagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']));
             if ($newTagId === null && $tx['ofx_type'] === 'INT') {
                 $newTagId = self::getInterestChargeId();
             }

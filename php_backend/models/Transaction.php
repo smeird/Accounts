@@ -28,7 +28,7 @@ class Transaction {
      */
     public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null, ?string $bank_ofx_id = null): int {
         if ($tag === null) {
-            $tag = Tag::findMatch($description);
+            $tag = Tag::findMatch(Tag::buildMatchText($description, $memo));
             if ($tag === null && $ofx_type === 'INT') {
                 $tag = Tag::getInterestChargeId();
             }
