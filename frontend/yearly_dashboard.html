@@ -103,13 +103,28 @@ window.renderPageHeader(pageMain, {
         const pct = total ? (sum / total * 100) : 0;
         return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(sum, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
     }
-    // Format totals with currency and colour coding
-    function totalFormatter(cell){
-        const value = cell.getValue();
+    // Format monetary cells with colour coding so positive saving months and negative overspend months stand out.
+    function formatCurrencyValue(value){
+        const amount = parseFloat(value) || 0;
+        return '£' + amount.toFixed(2);
+    }
+
+    function applyBalanceColour(cell){
+        const value = parseFloat(cell.getValue()) || 0;
         const el = cell.getElement();
         el.classList.toggle('text-red-600', value < 0);
         el.classList.toggle('text-green-600', value > 0);
-        return '£' + parseFloat(value).toFixed(2);
+        el.classList.toggle('font-semibold', value !== 0);
+    }
+
+    function balanceFormatter(cell){
+        applyBalanceColour(cell);
+        return formatCurrencyValue(cell.getValue());
+    }
+
+    function totalFormatter(cell){
+        applyBalanceColour(cell);
+        return formatCurrencyValue(cell.getValue());
     }
 
     // Render a Tabulator table showing monthly breakdowns
@@ -120,8 +135,7 @@ window.renderPageHeader(pageMain, {
         const monthCols = Array.from({length: 12}, (_, i) => ({
             title: new Date(0, i).toLocaleString('default', { month: 'short' }),
             field: String(i + 1),
-            formatter: 'money',
-            formatterParams: { symbol: '£', precision: 2 },
+            formatter: balanceFormatter,
             hozAlign: 'right',
             bottomCalc: 'sum',
             bottomCalcFormatter: totalFormatter
@@ -142,7 +156,7 @@ window.renderPageHeader(pageMain, {
                 }
             },
             ...monthCols,
-            { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
+            { title: 'Total', field: 'total', formatter: balanceFormatter, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
         ];
 
         tailwindTabulator(el, {
