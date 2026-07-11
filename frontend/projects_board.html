@@ -100,7 +100,7 @@ function fmtMoney(v){
     return '£' + (parseFloat(v) || 0).toFixed(2);
 }
 
-function scoreBadge(score){
+function createScoreBadge(score){
     const s = parseInt(score, 10) || 0;
     const colors = {
         1: 'bg-green-500',
@@ -109,8 +109,62 @@ function scoreBadge(score){
         4: 'bg-orange-500',
         5: 'bg-red-600'
     };
-    const colorClass = colors[s] || 'bg-gray-300';
-    return `<span class="inline-block px-2 py-0.5 rounded text-xs ${colorClass} text-black">${s}</span>`;
+    const span = document.createElement('span');
+    span.className = `inline-block px-2 py-0.5 rounded text-xs ${colors[s] || 'bg-gray-300'} text-black`;
+    span.textContent = s;
+    return span;
+}
+
+function createStars(score, minScore, maxScore){
+    const wrapper = document.createElement('span');
+    wrapper.className = 'inline-flex gap-0.5';
+    wrapper.setAttribute('aria-label', `Score ${fmtNumber(score)} out of ${fmtNumber(maxScore)}`);
+    renderStars(score, minScore, maxScore).forEach(star => wrapper.appendChild(star));
+    return wrapper;
+}
+
+function fmtNumber(v){
+    return (parseFloat(v) || 0).toFixed(1);
+}
+
+function appendLabelledText(container, label, value){
+    const paragraph = document.createElement('p');
+    const strong = document.createElement('span');
+    strong.className = 'font-semibold';
+    strong.textContent = `${label}:`;
+    paragraph.appendChild(strong);
+    paragraph.appendChild(document.createTextNode(` ${value || 'Not provided'}`));
+    container.appendChild(paragraph);
+}
+
+function appendCell(row, tagName, text){
+    const cell = document.createElement(tagName);
+    if(tagName === 'th') cell.scope = 'row';
+    cell.textContent = text;
+    row.appendChild(cell);
+    return cell;
+}
+
+function appendProjectRow(tbody, leftLabel, leftValue, rightLabel, rightValue){
+    const row = document.createElement('tr');
+    appendCell(row, 'th', leftLabel);
+    const leftCell = appendCell(row, 'td', '');
+    if(leftValue instanceof Node) leftCell.appendChild(leftValue);
+    else leftCell.textContent = leftValue || 'Not provided';
+    appendCell(row, 'th', rightLabel);
+    const rightCell = appendCell(row, 'td', '');
+    if(rightValue instanceof Node) rightCell.appendChild(rightValue);
+    else rightCell.textContent = rightValue || 'Not provided';
+    tbody.appendChild(row);
+}
+
+function createActionIcon(iconClass, label){
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'text-gray-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded';
+    button.setAttribute('aria-label', label);
+    button.innerHTML = `<i class="fas ${iconClass}" aria-hidden="true"></i>`;
+    return button;
 }
 
 
@@ -126,19 +180,27 @@ function renderStars(score, minScore, maxScore){
     let stars = '';
     for(let i = 0; i < 5; i++){
         if(i < starCount){
-            stars += '<i class="fas fa-star text-yellow-500 text-xs"></i>';
+            stars += '<i class="fas fa-star text-yellow-500 text-xs" aria-hidden="true"></i>';
         } else {
-            stars += '<i class="far fa-star text-gray-300 text-xs"></i>';
+            stars += '<i class="far fa-star text-gray-300 text-xs" aria-hidden="true"></i>';
         }
     }
-    return stars;
+    const template = document.createElement('template');
+    template.innerHTML = stars;
+    return Array.from(template.content.children);
 }
 
 
 async function loadProjects(){
     // Client-side filtering keeps the existing render pipeline simple; add query params in projects.php for larger datasets.
-    const res = await fetch('../php_backend/public/projects.php');
-    const projects = await res.json();
+    let projects = [];
+    try {
+        const res = await fetch('../php_backend/public/projects.php');
+        if(!res.ok) throw new Error('Projects request failed');
+        projects = await res.json();
+    } catch (error) {
+        showMessage('Could not load projects. Please refresh and try again.');
+    }
     const searchInput = document.getElementById('project-search');
     const fundingFilter = document.getElementById('funding-filter');
     const sortSelect = document.getElementById('project-sort');
@@ -220,60 +282,31 @@ async function loadProjects(){
         title.className = 'text-lg font-semibold text-indigo-700';
         title.textContent = p.name;
         const icons = document.createElement('div');
-        icons.className = 'flex space-x-2 text-gray-600';
-        icons.innerHTML = `
-            <i class="fas fa-edit cursor-pointer" aria-label="Edit"></i>
-            <i class="fas fa-box-archive cursor-pointer" aria-label="Archive"></i>
-            <i class="fas fa-trash cursor-pointer" aria-label="Delete"></i>
-        `;
+        icons.className = 'flex space-x-2';
+        const editIcon = createActionIcon('fa-edit', `Edit ${p.name || 'project'}`);
+        const archiveIcon = createActionIcon('fa-box-archive', `Archive ${p.name || 'project'}`);
+        const deleteIcon = createActionIcon('fa-trash', `Delete ${p.name || 'project'}`);
+        icons.append(editIcon, archiveIcon, deleteIcon);
         header.appendChild(title);
         header.appendChild(icons);
         card.appendChild(header);
 
         const details = document.createElement('div');
         details.className = 'space-y-1 text-sm';
-
-        const desc = document.createElement('p');
-        desc.innerHTML = `<span class="font-semibold">Description:</span> ${p.description || ''}`;
-        const rationale = document.createElement('p');
-        rationale.innerHTML = `<span class="font-semibold">Rationale:</span> ${p.rationale || ''}`;
-        details.appendChild(desc);
-        details.appendChild(rationale);
+        appendLabelledText(details, 'Description', p.description);
+        appendLabelledText(details, 'Rationale', p.rationale);
 
         const table = document.createElement('table');
         table.className = 'project-board-layout-table';
-        table.innerHTML = `
-            <tbody>
-                <tr>
-                    <th scope="row">Cost Low</th><td>${fmtMoney(p.cost_low)}</td>
-                    <th scope="row">Cost Medium</th><td>${fmtMoney(p.cost_medium)}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Cost High</th><td>${fmtMoney(p.cost_high)}</td>
-                    <th scope="row">Funding</th><td>${p.funding_source || ''}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Recurring Cost</th><td>${fmtMoney(p.recurring_cost)}</td>
-                    <th scope="row">Estimated Time</th><td>${p.estimated_time || ''}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Expected Lifespan</th><td>${p.expected_lifespan || ''}</td>
-                    <th scope="row">Financial Benefit</th><td>${scoreBadge(p.benefit_financial)}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Quality Benefit</th><td>${scoreBadge(p.benefit_quality)}</td>
-                    <th scope="row">Risk Benefit</th><td>${scoreBadge(p.benefit_risk)}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Sustainability Benefit</th><td>${scoreBadge(p.benefit_sustainability)}</td>
-                    <th scope="row">Score</th><td>${renderStars(p.score, minScore, maxScore)}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Dependencies</th><td>${p.dependencies || ''}</td>
-                    <th scope="row">Risks</th><td>${p.risks || ''}</td>
-                </tr>
-            </tbody>
-        `;
+        const tbody = document.createElement('tbody');
+        appendProjectRow(tbody, 'Cost Low', fmtMoney(p.cost_low), 'Cost Medium', fmtMoney(p.cost_medium));
+        appendProjectRow(tbody, 'Cost High', fmtMoney(p.cost_high), 'Funding', p.funding_source);
+        appendProjectRow(tbody, 'Recurring Cost', fmtMoney(p.recurring_cost), 'Estimated Time', p.estimated_time);
+        appendProjectRow(tbody, 'Expected Lifespan', p.expected_lifespan, 'Financial Benefit', createScoreBadge(p.benefit_financial));
+        appendProjectRow(tbody, 'Quality Benefit', createScoreBadge(p.benefit_quality), 'Risk Benefit', createScoreBadge(p.benefit_risk));
+        appendProjectRow(tbody, 'Sustainability Benefit', createScoreBadge(p.benefit_sustainability), 'Score', createStars(p.score, minScore, maxScore));
+        appendProjectRow(tbody, 'Dependencies', p.dependencies, 'Risks', p.risks);
+        table.appendChild(tbody);
         details.appendChild(table);
         card.appendChild(details);
 
@@ -282,28 +315,37 @@ async function loadProjects(){
         spent.textContent = `Spent: ${fmtMoney(p.spent)}`;
         card.appendChild(spent);
 
-        const [editIcon, archiveIcon, deleteIcon] = Array.from(icons.children);
         editIcon.addEventListener('click', () => {
             window.location.href = `project_add.html?id=${p.id}`;
         });
         archiveIcon.addEventListener('click', async () => {
-            await fetch('../php_backend/public/projects.php', {
+            try {
+                const archiveRes = await fetch('../php_backend/public/projects.php', {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: p.id, archived: 1})
-            });
-            loadProjects();
-            showMessage('Project archived');
+                });
+                if(!archiveRes.ok) throw new Error('Archive failed');
+                await loadProjects();
+                showMessage('Project archived');
+            } catch (error) {
+                showMessage('Could not archive project. Please try again.');
+            }
         });
         deleteIcon.addEventListener('click', async () => {
             if(!confirm('Delete this project?')) return;
-            await fetch('../php_backend/public/projects.php', {
+            try {
+                const deleteRes = await fetch('../php_backend/public/projects.php', {
                 method: 'DELETE',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({id: p.id})
-            });
-            loadProjects();
-            showMessage('Project deleted');
+                });
+                if(!deleteRes.ok) throw new Error('Delete failed');
+                await loadProjects();
+                showMessage('Project deleted');
+            } catch (error) {
+                showMessage('Could not delete project. Please try again.');
+            }
         });
 
         board.appendChild(card);
@@ -314,11 +356,11 @@ async function loadProjects(){
         }
     }
 
-    searchInput.addEventListener('input', applyFiltersAndRender);
-    fundingFilter.addEventListener('change', applyFiltersAndRender);
-    sortSelect.addEventListener('change', applyFiltersAndRender);
+    searchInput.oninput = applyFiltersAndRender;
+    fundingFilter.onchange = applyFiltersAndRender;
+    sortSelect.onchange = applyFiltersAndRender;
     statusChips.forEach(chip => {
-        chip.addEventListener('click', () => {
+        chip.onclick = () => {
             const active = chip.dataset.active === '1';
             chip.dataset.active = active ? '0' : '1';
             chip.classList.toggle('bg-gray-200', active);
@@ -326,7 +368,7 @@ async function loadProjects(){
             chip.classList.toggle('bg-indigo-600', !active);
             chip.classList.toggle('text-white', !active);
             applyFiltersAndRender();
-        });
+        };
     });
 
     applyFiltersAndRender();
