@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dashboard showing yearly spending summaries -->
+<!-- Yearly dashboard: an annual overview of cash flow, momentum, and spending drivers. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,265 +10,94 @@
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
     <link rel="stylesheet" href="operational_ui.css">
-
+    <link rel="stylesheet" href="yearly_dashboard.css">
 </head>
-<body class="ops-body dashboard-page">
+<body class="ops-body dashboard-page yearly-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<section class="ops-section">
-                <form class="ops-form-grid cols-2" aria-label="Yearly dashboard filters">
-                    <label for="year-select" class="ops-field"><span class="ops-label">Year</span>
-                        <select id="year-select" class="ops-select" data-help="Select year to display"></select>
-                        <span class="ops-help">Choose which year to visualize across all tables and charts.</span>
-                    </label>
-                </form>
-            </section>
+        <main class="ops-main yearly-main flex-1 min-w-0 overflow-x-hidden">
+            <div id="yearly-error" class="yearly-error" role="alert" hidden></div>
 
-            <section class="ops-table-block">
-                <div class="ops-titlebar"><h2>Tag Totals</h2></div>
-                <div class="ops-table-content"><div id="tags-table"></div></div>
-            </section>
-            <section class="ops-chart-block">
-                <div class="ops-titlebar"><h2>Tag Totals Chart</h2></div>
-                <div class="ops-chart-content"><div id="tags-chart" class="ops-chart-canvas" data-chart-desc="Column chart of tag totals for selected year."></div></div>
-            </section>
-
-            <section class="ops-table-block">
-                <div class="ops-titlebar"><h2>Category Totals</h2></div>
-                <div class="ops-table-content"><div id="categories-table"></div></div>
-            </section>
-            <section class="ops-chart-block">
-                <div class="ops-titlebar"><h2>Category Totals Chart</h2></div>
-                <div class="ops-chart-content"><div id="categories-chart" class="ops-chart-canvas" data-chart-desc="Column chart of category totals for selected year."></div></div>
-            </section>
-
-            <section class="ops-chart-block">
-                <div class="ops-titlebar"><h2>Category & Tag Breakdown</h2></div>
-                <div id="category-tag-sunburst" class="ops-chart-content grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div id="category-tag-income" class="ops-chart-canvas" data-chart-desc="Sunburst chart of income by category and tag for selected year."></div>
-                    <div id="category-tag-outgoings" class="ops-chart-canvas" data-chart-desc="Sunburst chart of outgoings by category and tag for selected year."></div>
+            <section class="yearly-hero" data-no-card="true" aria-labelledby="yearly-hero-title">
+                <div class="yearly-hero__orb" aria-hidden="true"></div>
+                <div class="yearly-hero__topline">
+                    <span class="yearly-eyebrow"><span aria-hidden="true"></span>Annual perspective</span>
+                    <span id="yearly-coverage" class="yearly-coverage">Loading activity…</span>
+                </div>
+                <div class="yearly-hero__body">
+                    <div>
+                        <p class="yearly-kicker">Net cash flow</p>
+                        <h1 id="yearly-hero-title" class="yearly-cashflow">£—</h1>
+                        <p id="yearly-message" class="yearly-message">Building the story of your year…</p>
+                    </div>
+                    <div class="yearly-rate" aria-label="Annual savings rate">
+                        <div id="yearly-rate-ring" class="yearly-rate__ring" style="--yearly-rate: 0deg">
+                            <div class="yearly-rate__centre"><strong id="yearly-rate">—%</strong><span>saved</span></div>
+                        </div>
+                        <small>Income kept after spending</small>
+                    </div>
+                </div>
+                <div class="yearly-metrics" aria-label="Annual headline metrics">
+                    <article><span class="yearly-metric-icon yearly-metric-icon--income"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span><div><p>Income</p><strong id="yearly-income">£—</strong><small id="yearly-income-change">vs prior year</small></div></article>
+                    <article><span class="yearly-metric-icon yearly-metric-icon--spend"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span><div><p>Spent</p><strong id="yearly-spending">£—</strong><small id="yearly-spending-change">vs prior year</small></div></article>
+                    <article><span class="yearly-metric-icon yearly-metric-icon--months"><i class="fas fa-calendar-days" aria-hidden="true"></i></span><div><p>Positive months</p><strong id="yearly-positive-months">—</strong><small id="yearly-months-note">of 12 months</small></div></article>
                 </div>
             </section>
 
-            <section class="ops-table-block">
-                <div class="ops-titlebar"><h2>Segment Totals</h2></div>
-                <div class="ops-table-content"><div id="segments-table"></div></div>
-            </section>
-            <section class="ops-chart-block">
-                <div class="ops-titlebar"><h2>Segment Totals Chart</h2></div>
-                <div class="ops-chart-content"><div id="segments-chart" class="ops-chart-canvas" data-chart-desc="Column chart of segment totals for selected year."></div></div>
+            <section class="yearly-card yearly-card--trend" data-no-card="true">
+                <div class="yearly-card__header">
+                    <div><p class="yearly-section-label">The full arc</p><h2>Income and spending through the year</h2></div>
+                    <a href="monthly_dashboard.html" class="yearly-link">Open monthly view <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div id="yearly-trend-chart" class="yearly-chart" data-chart-desc="Area chart comparing monthly income and spending across the selected year."></div>
+                <div id="yearly-month-strip" class="yearly-month-strip" aria-label="Monthly cash-flow summary"></div>
             </section>
 
-            <section class="ops-table-block">
-                <div class="ops-titlebar"><h2>Group Totals</h2></div>
-                <div class="ops-table-content"><div id="groups-table"></div></div>
-            </section>
-            <section class="ops-chart-block">
-                <div class="ops-titlebar"><h2>Group Totals Chart</h2></div>
-                <div class="ops-chart-content"><div id="groups-chart" class="ops-chart-canvas" data-chart-desc="Column chart of group totals for selected year."></div></div>
+            <div class="yearly-grid yearly-grid--primary">
+                <section class="yearly-card" data-no-card="true">
+                    <div class="yearly-card__header"><div><p class="yearly-section-label">Momentum</p><h2>Quarter by quarter</h2></div></div>
+                    <div id="yearly-quarters" class="yearly-quarter-list"></div>
+                </section>
+                <section class="yearly-card" data-no-card="true">
+                    <div class="yearly-card__header">
+                        <div><p class="yearly-section-label">Spending shape</p><h2>Biggest annual drivers</h2></div>
+                        <a href="search.html" class="yearly-icon-link" aria-label="Search transactions"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                    </div>
+                    <div id="yearly-categories" class="yearly-category-list"></div>
+                </section>
+            </div>
+
+            <section class="yearly-card yearly-card--insights" data-no-card="true">
+                <div class="yearly-card__header"><div><p class="yearly-section-label">What stands out</p><h2>Your year in four signals</h2></div></div>
+                <div id="yearly-insights" class="yearly-insight-grid"></div>
             </section>
         </main>
     </div>
+
     <script src="js/page_header.js"></script>
     <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Yearly Dashboard',
-    breadcrumb: 'Dashboards / Yearly',
-    subtitle: 'Analyse totals for a single year through charts and tables to understand how income and spending evolved month by month.'
-});
-</script>
-    <script src="js/menu.js"></script>
-    <script src="js/input_help.js"></script>
-    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/sunburst.js"></script>
-    <script src="js/color_map.js"></script>
-    <script>
-    function columnTooltip(){
-        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
-        const pct = total ? (this.y / total * 100) : 0;
-        return `<b>${this.series.name}</b><br/>${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}% of total)`;
-    }
-    function sunburstTooltip(){
-        const sum = (this.node && this.node.childrenTotal) || this.value;
-        const total = this.series.points[0].node.childrenTotal;
-        const pct = total ? (sum / total * 100) : 0;
-        return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(sum, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
-    }
-    // Format monetary cells with colour coding so positive saving months and negative overspend months stand out.
-    function formatCurrencyValue(value){
-        const amount = parseFloat(value) || 0;
-        return '£' + amount.toFixed(2);
-    }
-
-    function applyBalanceColour(cell){
-        const value = parseFloat(cell.getValue()) || 0;
-        const el = cell.getElement();
-        el.classList.toggle('text-red-600', value < 0);
-        el.classList.toggle('text-green-600', value > 0);
-        el.classList.toggle('font-semibold', value !== 0);
-    }
-
-    function balanceFormatter(cell){
-        applyBalanceColour(cell);
-        return formatCurrencyValue(cell.getValue());
-    }
-
-    function totalFormatter(cell){
-        applyBalanceColour(cell);
-        return formatCurrencyValue(cell.getValue());
-    }
-
-    // Render a Tabulator table showing monthly breakdowns
-    function buildTable(id, data, colorClasses){
-        const el = document.getElementById(id);
-        el.innerHTML = '';
-
-        const monthCols = Array.from({length: 12}, (_, i) => ({
-            title: new Date(0, i).toLocaleString('default', { month: 'short' }),
-            field: String(i + 1),
-            formatter: balanceFormatter,
-            hozAlign: 'right',
-            bottomCalc: 'sum',
-            bottomCalcFormatter: totalFormatter
-        }));
-
-        const columns = [
-            {
-                title: 'Name',
-                field: 'name',
-                bottomCalc: () => 'Total',
-                formatter: function(cell){
-                    const value = cell.getValue();
-                    const badge = createBadge(value, colorClasses);
-                    const link = document.createElement('a');
-                    link.href = `search.html?value=${encodeURIComponent(value)}`;
-                    link.appendChild(badge);
-                    return link;
-                }
-            },
-            ...monthCols,
-            { title: 'Total', field: 'total', formatter: balanceFormatter, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: totalFormatter }
-        ];
-
-        tailwindTabulator(el, {
-            data: data,
-            layout: 'fitDataStretch',
-            columns: columns
+        const yearlyActions = document.createElement('div');
+        yearlyActions.className = 'yearly-header-controls';
+        const yearLabel = document.createElement('label');
+        yearLabel.setAttribute('for', 'year-select');
+        yearLabel.textContent = 'Year';
+        const yearSelect = document.createElement('select');
+        yearSelect.id = 'year-select';
+        yearSelect.setAttribute('aria-label', 'Year to display');
+        yearLabel.appendChild(yearSelect);
+        yearlyActions.appendChild(yearLabel);
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Your year',
+            breadcrumb: 'Dashboards / Yearly',
+            subtitle: 'A clear annual view of progress, pressure, and the moments that shaped your money.',
+            actions: yearlyActions
         });
-    }
-
-    // Draw a column chart for the provided data set
-    function buildChart(id, title, data, colorFn){
-        Highcharts.chart(id, {
-            chart: { type: 'column' },
-            title: { text: title },
-            xAxis: { categories: data.map(d => d.name) },
-            yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-            tooltip: { pointFormatter: columnTooltip },
-            series: [{ name: 'Total', data: data.map(d => ({ y: parseFloat(d.total), color: colorFn ? colorFn(d) : chartColors[0] })) }]
-        });
-    }
-
-    // Create sunburst charts for income and outgoings categories/tags
-    function buildSunburstCharts(incomeId, outgoingsId, categories, tags){
-
-        // Build hierarchical series data filtered by income or outgoings
-        function createData(isIncome){
-            const data = [{ id: 'root', parent: '', name: '' }];
-            const segmentIds = {};
-            categories.forEach(c => {
-                const total = parseFloat(c.total);
-                if ((isIncome && total > 0) || (!isIncome && total < 0)) {
-                    const segName = c.segment_name || 'Not Segmented';
-                    let segId = segmentIds[segName];
-                    if (!segId) {
-                        segId = 'seg_' + segName.replace(/\s+/g, '_');
-                        segmentIds[segName] = segId;
-                        data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
-                    }
-                    const color = getCategoryColor(c.name, segName);
-                    const catId = c.name;
-                    data.push({ id: catId, parent: segId, name: c.name, value: Math.abs(total), color });
-                    tags.filter(t => t.category === c.name && ((isIncome && parseFloat(t.total) > 0) || (!isIncome && parseFloat(t.total) < 0))).forEach(t => {
-                        data.push({
-                            name: t.name,
-                            parent: catId,
-                            value: Math.abs(parseFloat(t.total)),
-                            color: Highcharts.color(color).brighten(0.1).get()
-                        });
-                    });
-                }
-            });
-            return data;
-        }
-
-        // Render a sunburst chart into the specified element
-        function render(id, title, data){
-            Highcharts.chart(id, {
-                title: { text: title },
-                series: [{
-                    type: 'sunburst',
-                    data: data,
-                    allowDrillToNode: true,
-                    cursor: 'pointer',
-                    dataLabels: { format: '{point.name}: £{point.value:.2f}' }
-                }],
-                tooltip: { pointFormatter: sunburstTooltip }
-            });
-        }
-
-        const incomeData = createData(true);
-        const outData = createData(false);
-        render(incomeId, 'Income Categories and Tags', incomeData);
-        render(outgoingsId, 'Outgoings Categories and Tags', outData);
-    }
-
-    // Load dashboard data for a specific year and update the UI
-    function loadYear(year){
-        fetch('../php_backend/public/yearly_dashboard.php?year=' + year)
-            .then(resp => resp.json())
-            .then(data => {
-                buildTable('tags-table', data.tags, 'bg-slate-200 text-slate-800');
-                buildChart('tags-chart', 'Tag Totals ' + year, data.tags);
-                buildTable('categories-table', data.categories, 'bg-slate-200 text-slate-800');
-                buildChart('categories-chart', 'Category Totals ' + year, data.categories, d => getCategoryColor(d.name, d.segment_name));
-                buildSunburstCharts('category-tag-income', 'category-tag-outgoings', data.categories, data.tags);
-                buildTable('segments-table', data.segments, 'bg-slate-200 text-slate-800');
-                buildChart('segments-chart', 'Segment Totals ' + year, data.segments, d => getSegmentColor(d.name));
-                buildTable('groups-table', data.groups, 'bg-slate-200 text-slate-800');
-                buildChart('groups-chart', 'Group Totals ' + year, data.groups);
-            });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('../php_backend/public/transaction_months.php')
-            .then(resp => resp.json())
-            .then(months => {
-                const years = Array.from(new Set(months.map(m => m.year))).sort((a,b) => b - a);
-                const select = document.getElementById('year-select');
-                years.forEach(y => {
-                    const opt = document.createElement('option');
-                    opt.value = y;
-                    opt.textContent = y;
-                    select.appendChild(opt);
-                });
-                const initial = select.value || years[0];
-                select.value = initial;
-                loadYear(initial);
-            });
-
-        document.getElementById('year-select').addEventListener('change', e => loadYear(e.target.value));
-    });
     </script>
+    <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/yearly_dashboard.js"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>

@@ -400,7 +400,10 @@ class Transaction {
     public static function getAvailableMonths(): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $stmt = $db->prepare('SELECT DISTINCT YEAR(`date`) AS year, MONTH(`date`) AS month FROM `transactions` WHERE `tag_id` IS NULL OR `tag_id` != :ignore ORDER BY YEAR(`date`) DESC, MONTH(`date`) DESC');
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $yearExpression = $driver === 'sqlite' ? 'CAST(SUBSTR(`date`, 1, 4) AS INTEGER)' : 'YEAR(`date`)';
+        $monthExpression = $driver === 'sqlite' ? 'CAST(SUBSTR(`date`, 6, 2) AS INTEGER)' : 'MONTH(`date`)';
+        $stmt = $db->prepare("SELECT DISTINCT $yearExpression AS year, $monthExpression AS month FROM `transactions` WHERE `tag_id` IS NULL OR `tag_id` != :ignore ORDER BY year DESC, month DESC");
         $stmt->execute(['ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -411,7 +414,10 @@ class Transaction {
     public static function getAvailableYears(): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $stmt = $db->prepare('SELECT DISTINCT YEAR(`date`) AS year FROM `transactions` WHERE `tag_id` IS NULL OR `tag_id` != :ignore ORDER BY YEAR(`date`)');
+        $yearExpression = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+            ? 'CAST(SUBSTR(`date`, 1, 4) AS INTEGER)'
+            : 'YEAR(`date`)';
+        $stmt = $db->prepare("SELECT DISTINCT $yearExpression AS year FROM `transactions` WHERE `tag_id` IS NULL OR `tag_id` != :ignore ORDER BY year");
         $stmt->execute(['ignore' => $ignore]);
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }

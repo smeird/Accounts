@@ -18,19 +18,20 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 1rem;
-    padding: 1.2rem 1.4rem;
-    border-radius: 1.25rem;
+    gap: 0.8rem;
+    padding: 0.78rem 1.05rem;
+    border-radius: 1rem;
 }
 
 .instant-page .page-title {
-    font-size: clamp(1.75rem, 3vw, 2.4rem) !important;
+    font-size: clamp(1.35rem, 2.2vw, 1.75rem) !important;
     letter-spacing: -0.035em;
 }
 
 .instant-page .page-subtitle {
     max-width: 48rem;
-    font-size: 0.86rem;
+    font-size: 0.74rem;
+    line-height: 1.35;
 }
 
 .instant-page .page-header-actions {
@@ -42,8 +43,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    min-height: 2.65rem;
-    padding: 0.65rem 1rem;
+    min-height: 2.3rem;
+    padding: 0.5rem 0.85rem;
     border: 1px solid var(--instant-line);
     border-radius: 0.8rem;
     color: var(--instant-brand-dark);
@@ -75,7 +76,7 @@
 .instant-hero {
     position: relative;
     overflow: hidden;
-    padding: clamp(1.35rem, 3.5vw, 2.75rem);
+    padding: clamp(1.15rem, 2.3vw, 1.75rem);
     border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: 1.75rem;
     color: #f8fafc;
@@ -150,9 +151,9 @@
 .instant-hero__primary {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: clamp(2rem, 5vw, 5rem);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
     align-items: center;
-    padding: clamp(2rem, 4vw, 3.5rem) 0;
+    padding: clamp(1.35rem, 2.4vw, 2rem) 0;
 }
 
 .instant-position {
@@ -170,24 +171,24 @@
 .instant-balance {
     margin: 0;
     color: #fff;
-    font-size: clamp(3.1rem, 7vw, 6.4rem);
+    font-size: clamp(2.8rem, 5vw, 4.75rem);
     font-weight: 780;
     letter-spacing: -0.065em;
     line-height: 0.95;
 }
 
 .instant-message {
-    margin: 1rem 0 0;
+    margin: 0.7rem 0 0;
     color: #cbd5e1;
-    font-size: clamp(1rem, 1.6vw, 1.24rem);
-    line-height: 1.55;
+    font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+    line-height: 1.45;
 }
 
 .instant-pace {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    margin-top: 1.1rem;
+    margin-top: 0.75rem;
     padding: 0.45rem 0.7rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 999px;
@@ -202,7 +203,7 @@
 
 .instant-score {
     display: flex;
-    width: 12.5rem;
+    width: 10rem;
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -210,8 +211,8 @@
 
 .instant-score__ring {
     display: grid;
-    width: 9.5rem;
-    height: 9.5rem;
+    width: 7.5rem;
+    height: 7.5rem;
     place-items: center;
     border-radius: 999px;
     background: conic-gradient(#34d399 var(--score-progress), rgba(255, 255, 255, 0.09) 0deg);
@@ -228,8 +229,8 @@
 
 .instant-score__centre {
     display: flex;
-    width: 7.7rem;
-    height: 7.7rem;
+    width: 6rem;
+    height: 6rem;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -240,7 +241,7 @@
 
 .instant-score__centre > span {
     color: #fff;
-    font-size: 2rem;
+    font-size: 1.55rem;
     font-weight: 800;
     letter-spacing: -0.04em;
 }
@@ -252,7 +253,7 @@
 }
 
 .instant-score > p {
-    margin: 0.65rem 0 0;
+    margin: 0.45rem 0 0;
 }
 
 .instant-metrics {
@@ -270,8 +271,8 @@
     display: flex;
     gap: 0.8rem;
     align-items: center;
-    min-height: 7rem;
-    padding: 1rem;
+    min-height: 5.65rem;
+    padding: 0.82rem;
 }
 
 .instant-metric + .instant-metric {
@@ -281,8 +282,8 @@
 .instant-metric__icon {
     display: inline-flex;
     flex: 0 0 auto;
-    width: 2.55rem;
-    height: 2.55rem;
+    width: 2.25rem;
+    height: 2.25rem;
     align-items: center;
     justify-content: center;
     border-radius: 0.8rem;
@@ -363,7 +364,7 @@
 }
 
 .instant-metric--progress .instant-progress {
-    margin: 0.8rem 0 0.65rem;
+    margin: 0.6rem 0 0.45rem;
 }
 
 .instant-card {
@@ -952,20 +953,20 @@
 
     .instant-page .page-header {
         grid-template-columns: minmax(0, 1fr) auto;
-        padding: 1rem 1rem 1rem 3.35rem;
+        padding: 0.72rem 0.75rem 0.72rem 3.35rem;
         border-radius: 1rem;
     }
 
     .instant-page .page-title {
-        font-size: 1.8rem !important;
+        font-size: 1.35rem !important;
     }
 
     .instant-page .page-subtitle {
-        font-size: 0.74rem;
+        display: none;
     }
 
     .instant-refresh-button {
-        width: 2.65rem;
+        width: 2.3rem;
         padding-inline: 0;
     }
 
@@ -979,7 +980,7 @@
     }
 
     .instant-hero {
-        padding: 1.25rem;
+        padding: 1.05rem;
     }
 
     .instant-hero__topline {
@@ -993,12 +994,12 @@
     }
 
     .instant-hero__primary {
-        gap: 1.7rem;
-        padding: 2.2rem 0;
+        gap: 1.25rem;
+        padding: 1.45rem 0;
     }
 
     .instant-balance {
-        font-size: clamp(3rem, 15vw, 4.2rem);
+        font-size: clamp(2.55rem, 13vw, 3.55rem);
     }
 
     .instant-message {
@@ -1010,13 +1011,13 @@
     }
 
     .instant-score__ring {
-        width: 6.7rem;
-        height: 6.7rem;
+        width: 5.9rem;
+        height: 5.9rem;
     }
 
     .instant-score__centre {
-        width: 5.35rem;
-        height: 5.35rem;
+        width: 4.7rem;
+        height: 4.7rem;
     }
 
     .instant-score__centre > span {
@@ -1028,7 +1029,7 @@
     }
 
     .instant-metric {
-        min-height: 7.4rem;
+        min-height: 6.15rem;
         gap: 0.6rem;
         padding: 0.75rem;
     }

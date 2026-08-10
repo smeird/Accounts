@@ -11,6 +11,11 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
     $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
+    if ($month < 1 || $month > 12 || $year < 1900 || $year > 2200) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid budget period']);
+        return;
+    }
     try {
         echo json_encode(Budget::getMonthly($month, $year));
     } catch (Exception $e) {
@@ -27,7 +32,7 @@ if ($method === 'POST') {
     $amount = isset($data['amount']) ? (float)$data['amount'] : null;
     $month = isset($data['month']) ? (int)$data['month'] : (int)date('n');
     $year = isset($data['year']) ? (int)$data['year'] : (int)date('Y');
-    if ($category <= 0 || $amount === null) {
+    if ($category <= 0 || $amount === null || $amount < 0 || $month < 1 || $month > 12 || $year < 1900 || $year > 2200) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid data']);
         return;
