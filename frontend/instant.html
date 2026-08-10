@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!-- Instant dashboard: a glanceable overview of balances, cash flow, budgets, and recent activity. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Instant Dashboard</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="instant.css">
+</head>
+<body class="ops-body dashboard-page instant-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main instant-main flex-1 min-w-0 overflow-x-hidden">
+            <div id="instant-error" class="instant-error" role="alert" hidden></div>
+
+            <section class="instant-hero" data-no-card="true" aria-labelledby="instant-balance-label">
+                <div class="instant-hero__glow" aria-hidden="true"></div>
+                <div class="instant-hero__topline">
+                    <span class="instant-live"><span aria-hidden="true"></span>Financial pulse</span>
+                    <span id="instant-period" class="instant-period">Loading latest month…</span>
+                </div>
+
+                <div class="instant-hero__primary">
+                    <div class="instant-position">
+                        <p id="instant-balance-label" class="instant-kicker">Total position across your accounts</p>
+                        <p id="instant-balance" class="instant-balance" aria-live="polite">£—</p>
+                        <p id="instant-message" class="instant-message">Building your financial snapshot…</p>
+                        <span id="instant-pace" class="instant-pace instant-tone--neutral">
+                            <i class="fas fa-wave-square" aria-hidden="true"></i>
+                            <span id="instant-pace-text">Comparing your spending pace</span>
+                        </span>
+                    </div>
+
+                    <div class="instant-score" aria-label="Monthly savings rate">
+                        <div id="instant-score-ring" class="instant-score__ring" style="--score-progress: 0deg">
+                            <div class="instant-score__centre">
+                                <span id="instant-savings-rate">—</span>
+                                <small>Savings rate</small>
+                            </div>
+                        </div>
+                        <p id="instant-score-note">Income kept after spending</p>
+                    </div>
+                </div>
+
+                <div class="instant-metrics" aria-label="Monthly headline metrics">
+                    <article class="instant-metric">
+                        <span class="instant-metric__icon instant-metric__icon--income"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span>
+                        <div>
+                            <p>Income</p>
+                            <strong id="instant-income">£—</strong>
+                            <span id="instant-income-change">vs last month</span>
+                        </div>
+                    </article>
+                    <article class="instant-metric">
+                        <span class="instant-metric__icon instant-metric__icon--spending"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span>
+                        <div>
+                            <p>Spent</p>
+                            <strong id="instant-spending">£—</strong>
+                            <span id="instant-spending-change">vs last month</span>
+                        </div>
+                    </article>
+                    <article class="instant-metric">
+                        <span class="instant-metric__icon instant-metric__icon--cashflow"><i class="fas fa-scale-balanced" aria-hidden="true"></i></span>
+                        <div>
+                            <p>Net cash flow</p>
+                            <strong id="instant-cashflow">£—</strong>
+                            <span id="instant-cashflow-label">Income minus spending</span>
+                        </div>
+                    </article>
+                    <article class="instant-metric instant-metric--progress">
+                        <div class="instant-metric__progress-heading">
+                            <div><p>Month complete</p><strong id="instant-month-progress">—%</strong></div>
+                            <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                        </div>
+                        <div class="instant-progress" aria-hidden="true"><span id="instant-month-progress-bar"></span></div>
+                        <span id="instant-latest-transaction">Finding latest activity…</span>
+                    </article>
+                </div>
+            </section>
+
+            <div class="instant-lead-grid">
+                <section class="instant-card instant-card--chart" data-no-card="true">
+                    <div class="instant-card__header">
+                        <div>
+                            <p class="instant-section-label">Direction of travel</p>
+                            <h2>Six-month cash flow</h2>
+                        </div>
+                        <a href="yearly_dashboard.html" class="instant-text-link">Full history <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                    <div id="instant-cashflow-chart" class="instant-chart" data-chart-desc="Area chart comparing monthly income and spending over the latest six months."></div>
+                </section>
+
+                <section class="instant-card instant-card--attention" data-no-card="true">
+                    <div class="instant-card__header">
+                        <div>
+                            <p class="instant-section-label">Focus now</p>
+                            <h2>Needs your attention</h2>
+                        </div>
+                        <span id="instant-attention-count" class="instant-count">—</span>
+                    </div>
+                    <div id="instant-attention" class="instant-attention-list" aria-live="polite">
+                        <div class="instant-loading-row"></div>
+                        <div class="instant-loading-row"></div>
+                        <div class="instant-loading-row"></div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="instant-detail-grid">
+                <section class="instant-card" data-no-card="true">
+                    <div class="instant-card__header">
+                        <div>
+                            <p class="instant-section-label">This month</p>
+                            <h2>Where money went</h2>
+                        </div>
+                        <a href="monthly_dashboard.html" class="instant-icon-link" aria-label="Open monthly dashboard"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                    </div>
+                    <div id="instant-categories" class="instant-ranked-list" aria-live="polite"></div>
+                </section>
+
+                <section class="instant-card" data-no-card="true">
+                    <div class="instant-card__header">
+                        <div>
+                            <p class="instant-section-label">Guardrails</p>
+                            <h2>Budget pressure</h2>
+                        </div>
+                        <a href="budgets.html" class="instant-icon-link" aria-label="Open budgets"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                    </div>
+                    <div id="instant-budget-summary" class="instant-budget-summary">
+                        <div><strong id="instant-budget-spent">£—</strong><span>of <span id="instant-budget-total">£—</span></span></div>
+                        <span id="instant-budget-used">—%</span>
+                    </div>
+                    <div class="instant-progress instant-progress--budget" aria-hidden="true"><span id="instant-budget-progress"></span></div>
+                    <div id="instant-budgets" class="instant-budget-list" aria-live="polite"></div>
+                </section>
+
+                <section class="instant-card" data-no-card="true">
+                    <div class="instant-card__header">
+                        <div>
+                            <p class="instant-section-label">Position</p>
+                            <h2>Your accounts</h2>
+                        </div>
+                        <a href="account_dashboard.html" class="instant-icon-link" aria-label="Open account dashboard"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                    </div>
+                    <div id="instant-accounts" class="instant-account-list" aria-live="polite"></div>
+                </section>
+            </div>
+
+            <section class="instant-card instant-recent" data-no-card="true">
+                <div class="instant-card__header">
+                    <div>
+                        <p class="instant-section-label">Latest movement</p>
+                        <h2>Recent activity</h2>
+                    </div>
+                    <a href="search.html" class="instant-text-link">Search everything <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div id="instant-recent" class="instant-recent-list" aria-live="polite"></div>
+            </section>
+
+            <nav class="instant-quick-actions" aria-label="Instant dashboard quick actions" data-no-card="true">
+                <span>Ready to act?</span>
+                <a href="upload.html"><i class="fas fa-arrow-up-from-bracket" aria-hidden="true"></i>Import transactions</a>
+                <a href="report.html"><i class="fas fa-file-lines" aria-hidden="true"></i>Build a report</a>
+                <a href="budgets.html"><i class="fas fa-bullseye" aria-hidden="true"></i>Adjust budgets</a>
+                <small id="instant-refreshed">Snapshot not loaded</small>
+            </nav>
+        </main>
+    </div>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        const instantHeaderActions = document.createElement('div');
+        const instantRefreshButton = document.createElement('button');
+        instantRefreshButton.id = 'instant-refresh';
+        instantRefreshButton.type = 'button';
+        instantRefreshButton.className = 'instant-refresh-button';
+        instantRefreshButton.setAttribute('aria-label', 'Refresh Instant dashboard');
+        instantRefreshButton.innerHTML = '<i class="fas fa-rotate" aria-hidden="true"></i><span>Refresh</span>';
+        instantHeaderActions.appendChild(instantRefreshButton);
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Instant',
+            breadcrumb: 'Dashboards / Instant',
+            subtitle: 'Everything worth knowing about your finances, distilled into one clear view.',
+            actions: instantHeaderActions
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/instant_dashboard.js"></script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

@@ -77,3 +77,4 @@
 - Page headers should be rendered via `frontend/js/page_header.js` using `renderPageHeader(main, { title, breadcrumb, subtitle, actions })`; `title` is required, other fields are optional, and output must keep `page-header`, `page-title`, `page-breadcrumb`, and `page-subtitle` classes.
 - Project `spent` totals count outgoing transactions as positive expenses and exclude incoming transactions.
 - The landing page uses a task-first structure (capture, understand, plan) and keeps live workspace totals in a compact hero snapshot; landing-specific styling belongs in `frontend/landing.css`.
+- The Instant dashboard is the glanceable cross-feature overview. Its snapshot is assembled by `InstantDashboard`, and its page-specific presentation belongs in `frontend/instant.css` and `frontend/js/instant_dashboard.js`.

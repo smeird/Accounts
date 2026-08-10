@@ -8,6 +8,7 @@ const init = () => {
     'settings.php': `Adjust system configuration such as the OpenAI token, batch size for AI tagging and how long to keep log entries. Save changes to update how the application behaves.`,
     'logout.php': `This page confirms you have been signed out. Use the button to return to the login screen when you are ready to sign in again.`,
     'index.html': `The home page is the starting point for exploring your finances. It shows a summary of the system and provides links to every feature. Use the menu on the left to open dashboards, run reports or adjust settings. Spend a moment getting familiar with these links before diving into the details.`,
+    'instant.html': `Instant is your financial command centre. Start with the total account position and this month's cash flow, then scan the trend and attention cards for anything that needs action. The lower panels show spending categories, budget pressure, account balances and recent transactions. Use the links on each card to open the detailed dashboard when you want to investigate further.`,
     'upload.html': `Upload OFX statement files from your bank so the system can read your transactions. Click Choose File, find the statement on your computer and then press Start Upload. When the process finishes you will see the new transactions ready for review. Importing regularly keeps your records up to date.`,
     'account.html': `Drill into a single account to review its balance trend and transaction statement. Sort code and account number or card number are shown at the top. Click any row to edit a transaction and ensure your records match the bank.`,
     'account_dashboard.html': `Check balances and recent activity for each account in one place. Charts show how money moves in and out over time, while tables list individual transactions. Sort codes and account numbers are listed where available. Look for jumps or dips that you do not recognise and click through to investigate further. This helps you spot unusual activity quickly.`,
@@ -78,4 +79,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-
