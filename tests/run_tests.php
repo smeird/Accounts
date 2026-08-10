@@ -9,6 +9,7 @@ require_once __DIR__ . '/../php_backend/models/SavedReport.php';
 require_once __DIR__ . '/../php_backend/OfxParser.php';
 require_once __DIR__ . '/../php_backend/NaturalLanguageReportParser.php';
 require_once __DIR__ . '/../php_backend/models/TagAlias.php';
+require_once __DIR__ . '/../php_backend/models/InstantDashboard.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 
 // Use an in-memory SQLite database for tests.
@@ -379,6 +380,37 @@ assertEqual('Example', $reports[0]['description'] ?? null, 'SavedReport descript
 SavedReport::delete($repId);
 $afterDel = SavedReport::all();
 assertEqual(0, count($afterDel), 'SavedReport::delete removes report');
+
+// --- Instant dashboard snapshot ---
+$db->exec('ALTER TABLE accounts ADD COLUMN ledger_balance REAL DEFAULT 0');
+$db->exec('ALTER TABLE accounts ADD COLUMN ledger_balance_date TEXT');
+$db->exec('ALTER TABLE budgets ADD COLUMN month INTEGER');
+$db->exec('ALTER TABLE budgets ADD COLUMN year INTEGER');
+$db->exec('DELETE FROM transactions');
+$db->exec('DELETE FROM budgets');
+$db->exec('DELETE FROM categories');
+$db->exec('DELETE FROM tags');
+$db->exec('DELETE FROM accounts');
+$db->exec("INSERT INTO accounts (id, name, ledger_balance, ledger_balance_date) VALUES (1, 'Current', 2500, '2026-08-10'), (2, 'Savings', 7500, '2026-08-09')");
+$db->exec("INSERT INTO categories (id, name) VALUES (1, 'Income'), (2, 'Home')");
+$db->exec("INSERT INTO tags (id, name, name_normalized) VALUES (1, 'Salary', 'salary'), (2, 'Bills', 'bills')");
+$db->exec("INSERT INTO budgets (category_id, amount, month, year) VALUES (2, 1000, 8, 2026)");
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES
+    (1, '2026-07-25', 3000, 'July salary', 1, 1),
+    (1, '2026-07-02', -1200, 'July home costs', 2, 2),
+    (1, '2026-08-01', 3200, 'August salary', 1, 1),
+    (1, '2026-08-02', -850, 'August home costs', 2, 2)");
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, transfer_id) VALUES
+    (1, '2026-08-03', -500, 'Transfer out', 99),
+    (2, '2026-08-03', 500, 'Transfer in', 99)");
+$instant = InstantDashboard::getSnapshot(new DateTimeImmutable('2026-08-10T12:00:00+01:00'));
+assertEqual(10000.0, (float)$instant['headline']['balance'], 'Instant dashboard totals account balances');
+assertEqual(3200.0, (float)$instant['metrics']['income'], 'Instant dashboard reports monthly income');
+assertEqual(850.0, (float)$instant['metrics']['spending'], 'Instant dashboard excludes transfers from spending');
+assertEqual(2350.0, (float)$instant['metrics']['cashflow'], 'Instant dashboard calculates monthly cash flow');
+assertEqual(85.0, (float)$instant['budget']['used'], 'Instant dashboard calculates budget pressure');
+assertEqual(true, (bool)$instant['recent'][0]['is_transfer'], 'Instant dashboard keeps transfers in recent activity');
+assertEqual(6, count($instant['trend']), 'Instant dashboard returns a six-month trend');
 
 // Output results and set exit code
 $failed = false;
