@@ -14,209 +14,198 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="landing.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <meta property="og:title" content="Finance Manager">
     <meta property="og:description" content="Manage your finances with budgets, reports and more.">
     <meta property="og:image" content="/favicon.png">
     <!-- Font Awesome icons loaded via menu.js -->
-    <style>
-      .fade-in {
-        opacity: 1;
-      }
-    </style>
 </head>
-<body class="ops-body">
+<body class="ops-body landing-page">
     <div class="flex flex-col md:flex-row min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <section class="mb-8" data-no-card="true">
-                <div class="rounded-xl bg-white text-slate-900 shadow-sm border border-slate-200">
-                    <div class="grid gap-8 p-8 md:grid-cols-2 md:p-10 items-start">
-                        <div class="space-y-5">
-                            <span class="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-slate-600">
-                                <i class="fas fa-shield-alt text-slate-600" aria-hidden="true"></i>
-                                Financial operations overview
-                            </span>
-                                        <header class="page-header">
-                <h1 class="text-4xl font-semibold leading-tight md:text-5xl page-title">Operational visibility for <span id="landing-site-name">Finance Manager</span></h1>
-            </header>
-                            <p class="text-base text-slate-600">Track account activity, reconcile imports, and review reporting in one place. The platform is designed for consistent financial controls and clear audit trails.</p>
-                            <div class="flex flex-wrap gap-3">
-                                <a href="upload.html" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-indigo-700" aria-label="Upload transactions">
-                                    Upload Transactions
-                                </a>
-                                <a href="monthly_dashboard.html" class="inline-flex items-center justify-center rounded-full border border-slate-400 bg-transparent px-6 py-3 text-base font-semibold text-indigo-700 transition hover:bg-slate-100" aria-label="View financial dashboards">
-                                    View Dashboard
-                                </a>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Accounts tracked</p>
-                                <p id="landing-stat-accounts" class="mt-1 text-3xl font-semibold" aria-live="polite">0</p>
-                                <p class="mt-1 text-sm text-slate-500">Current workspace coverage</p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Transactions recorded</p>
-                                <p id="landing-stat-transactions" class="mt-1 text-3xl font-semibold" aria-live="polite">0</p>
-                                <p class="mt-1 text-sm text-slate-500">Ready for reconciliation checks</p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tags available</p>
-                                <p id="landing-stat-tags" class="mt-1 text-3xl font-semibold" aria-live="polite">0</p>
-                                <p class="mt-1 text-sm text-slate-500">Supports consistent categorisation and reporting</p>
-                            </div>
+        <main class="ops-main landing-main flex-1 min-w-0 overflow-x-hidden">
+            <section class="landing-hero" data-no-card="true">
+                <div class="landing-hero__content">
+                    <div class="landing-hero__copy">
+                        <span class="landing-eyebrow">
+                            <i class="fas fa-sparkles" aria-hidden="true"></i>
+                            Your financial workspace
+                        </span>
+                        <header class="page-header landing-page-header">
+                            <h1 class="page-title landing-title">Your money, clearly organised.</h1>
+                            <p class="landing-intro">
+                                Bring every account, transaction and plan into one calm workspace with
+                                <span id="landing-site-name">Finance Manager</span>.
+                            </p>
+                        </header>
+                        <div class="landing-actions">
+                            <a href="upload.html" class="landing-button landing-button--primary" aria-label="Upload transactions">
+                                <i class="fas fa-arrow-up-from-bracket text-white" aria-hidden="true"></i>
+                                Upload transactions
+                            </a>
+                            <a href="monthly_dashboard.html" class="landing-button landing-button--secondary" aria-label="View financial dashboard">
+                                View dashboard
+                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </a>
                         </div>
                     </div>
+
+                    <aside class="landing-snapshot" aria-labelledby="snapshot-title">
+                        <div class="landing-snapshot__heading">
+                            <div>
+                                <p class="landing-snapshot__kicker">Workspace snapshot</p>
+                                <h2 id="snapshot-title">Everything in one view</h2>
+                            </div>
+                            <span class="landing-live"><span aria-hidden="true"></span>Live</span>
+                        </div>
+                        <div class="landing-stats">
+                            <div class="landing-stat">
+                                <span class="landing-stat__icon"><i class="fas fa-building-columns" aria-hidden="true"></i></span>
+                                <div>
+                                    <p id="landing-stat-accounts" class="landing-stat__value" aria-live="polite">0</p>
+                                    <p class="landing-stat__label">Accounts</p>
+                                </div>
+                            </div>
+                            <div class="landing-stat">
+                                <span class="landing-stat__icon"><i class="fas fa-receipt" aria-hidden="true"></i></span>
+                                <div>
+                                    <p id="landing-stat-transactions" class="landing-stat__value" aria-live="polite">0</p>
+                                    <p class="landing-stat__label">Transactions</p>
+                                </div>
+                            </div>
+                            <div class="landing-stat">
+                                <span class="landing-stat__icon"><i class="fas fa-tags" aria-hidden="true"></i></span>
+                                <div>
+                                    <p id="landing-stat-tags" class="landing-stat__value" aria-live="polite">0</p>
+                                    <p class="landing-stat__label">Tags</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="landing-snapshot__note">
+                            <i class="fas fa-circle-check" aria-hidden="true"></i>
+                            Ready for your next review
+                        </div>
+                    </aside>
                 </div>
-                <div class="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                    <ul class="grid grid-cols-1 gap-2 text-sm text-slate-700 sm:grid-cols-3 sm:gap-4">
-                        <li class="inline-flex items-center gap-2"><i class="fas fa-file-alt text-slate-500" aria-hidden="true"></i>Audit-ready reports</li>
-                        <li class="inline-flex items-center gap-2"><i class="fas fa-users-cog text-slate-500" aria-hidden="true"></i>Role-based access</li>
-                        <li class="inline-flex items-center gap-2"><i class="fas fa-lock text-slate-500" aria-hidden="true"></i>2FA enabled</li>
-                    </ul>
-                </div>
-                <p id="version" class="mt-4 text-center text-gray-500">Version: loading...</p>
+
+                <ul class="landing-trust" aria-label="Platform safeguards">
+                    <li><i class="fas fa-file-shield" aria-hidden="true"></i>Audit-ready reporting</li>
+                    <li><i class="fas fa-user-shield" aria-hidden="true"></i>Role-based access</li>
+                    <li><i class="fas fa-lock" aria-hidden="true"></i>Two-factor authentication</li>
+                </ul>
             </section>
 
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 opacity-0 transition-opacity duration-700" data-no-card="true">
-                <div class="cards cards-tight flex flex-col items-center text-center">
-                    <i class="fas fa-chart-line fa-6x mb-2 text-indigo-600"></i>
-                    <p class="text-gray-700">View spending trends by period and category with clear chart summaries.</p>
+            <section class="landing-section opacity-0 transition-opacity duration-700" data-no-card="true">
+                <div class="landing-section__heading">
+                    <div>
+                        <p class="landing-section__eyebrow">Start where you are</p>
+                        <h2>Three simple ways to move forward</h2>
+                    </div>
+                    <p>Choose the task that matches what you need today. Your data stays connected across every view.</p>
                 </div>
-                <div class="cards cards-tight flex flex-col items-center text-center">
-                    <i class="fas fa-piggy-bank fa-6x mb-2 text-indigo-600"></i>
-                    <p class="text-gray-700">Monitor savings performance against historical balances.</p>
-                </div>
-                <div class="cards cards-tight flex flex-col items-center text-center">
-                    <i class="fas fa-wallet fa-6x mb-2 text-indigo-600"></i>
-                    <p class="text-gray-700">Set budget targets and review variance as transactions post.</p>
-                </div>
-            </section>
 
-
-            <section class="mt-8 cards cards-roomy opacity-0 transition-opacity duration-700" data-no-card="true">
-
-                <h2 class="text-2xl font-semibold mb-4 text-indigo-700">Core Operational Capabilities</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-file-upload text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Upload OFX files to import your bank statements.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-tachometer-alt text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Explore dashboards for yearly, monthly and account insights.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-chart-bar text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Visualise trends with interactive graphs.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-robot text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Automatically tag transactions with AI suggestions.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-redo-alt text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Analyse recurring expenses to spot regular outgoings.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-layer-group text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Break down spending with segments and categories.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-lock text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Secure access with two-factor authentication.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-search text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Search and report on transactions in detail.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-database text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Back up and restore transaction and project data when required.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-magic text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Generate monthly budgets with AI suggestions.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-file-export text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Export transactions to OFX, CSV or XLSX.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-user-cog text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Manage user accounts, processes and logs.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-right-left text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Flag transfers automatically so income and expense totals stay accurate.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-th-large text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Organise projects on a board of cards with quick actions.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-bullseye text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Compare project benefits with bubble charts and configurable axes.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-archive text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Archive projects and restore them whenever needed.</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-question-circle text-indigo-600 fa-2x"></i>
-                        <p class="text-gray-700">Use built-in self-help overlays for page-specific guidance.</p>
-                    </div>
+                <div class="landing-journeys">
+                    <a href="upload.html" class="landing-journey landing-journey--capture">
+                        <span class="landing-journey__number">01</span>
+                        <span class="landing-journey__icon"><i class="fas fa-file-arrow-up" aria-hidden="true"></i></span>
+                        <span class="landing-journey__content">
+                            <strong>Capture</strong>
+                            <span>Import statements and bring new activity into your workspace.</span>
+                        </span>
+                        <span class="landing-journey__link">Upload transactions <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                    </a>
+                    <a href="monthly_dashboard.html" class="landing-journey landing-journey--understand">
+                        <span class="landing-journey__number">02</span>
+                        <span class="landing-journey__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
+                        <span class="landing-journey__content">
+                            <strong>Understand</strong>
+                            <span>Explore trends, recurring costs and the detail behind every total.</span>
+                        </span>
+                        <span class="landing-journey__link">Open dashboards <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                    </a>
+                    <a href="budgets.html" class="landing-journey landing-journey--plan">
+                        <span class="landing-journey__number">03</span>
+                        <span class="landing-journey__icon"><i class="fas fa-bullseye" aria-hidden="true"></i></span>
+                        <span class="landing-journey__content">
+                            <strong>Plan</strong>
+                            <span>Set budgets, compare priorities and turn insight into action.</span>
+                        </span>
+                        <span class="landing-journey__link">Review budgets <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                    </a>
                 </div>
             </section>
 
+            <section class="landing-section landing-capabilities opacity-0 transition-opacity duration-700" data-no-card="true">
+                <div class="landing-section__heading">
+                    <div>
+                        <p class="landing-section__eyebrow">Built for confidence</p>
+                        <h2>Less admin. Better decisions.</h2>
+                    </div>
+                    <p>Powerful controls sit quietly in the background, keeping day-to-day finance work clear and dependable.</p>
+                </div>
 
-            <section class="mt-8 cards cards-roomy opacity-0 transition-opacity duration-700" data-no-card="true">
-
-                <h2 class="text-2xl font-semibold mb-4 text-indigo-700">How Data Is Organised</h2>
-                <svg role="img" aria-label="Segments contain categories and tags, while tag aliases map descriptors to canonical tags used on transactions" class="mx-auto mb-4 w-full max-w-4xl" viewBox="0 0 900 290" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-                            <path d="M0,0 L10,5 L0,10 z" fill="#4338ca"></path>
-                        </marker>
-                        <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-                            <path d="M0,0 L10,5 L0,10 z" fill="#047857"></path>
-                        </marker>
-                    </defs>
-                    <rect x="30" y="28" width="165" height="56" rx="8" fill="#e0e7ff" stroke="#4338ca"></rect>
-                    <text x="112" y="62" text-anchor="middle" font-size="18" fill="#1f2937">Segment</text>
-
-                    <rect x="240" y="28" width="165" height="56" rx="8" fill="#e0e7ff" stroke="#4338ca"></rect>
-                    <text x="322" y="62" text-anchor="middle" font-size="18" fill="#1f2937">Category</text>
-
-                    <rect x="450" y="28" width="165" height="56" rx="8" fill="#e0e7ff" stroke="#4338ca"></rect>
-                    <text x="532" y="62" text-anchor="middle" font-size="18" fill="#1f2937">Tag (canonical)</text>
-
-                    <rect x="450" y="132" width="165" height="56" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-dasharray="6 3"></rect>
-                    <text x="532" y="166" text-anchor="middle" font-size="18" fill="#1f2937">Tag Aliases</text>
-
-                    <rect x="662" y="28" width="205" height="56" rx="8" fill="#dbeafe" stroke="#1d4ed8"></rect>
-                    <text x="764" y="62" text-anchor="middle" font-size="18" fill="#1f2937">Transactions</text>
-
-                    <rect x="240" y="220" width="165" height="56" rx="8" fill="#d1fae5" stroke="#047857" stroke-dasharray="6 3"></rect>
-                    <text x="322" y="254" text-anchor="middle" font-size="18" fill="#1f2937">Group</text>
-
-                    <line x1="195" y1="56" x2="240" y2="56" stroke="#4338ca" stroke-width="2" marker-end="url(#arrow)"></line>
-                    <line x1="405" y1="56" x2="450" y2="56" stroke="#4338ca" stroke-width="2" marker-end="url(#arrow)"></line>
-                    <line x1="615" y1="56" x2="662" y2="56" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow)"></line>
-                    <line x1="615" y1="158" x2="662" y2="84" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"></line>
-                    <line x1="405" y1="248" x2="662" y2="84" stroke="#047857" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-green)"></line>
-
-                    <text x="219" y="48" font-size="13" fill="#4338ca">1 → many</text>
-                    <text x="428" y="48" font-size="13" fill="#4338ca">1 → many</text>
-                    <text x="636" y="48" font-size="13" fill="#1d4ed8">stored tag</text>
-                    <text x="614" y="128" font-size="13" fill="#7c3aed">descriptor maps to canonical</text>
-                    <text x="463" y="225" font-size="13" fill="#047857">optional project/holiday roll-up</text>
-                </svg>
-                <p class="text-gray-700">Segments contain categories, and each category contains canonical tags used to classify transactions. Tag aliases provide extra words or merchant descriptors that map back to those canonical tags (for example, an alias like “uber eats” mapping to a “Dining Out” tag). Groups remain separate from the segment/category/tag hierarchy and let you bundle transactions for projects, holidays, or any temporary initiative.</p>
+                <div class="landing-feature-grid">
+                    <article class="landing-feature">
+                        <span class="landing-feature__icon"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i></span>
+                        <div><h3>Smarter organisation</h3><p>Use AI suggestions and aliases to classify activity consistently.</p></div>
+                    </article>
+                    <article class="landing-feature">
+                        <span class="landing-feature__icon"><i class="fas fa-arrows-rotate" aria-hidden="true"></i></span>
+                        <div><h3>Recurring spend</h3><p>Spot regular outgoings and changes before they become surprises.</p></div>
+                    </article>
+                    <article class="landing-feature">
+                        <span class="landing-feature__icon"><i class="fas fa-right-left" aria-hidden="true"></i></span>
+                        <div><h3>Accurate transfers</h3><p>Keep internal movements out of income and expense totals.</p></div>
+                    </article>
+                    <article class="landing-feature">
+                        <span class="landing-feature__icon"><i class="fas fa-file-lines" aria-hidden="true"></i></span>
+                        <div><h3>Flexible reporting</h3><p>Search the detail, save reports and export in the format you need.</p></div>
+                    </article>
+                    <article class="landing-feature">
+                        <span class="landing-feature__icon"><i class="fas fa-diagram-project" aria-hidden="true"></i></span>
+                        <div><h3>Plans and projects</h3><p>Compare priorities, track costs and keep initiatives connected.</p></div>
+                    </article>
+                    <article class="landing-feature">
+                        <span class="landing-feature__icon"><i class="fas fa-database" aria-hidden="true"></i></span>
+                        <div><h3>Backups and control</h3><p>Protect the workspace with recovery tools and secure access.</p></div>
+                    </article>
+                </div>
             </section>
 
+            <section class="landing-section landing-data opacity-0 transition-opacity duration-700" data-no-card="true">
+                <div class="landing-data__copy">
+                    <p class="landing-section__eyebrow">One connected system</p>
+                    <h2>From individual payments to the bigger picture</h2>
+                    <p>Each transaction receives a tag. Tags roll up into categories, and categories into segments, so you can move from fine detail to a clear overview without rebuilding your data.</p>
+                    <div class="landing-data__aside">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <p><strong>Need another lens?</strong> Aliases improve matching, while groups let you collect transactions for a holiday, project or other short-term goal.</p>
+                    </div>
+                </div>
+                <div class="landing-flow" aria-label="Transactions connect to tags, categories and segments">
+                    <div class="landing-flow__step landing-flow__step--active">
+                        <span>01</span><i class="fas fa-receipt" aria-hidden="true"></i><strong>Transactions</strong><small>Every payment</small>
+                    </div>
+                    <i class="fas fa-chevron-right landing-flow__arrow" aria-hidden="true"></i>
+                    <div class="landing-flow__step">
+                        <span>02</span><i class="fas fa-tag" aria-hidden="true"></i><strong>Tags</strong><small>Clear labels</small>
+                    </div>
+                    <i class="fas fa-chevron-right landing-flow__arrow" aria-hidden="true"></i>
+                    <div class="landing-flow__step">
+                        <span>03</span><i class="fas fa-folder" aria-hidden="true"></i><strong>Categories</strong><small>Useful themes</small>
+                    </div>
+                    <i class="fas fa-chevron-right landing-flow__arrow" aria-hidden="true"></i>
+                    <div class="landing-flow__step">
+                        <span>04</span><i class="fas fa-chart-pie" aria-hidden="true"></i><strong>Segments</strong><small>The big picture</small>
+                    </div>
+                </div>
+            </section>
 
+            <footer class="landing-footer" data-no-card="true">
+                <p><span data-landing-site-name>Finance Manager</span> · A clearer way to manage the details.</p>
+                <p id="version">Version: loading...</p>
+            </footer>
         </main>
     </div>
 
@@ -224,10 +213,7 @@
     <script src="js/version.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-
     <script src="js/scroll_animations.js"></script>
-
     <script src="js/landing_stats.js"></script>
-
-  </body>
+</body>
 </html>
