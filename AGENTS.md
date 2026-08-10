@@ -75,3 +75,4 @@
 
 - Page headings use a shared pattern: `<header class="page-header">` with an `h1.page-title` and optional `.page-subtitle` / `.page-header-actions`; keep this header directly on the page canvas above the first content card.
 - Page headers should be rendered via `frontend/js/page_header.js` using `renderPageHeader(main, { title, breadcrumb, subtitle, actions })`; `title` is required, other fields are optional, and output must keep `page-header`, `page-title`, `page-breadcrumb`, and `page-subtitle` classes.
+- Project `spent` totals count outgoing transactions as positive expenses and exclude incoming transactions.

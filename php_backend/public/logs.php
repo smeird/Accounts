@@ -7,17 +7,41 @@ require_once __DIR__ . '/../models/Setting.php';
 
 header('Content-Type: application/json');
 
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
-$retention = Setting::get('log_retention_days');
-$days = isset($_GET['days']) ? (int)$_GET['days'] : ($retention !== null ? (int)$retention : null);
-if ($retention !== null) {
-    Log::prune((int)$retention);
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($method === 'DELETE') {
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+    $prune = isset($data['days']) ? (int)$data['days'] : 0;
+    if ($prune < 1 || $prune > 3650) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'error' => 'Days must be between 1 and 3650']);
+        exit;
+    }
+    if (!Log::prune($prune)) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'error' => 'Logs could not be pruned']);
+        exit;
+    }
+    Log::write('Pruned logs older than ' . $prune . ' days');
+    echo json_encode(['status' => 'ok']);
+    exit;
 }
 
-if (isset($_GET['prune_days'])) {
-    $prune = (int)$_GET['prune_days'];
-    Log::prune($prune);
-    Log::write('Pruned logs older than ' . $prune . ' days');
+if ($method !== 'GET') {
+    http_response_code(405);
+    header('Allow: GET, DELETE');
+    echo json_encode(['status' => 'error', 'error' => 'Method not allowed']);
+    exit;
+}
+
+$limit = isset($_GET['limit']) ? max(1, min(1000, (int)$_GET['limit'])) : 100;
+$retention = Setting::get('log_retention_days');
+$retentionDays = $retention !== null && (int)$retention > 0
+    ? max(1, min(3650, (int)$retention))
+    : null;
+$days = isset($_GET['days']) ? max(1, min(3650, (int)$_GET['days'])) : $retentionDays;
+if ($retentionDays !== null) {
+    Log::prune($retentionDays);
 }
 
 try {
@@ -26,4 +50,3 @@ try {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
-

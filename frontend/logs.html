@@ -25,7 +25,7 @@
 <p class="mb-4">Review recent log entries to monitor system activity. Filtering by time or keyword helps you trace what happened during a specific event.</p>
             <div class="mb-4 flex items-center space-x-2">
                 <label class="text-sm">Days to keep/show:
-                    <input type="number" id="log-days" value="30" class="border p-1 w-20 rounded ml-1" data-help="Number of days of log entries to display and retain when pruning">
+                    <input type="number" id="log-days" value="30" min="1" max="3650" required class="border p-1 w-20 rounded ml-1" data-help="Number of days of log entries to display and retain when pruning">
                 </label>
                 <button id="refresh-logs" class="bg-indigo-600 text-white px-3 py-1 rounded">Refresh</button>
                 <button id="prune-logs" class="bg-red-500 text-white px-3 py-1 rounded">Prune</button>
@@ -48,16 +48,30 @@ window.renderPageHeader(pageMain, {
     <script src="js/tabulator-tailwind.js"></script>
     <script>
     const gridEl = '#logs-grid';
+    let logsTable;
 
-    function loadLogs() {
-        const days = document.getElementById('log-days').value;
-        fetch(`../php_backend/public/logs.php?days=${days}`)
-            .then(resp => resp.json())
-            .then(data => {
-                tailwindTabulator(gridEl, {
+    function selectedDays() {
+        const input = document.getElementById('log-days');
+        if (!input.reportValidity()) return null;
+        return Math.max(1, Math.min(3650, Number.parseInt(input.value, 10)));
+    }
+
+    async function loadLogs() {
+        const days = selectedDays();
+        if (days === null) return;
+        try {
+            const response = await fetch(`../php_backend/public/logs.php?days=${encodeURIComponent(days)}`);
+            if (!response.ok) throw new Error('Logs request failed');
+            const data = await response.json();
+            if (!Array.isArray(data)) throw new Error('Invalid logs response');
+            if (logsTable) {
+                logsTable.setData(data);
+            } else {
+                logsTable = tailwindTabulator(gridEl, {
                     data: data,
                     layout: 'fitColumns',
                     variableHeight: true,
+                    placeholder: 'No log entries found for this period.',
                     columns: [
                         { title: 'Time', field: 'created_at' },
                         { title: 'Level', field: 'level' },
@@ -65,18 +79,41 @@ window.renderPageHeader(pageMain, {
                             const el = cell.getElement();
                             el.style.whiteSpace = 'pre-wrap';
                             el.style.wordBreak = 'break-word';
-                            return cell.getValue();
+                            const text = document.createElement('span');
+                            text.textContent = cell.getValue() || '';
+                            return text;
                         } }
                     ]
                 });
-            });
+            }
+        } catch (error) {
+            showMessage('Could not load logs. Please refresh and try again.', 'error');
+        }
     }
 
     document.getElementById('refresh-logs').addEventListener('click', loadLogs);
-    document.getElementById('prune-logs').addEventListener('click', () => {
-        const days = document.getElementById('log-days').value;
-        fetch(`../php_backend/public/logs.php?prune_days=${days}`)
-            .then(() => loadLogs());
+    document.getElementById('prune-logs').addEventListener('click', async event => {
+        const days = selectedDays();
+        if (days === null || !confirm(`Permanently delete log entries older than ${days} days?`)) return;
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+            const response = await fetch('../php_backend/public/logs.php', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({days})
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.status !== 'ok') {
+                throw new Error(result.error || 'Log pruning failed');
+            }
+            await loadLogs();
+            showMessage(`Logs older than ${days} days were pruned.`);
+        } catch (error) {
+            showMessage(error.message || 'Could not prune logs.', 'error');
+        } finally {
+            button.disabled = false;
+        }
     });
 
     loadLogs();

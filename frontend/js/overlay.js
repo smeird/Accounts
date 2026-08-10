@@ -5,6 +5,9 @@
         const overlay = document.createElement('div');
         overlay.id = 'overlay';
         overlay.className = 'fixed top-6 right-8 z-50 px-4 py-2 rounded-full shadow bg-white text-gray-800 hidden transform translate-x-full transition-transform duration-300 border';
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-atomic', 'true');
 
         document.body.appendChild(overlay);
         return overlay;
@@ -23,6 +26,8 @@
         const overlay = window.__overlay || document.getElementById('overlay') || createOverlay();
         const rightBar = window.__utilityBar || document.getElementById('utility-bar');
         overlay.textContent = msg;
+        overlay.setAttribute('role', type === 'error' ? 'alert' : 'status');
+        overlay.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
         overlay.classList.remove('hidden', 'border-green-600', 'border-red-600');
         overlay.classList.add(type === 'error' ? 'border-red-600' : 'border-green-600', 'translate-x-full');
 

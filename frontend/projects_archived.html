@@ -43,30 +43,62 @@ window.renderPageHeader(pageMain, {
 <script src="js/tabulator-tailwind.js"></script>
 <script>
 let archivedTable;
+
+function restoreButton(project){
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'rounded p-2 text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50';
+    button.setAttribute('aria-label', `Restore ${project.name || 'project'}`);
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-box-open w-4 h-4';
+    icon.setAttribute('aria-hidden', 'true');
+    button.appendChild(icon);
+    button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+            const response = await fetch('../php_backend/public/projects.php',{
+                method:'PATCH',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({id:project.id, archived:0})
+            });
+            const result = await response.json().catch(() => ({}));
+            if(!response.ok || result.status !== 'ok'){
+                throw new Error(result.error || 'Project could not be restored');
+            }
+            await loadArchived();
+            showMessage('Project restored');
+        } catch (error) {
+            showMessage(error.message || 'Could not restore project.', 'error');
+        } finally {
+            button.disabled = false;
+        }
+    });
+    return button;
+}
+
 async function loadArchived(){
-    const res = await fetch('../php_backend/public/projects.php?archived=1');
-    const data = await res.json();
+    let data;
+    try {
+        const res = await fetch('../php_backend/public/projects.php?archived=1');
+        if(!res.ok) throw new Error('Could not load archived projects');
+        data = await res.json();
+    } catch (error) {
+        showMessage('Could not load archived projects. Please refresh and try again.', 'error');
+        return;
+    }
     if(archivedTable){
         archivedTable.setData(data);
     }else{
         archivedTable = tailwindTabulator('#archived-projects-table',{
             data:data,
             layout:'fitDataStretch',
+            placeholder:'No archived projects.',
             columns:[
                 {title:'Project', field:'name'},
                 {title:'Cost (mid)', field:'cost_medium', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
                 {title:'Spent', field:'spent', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
                 {title:'Score', field:'score', hozAlign:'right'},
-                {formatter:()=>'<i class="fas fa-box-open w-4 h-4"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
-                    const id = cell.getRow().getData().id;
-                    await fetch('../php_backend/public/projects.php',{
-                        method:'PATCH',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({id, archived:0})
-                    });
-                    loadArchived();
-                    showMessage('Project restored');
-                }}
+                {title:'Restore', formatter:cell => restoreButton(cell.getRow().getData()), width:90, hozAlign:'center', headerSort:false}
             ]
         });
     }

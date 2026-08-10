@@ -109,6 +109,36 @@ window.renderPageHeader(pageMain, {
 let projectTable;
 let projectData = [];
 
+function projectActionButton(iconClass, label, colorClass, onClick){
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `${colorClass} rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50`;
+    button.setAttribute('aria-label', label);
+    const icon = document.createElement('i');
+    icon.className = `fas ${iconClass} w-4 h-4`;
+    icon.setAttribute('aria-hidden', 'true');
+    button.appendChild(icon);
+    button.addEventListener('click', async event => {
+        event.stopPropagation();
+        button.disabled = true;
+        try {
+            await onClick();
+        } finally {
+            button.disabled = false;
+        }
+    });
+    return button;
+}
+
+async function projectRequest(options){
+    const response = await fetch('../php_backend/public/projects.php', options);
+    const result = await response.json().catch(() => ({}));
+    if(!response.ok || result.status !== 'ok'){
+        throw new Error(result.error || 'Project request failed');
+    }
+    return result;
+}
+
 const axisOptions = {
     cost_low: {label: 'Cost (low)', prefix: '£'},
     cost_medium: {label: 'Cost (mid)', prefix: '£'},
@@ -166,8 +196,14 @@ function drawBubble(){
 }
 
 async function loadProjects(){
-    const res = await fetch('../php_backend/public/projects.php');
-    projectData = await res.json();
+    try {
+        const res = await fetch('../php_backend/public/projects.php');
+        if(!res.ok) throw new Error('Could not load projects');
+        projectData = await res.json();
+    } catch (error) {
+        showMessage('Could not load projects. Please refresh and try again.', 'error');
+        return;
+    }
     drawBubble();
     if(projectTable){
         projectTable.setData(projectData);
@@ -175,11 +211,14 @@ async function loadProjects(){
         projectTable = tailwindTabulator('#projects-table',{
             data:projectData,
             layout:'fitDataStretch',
+            placeholder:'No active projects found.',
             columns:[
-                {formatter:()=>'<i class="fas fa-edit w-4 h-4" aria-label="Edit"></i>', width:40, hozAlign:'center', cellClick:(e,cell)=>{
-                    const id = cell.getRow().getData().id;
-                    window.location.href = `project_add.html?id=${id}`;
-                }},
+                {title:'Edit', formatter:cell => {
+                    const project = cell.getRow().getData();
+                    return projectActionButton('fa-edit', `Edit ${project.name || 'project'}`, 'text-indigo-700 hover:bg-indigo-50', () => {
+                        window.location.href = `project_add.html?id=${encodeURIComponent(project.id)}`;
+                    });
+                }, width:70, hozAlign:'center', headerSort:false},
                 {title:'Project', field:'name'},
                 {title:'Cost (mid)', field:'cost_medium', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
                 {title:'Spent', field:'spent', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
@@ -189,27 +228,39 @@ async function loadProjects(){
                 {title:'Sustainability', field:'benefit_sustainability', hozAlign:'right'},
                 {title:'Funding', field:'funding_source'},
                 {title:'Score', field:'score', hozAlign:'right'},
-                {formatter:()=>'<i class="fas fa-box-archive w-4 h-4" aria-label="Archive"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
-                    const id = cell.getRow().getData().id;
-                    await fetch('../php_backend/public/projects.php',{
-                        method:'PATCH',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({id, archived:1})
+                {title:'Archive', formatter:cell => {
+                    const project = cell.getRow().getData();
+                    return projectActionButton('fa-box-archive', `Archive ${project.name || 'project'}`, 'text-amber-700 hover:bg-amber-50', async () => {
+                        try {
+                            await projectRequest({
+                                method:'PATCH',
+                                headers:{'Content-Type':'application/json'},
+                                body:JSON.stringify({id:project.id, archived:1})
+                            });
+                            await loadProjects();
+                            showMessage('Project archived');
+                        } catch (error) {
+                            showMessage(error.message || 'Could not archive project.', 'error');
+                        }
                     });
-                    loadProjects();
-                    showMessage('Project archived');
-                }},
-                {formatter:()=>'<i class="fas fa-trash w-4 h-4" aria-label="Delete"></i>', width:40, hozAlign:'center', cellClick:async(e,cell)=>{
-                    if(!confirm('Delete this project?')) return;
-                    const id = cell.getRow().getData().id;
-                    await fetch('../php_backend/public/projects.php',{
-                        method:'DELETE',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({id})
+                }, width:90, hozAlign:'center', headerSort:false},
+                {title:'Delete', formatter:cell => {
+                    const project = cell.getRow().getData();
+                    return projectActionButton('fa-trash', `Delete ${project.name || 'project'}`, 'text-red-700 hover:bg-red-50', async () => {
+                        if(!confirm(`Permanently delete ${project.name || 'this project'}? This cannot be undone.`)) return;
+                        try {
+                            await projectRequest({
+                                method:'DELETE',
+                                headers:{'Content-Type':'application/json'},
+                                body:JSON.stringify({id:project.id})
+                            });
+                            await loadProjects();
+                            showMessage('Project deleted');
+                        } catch (error) {
+                            showMessage(error.message || 'Could not delete project.', 'error');
+                        }
                     });
-                    loadProjects();
-                    showMessage('Project deleted');
-                }}
+                }, width:80, hozAlign:'center', headerSort:false}
             ]
         });
     }

@@ -51,7 +51,7 @@ class Project {
                 benefit_risk*weight_risk +
                 benefit_sustainability*weight_sustainability
             ) AS score,
-            COALESCE(SUM(t.amount),0) AS spent
+            COALESCE(SUM(CASE WHEN t.amount < 0 THEN -t.amount ELSE 0 END),0) AS spent
             FROM projects p
             LEFT JOIN transactions t ON t.group_id = p.group_id
             WHERE p.archived = :archived
@@ -87,6 +87,9 @@ class Project {
         $projStmt = $db->prepare('SELECT group_id, archived FROM projects WHERE id = :id');
         $projStmt->execute(['id' => $id]);
         $proj = $projStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$proj) {
+            return false;
+        }
         $groupId = (int)($proj['group_id'] ?? 0);
         $currentArchived = (int)($proj['archived'] ?? 0);
         $archivedFlag = $data['archived'] ?? $currentArchived;
@@ -125,12 +128,17 @@ class Project {
      */
     public static function setArchived(int $id, bool $archived): bool {
         $db = Database::getConnection();
+        $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
+        $gidStmt->execute(['id' => $id]);
+        $groupIdValue = $gidStmt->fetchColumn();
+        if ($groupIdValue === false) {
+            return false;
+        }
+
         $stmt = $db->prepare('UPDATE projects SET archived = :archived WHERE id = :id');
         $ok = $stmt->execute(['archived' => $archived ? 1 : 0, 'id' => $id]);
         if($ok){
-            $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
-            $gidStmt->execute(['id' => $id]);
-            $groupId = (int)$gidStmt->fetchColumn();
+            $groupId = (int)$groupIdValue;
             if($groupId){
                 TransactionGroup::setActive($groupId, !$archived);
             }
@@ -146,7 +154,11 @@ class Project {
         // find and delete associated group
         $gidStmt = $db->prepare('SELECT group_id FROM projects WHERE id = :id');
         $gidStmt->execute(['id' => $id]);
-        $groupId = (int)$gidStmt->fetchColumn();
+        $groupIdValue = $gidStmt->fetchColumn();
+        if ($groupIdValue === false) {
+            return false;
+        }
+        $groupId = (int)$groupIdValue;
         $stmt = $db->prepare('DELETE FROM projects WHERE id = :id');
         $ok = $stmt->execute(['id' => $id]);
         if($ok && $groupId){
@@ -157,4 +169,3 @@ class Project {
 }
 
 ?>
-
