@@ -1,389 +1,57 @@
 <!DOCTYPE html>
-<!-- Page for viewing projects as cards -->
+<!-- Project Board: visual project status and quick actions. -->
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Project Board</title>
-
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet" href="operational_ui.css">
-
-    <style>
-        .project-board-layout-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: inherit;
-            color: inherit;
-            background: transparent;
-        }
-
-        .project-board-layout-table th,
-        .project-board-layout-table td {
-            padding: 0.15rem 0;
-            border: 0;
-            vertical-align: top;
-            background: transparent;
-            text-align: left;
-        }
-
-        .project-board-layout-table th {
-            width: 20%;
-            font-weight: 600;
-        }
-    </style>
-
-    <!-- Font Awesome icons loaded via menu.js -->
+    <script>window.tailwind=window.tailwind||{};window.tailwind.config={};</script><script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css"><link rel="stylesheet" href="projects.css">
 </head>
-<body class="ops-body">
+<body class="ops-body project-page">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<p class="mb-4">Browse all active projects in a card layout.</p>
-
-        <section class="cards cards-solid cards-tight space-y-4">
-            <div class="flex flex-col lg:flex-row lg:items-end gap-3">
-                <label class="flex-1">
-                    <span class="block text-sm font-semibold mb-1">Search Projects</span>
-                    <input id="project-search" type="text" placeholder="Search name or description" class="w-full border border-gray-300 rounded px-3 py-2" aria-label="Search projects by name or description">
-                </label>
-                <label>
-                    <span class="block text-sm font-semibold mb-1">Funding Source</span>
-                    <select id="funding-filter" class="border border-gray-300 rounded px-3 py-2 min-w-40" aria-label="Filter projects by funding source">
-                        <option value="">All funding</option>
-                    </select>
-                </label>
-                <label>
-                    <span class="block text-sm font-semibold mb-1">Sort</span>
-                    <select id="project-sort" class="border border-gray-300 rounded px-3 py-2 min-w-40" aria-label="Sort projects by score or risk">
-                        <option value="score_desc">Score: high to low</option>
-                        <option value="score_asc">Score: low to high</option>
-                        <option value="risk_desc">Risk: high to low</option>
-                        <option value="risk_asc">Risk: low to high</option>
-                    </select>
-                </label>
+    <main class="ops-main project-main flex-1 min-w-0 overflow-x-hidden">
+        <div id="project-error" class="project-error" role="alert" hidden></div>
+        <section class="project-hero" data-no-card="true" aria-labelledby="board-hero-value">
+            <div class="project-hero__glow" aria-hidden="true"></div>
+            <div class="project-hero__topline"><span class="project-pulse"><span aria-hidden="true"></span>Delivery pulse</span><span>Active projects · visual board</span></div>
+            <div class="project-hero__body"><div><p class="project-kicker">Runway remaining across active plans</p><h1 id="board-hero-value" class="project-hero__value">£—</h1><p id="board-hero-message" class="project-hero__message">Building the project board…</p></div><div class="project-hero__signal"><strong id="board-hero-signal">—</strong><span id="board-hero-signal-label">over plan</span></div></div>
+            <div class="project-hero__metrics">
+                <article><span class="project-summary-icon project-summary-icon--count"><i class="fas fa-layer-group" aria-hidden="true"></i></span><div><p>Active projects</p><strong id="board-active-count">—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--cost"><i class="fas fa-coins" aria-hidden="true"></i></span><div><p>Mid-cost plans</p><strong id="board-planned-total">£—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--spent"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><p>Spent to date</p><strong id="board-spent-total">£—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--risk"><i class="fas fa-gauge-high" aria-hidden="true"></i></span><div><p>Pressure signals</p><strong id="board-pressure-count">—</strong></div></article>
             </div>
-
-            <div class="flex flex-wrap gap-2" id="status-filters">
-                <button type="button" class="status-chip px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700" data-filter="high_risk" aria-label="Filter to high risk projects">High Risk</button>
-                <button type="button" class="status-chip px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700" data-filter="over_budget" aria-label="Filter to over budget projects">Over Budget</button>
-            </div>
-
-            <div class="flex flex-wrap gap-2" id="summary-chips"></div>
         </section>
 
-        <section class="cards">
-            <div id="projects-board" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <section class="project-card" data-no-card="true">
+            <div class="project-card__header"><div><p class="project-section-label">Find the signal</p><h2>Filter the board</h2><p class="project-card__copy">Search, sort, or isolate the projects that need a closer look.</p></div><span id="board-visible-count" class="project-count">—</span></div>
+            <div class="project-filter-bar">
+                <label class="project-field" for="project-search">Search<input id="project-search" type="search" placeholder="Name, description, or rationale"></label>
+                <label class="project-field" for="funding-filter">Funding<select id="funding-filter"><option value="">All funding</option></select></label>
+                <label class="project-field" for="project-sort">Sort<select id="project-sort"><option value="score_desc">Score: high to low</option><option value="score_asc">Score: low to high</option><option value="spend_desc">Spend: high to low</option><option value="cost_desc">Cost: high to low</option></select></label>
+            </div>
+            <div class="project-filter-status" aria-label="Project status filters">
+                <button type="button" class="project-chip" data-filter="over" aria-pressed="false"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Over plan</button>
+                <button type="button" class="project-chip" data-filter="watch" aria-pressed="false"><i class="fas fa-eye" aria-hidden="true"></i>Watch</button>
+                <button type="button" class="project-chip" data-filter="risk" aria-pressed="false"><i class="fas fa-shield-halved" aria-hidden="true"></i>Strong risk reduction</button>
+            </div>
+        </section>
+
+        <section class="project-card" data-no-card="true">
+            <div class="project-card__header"><div><p class="project-section-label">Portfolio cards</p><h2>Where every project stands</h2></div></div>
+            <div id="projects-board" class="project-board-grid" aria-live="polite"><div class="project-loading"></div><div class="project-loading"></div><div class="project-loading"></div></div>
         </section>
     </main>
 </div>
-
 <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Project Board',
-    breadcrumb: 'Projects',
-    subtitle: 'View active projects as cards with key status details and quick actions.'
-});
-</script>
-    <script src="js/menu.js"></script>
-<script src="js/input_help.js"></script>
 <script>
-function fmtMoney(v){
-    return '£' + (parseFloat(v) || 0).toFixed(2);
-}
-
-function createScoreBadge(score){
-    const s = parseInt(score, 10) || 0;
-    const colors = {
-        1: 'bg-green-500',
-        2: 'bg-lime-400',
-        3: 'bg-yellow-500',
-        4: 'bg-orange-500',
-        5: 'bg-red-600'
-    };
-    const span = document.createElement('span');
-    span.className = `inline-block px-2 py-0.5 rounded text-xs ${colors[s] || 'bg-gray-300'} text-black`;
-    span.textContent = s;
-    return span;
-}
-
-function createStars(score, minScore, maxScore){
-    const wrapper = document.createElement('span');
-    wrapper.className = 'inline-flex gap-0.5';
-    wrapper.setAttribute('aria-label', `Score ${fmtNumber(score)} out of ${fmtNumber(maxScore)}`);
-    renderStars(score, minScore, maxScore).forEach(star => wrapper.appendChild(star));
-    return wrapper;
-}
-
-function fmtNumber(v){
-    return (parseFloat(v) || 0).toFixed(1);
-}
-
-function appendLabelledText(container, label, value){
-    const paragraph = document.createElement('p');
-    const strong = document.createElement('span');
-    strong.className = 'font-semibold';
-    strong.textContent = `${label}:`;
-    paragraph.appendChild(strong);
-    paragraph.appendChild(document.createTextNode(` ${value || 'Not provided'}`));
-    container.appendChild(paragraph);
-}
-
-function appendCell(row, tagName, text){
-    const cell = document.createElement(tagName);
-    if(tagName === 'th') cell.scope = 'row';
-    cell.textContent = text;
-    row.appendChild(cell);
-    return cell;
-}
-
-function appendProjectRow(tbody, leftLabel, leftValue, rightLabel, rightValue){
-    const row = document.createElement('tr');
-    appendCell(row, 'th', leftLabel);
-    const leftCell = appendCell(row, 'td', '');
-    if(leftValue instanceof Node) leftCell.appendChild(leftValue);
-    else leftCell.textContent = leftValue || 'Not provided';
-    appendCell(row, 'th', rightLabel);
-    const rightCell = appendCell(row, 'td', '');
-    if(rightValue instanceof Node) rightCell.appendChild(rightValue);
-    else rightCell.textContent = rightValue || 'Not provided';
-    tbody.appendChild(row);
-}
-
-function createActionIcon(iconClass, label){
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'text-gray-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded';
-    button.setAttribute('aria-label', label);
-    button.innerHTML = `<i class="fas ${iconClass}" aria-hidden="true"></i>`;
-    return button;
-}
-
-
-function renderStars(score, minScore, maxScore){
-    const s = parseFloat(score) || 0;
-    const min = parseFloat(minScore) || 0;
-    const max = parseFloat(maxScore) || 0;
-    let starCount = 3;
-    if(max > min){
-        starCount = Math.round(((s - min) / (max - min)) * 4) + 1;
-    }
-    starCount = Math.max(1, Math.min(5, starCount));
-    let stars = '';
-    for(let i = 0; i < 5; i++){
-        if(i < starCount){
-            stars += '<i class="fas fa-star text-yellow-500 text-xs" aria-hidden="true"></i>';
-        } else {
-            stars += '<i class="far fa-star text-gray-300 text-xs" aria-hidden="true"></i>';
-        }
-    }
-    const template = document.createElement('template');
-    template.innerHTML = stars;
-    return Array.from(template.content.children);
-}
-
-
-async function loadProjects(){
-    // Client-side filtering keeps the existing render pipeline simple; add query params in projects.php for larger datasets.
-    const searchInput = document.getElementById('project-search');
-    const fundingFilter = document.getElementById('funding-filter');
-    const sortSelect = document.getElementById('project-sort');
-    const board = document.getElementById('projects-board');
-    const summary = document.getElementById('summary-chips');
-    const statusChips = Array.from(document.querySelectorAll('.status-chip'));
-    let projects = [];
-    try {
-        const res = await fetch('../php_backend/public/projects.php');
-        if(!res.ok) throw new Error('Projects request failed');
-        projects = await res.json();
-    } catch (error) {
-        board.replaceChildren();
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'cards cards-solid cards-tight text-sm text-red-700';
-        errorMessage.setAttribute('role', 'alert');
-        errorMessage.textContent = 'Could not load projects. Please refresh and try again.';
-        board.appendChild(errorMessage);
-        summary.replaceChildren();
-        showMessage('Could not load projects. Please refresh and try again.', 'error');
-        return;
-    }
-
-    const fundingSources = Array.from(new Set(projects.map(p => (p.funding_source || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-    fundingFilter.innerHTML = '<option value="">All funding</option>';
-    fundingSources.forEach(source => {
-        const option = document.createElement('option');
-        option.value = source;
-        option.textContent = source;
-        fundingFilter.appendChild(option);
-    });
-
-    function isHighRisk(project){
-        return (parseInt(project.benefit_risk, 10) || 0) >= 4;
-    }
-
-    function isOverBudget(project){
-        return (parseFloat(project.spent) || 0) > (parseFloat(project.cost_medium) || 0);
-    }
-
-    function updateSummary(filteredProjects){
-        const totalMidCost = filteredProjects.reduce((sum, p) => sum + (parseFloat(p.cost_medium) || 0), 0);
-        const totalSpent = filteredProjects.reduce((sum, p) => sum + (parseFloat(p.spent) || 0), 0);
-        summary.innerHTML = `
-            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Projects: ${filteredProjects.length}</span>
-            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Total Mid Cost: ${fmtMoney(totalMidCost)}</span>
-            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Total Spent: ${fmtMoney(totalSpent)}</span>
-        `;
-    }
-
-    function applyFiltersAndRender(){
-        const searchTerm = searchInput.value.trim().toLowerCase();
-        const funding = fundingFilter.value;
-        const sortValue = sortSelect.value;
-        const activeStatusFilters = statusChips.filter(chip => chip.dataset.active === '1').map(chip => chip.dataset.filter);
-
-        let filteredProjects = projects.filter(project => {
-            const name = (project.name || '').toLowerCase();
-            const description = (project.description || '').toLowerCase();
-            const matchesSearch = !searchTerm || name.includes(searchTerm) || description.includes(searchTerm);
-            const matchesFunding = !funding || (project.funding_source || '') === funding;
-            const matchesStatus = activeStatusFilters.every(filter => {
-                if(filter === 'high_risk') return isHighRisk(project);
-                if(filter === 'over_budget') return isOverBudget(project);
-                return true;
-            });
-            return matchesSearch && matchesFunding && matchesStatus;
-        });
-
-        filteredProjects = filteredProjects.slice().sort((a, b) => {
-            const scoreA = parseFloat(a.score) || 0;
-            const scoreB = parseFloat(b.score) || 0;
-            const riskA = parseFloat(a.benefit_risk) || 0;
-            const riskB = parseFloat(b.benefit_risk) || 0;
-            if(sortValue === 'score_asc') return scoreA - scoreB;
-            if(sortValue === 'risk_desc') return riskB - riskA;
-            if(sortValue === 'risk_asc') return riskA - riskB;
-            return scoreB - scoreA;
-        });
-
-        updateSummary(filteredProjects);
-
-        const scores = filteredProjects.map(p => parseFloat(p.score) || 0);
-        const minScore = scores.length ? Math.min(...scores) : 0;
-        const maxScore = scores.length ? Math.max(...scores) : 0;
-
-        board.innerHTML = '';
-        filteredProjects.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'cards cards-tight flex flex-col space-y-2';
-
-        const header = document.createElement('div');
-        header.className = 'flex justify-between items-start';
-        const title = document.createElement('h3');
-        title.className = 'text-lg font-semibold text-indigo-700';
-        title.textContent = p.name;
-        const icons = document.createElement('div');
-        icons.className = 'flex space-x-2';
-        const editIcon = createActionIcon('fa-edit', `Edit ${p.name || 'project'}`);
-        const archiveIcon = createActionIcon('fa-box-archive', `Archive ${p.name || 'project'}`);
-        const deleteIcon = createActionIcon('fa-trash', `Delete ${p.name || 'project'}`);
-        icons.append(editIcon, archiveIcon, deleteIcon);
-        header.appendChild(title);
-        header.appendChild(icons);
-        card.appendChild(header);
-
-        const details = document.createElement('div');
-        details.className = 'space-y-1 text-sm';
-        appendLabelledText(details, 'Description', p.description);
-        appendLabelledText(details, 'Rationale', p.rationale);
-
-        const table = document.createElement('table');
-        table.className = 'project-board-layout-table';
-        const tbody = document.createElement('tbody');
-        appendProjectRow(tbody, 'Cost Low', fmtMoney(p.cost_low), 'Cost Medium', fmtMoney(p.cost_medium));
-        appendProjectRow(tbody, 'Cost High', fmtMoney(p.cost_high), 'Funding', p.funding_source);
-        appendProjectRow(tbody, 'Recurring Cost', fmtMoney(p.recurring_cost), 'Estimated Time', p.estimated_time);
-        appendProjectRow(tbody, 'Expected Lifespan', p.expected_lifespan, 'Financial Benefit', createScoreBadge(p.benefit_financial));
-        appendProjectRow(tbody, 'Quality Benefit', createScoreBadge(p.benefit_quality), 'Risk Benefit', createScoreBadge(p.benefit_risk));
-        appendProjectRow(tbody, 'Sustainability Benefit', createScoreBadge(p.benefit_sustainability), 'Score', createStars(p.score, minScore, maxScore));
-        appendProjectRow(tbody, 'Dependencies', p.dependencies, 'Risks', p.risks);
-        table.appendChild(tbody);
-        details.appendChild(table);
-        card.appendChild(details);
-
-        const spent = document.createElement('h4');
-        spent.className = 'text-indigo-700 font-semibold';
-        spent.textContent = `Spent: ${fmtMoney(p.spent)}`;
-        card.appendChild(spent);
-
-        editIcon.addEventListener('click', () => {
-            window.location.href = `project_add.html?id=${p.id}`;
-        });
-        archiveIcon.addEventListener('click', async () => {
-            try {
-                const archiveRes = await fetch('../php_backend/public/projects.php', {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: p.id, archived: 1})
-                });
-                if(!archiveRes.ok) throw new Error('Archive failed');
-                await loadProjects();
-                showMessage('Project archived');
-            } catch (error) {
-                showMessage('Could not archive project. Please try again.', 'error');
-            }
-        });
-        deleteIcon.addEventListener('click', async () => {
-            if(!confirm('Delete this project?')) return;
-            try {
-                const deleteRes = await fetch('../php_backend/public/projects.php', {
-                method: 'DELETE',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: p.id})
-                });
-                if(!deleteRes.ok) throw new Error('Delete failed');
-                await loadProjects();
-                showMessage('Project deleted');
-            } catch (error) {
-                showMessage('Could not delete project. Please try again.', 'error');
-            }
-        });
-
-        board.appendChild(card);
-    });
-
-        if(!filteredProjects.length){
-            board.innerHTML = '<div class="cards cards-solid cards-tight text-sm text-gray-600">No projects match the selected filters.</div>';
-        }
-    }
-
-    searchInput.oninput = applyFiltersAndRender;
-    fundingFilter.onchange = applyFiltersAndRender;
-    sortSelect.onchange = applyFiltersAndRender;
-    statusChips.forEach(chip => {
-        chip.onclick = () => {
-            const active = chip.dataset.active === '1';
-            chip.dataset.active = active ? '0' : '1';
-            chip.classList.toggle('bg-gray-200', active);
-            chip.classList.toggle('text-gray-700', active);
-            chip.classList.toggle('bg-indigo-600', !active);
-            chip.classList.toggle('text-white', !active);
-            applyFiltersAndRender();
-        };
-    });
-
-    applyFiltersAndRender();
-}
-
-loadProjects();
+    const boardMain=document.querySelector('main.ops-main');
+    const boardActions=document.createElement('div');boardActions.className='project-header-actions';
+    const overviewLink=document.createElement('a');overviewLink.href='projects.html';overviewLink.className='project-header-link';overviewLink.innerHTML='<i class="fas fa-chart-simple" aria-hidden="true"></i><span>Overview</span>';
+    const addLink=document.createElement('a');addLink.href='project_add.html';addLink.className='project-header-link project-header-link--primary';addLink.innerHTML='<i class="fas fa-plus" aria-hidden="true"></i><span>New project</span>';boardActions.append(overviewLink,addLink);
+    window.renderPageHeader(boardMain,{title:'Project board',breadcrumb:'Projects / Board',subtitle:'See delivery pressure, planned cost, value signals, and next actions in one scan.',actions:boardActions});
 </script>
-<script src="js/overlay.js"></script>
+<script src="js/menu.js"></script><script src="js/projects_common.js"></script><script src="js/projects_board.js"></script><script src="js/overlay.js"></script>
 </body>
 </html>

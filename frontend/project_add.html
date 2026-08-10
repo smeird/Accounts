@@ -1,201 +1,91 @@
 <!DOCTYPE html>
-<!-- Page for adding or editing home projects -->
+<!-- Add/Edit Project: structured assumptions with a live project brief. -->
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Add Project</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
-      <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet" href="operational_ui.css">
-      <!-- Font Awesome icons loaded via menu.js -->
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><title>Add Project</title>
+    <script>window.tailwind=window.tailwind||{};window.tailwind.config={};</script><script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css"><link rel="stylesheet" href="projects.css">
 </head>
-<body class="ops-body">
+<body class="ops-body project-page">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<p class="mb-4">Capture ideas for home projects and detail their costs and benefits.</p>
+    <main class="ops-main project-main flex-1 min-w-0 overflow-x-hidden">
+        <div id="form-error" class="project-error" role="alert" hidden></div>
+        <form id="project-form" class="project-editor">
+            <input type="hidden" id="project_id" name="project_id">
+            <div class="project-form-stack">
+                <section class="project-form-section" data-no-card="true">
+                    <div class="project-form-section__header"><span class="project-form-section__icon"><i class="fas fa-lightbulb" aria-hidden="true"></i></span><div><h2>Intent</h2><p>Name the idea and capture why it deserves consideration.</p></div></div>
+                    <div class="project-form-grid">
+                        <label class="project-field" for="name">Project name<input type="text" id="name" name="name" placeholder="e.g. Replace the kitchen" required></label>
+                        <label class="project-field" for="funding_source">Funding source<select id="funding_source" name="funding_source"><option value="Savings">Savings</option><option value="Loan">Loan</option><option value="Grant">Grant</option><option value="Credit">Credit</option><option value="Other">Other</option></select></label>
+                        <label class="project-field project-field--wide" for="description">Description<textarea id="description" name="description" rows="3" placeholder="What will change when this project is complete?"></textarea></label>
+                        <label class="project-field project-field--wide" for="rationale">Why now?<textarea id="rationale" name="rationale" rows="3" placeholder="The problem, opportunity, or trigger behind the project"></textarea></label>
+                    </div>
+                </section>
 
-        <section class="cards">
-            <h2 class="text-xl font-semibold mb-4">Project Details</h2>
-            <form id="project-form" class="grid md:grid-cols-2 gap-4">
-                <input type="hidden" id="project_id">
-                <label class="block">Name<br><input type="text" id="name" name="name" class="border p-2 rounded w-full" data-help="Project name" required></label>
-                <label class="block">Funding Source<br>
-                    <select id="funding_source" name="funding_source" class="border p-2 rounded w-full" data-help="How you will fund this project">
-                        <option value="Savings">Savings</option>
-                        <option value="Loan">Loan</option>
-                        <option value="Grant">Grant</option>
-                        <option value="Credit">Credit</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </label>
-                <label class="block md:col-span-2">Description<br><textarea id="description" name="description" class="border p-2 rounded w-full" rows="2" data-help="Brief description"></textarea></label>
-                <label class="block md:col-span-2">Rationale<br><textarea id="rationale" name="rationale" class="border p-2 rounded w-full" rows="2" data-help="Why this project is needed"></textarea></label>
+                <section class="project-form-section" data-no-card="true">
+                    <div class="project-form-section__header"><span class="project-form-section__icon"><i class="fas fa-coins" aria-hidden="true"></i></span><div><h2>Cost and timing</h2><p>Use a range so uncertainty stays visible instead of hiding inside one estimate.</p></div></div>
+                    <div class="project-form-grid">
+                        <label class="project-field" for="cost_low">Low estimate (£)<input type="number" min="0" step="0.01" id="cost_low" name="cost_low" inputmode="decimal" placeholder="0.00"></label>
+                        <label class="project-field" for="cost_medium">Likely estimate (£)<input type="number" min="0" step="0.01" id="cost_medium" name="cost_medium" inputmode="decimal" placeholder="0.00"></label>
+                        <label class="project-field" for="cost_high">High estimate (£)<input type="number" min="0" step="0.01" id="cost_high" name="cost_high" inputmode="decimal" placeholder="0.00"></label>
+                        <label class="project-field" for="recurring_cost">Recurring cost (£)<input type="number" min="0" step="0.01" id="recurring_cost" name="recurring_cost" inputmode="decimal" placeholder="0.00"></label>
+                        <label class="project-field" for="estimated_time">Delivery time (months)<input type="number" min="0" id="estimated_time" name="estimated_time" placeholder="0"></label>
+                        <label class="project-field" for="expected_lifespan">Expected lifespan (years)<input type="number" min="0" id="expected_lifespan" name="expected_lifespan" placeholder="0"></label>
+                    </div>
+                </section>
 
-                <label class="block">Cost Low (£)<br><input type="number" min="0" step="0.01" id="cost_low" name="cost_low" class="border p-2 rounded w-full" data-help="Minimum estimated cost"></label>
-                <label class="block">Cost Medium (£)<br><input type="number" min="0" step="0.01" id="cost_medium" name="cost_medium" class="border p-2 rounded w-full" data-help="Typical estimated cost"></label>
-                <label class="block">Cost High (£)<br><input type="number" min="0" step="0.01" id="cost_high" name="cost_high" class="border p-2 rounded w-full" data-help="Maximum estimated cost"></label>
-                <label class="block">Recurring Cost (£)<br><input type="number" min="0" step="0.01" id="recurring_cost" name="recurring_cost" class="border p-2 rounded w-full" data-help="Ongoing maintenance or subscription cost"></label>
+                <section class="project-form-section" data-no-card="true">
+                    <div class="project-form-section__header"><span class="project-form-section__icon"><i class="fas fa-sparkles" aria-hidden="true"></i></span><div><h2>Value signals</h2><p>Score each outcome from 0–5, then weight how important it is to this decision.</p></div></div>
+                    <div class="project-form-grid">
+                        <label class="project-field" for="benefit_financial">Financial benefit (0–5)<input type="number" min="0" max="5" id="benefit_financial" name="benefit_financial" value="0"></label>
+                        <label class="project-field" for="weight_financial">Financial importance (0–5)<input type="number" min="0" max="5" id="weight_financial" name="weight_financial" value="1"></label>
+                        <label class="project-field" for="benefit_quality">Quality of life (0–5)<input type="number" min="0" max="5" id="benefit_quality" name="benefit_quality" value="0"></label>
+                        <label class="project-field" for="weight_quality">Quality importance (0–5)<input type="number" min="0" max="5" id="weight_quality" name="weight_quality" value="1"></label>
+                        <label class="project-field" for="benefit_risk">Risk reduction (0–5)<input type="number" min="0" max="5" id="benefit_risk" name="benefit_risk" value="0"></label>
+                        <label class="project-field" for="weight_risk">Risk importance (0–5)<input type="number" min="0" max="5" id="weight_risk" name="weight_risk" value="1"></label>
+                        <label class="project-field" for="benefit_sustainability">Sustainability (0–5)<input type="number" min="0" max="5" id="benefit_sustainability" name="benefit_sustainability" value="0"></label>
+                        <label class="project-field" for="weight_sustainability">Sustainability importance (0–5)<input type="number" min="0" max="5" id="weight_sustainability" name="weight_sustainability" value="1"></label>
+                    </div>
+                </section>
 
-                <label class="block">Estimated Time (months)<br><input type="number" min="0" id="estimated_time" name="estimated_time" class="border p-2 rounded w-full" data-help="Time to complete"></label>
-                <label class="block">Expected Lifespan (years)<br><input type="number" min="0" id="expected_lifespan" name="expected_lifespan" class="border p-2 rounded w-full" data-help="How long the project lasts"></label>
+                <section class="project-form-section" data-no-card="true">
+                    <div class="project-form-section__header"><span class="project-form-section__icon"><i class="fas fa-route" aria-hidden="true"></i></span><div><h2>Delivery reality</h2><p>Call out what must happen first and what could knock the plan off course.</p></div></div>
+                    <div class="project-form-grid">
+                        <label class="project-field project-field--wide" for="dependencies">Dependencies<textarea id="dependencies" name="dependencies" rows="3" placeholder="Approvals, other projects, suppliers, or prerequisites"></textarea></label>
+                        <label class="project-field project-field--wide" for="risks">Risks and constraints<textarea id="risks" name="risks" rows="3" placeholder="Cost uncertainty, timing, disruption, or external constraints"></textarea></label>
+                    </div>
+                </section>
 
-                <label class="block">Financial Benefit (1-5)<br><input type="number" min="0" max="5" id="benefit_financial" name="benefit_financial" class="border p-2 rounded w-full" data-help="Financial return score"></label>
-                <label class="block">Quality of Life (1-5)<br><input type="number" min="0" max="5" id="benefit_quality" name="benefit_quality" class="border p-2 rounded w-full" data-help="Comfort or enjoyment score"></label>
-                <label class="block">Risk Reduction (1-5)<br><input type="number" min="0" max="5" id="benefit_risk" name="benefit_risk" class="border p-2 rounded w-full" data-help="Risk reduction score"></label>
-                <label class="block">Sustainability (1-5)<br><input type="number" min="0" max="5" id="benefit_sustainability" name="benefit_sustainability" class="border p-2 rounded w-full" data-help="Environmental benefit score"></label>
+                <section class="project-form-section project-save-bar" data-no-card="true">
+                    <span class="project-save-note">You can refine assumptions at any time; the board updates immediately.</span>
+                    <button type="submit" id="save-project" class="project-button project-button--primary"><i class="fas fa-check" aria-hidden="true"></i><span>Save project</span></button>
+                </section>
+            </div>
 
-                <label class="block">Financial Weight<br><input type="number" min="0" max="5" id="weight_financial" name="weight_financial" class="border p-2 rounded w-full" data-help="Importance of financial return" value="1"></label>
-                <label class="block">Quality Weight<br><input type="number" min="0" max="5" id="weight_quality" name="weight_quality" class="border p-2 rounded w-full" data-help="Importance of quality of life" value="1"></label>
-                <label class="block">Risk Weight<br><input type="number" min="0" max="5" id="weight_risk" name="weight_risk" class="border p-2 rounded w-full" data-help="Importance of risk reduction" value="1"></label>
-                <label class="block">Sustainability Weight<br><input type="number" min="0" max="5" id="weight_sustainability" name="weight_sustainability" class="border p-2 rounded w-full" data-help="Importance of sustainability" value="1"></label>
-
-                <label class="block md:col-span-2">Dependencies<br><textarea id="dependencies" name="dependencies" class="border p-2 rounded w-full" rows="2" data-help="Prerequisite projects"></textarea></label>
-                <label class="block md:col-span-2">Risks<br><textarea id="risks" name="risks" class="border p-2 rounded w-full" rows="2" data-help="Potential risks or constraints"></textarea></label>
-
-                <button type="submit" id="save-project" class="bg-indigo-600 text-white px-4 py-2 rounded md:col-span-2 disabled:cursor-not-allowed disabled:opacity-60">Save Project</button>
-            </form>
-        </section>
+            <aside class="project-preview" aria-label="Live project brief" data-no-card="true">
+                <div class="project-preview__body">
+                    <span id="preview-eyebrow" class="project-preview__eyebrow">New project brief</span>
+                    <h2 id="preview-name">Untitled project</h2>
+                    <p id="preview-description" class="project-preview__description">Describe the outcome to make the project easier to compare.</p>
+                    <div class="project-preview__cost"><span>Likely cost</span><strong id="preview-cost">£0</strong><div class="project-preview__range"><span id="preview-low">Low £0</span><span id="preview-high">High £0</span></div></div>
+                    <div class="project-preview__score"><span>Weighted value score</span><strong id="preview-score">0</strong></div>
+                    <div class="project-preview__benefits">
+                        <div class="project-preview__benefit"><span>Financial</span><strong id="preview-financial">0 / 5</strong></div>
+                        <div class="project-preview__benefit"><span>Quality</span><strong id="preview-quality">0 / 5</strong></div>
+                        <div class="project-preview__benefit"><span>Risk reduction</span><strong id="preview-risk">0 / 5</strong></div>
+                        <div class="project-preview__benefit"><span>Sustainability</span><strong id="preview-sustainability">0 / 5</strong></div>
+                    </div>
+                </div>
+            </aside>
+        </form>
     </main>
 </div>
-
 <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Add Project',
-    breadcrumb: 'Projects',
-    subtitle: 'Create a new project and set its core details and benefit assumptions.'
-});
-</script>
-    <script src="js/menu.js"></script>
-<script src="js/input_help.js"></script>
 <script>
-async function loadProject(){
-    const params = new URLSearchParams(location.search);
-    const id = params.get('id');
-    if(!id) return;
-    const saveButton = document.getElementById('save-project');
-    let data;
-    try {
-        const res = await fetch('../php_backend/public/projects.php');
-        if(!res.ok) throw new Error('Could not load projects');
-        data = await res.json();
-    } catch (error) {
-        saveButton.disabled = true;
-        showMessage('Could not load this project. Please refresh and try again.', 'error');
-        return;
-    }
-    const p = data.find(pr => String(pr.id) === id);
-    if(!p){
-        saveButton.disabled = true;
-        showMessage('Project not found. Return to the projects page and choose another project.', 'error');
-        return;
-    }
-    const f = document.getElementById('project-form');
-    document.getElementById('project_id').value = p.id;
-    f.name.value = p.name || '';
-    f.funding_source.value = p.funding_source || 'Savings';
-    f.description.value = p.description || '';
-    f.rationale.value = p.rationale || '';
-    f.cost_low.value = p.cost_low || '';
-    f.cost_medium.value = p.cost_medium || '';
-    f.cost_high.value = p.cost_high || '';
-    f.recurring_cost.value = p.recurring_cost || '';
-    f.estimated_time.value = p.estimated_time || '';
-    f.expected_lifespan.value = p.expected_lifespan || '';
-    f.benefit_financial.value = p.benefit_financial || '';
-    f.benefit_quality.value = p.benefit_quality || '';
-    f.benefit_risk.value = p.benefit_risk || '';
-    f.benefit_sustainability.value = p.benefit_sustainability || '';
-    f.weight_financial.value = p.weight_financial || '';
-    f.weight_quality.value = p.weight_quality || '';
-    f.weight_risk.value = p.weight_risk || '';
-    f.weight_sustainability.value = p.weight_sustainability || '';
-    f.dependencies.value = p.dependencies || '';
-    f.risks.value = p.risks || '';
-    saveButton.textContent = 'Update Project';
-    document.title = 'Edit Project';
-    window.updatePageHeader(pageMain, {
-        title: 'Edit Project',
-        subtitle: 'Update project details, costs, and benefit assumptions.'
-    });
-}
-
-document.getElementById('project-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const f = e.target;
-    const saveButton = document.getElementById('save-project');
-    const data = {
-        name: f.name.value,
-        description: f.description.value,
-        rationale: f.rationale.value,
-        cost_low: f.cost_low.value,
-        cost_medium: f.cost_medium.value,
-        cost_high: f.cost_high.value,
-        funding_source: f.funding_source.value,
-        recurring_cost: f.recurring_cost.value,
-        estimated_time: f.estimated_time.value,
-        expected_lifespan: f.expected_lifespan.value,
-        benefit_financial: f.benefit_financial.value,
-        benefit_quality: f.benefit_quality.value,
-        benefit_risk: f.benefit_risk.value,
-        benefit_sustainability: f.benefit_sustainability.value,
-        weight_financial: f.weight_financial.value,
-        weight_quality: f.weight_quality.value,
-        weight_risk: f.weight_risk.value,
-        weight_sustainability: f.weight_sustainability.value,
-        dependencies: f.dependencies.value,
-        risks: f.risks.value
-    };
-    const id = document.getElementById('project_id').value;
-    let method = 'POST';
-    if(id){
-        data.id = id;
-        method = 'PUT';
-    }
-    saveButton.disabled = true;
-    const originalLabel = saveButton.textContent;
-    saveButton.textContent = id ? 'Updating…' : 'Saving…';
-    try {
-        const response = await fetch('../php_backend/public/projects.php',{
-            method,
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(data)
-        });
-        const result = await response.json().catch(() => ({}));
-        if(!response.ok || result.status !== 'ok'){
-            throw new Error(result.error || 'Project could not be saved');
-        }
-
-        if(!id && result.id){
-            document.getElementById('project_id').value = result.id;
-            history.replaceState(null, '', `?id=${encodeURIComponent(result.id)}`);
-            document.title = 'Edit Project';
-            window.updatePageHeader(pageMain, {
-                title: 'Edit Project',
-                subtitle: 'Update project details, costs, and benefit assumptions.'
-            });
-        }
-        saveButton.textContent = 'Update Project';
-        showMessage(id ? 'Project updated' : 'Project created');
-    } catch (error) {
-        saveButton.textContent = originalLabel;
-        showMessage(error.message || 'Could not save project. Please try again.', 'error');
-    } finally {
-        saveButton.disabled = false;
-    }
-});
-
-loadProject();
+    const formMain=document.querySelector('main.ops-main');const formActions=document.createElement('div');formActions.className='project-header-actions';const cancel=document.createElement('a');cancel.href='projects_board.html';cancel.className='project-header-link';cancel.innerHTML='<i class="fas fa-xmark" aria-hidden="true"></i><span>Cancel</span>';formActions.appendChild(cancel);window.renderPageHeader(formMain,{title:'Add project',breadcrumb:'Projects / Editor',subtitle:'Turn an idea into a clear, comparable plan with visible costs, benefits, and delivery assumptions.',actions:formActions});
 </script>
-<script src="js/overlay.js"></script>
+<script src="js/menu.js"></script><script src="js/projects_common.js"></script><script src="js/project_form.js"></script><script src="js/overlay.js"></script>
 </body>
 </html>
