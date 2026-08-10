@@ -156,8 +156,9 @@ const attachSidebarSearchHandler = (root = document) => {
       colorScheme = f.color_scheme || colorScheme;
       loadFontsModule(() => applyFonts(f));
       document.title = document.title.replace('Finance Manager', siteName);
-      const landing = document.getElementById('landing-site-name');
-      if (landing) landing.textContent = siteName;
+      document.querySelectorAll('#landing-site-name, [data-landing-site-name]').forEach(el => {
+        el.textContent = siteName;
+      });
       applyColorScheme();
       applyIconColor();
       document.querySelectorAll('#site-title').forEach(el => el.textContent = siteName);
