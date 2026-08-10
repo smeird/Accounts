@@ -1,228 +1,90 @@
 <!DOCTYPE html>
-<!-- Interface for searching transactions across all fields -->
+<!-- Search Transactions: investigate matching activity and understand its financial shape. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Search Transactions</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
-
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
-
+    <link rel="stylesheet" href="transactions_workspace.css">
 </head>
-<body class="ops-body">
-    <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Find specific transactions using keywords and view the results below. Quick searches help you jump straight to the entries you need.</p>
-            <section class="cards cards-tight">
-            <form id="search-form" class="space-y-4">
-                <input type="text" id="term" placeholder="Search value" class="border p-2 rounded w-full" data-help="Value to search across transactions">
-                <input type="number" step="0.01" id="min-amount" placeholder="Min Amount (£)" class="border p-2 rounded w-full" data-help="Minimum amount to match">
-                <input type="number" step="0.01" id="max-amount" placeholder="Max Amount (£)" class="border p-2 rounded w-full" data-help="Maximum amount to match">
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Search</button>
-            </form>
+<body class="ops-body transaction-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main transaction-main flex-1 min-w-0 overflow-x-hidden">
+        <div id="search-error" class="transaction-error" role="alert" hidden></div>
+
+        <section class="transaction-hero" data-no-card="true" aria-labelledby="search-hero-value">
+            <div class="transaction-hero__glow" aria-hidden="true"></div>
+            <div class="transaction-hero__topline">
+                <span class="transaction-pulse"><span aria-hidden="true"></span>Transaction signal</span>
+                <span id="search-hero-context">Ready to investigate</span>
+            </div>
+            <div class="transaction-hero__body">
+                <div>
+                    <p class="transaction-kicker">Net movement across matching transactions</p>
+                    <h1 id="search-hero-value" class="transaction-hero__value" aria-live="polite">£—</h1>
+                    <p id="search-hero-message" class="transaction-hero__message">Search by a name, note, category, tag or amount range to reveal the movement behind it.</p>
+                </div>
+                <div class="transaction-hero__signal">
+                    <strong id="search-match-count">—</strong>
+                    <span id="search-match-label">matches</span>
+                </div>
+            </div>
+            <div class="transaction-hero__metrics" aria-label="Search result summary">
+                <article><span class="transaction-summary-icon transaction-summary-icon--income"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span><div><p>Money in</p><strong id="search-income">£—</strong><small>Matched inflows</small></div></article>
+                <article><span class="transaction-summary-icon transaction-summary-icon--spend"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span><div><p>Money out</p><strong id="search-spending">£—</strong><small>Matched spending</small></div></article>
+                <article><span class="transaction-summary-icon transaction-summary-icon--period"><i class="fas fa-calendar-days" aria-hidden="true"></i></span><div><p>Date span</p><strong id="search-period">—</strong><small id="search-period-note">Across all dates</small></div></article>
+                <article><span class="transaction-summary-icon"><i class="fas fa-right-left" aria-hidden="true"></i></span><div><p>Transfers</p><strong id="search-transfers">—</strong><small>Excluded from net</small></div></article>
+            </div>
+        </section>
+
+        <div class="transaction-grid transaction-grid--search">
+            <section class="transaction-card" data-no-card="true">
+                <div class="transaction-card__header"><div><p class="transaction-section-label">Investigation</p><h2>Find the movement</h2><p class="transaction-card__copy">Search every transaction field, then narrow the result by amount if needed.</p></div></div>
+                <form id="search-form" class="transaction-search-form">
+                    <div class="transaction-field-grid">
+                        <label class="transaction-field transaction-field--wide" for="term"><span>Search term <small>Optional with an amount</small></span><input type="search" id="term" placeholder="Try a merchant, memo, category or tag" autocomplete="off" data-help="Value to search across transactions"></label>
+                        <label class="transaction-field" for="min-amount"><span>Minimum amount</span><input type="number" step="0.01" id="min-amount" placeholder="£0.00" data-help="Minimum amount to match"></label>
+                        <label class="transaction-field" for="max-amount"><span>Maximum amount</span><input type="number" step="0.01" id="max-amount" placeholder="£0.00" data-help="Maximum amount to match"></label>
+                    </div>
+                    <div class="transaction-actions">
+                        <button id="search-submit" type="submit" class="transaction-button transaction-button--primary"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span>Search transactions</span></button>
+                        <button id="search-clear" type="button" class="transaction-button transaction-button--quiet"><i class="fas fa-rotate-left" aria-hidden="true"></i><span>Clear</span></button>
+                        <span id="search-status" class="transaction-status" aria-live="polite"></span>
+                    </div>
+                </form>
             </section>
-            <section class="cards cards-tight mt-4">
-                <div id="results-grid"></div>
-                <p id="total" class="mt-4"></p>
+
+            <section class="transaction-card" data-no-card="true">
+                <div class="transaction-card__header"><div><p class="transaction-section-label">Pattern</p><h2>Matched spending over time</h2><p class="transaction-card__copy">Outgoings are grouped automatically so long and short searches stay readable.</p></div><span id="search-bucket-label" class="transaction-count">—</span></div>
+                <div id="results-chart" class="transaction-chart" data-chart-desc="Chart showing matched spending grouped across time."></div>
             </section>
-            <section class="cards cards-tight mt-6">
-                <div id="results-chart" style="height:400px" data-chart-desc="Column chart showing spending totals from search results."></div>
-            </section>
-        </main>
-    </div>
-    <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Search Transactions',
-    breadcrumb: 'Transactions',
-    subtitle: 'Search across transactions using flexible filters and keywords.'
-});
+        </div>
+
+        <section class="transaction-card transaction-results-card" data-no-card="true">
+            <div class="transaction-card__header"><div><p class="transaction-section-label">Evidence</p><h2>Matching transactions</h2><p id="search-results-copy" class="transaction-card__copy">Your result set will appear here, ready to sort and inspect.</p></div><span id="search-result-count" class="transaction-count">0</span></div>
+            <div id="results-grid" class="transaction-table" aria-live="polite"></div>
+        </section>
+    </main>
+</div>
+
+<script src="js/page_header.js"></script>
+<script>
+    const transactionSearchMain = document.querySelector('main.ops-main');
+    window.renderPageHeader(transactionSearchMain, { title:'Search Transactions', breadcrumb:'Transactions / Search', subtitle:'Investigate any slice of activity and understand its shape at a glance.', actions:null });
 </script>
-    <script src="js/menu.js"></script>
-    <script src="js/input_help.js"></script>
-    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
-    <script src="js/color_map.js"></script>
-    <script>
-    function columnTooltip(){
-        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
-        const pct = total ? (this.y / total * 100) : 0;
-        return `${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
-    }
-    // Format a numeric value as pounds and pence
-    function formatCurrency(value) {
-        return '£' + parseFloat(value).toFixed(2);
-    }
-
-    // Escape a string for safe insertion into HTML
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function runSearch(){
-        const term = document.getElementById('term').value;
-        const minAmount = document.getElementById('min-amount').value;
-        const maxAmount = document.getElementById('max-amount').value;
-        const params = new URLSearchParams();
-        if (term) params.append('value', term);
-        if (minAmount) params.append('min_amount', minAmount);
-        if (maxAmount) params.append('max_amount', maxAmount);
-        fetch('../php_backend/public/search_transactions.php?' + params.toString())
-            .then(resp => resp.json())
-            .then(data => {
-                const gridEl = document.getElementById('results-grid');
-                gridEl.innerHTML = '';
-                if (data.results && data.results.length) {
-                    tailwindTabulator(gridEl, {
-                        data: data.results,
-                        layout: 'fitDataStretch',
-                        columns: [
-                            { title: 'Date', field: 'date' },
-                            { title: 'Description', field: 'description', formatter: function(cell){
-                                const id = cell.getRow().getData().id;
-                                const link = document.createElement('a');
-                                link.href = `transaction.html?id=${id}`;
-                                link.textContent = cell.getValue();
-                                return link;
-                            } },
-                            { title: 'Memo', field: 'memo' },
-                            { title: 'Category', field: 'category_name', formatter: badgeFormatter('bg-green-200 text-green-800') },
-                            { title: 'Tag', field: 'tag_name', formatter: badgeFormatter('bg-indigo-200 text-indigo-800') },
-                            { title: 'Group', field: 'group_name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
-                            { title: 'Segment', field: 'segment_name', formatter: badgeFormatter('bg-yellow-200 text-yellow-800') },
-                            { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-                        ]
-                    });
-                } else {
-                    gridEl.innerHTML = 'No transactions found.';
-                }
-                const totalEl = document.getElementById('total');
-                const total = (data.results || []).reduce((sum, row) => {
-                    return row.transfer_id === null ? sum + parseFloat(row.amount) : sum;
-                }, 0);
-                totalEl.textContent = 'Total: ' + formatCurrency(total);
-                totalEl.classList.add('text-right');
-
-                const chartEl = document.getElementById('results-chart');
-                if (data.results && data.results.length) {
-                    const filtered = data.results.filter(r => r.transfer_id === null);
-                    if (filtered.length) {
-                        const dates = filtered.map(r => new Date(r.date));
-                        const min = new Date(Math.min.apply(null, dates));
-                        const max = new Date(Math.max.apply(null, dates));
-                        const diffDays = (max - min) / (1000 * 60 * 60 * 24);
-
-                        let buckets = {};
-                        let categories = [];
-                        let values = [];
-                        let chartTitle = term ? `Spending for "${escapeHtml(term)}"` : 'Search Results Spending';
-                        if (minAmount && maxAmount) {
-                            chartTitle += ` between £${parseFloat(minAmount).toFixed(2)} and £${parseFloat(maxAmount).toFixed(2)}`;
-                        } else if (minAmount) {
-                            chartTitle += ` from £${parseFloat(minAmount).toFixed(2)}`;
-                        } else if (maxAmount) {
-                            chartTitle += ` up to £${parseFloat(maxAmount).toFixed(2)}`;
-                        }
-                        let chartSubtitle = '';
-
-                        if (diffDays > 1095) {
-                            filtered.forEach(r => {
-                                const year = r.date.substring(0, 4);
-                                const amt = -parseFloat(r.amount);
-                                if (amt > 0) buckets[year] = (buckets[year] || 0) + amt;
-                            });
-                            const years = Object.keys(buckets).sort();
-                            categories = years;
-                            values = years.map(y => parseFloat(buckets[y].toFixed(2)));
-                            chartSubtitle = 'Yearly totals';
-                        } else if (diffDays > 62) {
-                            filtered.forEach(r => {
-                                const month = r.date.substring(0, 7);
-                                const amt = -parseFloat(r.amount);
-                                if (amt > 0) buckets[month] = (buckets[month] || 0) + amt;
-                            });
-                            const months = Object.keys(buckets).sort();
-                            categories = months.map(m => {
-                                const [y, mth] = m.split('-');
-                                return new Date(y, mth - 1).toLocaleString('default', { month: 'short', year: 'numeric' });
-                            });
-                            values = months.map(m => parseFloat(buckets[m].toFixed(2)));
-                            chartSubtitle = 'Monthly totals';
-                        } else {
-                            filtered.forEach(r => {
-                                const day = r.date;
-                                const amt = -parseFloat(r.amount);
-                                if (amt > 0) buckets[day] = (buckets[day] || 0) + amt;
-                            });
-                            const days = Object.keys(buckets).sort();
-                            categories = days.map(d => new Date(d).toLocaleDateString());
-                            values = days.map(d => parseFloat(buckets[d].toFixed(2)));
-                            chartSubtitle = 'Daily totals';
-                        }
-
-
-                        const points = values.map((v, i) => ({
-                            y: v,
-                            color: chartColors[i % chartColors.length]
-
-                        }));
-
-                        Highcharts.chart('results-chart', {
-                            colors: chartColors,
-                            chart: {
-                                type: 'column',
-
-                                options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
-
-                            },
-                            title: { text: chartTitle },
-                            subtitle: { text: chartSubtitle },
-                            xAxis: { categories: categories },
-                            yAxis: { title: { text: 'Amount (£)' } },
-                            plotOptions: { column: { depth: 25 } },
-                            series: [{ name: 'Spend', data: points, colorByPoint: true }],
-                            tooltip: { pointFormatter: columnTooltip }
-                        });
-                    } else {
-                        chartEl.innerHTML = '';
-                    }
-                } else {
-                    chartEl.innerHTML = '';
-                }
-            });
-    }
-
-    document.getElementById('search-form').addEventListener('submit', function(e){
-        e.preventDefault();
-        runSearch();
-    });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialValue = urlParams.get('value');
-    const initialMin = urlParams.get('min_amount');
-    const initialMax = urlParams.get('max_amount');
-    if (initialValue) document.getElementById('term').value = initialValue;
-    if (initialMin) document.getElementById('min-amount').value = initialMin;
-    if (initialMax) document.getElementById('max-amount').value = initialMax;
-    if (initialValue || initialMin || initialMax) {
-        runSearch();
-    }
-    </script>
-    <script src="js/overlay.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<script src="js/tabulator-tailwind.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="js/color_map.js"></script>
+<script src="js/search_transactions.js"></script>
+<script src="js/overlay.js"></script>
 </body>
 </html>

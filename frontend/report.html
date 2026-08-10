@@ -17,51 +17,83 @@
 
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <link rel="stylesheet" href="transactions_workspace.css">
 
 </head>
-<body class="ops-body">
+<body class="ops-body transaction-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Generate detailed transaction reports filtered by your chosen criteria. Use the results to review spending habits or export data for further analysis.</p>
-            <form id="report-form" class="cards cards-tight grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label class="block md:col-span-3">Ask in plain English:
-                    <input type="text" id="nl-query" class="border p-2 rounded w-full" placeholder="e.g., costs for cars in the last 12 months" data-help="Describe the report you want in plain English">
-                </label>
-                <div id="ai-status" class="md:col-span-3 text-sm text-gray-600 hidden" aria-live="polite"></div>
-                <div id="ai-debug" class="md:col-span-3 hidden">
-                    <div class="cards cards-tight space-y-3">
-                        <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
-                        <p class="text-sm font-semibold">Prompt</p>
-                        <pre id="ai-debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
-                        <p class="text-sm font-semibold">Response</p>
-                        <pre id="ai-debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
+        <main class="ops-main transaction-main flex-1 min-w-0 overflow-x-hidden">
+            <div id="report-error" class="transaction-error" role="alert" hidden></div>
+
+            <section id="report-summary" class="transaction-hero" data-no-card="true" aria-labelledby="report-hero-value">
+                <div class="transaction-hero__glow" aria-hidden="true"></div>
+                <div class="transaction-hero__topline"><span class="transaction-pulse"><span aria-hidden="true"></span>Report signal</span><span id="report-hero-context">Ready to build</span></div>
+                <div class="transaction-hero__body">
+                    <div><p class="transaction-kicker">Net movement in the current report</p><h1 id="report-hero-value" class="transaction-hero__value" aria-live="polite">£—</h1><p id="report-hero-message" class="transaction-hero__message">Combine natural language with precise filters, then read the result as a financial story rather than a spreadsheet.</p></div>
+                    <div class="transaction-hero__signal"><strong id="report-row-count">—</strong><span id="report-row-label">transactions</span></div>
+                </div>
+                <div class="transaction-hero__metrics" aria-label="Transaction report summary">
+                    <article><span class="transaction-summary-icon transaction-summary-icon--income"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span><div><p>Money in</p><strong id="report-income">£—</strong><small>Filtered inflows</small></div></article>
+                    <article><span class="transaction-summary-icon transaction-summary-icon--spend"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span><div><p>Money out</p><strong id="report-spending">£—</strong><small>Filtered spending</small></div></article>
+                    <article><span class="transaction-summary-icon transaction-summary-icon--period"><i class="fas fa-calendar-days" aria-hidden="true"></i></span><div><p>Date span</p><strong id="report-period">—</strong><small id="report-period-note">Awaiting a report</small></div></article>
+                    <article><span class="transaction-summary-icon"><i class="fas fa-filter" aria-hidden="true"></i></span><div><p>Filters active</p><strong id="report-filter-count">0</strong><small>Across all dimensions</small></div></article>
+                </div>
+            </section>
+
+            <div class="transaction-grid transaction-grid--report">
+                <form id="report-form" class="transaction-card" data-no-card="true">
+                    <div class="transaction-card__header"><div><p class="transaction-section-label">Report builder</p><h2>Ask the question</h2><p class="transaction-card__copy">Start in plain English or shape the exact audience, date range and transaction detail below.</p></div></div>
+                    <div class="transaction-natural">
+                        <label class="transaction-natural__label" for="nl-query"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>Ask in plain English</label>
+                        <input type="text" id="nl-query" class="transaction-natural-input" placeholder="e.g. car costs in the last 12 months" data-help="Describe the report you want in plain English">
+                        <div id="ai-status" class="transaction-ai-status hidden" aria-live="polite"></div>
+                        <div id="ai-debug" class="transaction-debug hidden"><details><summary>AI request detail</summary><p class="transaction-section-label">Prompt</p><pre id="ai-debug-request"></pre><p class="transaction-section-label">Response</p><pre id="ai-debug-response"></pre></details></div>
                     </div>
-                </div>
-                <label class="block">Category: <select id="category" multiple class="border p-2 rounded w-full" data-help="Filter by category"></select></label>
-                <label class="block">Tag: <select id="tag" multiple class="border p-2 rounded w-full" data-help="Filter by tag"></select></label>
-                <label class="block">Group: <select id="group" multiple class="border p-2 rounded w-full" data-help="Filter by group"></select></label>
-                <label class="block">Segment: <select id="segment" multiple class="border p-2 rounded w-full" data-help="Filter by segment"></select></label>
-                <label class="block">Description: <input type="text" id="text" class="border p-2 rounded w-full" data-help="Filter by description text"></label>
-                <label class="block">Memo: <input type="text" id="memo" class="border p-2 rounded w-full" data-help="Filter by memo text"></label>
-                <label class="block">Start Date: <input type="date" id="start" class="border p-2 rounded w-full" data-help="Start date for report"></label>
-                <label class="block">End Date: <input type="date" id="end" class="border p-2 rounded w-full" data-help="End date for report"></label>
-                <div class="md:col-span-3 space-x-2">
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Run Report</button>
-                    <button type="button" id="save-report" class="bg-gray-600 text-white px-4 py-2 rounded">Save Report</button>
-                    <button type="button" id="download-pdf" class="bg-green-600 text-white px-4 py-2 rounded" aria-label="Download report as PDF"><i class="fas fa-file-download inline w-4 h-4 mr-1"></i>Download PDF</button>
-                </div>
-            </form>
-            <div class="mt-4 flex items-center space-x-2">
-                <label class="block flex-1">Saved Reports: <select id="saved-reports" class="border p-2 rounded w-full" data-help="Load a saved report"></select></label>
-                <button type="button" id="delete-report" class="bg-red-600 text-white px-3 py-2 rounded" aria-label="Delete saved report"><i class="fas fa-trash inline w-4 h-4"></i></button>
+                    <div class="transaction-divider"></div>
+                    <div class="transaction-field-grid">
+                        <label class="transaction-field" for="category"><span>Category</span><select id="category" multiple data-help="Filter by category"></select></label>
+                        <label class="transaction-field" for="tag"><span>Tag</span><select id="tag" multiple data-help="Filter by tag"></select></label>
+                        <label class="transaction-field" for="group"><span>Group</span><select id="group" multiple data-help="Filter by group"></select></label>
+                        <label class="transaction-field" for="segment"><span>Segment</span><select id="segment" multiple data-help="Filter by segment"></select></label>
+                        <label class="transaction-field" for="text"><span>Description contains</span><input type="text" id="text" placeholder="Merchant or description" data-help="Filter by description text"></label>
+                        <label class="transaction-field" for="memo"><span>Memo contains</span><input type="text" id="memo" placeholder="Words in a memo" data-help="Filter by memo text"></label>
+                        <label class="transaction-field" for="start"><span>From</span><input type="date" id="start" data-help="Start date for report"></label>
+                        <label class="transaction-field" for="end"><span>To</span><input type="date" id="end" data-help="End date for report"></label>
+                    </div>
+                    <div class="transaction-divider"></div>
+                    <div class="transaction-actions">
+                        <button id="run-report" type="submit" class="transaction-button transaction-button--primary"><i class="fas fa-chart-column" aria-hidden="true"></i><span>Run report</span></button>
+                        <button type="button" id="save-report" class="transaction-button transaction-button--secondary"><i class="fas fa-bookmark" aria-hidden="true"></i><span>Save report</span></button>
+                        <button type="button" id="download-pdf" class="transaction-button transaction-button--quiet" aria-label="Download report as PDF"><i class="fas fa-file-arrow-down" aria-hidden="true"></i><span>Download PDF</span></button>
+                        <span id="report-status" class="transaction-status" aria-live="polite"></span>
+                    </div>
+                </form>
+
+                <aside class="transaction-card transaction-saved" data-no-card="true">
+                    <div class="transaction-card__header"><div><p class="transaction-section-label">Saved views</p><h2>Return to a report</h2><p class="transaction-card__copy">Load a repeat question without rebuilding every filter.</p></div></div>
+                    <div class="transaction-saved__actions">
+                        <label class="transaction-field transaction-saved__select" for="saved-reports"><span>Saved report</span><select id="saved-reports" data-help="Load a saved report"></select></label>
+                        <button type="button" id="delete-report" class="transaction-button transaction-button--danger" aria-label="Delete selected saved report"><i class="fas fa-trash" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="transaction-tip"><i class="fas fa-lightbulb" aria-hidden="true"></i><span>Save reports you revisit monthly. The name and description also carry into your PDF export.</span></div>
+                </aside>
             </div>
-            <div id="results-grid" class="mt-4"></div>
-            <div id="chart" class="mt-6 cards" style="height:400px;" data-chart-desc="Column chart of transaction amounts grouped by your criteria."></div>
-            <div class="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <div id="segment-chart" class="cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by segment."></div>
-                <div id="category-chart" class="cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by category."></div>
-                <div id="tag-chart" class="cards" style="height:400px;" data-chart-desc="Pie chart of transaction totals by tag."></div>
+
+            <section class="transaction-card transaction-results-card" data-no-card="true">
+                <div class="transaction-card__header"><div><p class="transaction-section-label">Report detail</p><h2>Transactions in scope</h2><p id="report-results-copy" class="transaction-card__copy">Run a report to populate the evidence behind the summary.</p></div><span id="report-result-count" class="transaction-count">0</span></div>
+                <div id="results-grid" class="transaction-table"></div>
+            </section>
+
+            <section class="transaction-card" data-no-card="true">
+                <div class="transaction-card__header"><div><p class="transaction-section-label">Direction of travel</p><h2>Movement over time</h2><p class="transaction-card__copy">The grouping adapts automatically to keep the report readable.</p></div><span id="report-group-label" class="transaction-count">—</span></div>
+                <div id="chart" class="transaction-chart" data-chart-desc="Column chart of transaction amounts grouped over time."></div>
+            </section>
+
+            <div class="transaction-grid transaction-grid--charts">
+                <section class="transaction-card" data-no-card="true"><div class="transaction-card__header"><div><p class="transaction-section-label">Breakdown</p><h2>By segment</h2></div></div><div id="segment-chart" class="transaction-chart transaction-chart--small" data-chart-desc="Pie chart of transaction totals by segment."></div></section>
+                <section class="transaction-card" data-no-card="true"><div class="transaction-card__header"><div><p class="transaction-section-label">Breakdown</p><h2>By category</h2></div></div><div id="category-chart" class="transaction-chart transaction-chart--small" data-chart-desc="Pie chart of transaction totals by category."></div></section>
+                <section class="transaction-card" data-no-card="true"><div class="transaction-card__header"><div><p class="transaction-section-label">Breakdown</p><h2>By tag</h2></div></div><div id="tag-chart" class="transaction-chart transaction-chart--small" data-chart-desc="Pie chart of transaction totals by tag."></div></section>
             </div>
         </main>
     </div>
@@ -70,8 +102,9 @@
 const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Transaction Reports',
-    breadcrumb: 'Reports & Analysis',
-    subtitle: 'Build and save transaction reports with charts and category breakdowns.'
+    breadcrumb: 'Transactions / Reports',
+    subtitle: 'Build a focused question, see the answer instantly, and keep the reports worth revisiting.',
+    actions: null
 });
 </script>
     <script src="js/menu.js"></script>
@@ -112,6 +145,93 @@ window.renderPageHeader(pageMain, {
 
     let currentReportName = '';
     let currentReportDesc = '';
+    const reportMoney = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const reportCompactMoney = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
+    const reportShortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    function reportHeaderActions() {
+        const wrap = document.createElement('div');
+        wrap.className = 'transaction-header-actions';
+        const search = document.createElement('a');
+        search.href = 'search.html';
+        search.className = 'transaction-header-link transaction-header-link--primary';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-magnifying-glass';
+        icon.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.textContent = 'Search transactions';
+        search.append(icon, label);
+        wrap.appendChild(search);
+        return wrap;
+    }
+
+    function reportEmptyState(title, copy, iconClass) {
+        const root = document.createElement('div');
+        root.className = 'transaction-empty';
+        const body = document.createElement('div');
+        body.className = 'transaction-empty__body';
+        const icon = document.createElement('i');
+        icon.className = 'fas ' + iconClass;
+        icon.setAttribute('aria-hidden', 'true');
+        const heading = document.createElement('strong');
+        heading.textContent = title;
+        const paragraph = document.createElement('p');
+        paragraph.textContent = copy;
+        body.append(icon, heading, paragraph);
+        root.appendChild(body);
+        return root;
+    }
+
+    function setReportEmpty(container, title, copy, iconClass) {
+        container.replaceChildren(reportEmptyState(title, copy, iconClass));
+    }
+
+    function reportActiveFilterCount() {
+        return [
+            getSelectedValues(window.catChoices),
+            getSelectedValues(window.tagChoices),
+            getSelectedValues(window.groupChoices),
+            getSelectedValues(window.segmentChoices)
+        ].filter(values => values.length).length + [
+            document.getElementById('text').value,
+            document.getElementById('memo').value,
+            document.getElementById('start').value,
+            document.getElementById('end').value
+        ].filter(Boolean).length;
+    }
+
+    function renderReportSummary(data) {
+        const values = data.map(row => Number(row.amount) || 0);
+        const income = values.reduce((sum, value) => sum + Math.max(0, value), 0);
+        const spending = values.reduce((sum, value) => sum + Math.max(0, -value), 0);
+        const net = income - spending;
+        const dates = data.map(row => new Date(row.date + (String(row.date).length === 10 ? 'T12:00:00' : ''))).filter(date => !Number.isNaN(date.getTime())).sort((a, b) => a - b);
+        const heroValue = document.getElementById('report-hero-value');
+        heroValue.classList.remove('transaction-tone--positive', 'transaction-tone--negative');
+        if (net > 0) heroValue.classList.add('transaction-tone--positive');
+        if (net < 0) heroValue.classList.add('transaction-tone--negative');
+        heroValue.textContent = reportMoney.format(net);
+        document.getElementById('report-row-count').textContent = String(data.length);
+        document.getElementById('report-row-label').textContent = data.length === 1 ? 'transaction' : 'transactions';
+        document.getElementById('report-income').textContent = reportCompactMoney.format(income);
+        document.getElementById('report-spending').textContent = reportCompactMoney.format(spending);
+        document.getElementById('report-filter-count').textContent = String(reportActiveFilterCount());
+        document.getElementById('report-result-count').textContent = String(data.length);
+        document.getElementById('report-hero-context').textContent = currentReportName || (reportActiveFilterCount() ? 'Filtered report' : 'All transactions');
+        document.getElementById('report-results-copy').textContent = data.length === 1 ? 'One transaction sits behind this report.' : `${data.length} transactions sit behind this report. Sort the evidence or open any row for detail.`;
+        document.getElementById('report-hero-message').textContent = data.length === 0 ? 'No transactions match this report. Try broadening one of the filters.' : net < 0 ? `${reportCompactMoney.format(Math.abs(net))} more left than arrived across this report.` : net > 0 ? `${reportCompactMoney.format(net)} more arrived than left across this report.` : 'Inflows and outgoings balance exactly across this report.';
+        if (dates.length) {
+            const first = dates[0];
+            const last = dates[dates.length - 1];
+            document.getElementById('report-period').textContent = first.getFullYear() === last.getFullYear() ? String(first.getFullYear()) : `${first.getFullYear()}–${last.getFullYear()}`;
+            document.getElementById('report-period-note').textContent = `${reportShortDate.format(first)} to ${reportShortDate.format(last)}`;
+        } else {
+            document.getElementById('report-period').textContent = '—';
+            document.getElementById('report-period-note').textContent = 'No dated activity';
+        }
+    }
+
+    window.updatePageHeader(pageMain, { actions: reportHeaderActions() });
 
     // Group transactions by an appropriate time frame so charts remain readable
     function groupTransactions(data) {
@@ -180,10 +300,6 @@ window.renderPageHeader(pageMain, {
             opt.textContent = t.name;
             tagSelect.appendChild(opt);
         });
-        if (window.tagChoices) {
-            window.tagChoices.destroy();
-        }
-        window.tagChoices = new Choices(tagSelect, { searchEnabled: true, shouldSort: false, itemSelectText: '' });
         groupSelect.innerHTML = '<option value="">All</option>';
         groups.filter(g => g.active).forEach(g => {
             const opt = document.createElement('option');
@@ -213,6 +329,7 @@ window.renderPageHeader(pageMain, {
         try {
             const res = await fetch('../php_backend/public/saved_reports.php');
             const saved = await res.json();
+            if (!res.ok || !Array.isArray(saved)) throw new Error('Saved reports could not be loaded.');
             window.savedReports = saved;
             const select = document.getElementById('saved-reports');
             select.innerHTML = '<option value="">Select</option>';
@@ -296,23 +413,49 @@ window.renderPageHeader(pageMain, {
         if (start) params.append('start', start);
         if (end) params.append('end', end);
 
-        const fetchUrl = '../php_backend/public/report.php?' + params.toString();
-        const data = await fetch(fetchUrl).then(resp => resp.json());
         const gridEl = document.getElementById('results-grid');
         const chartContainer = document.getElementById('chart');
         const categoryChartContainer = document.getElementById('category-chart');
         const segmentChartContainer = document.getElementById('segment-chart');
         const tagChartContainer = document.getElementById('tag-chart');
-        gridEl.innerHTML = '';
-        chartContainer.innerHTML = '';
-        categoryChartContainer.innerHTML = '';
-        segmentChartContainer.innerHTML = '';
-        tagChartContainer.innerHTML = '';
+        const reportError = document.getElementById('report-error');
+        const runButton = document.getElementById('run-report');
+        reportError.hidden = true;
+        runButton.disabled = true;
+        runButton.querySelector('span').textContent = 'Running…';
+        document.getElementById('report-status').textContent = 'Building your report…';
+        gridEl.classList.add('transaction-loading');
+        const fetchUrl = '../php_backend/public/report.php?' + params.toString();
+        let data;
+        try {
+            const response = await fetch(fetchUrl);
+            data = await response.json().catch(() => null);
+            if (!response.ok || !Array.isArray(data)) {
+                throw new Error((data && data.error) || 'The report could not be loaded.');
+            }
+        } catch (error) {
+            gridEl.classList.remove('transaction-loading');
+            setReportEmpty(gridEl, 'Report unavailable', 'Please try again in a moment.', 'fa-triangle-exclamation');
+            reportError.textContent = error.message || 'The report could not be loaded.';
+            reportError.hidden = false;
+            document.getElementById('report-status').textContent = 'Report failed';
+            runButton.disabled = false;
+            runButton.querySelector('span').textContent = 'Run report';
+            return;
+        }
+        gridEl.classList.remove('transaction-loading');
+        gridEl.replaceChildren();
+        chartContainer.replaceChildren();
+        categoryChartContainer.replaceChildren();
+        segmentChartContainer.replaceChildren();
+        tagChartContainer.replaceChildren();
         window.reportTable = null;
+        renderReportSummary(data);
         if (Array.isArray(data) && data.length) {
             window.reportTable = tailwindTabulator(gridEl, {
                 data: data,
                 layout: 'fitDataStretch',
+                responsiveLayout: 'collapse',
                 columns: [
                     { title: 'Date', field: 'date' },
                     { title: 'Description', field: 'description', formatter: function(cell){
@@ -336,6 +479,7 @@ window.renderPageHeader(pageMain, {
             const grouped = groupTransactions(data);
             const cats = grouped.grouped.map(g => g.label);
             const label = grouped.group.charAt(0).toUpperCase() + grouped.group.slice(1);
+            document.getElementById('report-group-label').textContent = label;
             const seriesData = grouped.grouped.map(g => {
                 let color = chartColors[0];
                 if (grouped.group === 'segment') {
@@ -346,13 +490,16 @@ window.renderPageHeader(pageMain, {
                 return { y: parseFloat(g.total), color };
             });
             Highcharts.chart('chart', {
-                chart: { type: 'column', backgroundColor: 'transparent' },
-                title: { text: 'Transaction Amounts by ' + label },
-                xAxis: { categories: cats, title: { text: label } },
-                yAxis: { title: { text: 'Amount' } },
+                chart: { type: 'column', backgroundColor: 'transparent', spacing: [8, 4, 2, 0], animation: false },
+                title: { text: null },
+                credits: { enabled: false },
+                accessibility: { enabled: false },
+                xAxis: { categories: cats, title: { text: null }, lineColor: 'rgba(148,163,184,.24)', tickLength: 0, labels: { style: { color: '#64748b', fontSize: '10px' } } },
+                yAxis: { title: { text: null }, gridLineColor: 'rgba(148,163,184,.16)', labels: { style: { color: '#64748b', fontSize: '10px' }, formatter: function () { return '£' + Highcharts.numberFormat(this.value, 0); } } },
                 legend: { enabled: false },
                 tooltip: { pointFormatter: columnTooltip },
-                series: [{ name: 'Amount', data: seriesData }]
+                plotOptions: { column: { borderWidth: 0, borderRadius: 5, maxPointWidth: 38 } },
+                series: [{ name: 'Amount', data: seriesData, color: '#4f46e5' }]
             });
 
             const catTotals = {};
@@ -369,9 +516,11 @@ window.renderPageHeader(pageMain, {
             if (pieData.length) {
                 Highcharts.chart('category-chart', {
                     chart: { type: 'pie', backgroundColor: 'transparent' },
-                    title: { text: 'Totals by Category' },
+                    title: { text: null },
+                    credits: { enabled: false }, accessibility: { enabled: false },
                     tooltip: { pointFormatter: pieTooltip },
                     legend: { enabled: false },
+                    plotOptions: { pie: { innerSize: '58%', borderWidth: 0, dataLabels: { enabled: false } } },
                     series: [{ name: 'Amount', data: pieData }]
                 });
             }
@@ -390,9 +539,11 @@ window.renderPageHeader(pageMain, {
             if (segmentData.length) {
                 Highcharts.chart('segment-chart', {
                     chart: { type: 'pie', backgroundColor: 'transparent' },
-                    title: { text: 'Totals by Segment' },
+                    title: { text: null },
+                    credits: { enabled: false }, accessibility: { enabled: false },
                     tooltip: { pointFormatter: pieTooltip },
                     legend: { enabled: false },
+                    plotOptions: { pie: { innerSize: '58%', borderWidth: 0, dataLabels: { enabled: false } } },
                     series: [{ name: 'Amount', data: segmentData }]
                 });
             }
@@ -415,18 +566,25 @@ window.renderPageHeader(pageMain, {
             if (tagData.length) {
                 Highcharts.chart('tag-chart', {
                     chart: { type: 'pie', backgroundColor: 'transparent' },
-                    title: { text: 'Totals by Tag' },
+                    title: { text: null },
+                    credits: { enabled: false }, accessibility: { enabled: false },
                     tooltip: { pointFormatter: pieTooltip },
                     legend: { enabled: false },
+                    plotOptions: { pie: { innerSize: '58%', borderWidth: 0, dataLabels: { enabled: false } } },
                     series: [{ name: 'Amount', data: tagData }]
                 });
             }
         } else {
-            gridEl.innerHTML = 'No transactions found.';
-            segmentChartContainer.innerHTML = '<div class="p-6 text-center text-sm text-gray-500">No segment totals to display.</div>';
-            categoryChartContainer.innerHTML = '<div class="p-6 text-center text-sm text-gray-500">No category totals to display.</div>';
-            tagChartContainer.innerHTML = '<div class="p-6 text-center text-sm text-gray-500">No tag totals to display.</div>';
+            document.getElementById('report-group-label').textContent = '—';
+            setReportEmpty(gridEl, 'No transactions found', 'Broaden a filter or adjust the date range to bring activity into scope.', 'fa-filter-circle-xmark');
+            setReportEmpty(chartContainer, 'No movement to plot', 'The time view will appear when the report contains transactions.', 'fa-chart-line');
+            setReportEmpty(segmentChartContainer, 'No segment totals', 'There is no segment breakdown for this report.', 'fa-chart-pie');
+            setReportEmpty(categoryChartContainer, 'No category totals', 'There is no category breakdown for this report.', 'fa-chart-pie');
+            setReportEmpty(tagChartContainer, 'No tag totals', 'There is no tag breakdown for this report.', 'fa-chart-pie');
         }
+        document.getElementById('report-status').textContent = `${data.length} result${data.length === 1 ? '' : 's'} in this report`;
+        runButton.disabled = false;
+        runButton.querySelector('span').textContent = 'Run report';
     }
 
     document.getElementById('report-form').addEventListener('submit', function(e) {
@@ -450,13 +608,20 @@ window.renderPageHeader(pageMain, {
             start: document.getElementById('start').value,
             end: document.getElementById('end').value
         };
-        await fetch('../php_backend/public/saved_reports.php', {
+        const response = await fetch('../php_backend/public/saved_reports.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(report)
         });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            document.getElementById('report-error').textContent = result.error || 'The report could not be saved.';
+            document.getElementById('report-error').hidden = false;
+            return;
+        }
         currentReportName = '';
         currentReportDesc = '';
+        if (typeof showMessage === 'function') showMessage('Report saved');
         loadSavedReports();
     });
 
@@ -489,14 +654,21 @@ window.renderPageHeader(pageMain, {
         const select = document.getElementById('saved-reports');
         const id = select.value;
         if (id === '') return;
-        await fetch('../php_backend/public/saved_reports.php', {
+        const response = await fetch('../php_backend/public/saved_reports.php', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id })
         });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            document.getElementById('report-error').textContent = result.error || 'The saved report could not be deleted.';
+            document.getElementById('report-error').hidden = false;
+            return;
+        }
         loadSavedReports();
         select.value = '';
         if (window.savedChoices) { window.savedChoices.setChoiceByValue(''); }
+        if (typeof showMessage === 'function') showMessage('Saved report deleted');
     });
 
     document.getElementById('download-pdf').addEventListener('click', async function() {
@@ -807,7 +979,15 @@ window.renderPageHeader(pageMain, {
 
     });
 
-    loadOptions();
+    setReportEmpty(document.getElementById('results-grid'), 'Build your first report', 'Choose filters or ask in plain English, then run the report to see its evidence.', 'fa-file-lines');
+    setReportEmpty(document.getElementById('chart'), 'Waiting for a report', 'The direction of travel will appear once a report has results.', 'fa-chart-line');
+    setReportEmpty(document.getElementById('segment-chart'), 'No segment view yet', 'Run a report to reveal the mix by segment.', 'fa-chart-pie');
+    setReportEmpty(document.getElementById('category-chart'), 'No category view yet', 'Run a report to reveal the mix by category.', 'fa-chart-pie');
+    setReportEmpty(document.getElementById('tag-chart'), 'No tag view yet', 'Run a report to reveal the mix by tag.', 'fa-chart-pie');
+    loadOptions().catch(error => {
+        document.getElementById('report-error').textContent = 'Report filters could not be loaded. Please refresh the page or sign in again.';
+        document.getElementById('report-error').hidden = false;
+    });
     loadSavedReports();
     initDebug();
     async function initDebug(){
