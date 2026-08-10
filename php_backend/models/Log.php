@@ -37,12 +37,14 @@ class Log {
     /**
      * Remove log entries older than the specified number of days.
      */
-    public static function prune(int $days): void {
+    public static function prune(int $days): bool {
         try {
             $db = Database::getConnection();
             $db->exec('DELETE FROM logs WHERE created_at < (NOW() - INTERVAL ' . (int)$days . ' DAY)');
+            return true;
         } catch (Throwable $e) {
             error_log('Log prune failed: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -60,6 +62,20 @@ class Log {
 
         set_exception_handler(function (Throwable $e): void {
             self::write($e->getMessage(), 'ERROR');
+            if (PHP_SAPI === 'cli') {
+                fwrite(STDERR, sprintf(
+                    "Uncaught %s: %s in %s on line %d%s",
+                    get_class($e),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    PHP_EOL
+                ));
+                exit(1);
+            }
+            if (!headers_sent()) {
+                http_response_code(500);
+            }
         });
 
 
@@ -74,4 +90,3 @@ class Log {
 }
 
 Log::registerHandlers();
-

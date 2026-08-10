@@ -39,13 +39,13 @@
                 <label class="block md:col-span-2">Description<br><textarea id="description" name="description" class="border p-2 rounded w-full" rows="2" data-help="Brief description"></textarea></label>
                 <label class="block md:col-span-2">Rationale<br><textarea id="rationale" name="rationale" class="border p-2 rounded w-full" rows="2" data-help="Why this project is needed"></textarea></label>
 
-                <label class="block">Cost Low (£)<br><input type="number" step="0.01" id="cost_low" name="cost_low" class="border p-2 rounded w-full" data-help="Minimum estimated cost"></label>
-                <label class="block">Cost Medium (£)<br><input type="number" step="0.01" id="cost_medium" name="cost_medium" class="border p-2 rounded w-full" data-help="Typical estimated cost"></label>
-                <label class="block">Cost High (£)<br><input type="number" step="0.01" id="cost_high" name="cost_high" class="border p-2 rounded w-full" data-help="Maximum estimated cost"></label>
-                <label class="block">Recurring Cost (£)<br><input type="number" step="0.01" id="recurring_cost" name="recurring_cost" class="border p-2 rounded w-full" data-help="Ongoing maintenance or subscription cost"></label>
+                <label class="block">Cost Low (£)<br><input type="number" min="0" step="0.01" id="cost_low" name="cost_low" class="border p-2 rounded w-full" data-help="Minimum estimated cost"></label>
+                <label class="block">Cost Medium (£)<br><input type="number" min="0" step="0.01" id="cost_medium" name="cost_medium" class="border p-2 rounded w-full" data-help="Typical estimated cost"></label>
+                <label class="block">Cost High (£)<br><input type="number" min="0" step="0.01" id="cost_high" name="cost_high" class="border p-2 rounded w-full" data-help="Maximum estimated cost"></label>
+                <label class="block">Recurring Cost (£)<br><input type="number" min="0" step="0.01" id="recurring_cost" name="recurring_cost" class="border p-2 rounded w-full" data-help="Ongoing maintenance or subscription cost"></label>
 
-                <label class="block">Estimated Time (months)<br><input type="number" id="estimated_time" name="estimated_time" class="border p-2 rounded w-full" data-help="Time to complete"></label>
-                <label class="block">Expected Lifespan (years)<br><input type="number" id="expected_lifespan" name="expected_lifespan" class="border p-2 rounded w-full" data-help="How long the project lasts"></label>
+                <label class="block">Estimated Time (months)<br><input type="number" min="0" id="estimated_time" name="estimated_time" class="border p-2 rounded w-full" data-help="Time to complete"></label>
+                <label class="block">Expected Lifespan (years)<br><input type="number" min="0" id="expected_lifespan" name="expected_lifespan" class="border p-2 rounded w-full" data-help="How long the project lasts"></label>
 
                 <label class="block">Financial Benefit (1-5)<br><input type="number" min="0" max="5" id="benefit_financial" name="benefit_financial" class="border p-2 rounded w-full" data-help="Financial return score"></label>
                 <label class="block">Quality of Life (1-5)<br><input type="number" min="0" max="5" id="benefit_quality" name="benefit_quality" class="border p-2 rounded w-full" data-help="Comfort or enjoyment score"></label>
@@ -60,7 +60,7 @@
                 <label class="block md:col-span-2">Dependencies<br><textarea id="dependencies" name="dependencies" class="border p-2 rounded w-full" rows="2" data-help="Prerequisite projects"></textarea></label>
                 <label class="block md:col-span-2">Risks<br><textarea id="risks" name="risks" class="border p-2 rounded w-full" rows="2" data-help="Potential risks or constraints"></textarea></label>
 
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded md:col-span-2">Save Project</button>
+                <button type="submit" id="save-project" class="bg-indigo-600 text-white px-4 py-2 rounded md:col-span-2 disabled:cursor-not-allowed disabled:opacity-60">Save Project</button>
             </form>
         </section>
     </main>
@@ -82,10 +82,23 @@ async function loadProject(){
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
     if(!id) return;
-    const res = await fetch('../php_backend/public/projects.php');
-    const data = await res.json();
-    const p = data.find(pr => pr.id == id);
-    if(!p) return;
+    const saveButton = document.getElementById('save-project');
+    let data;
+    try {
+        const res = await fetch('../php_backend/public/projects.php');
+        if(!res.ok) throw new Error('Could not load projects');
+        data = await res.json();
+    } catch (error) {
+        saveButton.disabled = true;
+        showMessage('Could not load this project. Please refresh and try again.', 'error');
+        return;
+    }
+    const p = data.find(pr => String(pr.id) === id);
+    if(!p){
+        saveButton.disabled = true;
+        showMessage('Project not found. Return to the projects page and choose another project.', 'error');
+        return;
+    }
     const f = document.getElementById('project-form');
     document.getElementById('project_id').value = p.id;
     f.name.value = p.name || '';
@@ -108,11 +121,18 @@ async function loadProject(){
     f.weight_sustainability.value = p.weight_sustainability || '';
     f.dependencies.value = p.dependencies || '';
     f.risks.value = p.risks || '';
+    saveButton.textContent = 'Update Project';
+    document.title = 'Edit Project';
+    window.updatePageHeader(pageMain, {
+        title: 'Edit Project',
+        subtitle: 'Update project details, costs, and benefit assumptions.'
+    });
 }
 
 document.getElementById('project-form').addEventListener('submit', async e => {
     e.preventDefault();
     const f = e.target;
+    const saveButton = document.getElementById('save-project');
     const data = {
         name: f.name.value,
         description: f.description.value,
@@ -141,14 +161,37 @@ document.getElementById('project-form').addEventListener('submit', async e => {
         data.id = id;
         method = 'PUT';
     }
-    await fetch('../php_backend/public/projects.php',{
-        method,
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(data)
-    });
-    f.reset();
-    document.getElementById('project_id').value = '';
-    showMessage('Project saved');
+    saveButton.disabled = true;
+    const originalLabel = saveButton.textContent;
+    saveButton.textContent = id ? 'Updating…' : 'Saving…';
+    try {
+        const response = await fetch('../php_backend/public/projects.php',{
+            method,
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(data)
+        });
+        const result = await response.json().catch(() => ({}));
+        if(!response.ok || result.status !== 'ok'){
+            throw new Error(result.error || 'Project could not be saved');
+        }
+
+        if(!id && result.id){
+            document.getElementById('project_id').value = result.id;
+            history.replaceState(null, '', `?id=${encodeURIComponent(result.id)}`);
+            document.title = 'Edit Project';
+            window.updatePageHeader(pageMain, {
+                title: 'Edit Project',
+                subtitle: 'Update project details, costs, and benefit assumptions.'
+            });
+        }
+        saveButton.textContent = 'Update Project';
+        showMessage(id ? 'Project updated' : 'Project created');
+    } catch (error) {
+        saveButton.textContent = originalLabel;
+        showMessage(error.message || 'Could not save project. Please try again.', 'error');
+    } finally {
+        saveButton.disabled = false;
+    }
 });
 
 loadProject();

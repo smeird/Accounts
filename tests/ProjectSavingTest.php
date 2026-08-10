@@ -36,4 +36,26 @@ class ProjectSavingTest extends TestCase
         $active = $this->db->query('SELECT active FROM transaction_groups WHERE id = (SELECT group_id FROM projects WHERE id = '.$id.')')->fetchColumn();
         $this->assertSame(0, (int)$active);
     }
+
+    public function testSpentIsPositiveAndExcludesIncome(): void
+    {
+        $this->db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id INT, amount REAL);');
+        $id = Project::create(['name' => 'Kitchen']);
+        $groupId = $this->db->query('SELECT group_id FROM projects WHERE id = ' . $id)->fetchColumn();
+        $insert = $this->db->prepare('INSERT INTO transactions (group_id, amount) VALUES (:group_id, :amount)');
+        $insert->execute(['group_id' => $groupId, 'amount' => -125.50]);
+        $insert->execute(['group_id' => $groupId, 'amount' => -24.50]);
+        $insert->execute(['group_id' => $groupId, 'amount' => 30.00]);
+
+        $projects = Project::all(false);
+
+        $this->assertSame(150.0, (float)$projects[0]['spent']);
+    }
+
+    public function testMissingProjectMutationsReportFailure(): void
+    {
+        $this->assertFalse(Project::update(999, ['name' => 'Missing']));
+        $this->assertFalse(Project::setArchived(999, true));
+        $this->assertFalse(Project::delete(999));
+    }
 }

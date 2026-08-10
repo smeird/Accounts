@@ -39,30 +39,53 @@ try {
             break;
         case 'POST':
             $data = json_decode(file_get_contents('php://input'), true) ?? [];
+            if (trim((string)($data['name'] ?? '')) === '') {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'error' => 'Project name is required']);
+                break;
+            }
             if (isset($data['archived'])) {
                 $data['archived'] = parseBooleanInput($data['archived']) ? 1 : 0;
             }
             $id = Project::create($data);
+            http_response_code(201);
             echo json_encode(['status' => 'ok', 'id' => $id]);
             break;
         case 'PUT':
             $data = json_decode(file_get_contents('php://input'), true) ?? [];
+            if (!isset($data['id'])) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'error' => 'Missing id']);
+                break;
+            }
+            if (trim((string)($data['name'] ?? '')) === '') {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'error' => 'Project name is required']);
+                break;
+            }
             if (isset($data['archived'])) {
                 $data['archived'] = parseBooleanInput($data['archived']) ? 1 : 0;
             }
-            if (isset($data['id'])) {
-                $ok = Project::update((int)$data['id'], $data);
-                echo json_encode(['status' => $ok ? 'ok' : 'error']);
-            } else {
-                echo json_encode(['status' => 'error', 'error' => 'Missing id']);
+            $ok = Project::update((int)$data['id'], $data);
+            if (!$ok) {
+                http_response_code(404);
+                echo json_encode(['status' => 'error', 'error' => 'Project not found']);
+                break;
             }
+            echo json_encode(['status' => 'ok']);
             break;
         case 'PATCH':
             $data = json_decode(file_get_contents('php://input'), true) ?? [];
             if (isset($data['id']) && isset($data['archived'])) {
                 $ok = Project::setArchived((int)$data['id'], parseBooleanInput($data['archived']));
-                echo json_encode(['status' => $ok ? 'ok' : 'error']);
+                if (!$ok) {
+                    http_response_code(404);
+                    echo json_encode(['status' => 'error', 'error' => 'Project not found']);
+                    break;
+                }
+                echo json_encode(['status' => 'ok']);
             } else {
+                http_response_code(400);
                 echo json_encode(['status' => 'error', 'error' => 'Missing id or archived']);
             }
             break;
@@ -70,8 +93,14 @@ try {
             $data = json_decode(file_get_contents('php://input'), true) ?? [];
             if (isset($data['id'])) {
                 $ok = Project::delete((int)$data['id']);
-                echo json_encode(['status' => $ok ? 'ok' : 'error']);
+                if (!$ok) {
+                    http_response_code(404);
+                    echo json_encode(['status' => 'error', 'error' => 'Project not found']);
+                    break;
+                }
+                echo json_encode(['status' => 'ok']);
             } else {
+                http_response_code(400);
                 echo json_encode(['status' => 'error', 'error' => 'Missing id']);
             }
             break;

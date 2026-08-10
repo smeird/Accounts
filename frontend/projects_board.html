@@ -193,20 +193,28 @@ function renderStars(score, minScore, maxScore){
 
 async function loadProjects(){
     // Client-side filtering keeps the existing render pipeline simple; add query params in projects.php for larger datasets.
-    let projects = [];
-    try {
-        const res = await fetch('../php_backend/public/projects.php');
-        if(!res.ok) throw new Error('Projects request failed');
-        projects = await res.json();
-    } catch (error) {
-        showMessage('Could not load projects. Please refresh and try again.');
-    }
     const searchInput = document.getElementById('project-search');
     const fundingFilter = document.getElementById('funding-filter');
     const sortSelect = document.getElementById('project-sort');
     const board = document.getElementById('projects-board');
     const summary = document.getElementById('summary-chips');
     const statusChips = Array.from(document.querySelectorAll('.status-chip'));
+    let projects = [];
+    try {
+        const res = await fetch('../php_backend/public/projects.php');
+        if(!res.ok) throw new Error('Projects request failed');
+        projects = await res.json();
+    } catch (error) {
+        board.replaceChildren();
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'cards cards-solid cards-tight text-sm text-red-700';
+        errorMessage.setAttribute('role', 'alert');
+        errorMessage.textContent = 'Could not load projects. Please refresh and try again.';
+        board.appendChild(errorMessage);
+        summary.replaceChildren();
+        showMessage('Could not load projects. Please refresh and try again.', 'error');
+        return;
+    }
 
     const fundingSources = Array.from(new Set(projects.map(p => (p.funding_source || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
     fundingFilter.innerHTML = '<option value="">All funding</option>';
@@ -329,7 +337,7 @@ async function loadProjects(){
                 await loadProjects();
                 showMessage('Project archived');
             } catch (error) {
-                showMessage('Could not archive project. Please try again.');
+                showMessage('Could not archive project. Please try again.', 'error');
             }
         });
         deleteIcon.addEventListener('click', async () => {
@@ -344,7 +352,7 @@ async function loadProjects(){
                 await loadProjects();
                 showMessage('Project deleted');
             } catch (error) {
-                showMessage('Could not delete project. Please try again.');
+                showMessage('Could not delete project. Please try again.', 'error');
             }
         });
 
