@@ -10,8 +10,10 @@ class Budget {
      */
     public static function set(int $categoryId, int $month, int $year, float $amount): array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO budgets (category_id, month, year, amount) VALUES (:cid, :month, :year, :amount) '
-            . 'ON DUPLICATE KEY UPDATE amount = VALUES(amount)');
+        $upsert = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+            ? 'ON CONFLICT(category_id, month, year) DO UPDATE SET amount = excluded.amount'
+            : 'ON DUPLICATE KEY UPDATE amount = VALUES(amount)';
+        $stmt = $db->prepare('INSERT INTO budgets (category_id, month, year, amount) VALUES (:cid, :month, :year, :amount) ' . $upsert);
         $stmt->execute([
             'cid' => $categoryId,
             'month' => $month,
@@ -43,15 +45,19 @@ class Budget {
         $budgets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $ignore = Tag::getIgnoreId();
+        $start = sprintf('%04d-%02d-01', $year, $month);
+        $end = (new DateTimeImmutable($start))->modify('+1 month')->format('Y-m-d');
         $spentStmt = $db->prepare('SELECT COALESCE(SUM(amount),0) FROM transactions '
-            . 'WHERE category_id = :cid AND MONTH(`date`) = :month AND YEAR(`date`) = :year AND transfer_id IS NULL AND (tag_id IS NULL OR tag_id != :ignore)');
+            . 'WHERE category_id = :cid AND `date` >= :start AND `date` < :end '
+            . 'AND transfer_id IS NULL AND (tag_id IS NULL OR tag_id != :ignore)');
         foreach ($budgets as &$b) {
-            $spentStmt->execute(['cid' => $b['category_id'], 'month' => $month, 'year' => $year, 'ignore' => $ignore]);
+            $spentStmt->execute(['cid' => $b['category_id'], 'start' => $start, 'end' => $end, 'ignore' => $ignore]);
             $total = (float)$spentStmt->fetchColumn();
             $spent = $total < 0 ? -$total : 0; // expenses are negative amounts
             $b['spent'] = $spent;
             $b['left'] = (float)$b['amount'] - $spent;
         }
+        unset($b);
         return $budgets;
     }
 }

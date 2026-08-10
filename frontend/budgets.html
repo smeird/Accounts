@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Page for managing monthly category budgets -->
+<!-- Visual monthly budget planning and progress dashboard. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,251 +10,97 @@
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
     <link rel="stylesheet" href="operational_ui.css">
-    <!-- Font Awesome icons loaded via menu.js -->
-
+    <link rel="stylesheet" href="budgets.css">
 </head>
-<body class="ops-body">
-<div class="flex min-h-screen">
-    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Set monthly spending limits for categories and monitor progress. Use this page to plan ahead and see where you may need to adjust your spending.</p>
-        <section class="ops-section">
-            <form id="budget-form" class="ops-form-grid cols-4">
-                <label class="ops-field" for="month">
-                    <span class="ops-label">Month</span>
-                    <input type="month" id="month" class="ops-input" data-help="Month for the budget">
-                    <span class="ops-help">The budget period that new values apply to.</span>
-                </label>
-                <label class="ops-field" for="category">
-                    <span class="ops-label">Category</span>
-                    <select id="category" class="ops-select" data-help="Category to assign the budget"></select>
-                    <span class="ops-help">Choose the spending category to constrain.</span>
-                </label>
-                <label class="ops-field" for="amount">
-                    <span class="ops-label">Amount (£)</span>
-                    <input type="number" step="0.01" id="amount" class="ops-input" data-help="Budget amount in pounds">
-                    <span class="ops-help">Set the monthly budget amount in pounds.</span>
-                </label>
-                <button type="submit" class="ops-btn-primary" aria-label="Set budget">Set Budget</button>
-            </form>
-        </section>
-        <section class="ops-section cards space-y-4">
-            <h2 class="ops-heading">AI Budgeting</h2>
+<body class="ops-body budget-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main budget-main flex-1 min-w-0 overflow-x-hidden">
+            <div id="budget-error" class="budget-error" role="alert" hidden></div>
 
-            <p>Send your savings goal and the last 12 months of category totals to the AI to propose next month's budgets and provide a brief explanation.</p>
-            <form id="ai-form" class="ops-form-grid cols-3">
-                <label class="ops-field" for="goal">
-                    <span class="ops-label">Savings Goal (£)</span>
-                    <input type="number" step="0.01" id="goal" class="ops-input" data-help="Monthly amount you want to save. The AI uses this plus a year of history to set budgets.">
-                    <span class="ops-help">Target amount you want left over after monthly spending.</span>
-                </label>
-                <button id="ai-run" type="submit" class="ops-btn-primary" aria-label="Generate budgets with AI"><i class="fas fa-robot inline w-4 h-4"></i>Generate Budgets</button>
-            </form>
-            <div id="ai-result" class="mt-4"></div>
-            <div id="ai-debug" class="hidden">
-                <div class="cards cards-tight space-y-3">
-                    <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
-                    <p class="text-sm font-semibold">Prompt</p>
-                    <pre id="ai-debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
-                    <p class="text-sm font-semibold">Response</p>
-                    <pre id="ai-debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
+            <section class="budget-hero" data-no-card="true" aria-labelledby="budget-hero-title">
+                <div class="budget-hero__glow" aria-hidden="true"></div>
+                <div class="budget-hero__topline">
+                    <span class="budget-pulse"><span aria-hidden="true"></span>Monthly guardrails</span>
+                    <span id="budget-period-label">Current period</span>
                 </div>
-            </div>
+                <div class="budget-hero__body">
+                    <div>
+                        <p id="budget-kicker" class="budget-kicker">Available across your budgets</p>
+                        <h1 id="budget-hero-title" class="budget-remaining">£—</h1>
+                        <p id="budget-hero-message" class="budget-hero-message">Loading your budget runway…</p>
+                    </div>
+                    <div class="budget-used-block">
+                        <strong id="budget-used">—%</strong>
+                        <span>of plan used</span>
+                    </div>
+                </div>
+                <div class="budget-overall-progress" aria-label="Overall budget progress"><span id="budget-overall-fill"></span></div>
+                <div class="budget-summary-grid" aria-label="Budget summary">
+                    <article><span class="budget-summary-icon budget-summary-icon--plan"><i class="fas fa-bullseye" aria-hidden="true"></i></span><div><p>Planned</p><strong id="budget-planned">£—</strong></div></article>
+                    <article><span class="budget-summary-icon budget-summary-icon--spent"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><p>Spent</p><strong id="budget-spent">£—</strong></div></article>
+                    <article><span class="budget-summary-icon budget-summary-icon--safe"><i class="fas fa-shield-heart" aria-hidden="true"></i></span><div><p>Comfortable</p><strong id="budget-safe-count">—</strong></div></article>
+                    <article><span class="budget-summary-icon budget-summary-icon--pressure"><i class="fas fa-gauge-high" aria-hidden="true"></i></span><div><p>Need attention</p><strong id="budget-pressure-count">—</strong></div></article>
+                </div>
+            </section>
 
-        </section>
-        <section class="ops-table-block">
-            <div class="ops-titlebar"><h2>Current Budgets</h2></div>
-            <div class="ops-table-content">
-                <div id="budget-table"></div>
+            <div class="budget-layout">
+                <section class="budget-card budget-card--runway" data-no-card="true">
+                    <div class="budget-card__header">
+                        <div><p class="budget-section-label">Category runway</p><h2>Where each budget stands</h2></div>
+                        <span id="budget-count" class="budget-count">—</span>
+                    </div>
+                    <div class="budget-legend" aria-label="Budget status legend"><span><i class="budget-dot budget-dot--safe"></i>Comfortable</span><span><i class="budget-dot budget-dot--watch"></i>Watch</span><span><i class="budget-dot budget-dot--over"></i>Over</span></div>
+                    <div id="budget-list" class="budget-list" aria-live="polite"><div class="budget-loading"></div><div class="budget-loading"></div><div class="budget-loading"></div></div>
+                </section>
+
+                <aside class="budget-sidebar">
+                    <section class="budget-card" data-no-card="true">
+                        <div class="budget-card__header"><div><p class="budget-section-label">Plan</p><h2>Set a category budget</h2></div></div>
+                        <form id="budget-form" class="budget-form">
+                            <label for="category"><span>Category</span><select id="category" required></select></label>
+                            <label for="amount"><span>Monthly limit</span><div class="budget-money-input"><span>£</span><input type="number" min="0" step="0.01" id="amount" inputmode="decimal" placeholder="0.00" required></div></label>
+                            <button type="submit" class="budget-primary-button"><i class="fas fa-plus" aria-hidden="true"></i><span>Save budget</span></button>
+                        </form>
+                        <p class="budget-form-note">Pick an existing category to update its limit.</p>
+                    </section>
+
+                    <section class="budget-card budget-ai" data-no-card="true">
+                        <div class="budget-card__header"><div><p class="budget-section-label">Smart planning</p><h2>Build a plan with AI</h2></div><span class="budget-ai__icon"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i></span></div>
+                        <p class="budget-ai__copy">Use your last 12 months and a savings target to propose the next set of limits.</p>
+                        <form id="ai-form" class="budget-form">
+                            <label for="goal"><span>Monthly savings goal</span><div class="budget-money-input"><span>£</span><input type="number" min="0" step="0.01" id="goal" inputmode="decimal" placeholder="500.00" required></div></label>
+                            <button id="ai-run" type="submit" class="budget-secondary-button"><i class="fas fa-robot" aria-hidden="true"></i><span>Generate a plan</span></button>
+                        </form>
+                        <div id="ai-result" class="budget-ai__result" aria-live="polite"></div>
+                        <details id="ai-debug" class="budget-debug" hidden><summary>AI debug details</summary><p>Prompt</p><pre id="ai-debug-request"></pre><p>Response</p><pre id="ai-debug-response"></pre></details>
+                    </section>
+                </aside>
             </div>
-        </section>
-        <section class="ops-chart-block">
-            <div class="ops-titlebar"><h2>Budget Progress</h2></div>
-            <div class="ops-chart-content">
-                <div id="budget-chart" class="ops-chart-canvas" data-chart-desc="Bullet chart comparing spending to budgets."></div>
-            </div>
-        </section>
-    </main>
-</div>
-<script src="js/page_header.js"></script>
+        </main>
+    </div>
+
+    <script src="js/page_header.js"></script>
     <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Budgets',
-    breadcrumb: 'Planning',
-    subtitle: 'Set monthly budget targets and compare them against actual spending by category.'
-});
-</script>
+        const budgetHeaderActions = document.createElement('div');
+        budgetHeaderActions.className = 'budget-header-controls';
+        const monthLabel = document.createElement('label');
+        monthLabel.setAttribute('for', 'month');
+        monthLabel.textContent = 'Period';
+        const monthInput = document.createElement('input');
+        monthInput.type = 'month'; monthInput.id = 'month';
+        monthLabel.appendChild(monthInput); budgetHeaderActions.appendChild(monthLabel);
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Budget runway',
+            breadcrumb: 'Planning / Budgets',
+            subtitle: 'See how much room is left, where pressure is building, and what to adjust next.',
+            actions: budgetHeaderActions
+        });
+    </script>
     <script src="js/menu.js"></script>
-<script src="js/input_help.js"></script>
-<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-<script src="js/tabulator-tailwind.js"></script>
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/bullet.js"></script>
-<script>
-// Format a number as currency with a pound symbol
-function formatCurrency(value){return '£'+parseFloat(value).toFixed(2);}
-function budgetTooltip(){
-    const category=this.category;
-    const budget=this.point.target;
-    const spent=this.y;
-    const pct=budget?(spent/budget*100):0;
-    return `<b>${category}</b><br/>Spent: £${Highcharts.numberFormat(spent,2)} (${Highcharts.numberFormat(pct,1)}% of budget)<br/>Budget: £${Highcharts.numberFormat(budget,2)}`;
-}
-function budgetRowFormatter(row){
-    const data=row.getData();
-    const el=row.getElement();
-    el.classList.remove('text-red-600');
-    if(parseFloat(data.spent)>parseFloat(data.amount)){
-        el.classList.add('text-red-600');
-    }
-}
-let budgetTable;
-const monthInput=document.getElementById('month');
-monthInput.value=new Date().toISOString().slice(0,7);
-
-// Populate the category select with options from the server
-async function loadCategories(){
-    const res=await fetch('../php_backend/public/categories.php');
-    const cats=await res.json();
-    const sel=document.getElementById('category');
-    sel.innerHTML='';
-    cats.forEach(c=>{
-        const opt=document.createElement('option');
-        opt.value=c.id; opt.textContent=c.name; sel.appendChild(opt);
-    });
-}
-
-// Fetch and display budgets for the selected month
-async function loadBudgets(){
-    const [year,month]=monthInput.value.split('-');
-    const res=await fetch(`../php_backend/public/budgets.php?month=${parseInt(month)}&year=${parseInt(year)}`);
-    const data=await res.json();
-    if(budgetTable){
-        budgetTable.setData(data);
-        budgetTable.getRows().forEach(budgetRowFormatter);
-    }else{
-        budgetTable=tailwindTabulator('#budget-table',{
-            data:data,
-            layout: 'fitDataStretch',
-            rowFormatter:budgetRowFormatter,
-            columns:[
-                {title:'Category',field:'category'},
-                {title:'Budget',field:'amount',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
-                {title:'Spent',field:'spent',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
-                {title:'Left',field:'left',formatter:'money',formatterParams:{symbol:'£',precision:2},hozAlign:'right'},
-                {formatter:()=>'<i class="fas fa-trash w-4 h-4" aria-label="Delete"></i>',width:40,hozAlign:'center',cellClick:async(e,cell)=>{
-                    if(!confirm('Delete this budget?')) return;
-                    const id=cell.getRow().getData().id;
-                    await fetch('../php_backend/public/budgets.php',{
-                        method:'DELETE',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({id})
-                    });
-                    loadBudgets();
-                    showMessage('Budget deleted');
-                }}
-            ]
-        });
-    }
-    Highcharts.chart('budget-chart',{
-        chart:{type:'bullet',inverted:true},
-        title:{text:''},
-        xAxis:{categories:data.map(b=>b.category)},
-        yAxis:{title:{text:'£'}},
-        tooltip:{ pointFormatter: budgetTooltip },
-        series:[{
-            name:'Spent',
-            data:data.map(b=>({y:parseFloat(b.spent),target:parseFloat(b.amount),color:parseFloat(b.spent)>parseFloat(b.amount)?'#ef4444':undefined}))
-        }]
-    });
-}
-
-monthInput.addEventListener('change',loadBudgets);
-
-document.getElementById('budget-form').addEventListener('submit',async e=>{
-    e.preventDefault();
-    const [year,month]=monthInput.value.split('-');
-    const category=document.getElementById('category').value;
-    const amount=document.getElementById('amount').value;
-    await fetch('../php_backend/public/budgets.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({category_id:category,amount:amount,month:parseInt(month),year:parseInt(year)})
-    });
-    document.getElementById('amount').value='';
-    loadBudgets();
-    showMessage('Budget saved');
-});
-
-document.getElementById('ai-form').addEventListener('submit',async e=>{
-    e.preventDefault();
-    const [year,month]=monthInput.value.split('-');
-    const goal=document.getElementById('goal').value;
-
-    const resultEl=document.getElementById('ai-result');
-    const debugContainer=document.getElementById('ai-debug');
-    const debugReq=document.getElementById('ai-debug-request');
-    const debugRes=document.getElementById('ai-debug-response');
-    const btn=document.getElementById('ai-run');
-    btn.disabled=true;
-    btn.classList.add('opacity-50','cursor-not-allowed');
-    resultEl.innerHTML='<i class="fas fa-spinner fa-spin inline w-4 h-4 mr-2"></i>Submitting to AI...';
-    showMessage('AI budgeting started');
-    try{
-        const res=await fetch('../php_backend/public/ai_budget.php',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({goal:parseFloat(goal),month:parseInt(month),year:parseInt(year)})
-        });
-        resultEl.innerHTML='<i class="fas fa-spinner fa-spin inline w-4 h-4 mr-2"></i>Awaiting AI response...';
-        const data=await res.json();
-        if(data.status==='ok'){
-            document.getElementById('goal').value='';
-            loadBudgets();
-            resultEl.textContent=data.summary||'AI budgets applied.';
-            showMessage('AI budgets applied');
-        }else{
-            resultEl.textContent=data.error||'AI budgeting failed.';
-            showMessage('AI budgeting failed','error');
-        }
-        if(data.debug){
-            debugReq.textContent=data.debug.prompt;
-            const resp=typeof data.debug.response==='string'?data.debug.response:JSON.stringify(data.debug.response,null,2);
-            debugRes.textContent=resp;
-            debugContainer.classList.remove('hidden');
-        }else{
-            debugContainer.classList.add('hidden');
-        }
-    }catch(err){
-        resultEl.textContent='Request failed';
-        showMessage('AI budgeting failed','error');
-        debugContainer.classList.add('hidden');
-    }finally{
-        btn.disabled=false;
-        btn.classList.remove('opacity-50','cursor-not-allowed');
-
-    }
-});
-
-async function initDebug(){
-    try{
-        const res=await fetch('../php_backend/public/ai_debug.php');
-        const data=await res.json();
-        if(data.debug){
-            document.getElementById('ai-debug').classList.remove('hidden');
-        }
-    }catch(e){}
-}
-
-loadCategories().then(loadBudgets);
-initDebug();
-</script>
-<script src="js/overlay.js"></script>
+    <script src="js/budgets.js"></script>
+    <script src="js/overlay.js"></script>
 </body>
 </html>

@@ -10,6 +10,8 @@ require_once __DIR__ . '/../php_backend/OfxParser.php';
 require_once __DIR__ . '/../php_backend/NaturalLanguageReportParser.php';
 require_once __DIR__ . '/../php_backend/models/TagAlias.php';
 require_once __DIR__ . '/../php_backend/models/InstantDashboard.php';
+require_once __DIR__ . '/../php_backend/models/YearlyDashboard.php';
+require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 
 // Use an in-memory SQLite database for tests.
@@ -411,6 +413,24 @@ assertEqual(2350.0, (float)$instant['metrics']['cashflow'], 'Instant dashboard c
 assertEqual(85.0, (float)$instant['budget']['used'], 'Instant dashboard calculates budget pressure');
 assertEqual(true, (bool)$instant['recent'][0]['is_transfer'], 'Instant dashboard keeps transfers in recent activity');
 assertEqual(6, count($instant['trend']), 'Instant dashboard returns a six-month trend');
+
+// --- Yearly dashboard snapshot and portable monthly budgets ---
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES
+    (1, '2025-07-25', 2800, 'Prior July salary', 1, 1),
+    (1, '2025-07-02', -1100, 'Prior July home costs', 2, 2),
+    (1, '2025-08-01', 3000, 'Prior August salary', 1, 1),
+    (1, '2025-08-02', -800, 'Prior August home costs', 2, 2)");
+$yearly = YearlyDashboard::getSnapshot(2026);
+assertEqual(6200.0, (float)$yearly['metrics']['income'], 'Yearly dashboard totals annual income');
+assertEqual(2050.0, (float)$yearly['metrics']['spending'], 'Yearly dashboard totals annual spending');
+assertEqual(4150.0, (float)$yearly['metrics']['cashflow'], 'Yearly dashboard calculates annual cash flow');
+assertEqual(2, (int)$yearly['metrics']['active_months'], 'Yearly dashboard counts active months');
+assertEqual('Home', $yearly['top_categories'][0]['name'] ?? null, 'Yearly dashboard ranks spending categories');
+assertEqual(2350.0, (float)$yearly['months'][7]['cashflow'], 'Yearly dashboard returns August cash flow');
+assertEqual(6.9, (float)$yearly['comparison']['income'], 'Yearly dashboard compares year-to-date with the equivalent prior-year period');
+$monthlyBudgets = Budget::getMonthly(8, 2026);
+assertEqual(850.0, (float)$monthlyBudgets[0]['spent'], 'Budget dashboard totals monthly category spending with date ranges');
+assertEqual(150.0, (float)$monthlyBudgets[0]['left'], 'Budget dashboard calculates remaining category runway');
 
 // Output results and set exit code
 $failed = false;
