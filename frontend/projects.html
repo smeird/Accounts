@@ -1,288 +1,86 @@
 <!DOCTYPE html>
-<!-- Page for viewing and prioritising home projects -->
+<!-- Projects overview: portfolio position, comparison, and prioritisation. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Projects</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
-      <script src="https://cdn.tailwindcss.com"></script>
-
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="operational_ui.css">
-      <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/highcharts-more.js"></script>
-    <!-- Font Awesome icons loaded via menu.js -->
+    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="projects.css">
 </head>
-<body class="ops-body">
+<body class="ops-body project-page">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<p class="mb-4">Review your planned projects, explore costs and compare their priorities.</p>
+    <main class="ops-main project-main flex-1 min-w-0 overflow-x-hidden">
+        <div id="project-error" class="project-error" role="alert" hidden></div>
 
-        <section class="grid gap-6 xl:grid-cols-3 auto-rows-min">
-            <div class="cards cards-snug flex flex-col space-y-6">
-                <div>
-                    <h2 class="text-xl font-semibold text-indigo-700">Budget Planning</h2>
-                    <p class="text-sm text-slate-600 mt-2">Filter the list to the initiatives that fit within your available annual funds.</p>
-                    <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end">
-                        <label class="flex-1 text-sm">
-                            <span class="block mb-1 font-medium text-slate-700">Annual Budget (£)</span>
-                            <input type="number" id="annual-budget" class="w-full" data-help="Total funds available">
-                        </label>
-                        <button id="apply-budget" class="bg-indigo-600 text-white px-4 py-2 rounded font-light sm:self-end" aria-label="Apply budget filter">
-                            <i class="fas fa-filter mr-2"></i>Apply Budget
-                        </button>
-                    </div>
-                </div>
-                <div class="border-t border-white/40 pt-4">
-                    <h2 class="text-xl font-semibold text-indigo-700">Chart Axes</h2>
-                    <p class="text-sm text-slate-600 mt-2">Choose which metrics to plot horizontally and vertically when comparing projects.</p>
-                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <label class="text-sm">
-                            <span class="block mb-1 font-medium text-slate-700">X Axis</span>
-                            <select id="x-axis" class="w-full" data-help="Field used for horizontal axis">
-                                <option value="cost_medium" selected>Cost (mid)</option>
-                                <option value="cost_low">Cost (low)</option>
-                                <option value="cost_high">Cost (high)</option>
-                                <option value="spent">Spent</option>
-                                <option value="benefit_quality">Quality</option>
-                                <option value="benefit_financial">Financial</option>
-                                <option value="benefit_risk">Risk</option>
-                                <option value="benefit_sustainability">Sustainability</option>
-                            </select>
-                        </label>
-                        <label class="text-sm">
-                            <span class="block mb-1 font-medium text-slate-700">Y Axis</span>
-                            <select id="y-axis" class="w-full" data-help="Field used for vertical axis">
-                                <option value="cost_medium">Cost (mid)</option>
-                                <option value="cost_low">Cost (low)</option>
-                                <option value="cost_high">Cost (high)</option>
-                                <option value="spent">Spent</option>
-                                <option value="benefit_quality" selected>Quality</option>
-                                <option value="benefit_financial">Financial</option>
-                                <option value="benefit_risk">Risk</option>
-                                <option value="benefit_sustainability">Sustainability</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
+        <section class="project-hero" data-no-card="true" aria-labelledby="project-hero-value">
+            <div class="project-hero__glow" aria-hidden="true"></div>
+            <div class="project-hero__topline"><span class="project-pulse"><span aria-hidden="true"></span>Project portfolio</span><span>Active plans · live position</span></div>
+            <div class="project-hero__body">
+                <div><p class="project-kicker">Runway remaining across mid-cost plans</p><h1 id="project-hero-value" class="project-hero__value">£—</h1><p id="project-hero-message" class="project-hero__message">Loading your project portfolio…</p></div>
+                <div class="project-hero__signal"><strong id="project-hero-signal">—</strong><span id="project-hero-signal-label">over plan</span></div>
             </div>
-            <div class="cards xl:col-span-2">
-                <h2 class="text-xl font-semibold text-indigo-700">Project Comparison</h2>
-                <p class="text-sm text-slate-600 mt-2">Visualise how initiatives balance cost and value. Hover to inspect details for each project.</p>
-                <div id="project-bubble-chart" class="mt-6" style="height:600px" data-chart-desc="Bubble chart plotting chosen fields with bubble size representing score."></div>
+            <div class="project-hero__metrics" aria-label="Project portfolio summary">
+                <article><span class="project-summary-icon project-summary-icon--count"><i class="fas fa-layer-group" aria-hidden="true"></i></span><div><p>Active projects</p><strong id="project-active-count">—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--cost"><i class="fas fa-coins" aria-hidden="true"></i></span><div><p>Mid-cost plans</p><strong id="project-planned-total">£—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--spent"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><p>Spent to date</p><strong id="project-spent-total">£—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--risk"><i class="fas fa-gauge-high" aria-hidden="true"></i></span><div><p>Pressure signals</p><strong id="project-pressure-count">—</strong></div></article>
             </div>
         </section>
 
-        <section class="cards cards-roomy">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h2 class="text-xl font-semibold text-indigo-700">Project Priorities</h2>
-                    <p class="text-sm text-slate-600 mt-2">Review scoring, funding and costs to determine which projects to advance next.</p>
+        <div class="project-grid project-grid--overview">
+            <section class="project-card" data-no-card="true">
+                <div class="project-card__header"><div><p class="project-section-label">Decision controls</p><h2>Shape the shortlist</h2><p class="project-card__copy">Focus the portfolio around available capital and compare the dimensions that matter.</p></div></div>
+                <div class="project-controls">
+                    <div class="project-control-group">
+                        <label class="project-field" for="annual-budget">Available capital</label>
+                        <div class="project-input-action"><input type="number" min="0" step="100" id="annual-budget" class="project-field-input" placeholder="Enter an annual limit"><button id="apply-budget" type="button" class="project-button project-button--primary"><i class="fas fa-filter" aria-hidden="true"></i>Apply</button></div>
+                        <p id="budget-filter-note" class="project-card__copy">Showing the full active portfolio.</p>
+                    </div>
+                    <div class="project-control-group">
+                        <p class="project-section-label">Comparison axes</p>
+                        <div class="project-field-grid">
+                            <label class="project-field" for="x-axis">Horizontal<select id="x-axis"><option value="cost_medium" selected>Mid cost</option><option value="cost_low">Low cost</option><option value="cost_high">High cost</option><option value="spent">Spent</option><option value="benefit_quality">Quality</option><option value="benefit_financial">Financial</option><option value="benefit_risk">Risk reduction</option><option value="benefit_sustainability">Sustainability</option></select></label>
+                            <label class="project-field" for="y-axis">Vertical<select id="y-axis"><option value="cost_medium">Mid cost</option><option value="cost_low">Low cost</option><option value="cost_high">High cost</option><option value="spent">Spent</option><option value="benefit_quality" selected>Quality</option><option value="benefit_financial">Financial</option><option value="benefit_risk">Risk reduction</option><option value="benefit_sustainability">Sustainability</option></select></label>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div id="projects-table" class="glass-table mt-4"></div>
+            </section>
+
+            <section class="project-card" data-no-card="true">
+                <div class="project-card__header"><div><p class="project-section-label">Trade-off map</p><h2>Cost versus value</h2><p class="project-card__copy">Bubble size reflects weighted score; colour shows budget pressure.</p></div><span id="comparison-count" class="project-count">—</span></div>
+                <div id="project-bubble-chart" class="project-chart" data-chart-desc="Bubble chart comparing selected project cost and benefit fields."></div>
+            </section>
+        </div>
+
+        <section class="project-card project-table-wrap" data-no-card="true">
+            <div class="project-card__header"><div><p class="project-section-label">Priority stack</p><h2>Every active project</h2><p class="project-card__copy">Sort the evidence, then open a project to refine its assumptions.</p></div><a href="projects_board.html" class="project-header-link"><i class="fas fa-table-columns" aria-hidden="true"></i><span>Visual board</span></a></div>
+            <div id="projects-table"></div>
         </section>
     </main>
 </div>
 
 <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Projects',
-    breadcrumb: 'Projects',
-    subtitle: 'Manage active projects, update details, and track outcomes.'
-});
+<script>
+    const projectPageMain = document.querySelector('main.ops-main');
+    window.renderPageHeader(projectPageMain, { title:'Projects', breadcrumb:'Projects / Overview', subtitle:'See the portfolio position, compare trade-offs, and decide what deserves attention next.', actions:null });
 </script>
-    <script src="js/menu.js"></script>
+<script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
 <script src="js/tabulator-tailwind.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="js/projects_common.js"></script>
 <script>
-let projectTable;
-let projectData = [];
-
-function projectActionButton(iconClass, label, colorClass, onClick){
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `${colorClass} rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50`;
-    button.setAttribute('aria-label', label);
-    const icon = document.createElement('i');
-    icon.className = `fas ${iconClass} w-4 h-4`;
-    icon.setAttribute('aria-hidden', 'true');
-    button.appendChild(icon);
-    button.addEventListener('click', async event => {
-        event.stopPropagation();
-        button.disabled = true;
-        try {
-            await onClick();
-        } finally {
-            button.disabled = false;
-        }
-    });
-    return button;
-}
-
-async function projectRequest(options){
-    const response = await fetch('../php_backend/public/projects.php', options);
-    const result = await response.json().catch(() => ({}));
-    if(!response.ok || result.status !== 'ok'){
-        throw new Error(result.error || 'Project request failed');
-    }
-    return result;
-}
-
-const axisOptions = {
-    cost_low: {label: 'Cost (low)', prefix: '£'},
-    cost_medium: {label: 'Cost (mid)', prefix: '£'},
-    cost_high: {label: 'Cost (high)', prefix: '£'},
-    spent: {label: 'Spent', prefix: '£'},
-    benefit_quality: {label: 'Quality'},
-    benefit_financial: {label: 'Financial'},
-    benefit_risk: {label: 'Risk'},
-    benefit_sustainability: {label: 'Sustainability'}
-};
-
-function drawBubble(){
-    const xKey = document.getElementById('x-axis').value;
-    const yKey = document.getElementById('y-axis').value;
-    const xOpt = axisOptions[xKey];
-    const yOpt = axisOptions[yKey];
-
-    const series = projectData.map(p => ({
-        name: p.name,
-        data: [{
-            x: parseFloat(p[xKey]) || 0,
-            y: parseFloat(p[yKey]) || 0,
-            z: parseFloat(p.score) || 0
-        }]
-    }));
-
-    Highcharts.chart('project-bubble-chart', {
-        chart: {
-            type: 'bubble',
-            plotBorderWidth: 0,
-            zoomType: 'xy',
-            height: 600,
-            backgroundColor: 'rgba(255,255,255,0)',
-            plotBackgroundColor: 'rgba(255,255,255,0)'
-        },
-        title: { text: `${xOpt.label} vs ${yOpt.label}` },
-        xAxis: {
-            title: { text: xOpt.label },
-            labels: { formatter: function(){ return xOpt.prefix ? xOpt.prefix + this.value : this.value; } }
-        },
-        yAxis: {
-            title: { text: yOpt.label },
-            labels: { formatter: function(){ return yOpt.prefix ? yOpt.prefix + this.value : this.value; } }
-        },
-        tooltip: {
-            headerFormat: '<b>{series.name}</b><br/>',
-            pointFormatter: function(){
-                const xVal = xOpt.prefix ? xOpt.prefix + this.x : this.x;
-                const yVal = yOpt.prefix ? yOpt.prefix + this.y : this.y;
-                return `${xOpt.label}: ${xVal}<br>${yOpt.label}: ${yVal}<br>Score: ${this.z}`;
-            }
-        },
-        series: series
-    });
-}
-
-async function loadProjects(){
-    try {
-        const res = await fetch('../php_backend/public/projects.php');
-        if(!res.ok) throw new Error('Could not load projects');
-        projectData = await res.json();
-    } catch (error) {
-        showMessage('Could not load projects. Please refresh and try again.', 'error');
-        return;
-    }
-    drawBubble();
-    if(projectTable){
-        projectTable.setData(projectData);
-    }else{
-        projectTable = tailwindTabulator('#projects-table',{
-            data:projectData,
-            layout:'fitDataStretch',
-            placeholder:'No active projects found.',
-            columns:[
-                {title:'Edit', formatter:cell => {
-                    const project = cell.getRow().getData();
-                    return projectActionButton('fa-edit', `Edit ${project.name || 'project'}`, 'text-indigo-700 hover:bg-indigo-50', () => {
-                        window.location.href = `project_add.html?id=${encodeURIComponent(project.id)}`;
-                    });
-                }, width:70, hozAlign:'center', headerSort:false},
-                {title:'Project', field:'name'},
-                {title:'Cost (mid)', field:'cost_medium', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
-                {title:'Spent', field:'spent', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right'},
-                {title:'Risk', field:'benefit_risk', hozAlign:'right'},
-                {title:'Quality', field:'benefit_quality', hozAlign:'right'},
-                {title:'Financial', field:'benefit_financial', hozAlign:'right'},
-                {title:'Sustainability', field:'benefit_sustainability', hozAlign:'right'},
-                {title:'Funding', field:'funding_source'},
-                {title:'Score', field:'score', hozAlign:'right'},
-                {title:'Archive', formatter:cell => {
-                    const project = cell.getRow().getData();
-                    return projectActionButton('fa-box-archive', `Archive ${project.name || 'project'}`, 'text-amber-700 hover:bg-amber-50', async () => {
-                        try {
-                            await projectRequest({
-                                method:'PATCH',
-                                headers:{'Content-Type':'application/json'},
-                                body:JSON.stringify({id:project.id, archived:1})
-                            });
-                            await loadProjects();
-                            showMessage('Project archived');
-                        } catch (error) {
-                            showMessage(error.message || 'Could not archive project.', 'error');
-                        }
-                    });
-                }, width:90, hozAlign:'center', headerSort:false},
-                {title:'Delete', formatter:cell => {
-                    const project = cell.getRow().getData();
-                    return projectActionButton('fa-trash', `Delete ${project.name || 'project'}`, 'text-red-700 hover:bg-red-50', async () => {
-                        if(!confirm(`Permanently delete ${project.name || 'this project'}? This cannot be undone.`)) return;
-                        try {
-                            await projectRequest({
-                                method:'DELETE',
-                                headers:{'Content-Type':'application/json'},
-                                body:JSON.stringify({id:project.id})
-                            });
-                            await loadProjects();
-                            showMessage('Project deleted');
-                        } catch (error) {
-                            showMessage(error.message || 'Could not delete project.', 'error');
-                        }
-                    });
-                }, width:80, hozAlign:'center', headerSort:false}
-            ]
-        });
-    }
-}
-
-document.getElementById('apply-budget').addEventListener('click',()=>{
-    const budget = parseFloat(document.getElementById('annual-budget').value);
-    if(!projectTable){
-        return;
-    }
-    if(isNaN(budget)){
-        projectTable.clearFilter();
-        return;
-    }
-    projectTable.setFilter('cost_medium','<=',budget);
-});
-
-document.getElementById('x-axis').addEventListener('change', drawBubble);
-document.getElementById('y-axis').addEventListener('change', drawBubble);
-
-loadProjects();
+    window.updatePageHeader(projectPageMain, { actions: ProjectUI.headerActions('New project') });
 </script>
+<script src="js/projects_overview.js"></script>
 <script src="js/overlay.js"></script>
 </body>
 </html>
