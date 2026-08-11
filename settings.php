@@ -318,7 +318,7 @@ $bg600 = "bg-{$colorScheme}-600";
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
-    <script src="frontend/js/fonts.js"></script>
+    <script src="frontend/js/fonts.js?v=20260811-font-weights"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($headingFont) ?>,

@@ -5,15 +5,22 @@
     'sans-serif', 'monospace', 'inherit', 'system-ui'
   ]);
 
-  function loadFont(font) {
+  const FONT_WEIGHTS = '100;300;400;700';
+
+  function loadFont(font, includeWeights) {
     if (!font || systemFonts.has(font)) return;
-    const id = 'font-' + font.replace(/\s+/g, '-');
+    const baseId = 'font-' + font.replace(/\s+/g, '-');
+    const weightedId = baseId + '-configured-weights';
+    const id = includeWeights ? weightedId : baseId;
+    if (!includeWeights && document.getElementById(weightedId)) return;
     if (document.getElementById(id)) return;
     const link = document.createElement('link');
     link.id = id;
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?family=' +
-      encodeURIComponent(font).replace(/%20/g, '+') + '&display=swap';
+      encodeURIComponent(font).replace(/%20/g, '+') +
+      (includeWeights ? ':wght@' + FONT_WEIGHTS : '') +
+      '&display=swap';
     document.head.appendChild(link);
   }
 
@@ -52,7 +59,7 @@
     const chart   = opts.chart_font   || opts.font_chart   || '';
     const accentW = opts.accent_font_weight || opts.font_accent_weight || '';
 
-    [heading, body, table, chart].forEach(loadFont);
+    [heading, body, table, chart].forEach(font => loadFont(font, true));
 
     const root = document.documentElement;
     setOrRemove(root, '--heading-font', heading);
