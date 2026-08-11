@@ -23,18 +23,25 @@
     style.id = 'font-overrides';
     style.textContent = `
       body { font-family: var(--body-font, inherit); }
+      button, input, select, textarea { font-family: inherit; }
       h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font, inherit); }
-      table, .tabulator, .tabulator * { font-family: var(--table-font, inherit); }
-      .accent { font-family: var(--accent-font, inherit); font-weight: var(--accent-font-weight, 300); }
-      .page-title { font-weight: var(--accent-font-weight, inherit); }
-      input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-      select,
-      textarea,
-      .tabulator .tabulator-header-filter input {
-        font-weight: var(--accent-font-weight, inherit);
+      table, table *, .tabulator, .tabulator * { font-family: var(--table-font, inherit); }
+      .accent { font-family: var(--accent-font, inherit); }
+      :root[data-accent-font-weight] .accent,
+      :root[data-accent-font-weight] .page-title,
+      :root[data-accent-font-weight] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+      :root[data-accent-font-weight] select,
+      :root[data-accent-font-weight] textarea,
+      :root[data-accent-font-weight] .tabulator .tabulator-header-filter input {
+        font-weight: var(--accent-font-weight) !important;
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function setOrRemove(root, property, value) {
+    if (value) root.style.setProperty(property, value);
+    else root.style.removeProperty(property);
   }
 
   window.applyFonts = function(opts){
@@ -48,19 +55,19 @@
     [heading, body, table, chart].forEach(loadFont);
 
     const root = document.documentElement;
-    if (heading) root.style.setProperty('--heading-font', heading);
-    if (body) root.style.setProperty('--body-font', body);
-    if (table) {
-      root.style.setProperty('--table-font', table);
-      root.style.setProperty('--accent-font', table);
-      root.style.setProperty('--tabulator-font-family', table);
-      root.style.setProperty('--tabulator-header-font-family', table);
-    }
-    if (chart) root.style.setProperty('--chart-font', chart);
+    setOrRemove(root, '--heading-font', heading);
+    setOrRemove(root, '--body-font', body);
+    setOrRemove(root, '--table-font', table);
+    setOrRemove(root, '--accent-font', table);
+    setOrRemove(root, '--tabulator-font-family', table);
+    setOrRemove(root, '--tabulator-header-font-family', table);
+    setOrRemove(root, '--chart-font', chart);
     if (accentW) {
       root.style.setProperty('--accent-font-weight', accentW);
+      root.dataset.accentFontWeight = accentW;
     } else {
       root.style.removeProperty('--accent-font-weight');
+      delete root.dataset.accentFontWeight;
     }
 
     ensureStyle();
