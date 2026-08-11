@@ -84,3 +84,4 @@
 - Monthly Statement follows the native responsive-table reference and makes transaction classification visually explicit. Segment, category, tag, and group appear as labelled, type-coloured pills; missing classifications use equally prominent gap pills rather than blank cells.
 - `frontend/typography.css` is the shared readable type scale and is loaded last by `frontend/js/menu.js`; operational controls and body copy target 14px, table rows 13px, and table headings/captions 12px.
 - Saved OpenAI API tokens must never be returned to the browser. Token-management views expose only configured/not-configured state and accept explicit replacement or removal.
+- Remaining data views use the shared modern-table adapter in `frontend/js/tabulator-tailwind.js`: conventional tables become labelled card rows on small screens, wide matrix/pivot tables retain horizontal navigation, and classification pills use consistent type colours and visible missing states.

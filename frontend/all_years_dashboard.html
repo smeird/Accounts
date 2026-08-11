@@ -69,7 +69,7 @@ window.renderPageHeader(pageMain, {
 </script>
     <script src="js/menu.js"></script>
     <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js"></script>
+    <script src="js/tabulator-tailwind.js?v=20260811-modern-tables"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
     <script src="js/color_map.js"></script>
@@ -130,6 +130,7 @@ window.renderPageHeader(pageMain, {
         tailwindTabulator(el, {
             data: data,
             layout: 'fitDataStretch',
+            modernResponsive: false,
             columns: columns
         });
     }

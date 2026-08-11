@@ -1,37 +1,117 @@
-// Tabulator modules are loaded via the main bundle. Avoid dynamically
-// injecting module scripts from external CDNs so the app works in offline
-// or restricted environments without console errors.
+// Shared adapter for the site's modern table system. Tabulator remains the
+// data engine for dense and dynamic views, while this adapter supplies the
+// same toolbar, classification pills, responsive card rows and accessible
+// labelling used by the native Account and Monthly Statement tables.
+
+function ensureModernTableStyles() {
+    if (document.getElementById('modern-tables-css')) return;
+    const link = document.createElement('link');
+    const source = document.currentScript && document.currentScript.src;
+    link.id = 'modern-tables-css';
+    link.rel = 'stylesheet';
+    link.href = source ? new URL('../modern_tables.css?v=20260811-modern-tables', source).href : 'modern_tables.css?v=20260811-modern-tables';
+    document.head.appendChild(link);
+}
+
+ensureModernTableStyles();
+
+function classificationKind(colorClasses) {
+    const classes = String(colorClasses || '');
+    if (/purple|violet/.test(classes)) return 'group';
+    if (/green|emerald/.test(classes)) return 'category';
+    if (/yellow|amber|orange/.test(classes)) return 'segment';
+    if (/indigo|blue|cyan/.test(classes)) return 'tag';
+    return 'label';
+}
 
 // Create a coloured badge element used in table cells
-function createBadge(text, colorClasses) {
+function createBadge(text, colorClasses, kind) {
     const span = document.createElement('span');
-    span.textContent = text;
-    span.className = `inline-block px-2 py-1 text-xs font-semibold rounded ${colorClasses}`;
+    const resolvedKind = kind || classificationKind(colorClasses);
+    const label = document.createElement('strong');
+    const value = document.createElement('span');
+    label.className = 'modern-table-pill-label';
+    label.textContent = resolvedKind;
+    value.className = 'modern-table-pill-value';
+    value.textContent = text;
+    span.className = `modern-table-pill modern-table-pill--${resolvedKind} ${colorClasses || ''}`.trim();
+    span.append(label, value);
     return span;
 }
 
 // Return a Tabulator formatter that displays values as badges
-function badgeFormatter(colorClasses) {
+function badgeFormatter(colorClasses, kind) {
     return function (cell) {
         const value = cell.getValue();
-        if (!value) return '';
+        const resolvedKind = kind || classificationKind(colorClasses);
+        if (!value) {
+            const missing = createBadge(`No ${resolvedKind}`, colorClasses, resolvedKind);
+            missing.classList.add('is-missing');
+            return missing;
+        }
         if (Array.isArray(value)) {
             const container = document.createElement('div');
+            container.className = 'modern-table-pill-list';
             value.forEach(v => {
-                const badge = createBadge(v, colorClasses);
+                const badge = createBadge(v, colorClasses, resolvedKind);
                 const link = document.createElement('a');
                 link.href = `search.html?value=${encodeURIComponent(v)}`;
+                link.setAttribute('aria-label', `Search for ${resolvedKind} ${v}`);
                 link.appendChild(badge);
                 container.appendChild(link);
             });
             return container;
         }
-        const badge = createBadge(value, colorClasses);
+        const badge = createBadge(value, colorClasses, resolvedKind);
         const link = document.createElement('a');
         link.href = `search.html?value=${encodeURIComponent(value)}`;
+        link.setAttribute('aria-label', `Search for ${resolvedKind} ${value}`);
         link.appendChild(badge);
         return link;
     };
+}
+
+function plainColumnTitle(definition) {
+    const holder = document.createElement('span');
+    holder.innerHTML = String(definition.title || definition.field || 'Value');
+    return holder.textContent.trim() || 'Value';
+}
+
+function modernCellKind(definition) {
+    const field = String(definition.field || '').toLowerCase();
+    const title = String(definition.title || '').toLowerCase();
+    const name = `${field} ${title}`.replace(/[_-]/g, ' ');
+    if (/\b(actions?|remove|delete|open|edit)\b/.test(name)) return 'actions';
+    if (/\b(amount|balance|total|cost|spent|income|expense|outgoing)\b/.test(name)) return 'money';
+    if (/\b(date|month|year|period|time)\b/.test(name)) return 'date';
+    if (/category/.test(name)) return 'category';
+    if (/(^|_)tag|\btag\b/.test(name)) return 'tag';
+    if (/segment/.test(name)) return 'segment';
+    if (/group/.test(name)) return 'group';
+    return 'text';
+}
+
+function decorateModernRow(row) {
+    const rowElement = row.getElement();
+    rowElement.classList.remove('bg-white', 'hover:bg-white', 'tabulator-row-even', 'tabulator-row-odd');
+    rowElement.classList.add('ops-table-row', 'modern-table-row');
+    row.getCells().forEach((cell, index) => {
+        const definition = cell.getColumn().getDefinition();
+        const cellElement = cell.getElement();
+        const kind = modernCellKind(definition);
+        cellElement.dataset.label = plainColumnTitle(definition);
+        cellElement.dataset.modernKind = kind;
+        cellElement.dataset.modernPriority = index === 0 ? 'primary' : (kind === 'actions' ? 'actions' : 'secondary');
+    });
+}
+
+function tableRegionLabel(tableElement, requestedLabel) {
+    if (requestedLabel) return requestedLabel;
+    if (tableElement.getAttribute('aria-label')) return tableElement.getAttribute('aria-label');
+    const section = tableElement.closest('section,.cards,.ops-table-block,.transaction-card');
+    const heading = section && section.querySelector('h2,h3');
+    if (heading && heading.textContent.trim()) return heading.textContent.trim();
+    return `${document.title || 'Data'} table`;
 }
 
 // Apply consistent styling to Tabulator calculation rows
@@ -54,11 +134,24 @@ function tailwindTabulator(element, options) {
 
     const enableSearch = options.simpleSearch !== false;
     const searchFields = options.searchFields;
+    const requestedPageSize = options.paginationSize;
+    const modernResponsiveOption = options.modernResponsive;
+    const modernLabel = options.modernLabel;
+    delete options.simpleSearch;
+    delete options.searchFields;
+    delete options.modernResponsive;
+    delete options.modernLabel;
 
     // Allow rowClick handler to be bound after table creation
     const rowClickHandler = options.rowClick;
     delete options.rowClick;
 
+    const tableElement = typeof element === 'string' ? document.querySelector(element) : element;
+    if (!tableElement) throw new Error('The table container could not be found.');
+    const resolvedLabel = tableRegionLabel(tableElement, modernLabel);
+    const isMatrix = modernResponsiveOption === false || /(^|-)pivot-table$/.test(tableElement.id || '') || (Array.isArray(options.columns) && options.columns.length > 10);
+    const modernResponsive = !isMatrix;
+    if (modernResponsive && options.responsiveLayout) options.responsiveLayout = false;
 
     // Apply the Simple theme to all Tabulator tables
     options.theme = 'simple';
@@ -72,15 +165,12 @@ function tailwindTabulator(element, options) {
     // updates when large data sets are rendered.
     options.rowFormatter = function(row) {
         if (userRowFormatter) userRowFormatter(row);
-        const rowEl = row.getElement();
-        rowEl.classList.remove('bg-white', 'hover:bg-white');
-        rowEl.classList.add('ops-table-row');
-        rowEl.classList.remove('tabulator-row-even', 'tabulator-row-odd');
+        decorateModernRow(row);
     };
     if (options.pagination === undefined) {
         options.pagination = 'local';
     }
-    options.paginationSize = 20;
+    options.paginationSize = requestedPageSize || 20;
 
     // Freeze the first column by default using the column definition to
     // maintain compatibility across Tabulator versions. Earlier builds used
@@ -92,9 +182,14 @@ function tailwindTabulator(element, options) {
         options.columns[0].frozen = true;
     }
 
-    const table = new Tabulator(element, options);
+    const table = new Tabulator(tableElement, options);
     const el = table.element;
     el.style.colorScheme = 'light';
+    el.classList.add('border-0', 'rounded-xl', 'overflow-hidden', 'ops-standard-table', 'modern-table');
+    el.classList.add(modernResponsive ? 'modern-table--cards' : 'modern-table--matrix');
+    el.setAttribute('role', 'region');
+    el.setAttribute('aria-label', resolvedLabel);
+    el.tabIndex = 0;
 
 
     if (rowClickHandler) {
@@ -102,49 +197,78 @@ function tailwindTabulator(element, options) {
     }
 
     if (enableSearch) {
-        const tableEl = typeof element === 'string' ? document.querySelector(element) : element;
-
         // Remove any existing search input inserted by a previous
         // table initialisation to avoid duplicate fields.
-        const existing = tableEl.previousElementSibling;
-        if (existing && existing.classList.contains('tabulator-search')) {
+        const existing = tableElement.previousElementSibling;
+        if (existing && existing.classList.contains('modern-table-toolbar')) {
             existing.remove();
         }
 
+        const toolbar = document.createElement('div');
+        const searchLabel = document.createElement('label');
+        const searchIcon = document.createElement('i');
         const searchInput = document.createElement('input');
+        const count = document.createElement('span');
+        toolbar.className = 'modern-table-toolbar';
+        searchLabel.className = 'modern-table-search';
+        searchIcon.className = 'fas fa-magnifying-glass';
+        searchIcon.setAttribute('aria-hidden', 'true');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search';
-        searchInput.className = 'tabulator-search ops-input mb-2 w-full';
+        searchInput.placeholder = 'Search this table';
+        searchInput.setAttribute('aria-label', `Search ${resolvedLabel}`);
+        searchInput.className = 'tabulator-search modern-table-search-input';
         searchInput.style.colorScheme = 'light';
-        tableEl.parentNode.insertBefore(searchInput, tableEl);
+        count.className = 'modern-table-count';
+        count.setAttribute('role', 'status');
+        count.setAttribute('aria-live', 'polite');
+        searchLabel.append(searchIcon, searchInput);
+        toolbar.append(searchLabel, count);
+        tableElement.parentNode.insertBefore(toolbar, tableElement);
         let searchInProgress = false;
+        let searchTimer = null;
         searchInput.addEventListener('input', function() {
-            if (typeof table.search === 'function') {
+            window.clearTimeout(searchTimer);
+            const query = this.value;
+            searchTimer = window.setTimeout(function () {
                 if (searchInProgress) return;
                 searchInProgress = true;
+                const normalisedQuery = query.toLowerCase();
                 try {
-                    table.search(this.value, searchFields);
+                    if (!normalisedQuery) {
+                        table.clearFilter();
+                        return;
+                    }
+                    table.setFilter(function(data) {
+                        return Object.entries(data).some(([field, v]) => {
+                            if (searchFields && !searchFields.includes(field)) return false;
+                            return v !== null && v !== undefined && v.toString().toLowerCase().includes(normalisedQuery);
+                        });
+                    });
                 } finally {
                     searchInProgress = false;
                 }
-            } else {
-                const query = this.value.toLowerCase();
-                table.setFilter(function(data) {
-                    return Object.entries(data).some(([field, v]) => {
-                        if (searchFields && !searchFields.includes(field)) return false;
-                        return v && v.toString().toLowerCase().includes(query);
-                    });
-                });
-            }
+            }, 120);
         });
+
+        const updateCount = function () {
+            const rows = typeof table.getRows === 'function' ? table.getRows('active').length : table.getData('active').length;
+            count.textContent = `${rows.toLocaleString('en-GB')} ${rows === 1 ? 'row' : 'rows'}`;
+        };
+        const queueCountUpdate = function () { window.setTimeout(updateCount, 0); };
+        table.on('dataProcessed', queueCountUpdate);
+        table.on('dataFiltered', queueCountUpdate);
+        table.on('pageLoaded', queueCountUpdate);
+        table.on('tableDestroyed', function () { toolbar.remove(); });
+        window.setTimeout(updateCount, 0);
     }
     table.on('tableBuilt', function() {
         styleCalcRows(table);
+        table.getRows('active').forEach(decorateModernRow);
     });
     table.on('dataProcessed', function() {
         styleCalcRows(table);
+        table.getRows('active').forEach(decorateModernRow);
     });
-    el.classList.add('border-0', 'rounded-xl', 'overflow-hidden', 'ops-standard-table');
     const header = el.querySelector('.tabulator-header');
     if (header) {
         header.classList.remove('bg-white');
@@ -163,5 +287,10 @@ function tailwindTabulator(element, options) {
         paginator.classList.add('p-2', 'rounded-b-lg', 'ops-table-paginator');
         paginator.style.backgroundColor = '';
     }
+
+    const media = window.matchMedia('(max-width: 720px)');
+    const redrawForViewport = function () { table.redraw(true); };
+    if (typeof media.addEventListener === 'function') media.addEventListener('change', redrawForViewport);
+    else if (typeof media.addListener === 'function') media.addListener(redrawForViewport);
     return table;
 }
