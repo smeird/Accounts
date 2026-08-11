@@ -155,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data: tableData,
         columns,
         layout: 'fitDataStretch',
+        modernResponsive: false,
 
         pagination: false,
         dataTree: true,
@@ -306,5 +307,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
-
 
