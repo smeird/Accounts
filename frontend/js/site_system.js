@@ -10,7 +10,7 @@
     }
 
     function classifyButton(button) {
-        if (button.classList.contains('site-button') || button.closest('#menu')) return;
+        if (button.classList.contains('site-button') || button.closest('#menu,.account-dashboard')) return;
         const hasColour = hasBackgroundClass(button, ['indigo','blue','green','emerald','teal','red','rose','orange','amber','gray','slate']);
         const isProminentControl = button.matches('[type="submit"],.ops-btn-primary,[class*="px-"],[class*="py-"]');
         const looksLikeButton = button.getAttribute('role') === 'button' || hasColour || isProminentControl;

@@ -14,18 +14,77 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
-
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="account_dashboard.css">
 
 </head>
-<body class="ops-body dashboard-page">
+<body class="ops-body dashboard-page account-dashboard-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<div class="cards">
-                <div id="accounts-table"></div>
-                <div id="accounts-chart" class="mt-4" style="height:400px" data-chart-desc="Waterfall chart showing balance changes per account."></div>
-            </div>
+            <section class="account-dashboard" data-no-card>
+                <div id="account-summary" class="account-summary" aria-label="Account summary">
+                    <div class="account-summary-card is-loading" aria-hidden="true"></div>
+                    <div class="account-summary-card is-loading" aria-hidden="true"></div>
+                    <div class="account-summary-card is-loading" aria-hidden="true"></div>
+                    <div class="account-summary-card is-loading" aria-hidden="true"></div>
+                </div>
+
+                <section class="account-ledger" aria-labelledby="account-ledger-title">
+                    <header class="account-ledger-header">
+                        <div>
+                            <p class="account-kicker">Account portfolio</p>
+                            <div class="account-heading-row">
+                                <h2 id="account-ledger-title">Your accounts</h2>
+                                <span id="account-result-count" class="account-count" aria-live="polite">Loading</span>
+                            </div>
+                            <p>Balances, activity and identifiers in one calm, scannable view.</p>
+                        </div>
+                        <div class="account-table-tools">
+                            <label class="account-search" for="account-search">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <span class="sr-only">Search accounts</span>
+                                <input id="account-search" type="search" placeholder="Find an account" autocomplete="off">
+                            </label>
+                            <label class="account-sort" for="account-sort">
+                                <span>Sort</span>
+                                <select id="account-sort">
+                                    <option value="name-asc">Name A–Z</option>
+                                    <option value="name-desc">Name Z–A</option>
+                                    <option value="balance-desc">Highest balance</option>
+                                    <option value="balance-asc">Lowest balance</option>
+                                    <option value="transactions-desc">Most activity</option>
+                                    <option value="transactions-asc">Least activity</option>
+                                    <option value="last_transaction-desc">Most recent</option>
+                                    <option value="last_transaction-asc">Least recent</option>
+                                </select>
+                            </label>
+                        </div>
+                    </header>
+
+                    <div class="account-filter-row" aria-label="Filter account type">
+                        <button type="button" class="account-filter is-active" data-account-filter="all" aria-pressed="true">All accounts</button>
+                        <button type="button" class="account-filter" data-account-filter="bank" aria-pressed="false">Bank accounts</button>
+                        <button type="button" class="account-filter" data-account-filter="credit" aria-pressed="false">Credit cards</button>
+                    </div>
+
+                    <div id="account-table-status" class="account-table-status" role="status" aria-live="polite">
+                        <span class="account-spinner" aria-hidden="true"></span>
+                        Loading your accounts
+                    </div>
+                    <div id="accounts-table" class="account-table-region" hidden></div>
+                </section>
+
+                <section class="account-chart-panel" aria-labelledby="account-chart-title">
+                    <header>
+                        <div>
+                            <p class="account-kicker">Balance composition</p>
+                            <h2 id="account-chart-title">How your accounts compare</h2>
+                        </div>
+                        <p>Positive and negative balances are separated so credit exposure stays visible.</p>
+                    </header>
+                    <div id="accounts-chart" class="account-chart" data-chart-desc="Bar chart comparing the balance of each account."></div>
+                </section>
+            </section>
         </main>
     </div>
     <script src="js/page_header.js"></script>
@@ -34,117 +93,14 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Account Dashboard',
     breadcrumb: 'Dashboards / Accounts',
-    subtitle: 'See an overview of account balances and recent activity. Charts and tables reveal how money flows through each account. Sort codes and account numbers are shown where applicable; credit cards list only their card number.'
+    subtitle: 'Scan every balance, identifier and activity signal, then open an account when something needs attention.'
 });
 </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
-    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="js/color_map.js"></script>
-
-    <script>
-    function waterfallTooltip(){
-        const name = this.point.name || this.category;
-        const change = this.y;
-        const total = this.point.stackY;
-        return `<b>${name}</b><br/>Change: £${Highcharts.numberFormat(change, 2)}<br/>Total: £${Highcharts.numberFormat(total, 2)}`;
-    }
-    // Format balance cells with currency and positive/negative colouring
-    function balanceFormatter(cell){
-        const value = cell.getValue();
-        const el = cell.getElement();
-        el.classList.toggle('text-red-600', value < 0);
-        el.classList.toggle('text-green-600', value > 0);
-        return '£' + parseFloat(value).toFixed(2);
-    }
-
-    function creditCardFormatter(cell){
-        return cell.getValue() ? '<i class="fas fa-credit-card w-4 h-4"></i>' : '';
-    }
-
-    fetch('../php_backend/public/account_dashboard.php')
-        .then(resp => resp.json())
-        .then(data => {
-            tailwindTabulator(document.getElementById('accounts-table'), {
-                data,
-                layout: 'fitDataStretch',
-                rowClick: (e, row) => {
-                    const cell = row.getCellFromEvent(e);
-                    if (!cell || cell.getField() !== 'name') {
-                        window.location = `account.html?id=${row.getData().id}`;
-                    }
-                },
-                columns: [
-                    { title: 'Name', field: 'name', editor: 'input', cellEdited: async (cell) => {
-                        const oldValue = cell.getOldValue();
-                        const newValue = cell.getValue();
-                        const id = cell.getRow().getData().id;
-                        const resp = await fetch('../php_backend/public/update_account.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ account_id: id, name: newValue })
-                        });
-                        if (!resp.ok) {
-                            alert('Failed to update name');
-                            cell.setValue(oldValue, true);
-                        }
-                    } },
-                    { title: 'Sort Code', field: 'sort_code' },
-                    { title: 'Account/Card Number', field: 'account_number' },
-                    { title: 'Credit Card', field: 'is_credit_card', hozAlign: 'center', formatter: creditCardFormatter, headerSort: false },
-                    { title: 'Transactions', field: 'transactions', hozAlign: 'right' },
-                    { title: 'Balance', field: 'balance', hozAlign: 'right', formatter: balanceFormatter },
-                    { title: 'Last Transaction', field: 'last_transaction' }
-                ]
-            });
-
-            const seriesData = data.map(a => ({
-                y: parseFloat(a.balance),
-                name: a.name,
-                id: a.id
-            }));
-
-            seriesData.push({
-                name: 'Total',
-                isSum: true
-            });
-
-            Highcharts.chart('accounts-chart', {
-                colors: chartColors,
-                chart: { type: 'waterfall' },
-                title: { text: 'Account Balances' },
-                xAxis: { type: 'category' },
-                yAxis: {
-                    title: { text: 'Balance (£)' },
-                    labels: {
-                        formatter: function(){
-                            return '£' + Highcharts.numberFormat(this.value, 2);
-                        }
-                    }
-                },
-                tooltip: { pointFormatter: waterfallTooltip },
-                series: [{
-                    type: 'waterfall',
-                    name: 'Balance',
-                    data: seriesData,
-                    colorByPoint: true,
-                    cursor: 'pointer',
-                    point: {
-                        events: {
-                            click: function(){
-                                if(this.options.id){
-                                    window.location = `account.html?id=${this.options.id}`;
-                                }
-                            }
-                        }
-                    }
-                }]
-            });
-        });
-    </script>
+    <script src="js/account_dashboard.js"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>
