@@ -24,9 +24,10 @@
         <section>
             <h2 class="text-xl font-semibold mb-2">OpenAI Token</h2>
             <div class="flex space-x-2">
-                <input type="text" id="token" class="border p-2 rounded flex-1" data-help="Your OpenAI API token">
+                <input type="password" id="token" class="border p-2 rounded flex-1" autocomplete="new-password" placeholder="Enter a new API token" data-help="Enter a new token to replace the configured OpenAI API token">
                 <button id="save-token" class="bg-indigo-600 text-white px-4 py-2 rounded">Save Token</button>
             </div>
+            <p id="token-status" class="mt-2" role="status">Checking token status…</p>
         </section>
 
         <section>
@@ -62,16 +63,36 @@ window.renderPageHeader(pageMain, {
 async function loadToken(){
     const res = await fetch('../php_backend/public/ai_token.php');
     const data = await res.json();
-    if (data.token) document.getElementById('token').value = data.token;
+    const status = document.getElementById('token-status');
+    const input = document.getElementById('token');
+    if (data.configured) {
+        status.textContent = 'A token is configured. Enter a new token only to replace it.';
+        input.placeholder = 'Token configured — enter a replacement';
+    } else {
+        status.textContent = 'No OpenAI API token is configured.';
+    }
 }
 
 document.getElementById('save-token').addEventListener('click', async () => {
-    const token = document.getElementById('token').value.trim();
-    await fetch('../php_backend/public/ai_token.php', {
+    const input = document.getElementById('token');
+    const token = input.value.trim();
+    if (!token) {
+        showMessage('Enter a token before saving', 'error');
+        input.focus();
+        return;
+    }
+    const res = await fetch('../php_backend/public/ai_token.php', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({token})
     });
+    if (!res.ok) {
+        showMessage('Token could not be saved', 'error');
+        return;
+    }
+    input.value = '';
+    document.getElementById('token-status').textContent = 'A token is configured. Enter a new token only to replace it.';
+    input.placeholder = 'Token configured — enter a replacement';
     showMessage('Token saved');
 });
 
