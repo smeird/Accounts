@@ -1,0 +1,68 @@
+.transaction-detail-main { max-width: 92rem; }
+.transaction-detail-hero .transaction-hero__signal strong { font-size: clamp(1.7rem, 3vw, 2.55rem); }
+.transaction-detail-hero .transaction-hero__metrics strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.transaction-detail-loading { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(20rem,.65fr); gap:1.25rem; }
+.transaction-detail-loading .transaction-loading { min-height:25rem; }
+.transaction-detail-grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(20rem,.65fr); align-items:start; gap:1.25rem; }
+.transaction-detail-card { min-width:0; }
+.transaction-editor { position:sticky; top:1rem; }
+
+.transaction-meta-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin:-.2rem 0 1rem; }
+.transaction-meta-chip { display:inline-flex; min-height:1.9rem; align-items:center; gap:.42rem; padding:.35rem .62rem; border:1px solid rgba(79,70,229,.14); border-radius:999px; color:var(--transaction-brand-dark); background:#eef2ff; font-size:.6rem; font-weight:800; }
+.transaction-meta-chip--category { border-color:rgba(16,185,129,.16); color:#047857; background:#ecfdf5; }
+.transaction-meta-chip--segment { border-color:rgba(6,182,212,.16); color:#0e7490; background:#ecfeff; }
+.transaction-meta-chip--group { border-color:rgba(168,85,247,.16); color:#7e22ce; background:#faf5ff; }
+.transaction-meta-chip:hover { transform:translateY(-1px); }
+
+.transaction-receipt { overflow:hidden; }
+.transaction-receipt__body { overflow:hidden; border:1px solid var(--transaction-line); border-radius:1rem; background:linear-gradient(155deg,rgba(248,250,252,.94),rgba(255,255,255,.88)); }
+.transaction-receipt__mark { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; padding:1.15rem 1.2rem; border-bottom:1px solid var(--transaction-line); background:linear-gradient(120deg,rgba(238,242,255,.86),rgba(236,254,255,.65)); }
+.transaction-receipt__mark span { color:var(--transaction-muted); font-size:.62rem; font-weight:850; letter-spacing:.11em; text-transform:uppercase; }
+.transaction-receipt__mark strong { color:var(--transaction-ink); font-size:clamp(1.7rem,3vw,2.5rem); font-weight:850; letter-spacing:-.05em; line-height:1; }
+.transaction-detail-list { margin:0; padding:.25rem 1.2rem; }
+.transaction-detail-row { display:grid; grid-template-columns:minmax(8rem,.32fr) minmax(0,.68fr); gap:1rem; padding:.82rem 0; border-bottom:1px solid rgba(226,232,240,.82); }
+.transaction-detail-row:last-child { border-bottom:0; }
+.transaction-detail-row dt { color:var(--transaction-muted); font-size:.61rem; font-weight:750; }
+.transaction-detail-row dd { min-width:0; margin:0; overflow-wrap:anywhere; color:var(--transaction-ink); font-size:.73rem; font-weight:720; text-align:right; line-height:1.45; }
+.transaction-detail-row--memo dd { color:#475569; font-weight:600; }
+.transaction-technical { border-top:1px solid var(--transaction-line); }
+.transaction-technical summary { display:flex; cursor:pointer; list-style:none; align-items:center; justify-content:space-between; gap:1rem; padding:.9rem 1.2rem; color:#475569; font-size:.65rem; font-weight:800; }
+.transaction-technical summary::-webkit-details-marker { display:none; }
+.transaction-technical summary span { display:flex; align-items:center; gap:.5rem; }
+.transaction-technical summary span i { color:#a5b4fc; }
+.transaction-technical[open] summary > i { transform:rotate(180deg); }
+.transaction-detail-list--technical { border-top:1px solid var(--transaction-line); background:rgba(248,250,252,.72); }
+
+.transaction-field-stack { display:grid; gap:.85rem; }
+.transaction-editor__note { display:flex; gap:.65rem; margin-top:1rem; padding:.78rem; border-radius:.85rem; color:#475569; background:linear-gradient(135deg,#f5f3ff,#ecfeff); font-size:.61rem; line-height:1.45; }
+.transaction-editor__note i { margin-top:.1rem; color:#06b6d4; }
+.transaction-editor__actions { align-items:stretch; margin-top:1rem; }
+.transaction-editor__actions .transaction-button { flex:1 1 auto; }
+.transaction-editor__actions .transaction-status { flex:1 0 100%; }
+.transaction-button.is-complete { color:#047857; background:#ecfdf5; }
+
+.transaction-detail-empty { grid-column:1/-1; }
+.transaction-detail-page .transaction-error { margin-bottom:0; }
+
+.theme-professional .transaction-receipt__body { border-radius:.55rem; background:#fff; }
+.theme-professional .transaction-receipt__mark { background:#f8fafc; }
+
+@media(max-width:1000px){.transaction-detail-loading,.transaction-detail-grid{grid-template-columns:1fr}.transaction-editor{position:static}}
+@media(max-width:640px){
+    .transaction-detail-loading{gap:1rem}.transaction-detail-loading .transaction-loading{min-height:16rem}.transaction-detail-hero .transaction-hero__signal strong{font-size:1.45rem}.transaction-detail-hero .transaction-hero__metrics strong{font-size:.9rem}.transaction-meta-chips{margin-bottom:.8rem}.transaction-receipt__mark{align-items:flex-start;flex-direction:column-reverse;padding:1rem}.transaction-receipt__mark strong{font-size:2rem}.transaction-detail-list{padding:.15rem 1rem}.transaction-detail-row{grid-template-columns:1fr;gap:.2rem;padding:.68rem 0}.transaction-detail-row dd{text-align:left}.transaction-technical summary{padding:.8rem 1rem}.transaction-editor__actions .transaction-button{width:100%}
+}
+
+@media print {
+    body { background:#fff!important; }
+    nav,.page-header,.transaction-detail-hero,.transaction-error,.transaction-detail-loading,.transaction-editor,#help-button,.page-help-overlay { display:none!important; }
+    .transaction-main { max-width:none!important; padding:0!important; overflow:visible!important; }
+    .transaction-detail-grid { display:block!important; }
+    .transaction-receipt { padding:0!important; border:0!important; box-shadow:none!important; background:#fff!important; }
+    .transaction-card__header { margin-bottom:1rem; }
+    .transaction-receipt__body { border:1px solid #cbd5e1!important; background:#fff!important; }
+    .transaction-meta-chip { color:#111827!important; background:#fff!important; }
+    .transaction-technical { display:block; }
+    .transaction-technical summary { display:none; }
+    .transaction-detail-list--technical { display:block; }
+}

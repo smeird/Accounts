@@ -1,335 +1,98 @@
 <!DOCTYPE html>
+<!-- Transaction detail: understand one movement, then refine its classification. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Transaction Details</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
-    <!-- Font Awesome icons loaded via menu.js -->
-    <style>
-    .receipt-paper {
-        position: relative;
-        background: linear-gradient(180deg, #fffef9 0%, #fffdf4 100%);
-        border: 1px solid #e5dcc2;
-        border-radius: 0.75rem;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-    }
-    .receipt-paper::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: -10px;
-        height: 10px;
-        background: repeating-linear-gradient(-45deg, #ede3c9 0 8px, #fffdf4 8px 16px);
-        border-bottom-left-radius: 0.5rem;
-        border-bottom-right-radius: 0.5rem;
-    }
-    .meta-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.28rem 0.65rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-        border-radius: 9999px;
-        border: 1px solid transparent;
-    }
-    .meta-pill i { font-size: 0.7rem; }
-    .tx-action-btn {
-        height: 2.6rem;
-        border-radius: 0.5rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        padding: 0 1rem;
-        color: #ffffff;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .tx-action-btn--save { background: #4f46e5; }
-    .tx-action-btn--transfer { background: #2563eb; }
-    .tx-action-btn--print { background: #475569; }
-    .tx-action-btn--disabled { background: #94a3b8; cursor: not-allowed; }
-    @media print {
-        body { background: white; }
-        nav, h1, p, .no-print { display: none !important; }
-        .receipt-paper { border: none; box-shadow: none; }
-        .receipt-paper::after { display: none; }
-    }
-    </style>
+    <link rel="stylesheet" href="transactions_workspace.css">
+    <link rel="stylesheet" href="transaction_detail.css">
 </head>
-<body class="ops-body">
-    <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<div id="transaction-details" class="mt-4"></div>
-        </main>
-    </div>
-    <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Transaction Details',
-    breadcrumb: 'Transactions',
-    subtitle: 'Review or edit the information for a single transaction. Changes here immediately update dashboards, reports and budgets.'
-});
+<body class="ops-body transaction-page transaction-detail-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main transaction-main transaction-detail-main flex-1 min-w-0 overflow-x-hidden">
+        <div id="transaction-error" class="transaction-error" role="alert" hidden></div>
+
+        <section class="transaction-hero transaction-detail-hero" data-no-card="true" aria-labelledby="transaction-hero-amount">
+            <div class="transaction-hero__glow" aria-hidden="true"></div>
+            <div class="transaction-hero__topline">
+                <span class="transaction-pulse"><span aria-hidden="true"></span>Transaction signal</span>
+                <span id="transaction-hero-reference">Loading reference…</span>
+            </div>
+            <div class="transaction-hero__body">
+                <div>
+                    <p id="transaction-hero-direction" class="transaction-kicker">Loading movement</p>
+                    <h1 id="transaction-hero-amount" class="transaction-hero__value" aria-live="polite">£—</h1>
+                    <p id="transaction-hero-description" class="transaction-hero__message">Building the transaction detail…</p>
+                </div>
+                <div class="transaction-hero__signal">
+                    <strong id="transaction-hero-date">—</strong>
+                    <span id="transaction-hero-date-label">transaction date</span>
+                </div>
+            </div>
+            <div class="transaction-hero__metrics" aria-label="Transaction summary">
+                <article><span class="transaction-summary-icon transaction-summary-icon--income"><i class="fas fa-building-columns" aria-hidden="true"></i></span><div><p>Account</p><strong id="transaction-account">—</strong><small id="transaction-account-detail">Loading account</small></div></article>
+                <article><span class="transaction-summary-icon"><i class="fas fa-tag" aria-hidden="true"></i></span><div><p>Tag</p><strong id="transaction-tag">—</strong><small>Current classification</small></div></article>
+                <article><span class="transaction-summary-icon transaction-summary-icon--period"><i class="fas fa-folder-open" aria-hidden="true"></i></span><div><p>Category</p><strong id="transaction-category">—</strong><small id="transaction-segment">No segment</small></div></article>
+                <article><span class="transaction-summary-icon transaction-summary-icon--spend"><i class="fas fa-right-left" aria-hidden="true"></i></span><div><p>Transfer status</p><strong id="transaction-transfer">—</strong><small id="transaction-transfer-note">Checking status</small></div></article>
+            </div>
+        </section>
+
+        <div id="transaction-loading" class="transaction-detail-loading" aria-live="polite">
+            <div class="transaction-loading"></div>
+            <div class="transaction-loading"></div>
+        </div>
+
+        <div id="transaction-workspace" class="transaction-detail-grid" hidden>
+            <section id="transaction-receipt" class="transaction-card transaction-detail-card transaction-receipt" data-no-card="true">
+                <div class="transaction-card__header">
+                    <div><p class="transaction-section-label">Movement record</p><h2>The transaction</h2><p class="transaction-card__copy">The original statement detail and identifiers behind this movement.</p></div>
+                    <span id="transaction-type-badge" class="transaction-count">—</span>
+                </div>
+                <div id="transaction-meta" class="transaction-meta-chips" aria-label="Assigned transaction labels"></div>
+                <div class="transaction-receipt__body">
+                    <div class="transaction-receipt__mark"><span id="transaction-receipt-direction">Payment</span><strong id="transaction-receipt-amount">£—</strong></div>
+                    <dl id="transaction-core-details" class="transaction-detail-list"></dl>
+                    <details class="transaction-technical">
+                        <summary><span><i class="fas fa-fingerprint" aria-hidden="true"></i>Statement identifiers</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+                        <dl id="transaction-technical-details" class="transaction-detail-list transaction-detail-list--technical"></dl>
+                    </details>
+                </div>
+            </section>
+
+            <form id="transaction-form" class="transaction-card transaction-detail-card transaction-editor no-print" data-no-card="true">
+                <div class="transaction-card__header"><div><p class="transaction-section-label">Classification</p><h2>Organise this movement</h2><p class="transaction-card__copy">Refine where this transaction belongs. Changes flow into dashboards, budgets and reports.</p></div></div>
+                <div class="transaction-field-stack">
+                    <label class="transaction-field" for="tag-select"><span>Existing tag <small>Choose one to reuse</small></span><select id="tag-select" data-help="Choose an existing tag name to reuse it"><option value="">Select an existing tag</option></select></label>
+                    <label class="transaction-field" for="tag"><span>Or create a new tag <small>Only used when no tag is selected</small></span><input type="text" id="tag" placeholder="Enter a new tag name" autocomplete="off" data-help="Only fill this in when you need to create a brand new tag"></label>
+                    <label class="transaction-field" for="category"><span>Category <small>Grouped by segment</small></span><select id="category" data-help="Assign a category"><option value="">No category</option></select></label>
+                    <label class="transaction-field" for="group"><span>Group <small>Optional reporting group</small></span><select id="group" data-help="Assign a group"><option value="">No group</option></select></label>
+                </div>
+                <div class="transaction-editor__note"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>Choosing or creating a tag may also improve matching for similar transactions on this account.</span></div>
+                <div class="transaction-actions transaction-editor__actions">
+                    <button id="save-transaction" type="submit" class="transaction-button transaction-button--primary" aria-label="Save transaction classification"><i class="fas fa-check" aria-hidden="true"></i><span>Save changes</span></button>
+                    <button id="mark-transfer" type="button" class="transaction-button transaction-button--secondary" aria-label="Mark transaction as transfer"><i class="fas fa-right-left" aria-hidden="true"></i><span>Mark as transfer</span></button>
+                    <button id="print-transaction" type="button" class="transaction-button transaction-button--quiet" aria-label="Print transaction record"><i class="fas fa-print" aria-hidden="true"></i><span>Print record</span></button>
+                    <span id="transaction-status" class="transaction-status" aria-live="polite"></span>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script src="js/page_header.js"></script>
+<script>
+    const transactionDetailMain = document.querySelector('main.ops-main');
+    window.renderPageHeader(transactionDetailMain, { title:'Transaction Details', breadcrumb:'Transactions / Detail', subtitle:'Understand one movement, verify its source, and refine where it belongs.', actions:null });
 </script>
-    <script src="js/menu.js"></script>
-    <script src="js/input_help.js"></script>
-    <script>
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    const container = document.getElementById('transaction-details');
-    if (!id) {
-        container.textContent = 'No transaction id provided.';
-    } else {
-        Promise.all([
-            fetch('../php_backend/public/transaction.php?id=' + id).then(r => r.json()),
-            fetch('../php_backend/public/groups.php').then(r => r.json()),
-            fetch('../php_backend/public/categories.php').then(r => r.json()),
-            fetch('../php_backend/public/tags.php').then(r => r.json())
-        ]).then(([tx, groups, categories, tags]) => {
-            if (tx.error) {
-                container.textContent = 'Transaction not found.';
-                return;
-            }
-
-            const card = document.createElement('div');
-            card.className = 'cards cards-tight';
-
-            function createMetaPill(icon, label, value, colorClasses) {
-                const link = document.createElement('a');
-                link.href = `search.html?value=${encodeURIComponent(value)}`;
-                link.className = `meta-pill ${colorClasses}`;
-                link.setAttribute('aria-label', `Search for ${label} ${value}`);
-                link.innerHTML = `<i class="fas ${icon}" aria-hidden="true"></i><span>${value}</span>`;
-                return link;
-            }
-
-            const metaChips = document.createElement('div');
-            metaChips.className = 'flex flex-wrap gap-2';
-
-            function addMetaPill(icon, label, value, color) {
-                if (!value) return;
-                metaChips.appendChild(createMetaPill(icon, label, value, color));
-            }
-
-            addMetaPill('fa-tag', 'tag', tx.tag_name, 'bg-indigo-50 text-indigo-700 border-indigo-200');
-            addMetaPill('fa-folder-open', 'category', tx.category_name, 'bg-emerald-50 text-emerald-700 border-emerald-200');
-            addMetaPill('fa-diagram-project', 'segment', tx.segment_name, 'bg-amber-50 text-amber-700 border-amber-200');
-
-            const form = document.createElement('form');
-            form.className = 'space-y-4';
-            form.innerHTML = `
-                <div class="receipt-paper max-w-xl mx-auto p-6 sm:p-8 space-y-4 text-slate-700">
-                    <div class="text-center border-b border-dashed border-amber-300 pb-3">
-                        <p class="uppercase tracking-[0.25em] text-xs text-slate-500">Transaction receipt</p>
-                        <p class="text-sm text-slate-500">Reference #${tx.id}</p>
-                    </div>
-                    <div class="font-mono text-sm space-y-2">
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Account</span><span class="text-right">${tx.account_name || ''}</span></div>
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Sort Code</span><span class="text-right">${tx.sort_code || ''}</span></div>
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Account Number</span><span class="text-right">${tx.account_number || ''}</span></div>
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Date</span><span class="text-right">${tx.date}</span></div>
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Description</span><span class="text-right">${tx.description}</span></div>
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Memo</span><span class="text-right">${tx.memo || ''}</span></div>
-                        <div class="flex justify-between gap-3 border-y border-dashed border-amber-300 py-2 mt-2">
-                            <span class="font-semibold uppercase tracking-wide">Total</span><span class="text-right font-semibold">£${parseFloat(tx.amount).toFixed(2)}</span>
-                        </div>
-                        <div class="flex justify-between gap-3"><span class="font-semibold">OFX Type</span><span class="text-right">${tx.ofx_type || ''}</span></div>
-                        ${tx.ofx_id ? `<div class="flex justify-between gap-3"><span class="font-semibold">OFX ID</span><span class="text-right">${tx.ofx_id}</span></div>` : ''}
-                        ${tx.bank_ofx_id ? `<div class="flex justify-between gap-3"><span class="font-semibold">Bank OFX ID</span><span class="text-right">${tx.bank_ofx_id}</span></div>` : ''}
-                        <div class="flex justify-between gap-3"><span class="font-semibold">Transfer</span><span class="text-right">${tx.transfer_id ? '<span class="text-blue-700"><i class="fas fa-right-left inline w-4 h-4 mr-1" aria-hidden="true"></i>Yes (ID ' + tx.transfer_id + ')</span>' : 'No'}</span></div>
-                    </div>
-                    <div class="pt-2 border-t border-dashed border-amber-300 space-y-2">
-                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Assigned labels</p>
-                        <div id="assigned-meta" class="flex flex-wrap gap-2"></div>
-                    </div>
-                </div>
-                <div class="pt-6 space-y-4">
-                    <div>
-                        <label for="tag-select" class="block font-medium">Tag (select existing or create new)</label>
-                        <p class="text-sm text-slate-500 mb-2">Choose an existing tag from the list, or type a new name below if no match exists.</p>
-                        <select id="tag-select" class="border p-2 rounded w-full" data-help="Choose an existing tag name to reuse it">
-                            <option value="">-- Select existing tag --</option>
-                        </select>
-                    </div>
-                    <label for="tag" class="block">New tag name (only for new tags): <input type="text" id="tag" class="border p-2 rounded w-full" data-help="Only fill this in when you need to create a brand new tag"></label>
-                    <label class="block">Category Group: <select id="category" class="border p-2 rounded w-full" data-help="Assign a category group"></select></label>
-                    <label class="block">Group: <select id="group" class="border p-2 rounded w-full" data-help="Assign a group"></select></label>
-                </div>
-                <div class="flex flex-wrap gap-2 justify-center no-print">
-                    <button type="submit" class="tx-action-btn tx-action-btn--save" aria-label="Save transaction">Save</button>
-                    <button type="button" id="mark-transfer" class="tx-action-btn tx-action-btn--transfer" aria-label="Mark transaction as transfer">Mark as Transfer</button>
-                    <button type="button" id="print" class="tx-action-btn tx-action-btn--print" aria-label="Print receipt">Print Receipt</button>
-                </div>
-            `;
-            form.querySelector('#assigned-meta').appendChild(metaChips);
-            card.appendChild(form);
-            container.appendChild(card);
-            const printBtn = form.querySelector('#print');
-            if (printBtn) {
-                printBtn.addEventListener('click', () => window.print());
-            }
-            const markTransferBtn = form.querySelector('#mark-transfer');
-            if (markTransferBtn) {
-                if (tx.transfer_id) {
-                    markTransferBtn.disabled = true;
-                    markTransferBtn.classList.remove('tx-action-btn--transfer');
-                    markTransferBtn.classList.add('tx-action-btn--disabled');
-                    markTransferBtn.textContent = 'Already marked as transfer';
-                } else {
-                    markTransferBtn.addEventListener('click', () => {
-                        fetch('../php_backend/public/mark_transaction_transfer.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: tx.id })
-                        }).then(r => r.json()).then(res => {
-                            if (res && res.status === 'ok') {
-                                showMessage('Transaction marked as transfer');
-                                setTimeout(() => window.location.reload(), 500);
-                            } else {
-                                alert(res.error || 'Failed to mark transfer');
-                            }
-                        }).catch(() => alert('Failed to mark transfer'));
-                    });
-                }
-            }
-            const tagInput = form.querySelector('#tag');
-            const tagSelect = form.querySelector('#tag-select');
-            const groupSel = form.querySelector('#group');
-            const catSel = form.querySelector('#category');
-            const tagByName = {};
-            tags.forEach(tag => {
-                const opt = document.createElement('option');
-                opt.value = tag.id;
-                opt.textContent = tag.name;
-                tagSelect.appendChild(opt);
-                tagByName[(tag.name || '').toLowerCase()] = String(tag.id);
-            });
-            if (tx.tag_id) {
-                tagSelect.value = String(tx.tag_id);
-            } else if (tx.tag_name) {
-                const matchingTagId = tagByName[tx.tag_name.toLowerCase()];
-                if (matchingTagId) {
-                    tagSelect.value = matchingTagId;
-                } else {
-                    tagInput.value = tx.tag_name;
-                }
-            }
-            const blankGrp = document.createElement('option');
-            blankGrp.value = '';
-            blankGrp.textContent = '-- None --';
-            groupSel.appendChild(blankGrp);
-            groups.forEach(g => {
-                if (g.active || g.id == tx.group_id) {
-                    const opt = document.createElement('option');
-                    opt.value = g.id;
-                    opt.textContent = g.name;
-                    if (g.id == tx.group_id) opt.selected = true;
-                    else if (!g.active) opt.disabled = true;
-                    groupSel.appendChild(opt);
-                }
-            });
-            const blankCat = document.createElement('option');
-            blankCat.value = '';
-            blankCat.textContent = '-- None --';
-            catSel.appendChild(blankCat);
-            const segMap = {};
-            categories.forEach(c => {
-                const seg = c.segment_name || 'Unassigned';
-                if (!segMap[seg]) {
-                    const og = document.createElement('optgroup');
-                    og.label = seg;
-                    segMap[seg] = og;
-                    catSel.appendChild(og);
-                }
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.name;
-                if (c.id == tx.category_id) opt.selected = true;
-                segMap[seg].appendChild(opt);
-            });
-            const newGrp = document.createElement('option');
-            newGrp.value = '__new';
-            newGrp.textContent = 'Add New Group...';
-            groupSel.appendChild(newGrp);
-
-            groupSel.addEventListener('change', () => {
-                if (groupSel.value === '__new') {
-                    const name = prompt('Enter new group name:');
-                    if (!name) { groupSel.value = ''; return; }
-                    fetch('../php_backend/public/groups.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name })
-                    }).then(r => r.json()).then(res => {
-                        if (res.id) {
-                            const opt = document.createElement('option');
-                            opt.value = res.id;
-                            opt.textContent = name;
-                            groupSel.insertBefore(opt, newGrp);
-                            groupSel.value = res.id;
-                            showMessage('Group created');
-                        } else {
-                            alert('Failed to create group');
-                            groupSel.value = '';
-                        }
-                    }).catch(() => {
-                        alert('Failed to create group');
-                        groupSel.value = '';
-                    });
-                }
-            });
-
-            form.addEventListener('submit', function(ev){
-                ev.preventDefault();
-                const payload = {
-                    transaction_id: tx.id,
-                    account_id: tx.account_id,
-                    description: tx.description
-                };
-                if (groupSel.value !== '') payload.group_id = groupSel.value;
-                if (catSel.value !== '') payload.category_id = catSel.value;
-                const selectedTagId = tagSelect.value;
-                const enteredTagName = tagInput.value.trim();
-                if (selectedTagId !== '') {
-                    payload.tag_id = selectedTagId;
-                } else if (enteredTagName !== '') {
-                    payload.tag_name = enteredTagName;
-                }
-
-                fetch('../php_backend/public/update_transaction.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).then(r => r.json()).then(res => {
-                    if (res && res.status === 'ok') {
-                        showMessage('Saved');
-                        setTimeout(() => {
-                            if (document.referrer) {
-                                window.location = document.referrer;
-                            } else {
-                                history.back();
-                            }
-                        }, 500);
-                    } else {
-                        alert('Failed to save');
-                    }
-                }).catch(() => alert('Failed to save'));
-            });
-        });
-    }
-    </script>
-    <script src="js/overlay.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/transaction_detail.js"></script>
+<script src="js/overlay.js"></script>
 </body>
 </html>
