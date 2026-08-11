@@ -164,7 +164,7 @@ const attachSidebarSearchHandler = (root = document) => {
   function loadFontsModule(cb) {
     if (window.applyFonts) { cb(); return; }
     const s = document.createElement('script');
-    s.src = resolveFrontendAsset('js/fonts.js');
+    s.src = resolveFrontendAsset('js/fonts.js?v=20260811-font-weights');
     s.onload = cb;
     document.head.appendChild(s);
   }
