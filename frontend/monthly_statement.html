@@ -14,17 +14,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
-
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="monthly_statement.css">
 
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="ops-body">
+<body class="ops-body monthly-statement-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <div class="cards">
-                <form id="statement-form" class="flex flex-wrap items-end gap-4">
+            <section class="cards statement-controls">
+                <form id="statement-form" class="statement-controls-form">
                     <div class="w-full sm:w-auto">
                         <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year</label>
                         <select id="year" name="year" class="border p-2 rounded w-full sm:w-32" data-help="Select year"></select>
@@ -39,8 +38,8 @@
                     </div>
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">View</button>
                 </form>
-            </div>
-            <div id="totals" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            </section>
+            <div id="totals" class="statement-summary">
                 <div id="income-card" class="cards cards-tight text-center cursor-pointer">
                     <p class="text-gray-500">Income</p>
                     <p id="income-total" class="text-3xl font-bold">£0.00</p>
@@ -74,16 +73,65 @@
                     <p id="days-negative" class="text-3xl font-bold">N/A</p>
                 </div>
             </div>
-            <div class="cards mt-4">
-                <div id="transactions-grid"></div>
-            </div>
-            <div class="mt-4">
-                <div class="cards">
+            <section class="monthly-statement" data-no-card aria-labelledby="statement-ledger-title">
+                <header class="statement-ledger-header">
+                    <div>
+                        <p class="statement-kicker">Transaction ledger</p>
+                        <div class="statement-heading-row">
+                            <h2 id="statement-ledger-title">Monthly activity</h2>
+                            <span id="statement-result-count" class="statement-count" aria-live="polite">Loading</span>
+                        </div>
+                        <p>Every classification is labelled and colour-coded so gaps are immediately visible.</p>
+                    </div>
+                    <div class="statement-table-tools">
+                        <label class="statement-search" for="statement-search">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <span class="sr-only">Search transactions</span>
+                            <input id="statement-search" type="search" placeholder="Search this month" autocomplete="off">
+                        </label>
+                        <label class="statement-sort" for="statement-sort">
+                            <span>Sort</span>
+                            <select id="statement-sort">
+                                <option value="date-desc">Newest first</option>
+                                <option value="date-asc">Oldest first</option>
+                                <option value="amount-desc">Highest amount</option>
+                                <option value="amount-asc">Lowest amount</option>
+                                <option value="description-asc">Merchant A–Z</option>
+                                <option value="description-desc">Merchant Z–A</option>
+                            </select>
+                        </label>
+                    </div>
+                </header>
 
-                    <div id="category-donut" style="height:500px;" data-chart-desc="Donut chart of spending by category for the selected month."></div>
-
+                <div class="statement-filter-row" aria-label="Filter monthly transactions">
+                    <button type="button" class="statement-filter is-active" data-statement-filter="all" aria-pressed="true">All activity</button>
+                    <button type="button" class="statement-filter" data-statement-filter="income" aria-pressed="false">Income</button>
+                    <button type="button" class="statement-filter" data-statement-filter="spending" aria-pressed="false">Spending</button>
+                    <button type="button" class="statement-filter statement-filter--attention" data-statement-filter="needs-classification" aria-pressed="false">Needs classification</button>
+                    <button type="button" class="statement-filter" data-statement-filter="transfers" aria-pressed="false">Transfers</button>
                 </div>
-            </div>
+
+                <div id="statement-table-status" class="statement-table-status" role="status" aria-live="polite">
+                    <span class="statement-spinner" aria-hidden="true"></span>
+                    Loading monthly activity
+                </div>
+                <div id="transactions-grid" class="statement-table-region" hidden></div>
+                <footer id="statement-table-footer" class="statement-table-footer" hidden>
+                    <span id="statement-page-status"></span>
+                    <button id="statement-load-more" type="button">Show more transactions</button>
+                </footer>
+            </section>
+
+            <section class="statement-chart-panel" data-no-card aria-labelledby="statement-chart-title">
+                <header>
+                    <div>
+                        <p class="statement-kicker">Spending composition</p>
+                        <h2 id="statement-chart-title">Where the month went</h2>
+                    </div>
+                    <p>Select a category in the chart to focus the ledger above.</p>
+                </header>
+                <div id="category-donut" class="statement-chart" data-chart-desc="Donut chart of spending by category for the selected month."></div>
+            </section>
         </main>
     </div>
     <script src="js/page_header.js"></script>
@@ -92,405 +140,14 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Monthly Statement',
     breadcrumb: 'Transactions / Statements',
-    subtitle: 'Select a month to view a detailed list of transactions. Reviewing each line ensures the data is accurate and properly tagged.'
+    subtitle: 'Review every transaction with clear segment, category, tag and group labels, then open any line that needs attention.'
 });
 </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
-    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="js/color_map.js"></script>
-
-
-<script>
-const monthSelect = document.getElementById('month');
-const yearSelect = document.getElementById('year');
-const form = document.getElementById('statement-form');
-const untaggedOnly = document.getElementById('untagged-only');
-let table;
-
-// fetch available transaction groups once
-const groupsPromise = fetch('../php_backend/public/groups.php').then(r => r.json());
-
-// Determine initial year and month from query parameters if provided
-const urlParams = new URLSearchParams(window.location.search);
-const paramYear = urlParams.get('year');
-const paramMonth = urlParams.get('month');
-
-const recurringPromise = fetch('../php_backend/public/recurring_spend.php')
-    .then(r => r.json())
-    .then(d => {
-        const set = new Set();
-        (d.results || []).forEach(item => set.add(item.description.toLowerCase()));
-        return set;
-    });
-
-const balancePromise = fetch('../php_backend/public/account_dashboard.php')
-    .then(r => r.json())
-    .then(rows => rows.reduce((sum, row) => sum + parseFloat(row.balance), 0));
-
-fetch('../php_backend/public/transaction_months.php')
-    .then(resp => resp.json())
-    .then(data => {
-        const monthsByYear = {};
-        data.forEach(row => {
-            const y = row.year;
-            const m = row.month;
-            if (!monthsByYear[y]) {
-                monthsByYear[y] = [];
-            }
-            monthsByYear[y].push(m);
-        });
-
-        const years = Object.keys(monthsByYear).sort((a, b) => b - a);
-        years.forEach(y => {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            yearSelect.appendChild(opt);
-            monthsByYear[y].sort((a, b) => b - a);
-        });
-
-        function populateMonths() {
-            const year = yearSelect.value;
-            monthSelect.innerHTML = '';
-            (monthsByYear[year] || []).forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m;
-                const d = new Date(year, m - 1);
-                opt.textContent = d.toLocaleString('default', { month: 'long' });
-                monthSelect.appendChild(opt);
-            });
-            if (monthSelect.options.length > 0) {
-                monthSelect.selectedIndex = 0;
-            }
-        }
-
-        yearSelect.addEventListener('change', populateMonths);
-        if (years.length > 0) {
-            yearSelect.selectedIndex = 0;
-            populateMonths();
-        }
-
-        // Override defaults with query parameters if present
-        if (paramYear && monthsByYear[paramYear]) {
-            yearSelect.value = paramYear;
-            populateMonths();
-            const monthInt = parseInt(paramMonth, 10);
-            if (paramMonth && monthsByYear[paramYear].includes(monthInt)) {
-                monthSelect.value = monthInt;
-            }
-        }
-
-        // Automatically load the initially selected statement
-        loadTransactions();
-    })
-    .catch(() => {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth() + 1;
-        for (let y = currentYear; y >= currentYear - 5; y--) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            yearSelect.appendChild(opt);
-        }
-        for (let m = 1; m <= 12; m++) {
-            const opt = document.createElement('option');
-            opt.value = m;
-            const d = new Date(currentYear, m - 1);
-            opt.textContent = d.toLocaleString('default', { month: 'long' });
-            monthSelect.appendChild(opt);
-        }
-        yearSelect.value = paramYear || currentYear;
-        monthSelect.value = paramMonth || currentMonth;
-        loadTransactions();
-    });
-
-function loadTransactions(retry = false) {
-    const month = parseInt(monthSelect.value);
-    const year = parseInt(yearSelect.value);
-    const untaggedParam = untaggedOnly.checked ? '&untagged=1' : '';
-    if (!Number.isNaN(month) && !Number.isNaN(year)) {
-        const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
-        const titleText = `Monthly Statement - ${monthName} ${year}`;
-        window.updatePageHeader(pageMain, { title: titleText });
-        document.title = titleText;
-    }
-
-    const prevDate = new Date(year, month - 1);
-    prevDate.setMonth(prevDate.getMonth() - 1);
-    const prevMonth = prevDate.getMonth() + 1;
-    const prevYear = prevDate.getFullYear();
-
-    Promise.all([
-        recurringPromise,
-        balancePromise,
-        groupsPromise,
-        fetch('../php_backend/public/transactions.php?month=' + month + '&year=' + year + untaggedParam).then(r => r.json()),
-        fetch('../php_backend/public/transactions.php?month=' + prevMonth + '&year=' + prevYear + untaggedParam).then(r => r.json())
-    ]).then(([recurringSet, totalBalance, groups, data, prevData]) => {
-        // If no untagged transactions exist, automatically show all
-        if (untaggedOnly.checked && data.length === 0 && !retry) {
-            untaggedOnly.checked = false;
-            loadTransactions(true);
-            return;
-        }
-        const groupValues = { '': 'None' };
-        groups.filter(g => g.active).forEach(g => groupValues[g.id] = g.name);
-
-        // normalise group ids for Tabulator
-        data.forEach(t => { t.group_id = t.group_id ? String(t.group_id) : ''; });
-        let income = 0, outgoings = 0, numIncome = 0, numExpense = 0;
-        const spendings = {};
-        const prevSpendings = {};
-        const categoryTotals = {};
-        let recurringTotal = 0, oneoffTotal = 0;
-
-        data.forEach(t => {
-            if (t.transfer_id !== null) return;
-            const amt = parseFloat(t.amount);
-            const cat = t.category_name || 'Uncategorised';
-            if (amt > 0) {
-                income += amt;
-                numIncome++;
-            } else if (amt < 0) {
-                const exp = -amt;
-                outgoings += exp;
-                numExpense++;
-                spendings[cat] = (spendings[cat] || 0) + exp;
-                categoryTotals[cat] = (categoryTotals[cat] || 0) + exp;
-                if (recurringSet.has(t.description.toLowerCase())) {
-                    recurringTotal += exp;
-                } else {
-                    oneoffTotal += exp;
-                }
-            }
-        });
-
-        prevData.forEach(t => {
-            if (t.transfer_id !== null) return;
-            const amt = parseFloat(t.amount);
-            if (amt < 0) {
-                const cat = t.category_name || 'Uncategorised';
-                prevSpendings[cat] = (prevSpendings[cat] || 0) + (-amt);
-            }
-        });
-
-        const delta = income - outgoings;
-        document.getElementById('income-total').textContent = '£' + income.toFixed(2);
-        document.getElementById('outgoings-total').textContent = '£' + outgoings.toFixed(2);
-        const deltaEl = document.getElementById('delta-total');
-        deltaEl.textContent = '£' + delta.toFixed(2);
-        deltaEl.className = (delta >= 0 ? 'text-green-600' : 'text-red-600') + ' text-3xl font-bold';
-
-        const savingsRate = income > 0 ? (delta / income) * 100 : 0;
-        document.getElementById('savings-rate').textContent = savingsRate.toFixed(1) + '%';
-
-        let largestCategory = 'N/A';
-        if (Object.keys(categoryTotals).length) {
-            largestCategory = Object.entries(categoryTotals).sort((a,b) => b[1] - a[1])[0][0];
-        }
-        document.getElementById('largest-category').textContent = largestCategory;
-
-        const recurringPercent = outgoings > 0 ? (recurringTotal / outgoings) * 100 : 0;
-        const oneoffPercent = outgoings > 0 ? (oneoffTotal / outgoings) * 100 : 0;
-        document.getElementById('recurring-ratio').innerHTML =
-            `Recurring: £${recurringTotal.toFixed(2)} (${recurringPercent.toFixed(1)}%)<br>` +
-            `One-off: £${oneoffTotal.toFixed(2)} (${oneoffPercent.toFixed(1)}%)`;
-
-        const avgIncome = numIncome > 0 ? income / numIncome : 0;
-        const avgExpense = numExpense > 0 ? outgoings / numExpense : 0;
-        document.getElementById('avg-transaction').innerHTML =
-            `Income: £${avgIncome.toFixed(2)}<br>Expenses: £${avgExpense.toFixed(2)}`;
-
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const burnRate = (outgoings - income) / daysInMonth;
-        let daysNegative = 'N/A';
-        if (burnRate > 0 && totalBalance > 0) {
-            daysNegative = Math.floor(totalBalance / burnRate);
-        }
-        document.getElementById('days-negative').textContent = daysNegative;
-
-        table = tailwindTabulator('#transactions-grid', {
-            data: data,
-            layout: 'fitDataStretch',
-            searchFields: ['date','description','memo','category_name','tag_name','segment_name','amount'],
-            columns: [
-                { title: 'Date', field: 'date' },
-                { title: 'Description', field: 'description', formatter: function(cell) {
-                    const id = cell.getRow().getData().id;
-                    return `<a href="transaction.html?id=${id}">${cell.getValue()}</a>`;
-                } },
-                { title: 'Memo', field: 'memo' },
-                {
-                    title: 'Category',
-                    field: 'category_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-green-200 text-green-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                {
-                    title: 'Tag',
-                    field: 'tag_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-indigo-200 text-indigo-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                {
-                    title: 'Group',
-                    field: 'group_id',
-                    formatter: function(cell){
-                        const id = cell.getValue();
-                        const name = cell.getRow().getData().group_name || groupValues[id] || '';
-                        if (!name) return '';
-                        const badge = createBadge(name, 'bg-purple-200 text-purple-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(name)}`;
-                        link.appendChild(badge);
-                        return link;
-                    },
-                    editor: 'list',
-                    editorParams: { values: groupValues },
-                    cellEdited: function(cell){
-                        const newId = cell.getValue();
-                        const row = cell.getRow().getData();
-                        fetch('../php_backend/public/update_transaction.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                transaction_id: row.id,
-                                account_id: row.account_id,
-                                description: row.description,
-                                group_id: newId === '' ? '' : parseInt(newId, 10)
-                            })
-                        }).then(r => r.json()).then(res => {
-                        const name = groupValues[newId] || '';
-                        cell.getRow().update({ group_name: name });
-                        });
-                    }
-                },
-                {
-                    title: 'Segment',
-                    field: 'segment_name',
-                    formatter: function(cell){
-                        const value = cell.getValue();
-                        if (!value) return '';
-                        const badge = createBadge(value, 'bg-yellow-200 text-yellow-800');
-                        const link = document.createElement('a');
-                        link.href = `search.html?value=${encodeURIComponent(value)}`;
-                        link.appendChild(badge);
-                        return link;
-                    }
-                },
-                { title: 'Amount', field: 'amount', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right' }
-            ]
-        });
-
-
-        buildDonutChart(spendings, prevSpendings);
-
-    });
-}
-
-function buildDonutChart(spendings, prevSpendings){
-    const data = Object.entries(spendings).map(([cat, total]) => {
-        const prev = prevSpendings[cat] || 0;
-        const change = total - prev;
-        const color = getCategoryColor(cat);
-        return { name: cat, y: parseFloat(total.toFixed(2)), color, change };
-    });
-    Highcharts.chart('category-donut', {
-
-        chart: { type: 'pie', height: 500 },
-        title: { text: 'Spending by Category' },
-        legend: {
-            enabled: true,
-            useHTML: true,
-            labelFormatter: function(){
-                return '<span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs">'+this.name+'</span>';
-            }
-        },
-
-        plotOptions: {
-            pie: {
-                innerSize: '60%',
-                dataLabels: {
-                    enabled: true,
-                    useHTML: true,
-                    format: '<span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs">{point.name}</span>',
-                    style: { textOutline: 'none' }
-                },
-                point: {
-                    events: {
-                        click: function(){
-                            showCategoryTransactions(this.name);
-                        }
-                    }
-                }
-            }
-        },
-        tooltip: {
-            useHTML: true,
-            pointFormatter: function(){
-                const change = this.change;
-                const sign = change >= 0 ? '+' : '-';
-                const share = Highcharts.numberFormat(this.percentage, 1);
-                return `<b>${this.series.name}: ${this.name}</b><br/>Spend: £${Highcharts.numberFormat(this.y, 2)}<br/>Change: ${sign}£${Highcharts.numberFormat(Math.abs(change), 2)}<br/>Share: ${share}%`;
-            }
-        },
-        series: [{ data }]
-    });
-}
-
-function showTransactions(type){
-    if(!table) return;
-    table.clearFilter();
-    if(type === 'income'){
-        table.setFilter(function(row){
-            return parseFloat(row.amount) > 0 && row.transfer_id === null;
-        });
-    } else if(type === 'outgoings'){
-        table.setFilter(function(row){
-            return parseFloat(row.amount) < 0 && row.transfer_id === null;
-        });
-    }
-    document.getElementById('transactions-grid').scrollIntoView({behavior:'smooth'});
-}
-
-function showCategoryTransactions(category){
-    if(!table) return;
-    table.clearFilter();
-    table.setFilter(function(row){
-        if(row.transfer_id !== null) return false;
-        const cat = row.category_name || 'Uncategorised';
-        return cat === category;
-    });
-    document.getElementById('transactions-grid').scrollIntoView({behavior:'smooth'});
-}
-
-document.getElementById('income-card').addEventListener('click', () => showTransactions('income'));
-document.getElementById('outgoings-card').addEventListener('click', () => showTransactions('outgoings'));
-
-form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    loadTransactions();
-});
-untaggedOnly.addEventListener('change', loadTransactions);
-</script>
+    <script src="js/monthly_statement.js"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>
