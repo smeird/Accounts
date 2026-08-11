@@ -62,6 +62,16 @@ const attachSidebarSearchHandler = (root = document) => {
     }
   }
 
+  // Load the shared type scale after page-specific styles so operational text
+  // remains readable across specialist dashboards and legacy pages alike.
+  if (!document.getElementById('site-typography-css')) {
+    const typographyLink = document.createElement('link');
+    typographyLink.id = 'site-typography-css';
+    typographyLink.rel = 'stylesheet';
+    typographyLink.href = resolveFrontendAsset('typography.css?v=20260811-readable-scale');
+    document.head.appendChild(typographyLink);
+  }
+
   const PROFESSIONAL_THEME_KEY = 'professionalThemeEnabled';
   const professionalThemeEnabled = localStorage.getItem(PROFESSIONAL_THEME_KEY) === 'true';
   document.body.classList.toggle('theme-professional', professionalThemeEnabled);

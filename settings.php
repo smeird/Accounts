@@ -25,7 +25,8 @@ if ($timeoutSetting > 0) {
 $_SESSION['last_activity'] = time();
 
 $message = '';
-$openai = Setting::get('openai_api_token') ?? '';
+$savedOpenaiToken = Setting::get('openai_api_token') ?? '';
+$openaiConfigured = is_string($savedOpenaiToken) && trim($savedOpenaiToken) !== '';
 $batch = Setting::get('ai_tag_batch_size') ?? '20';
 $aiModel = Setting::get('ai_model') ?? 'gpt-5-nano';
 $recommendedModels = [
@@ -114,6 +115,7 @@ $colorLabels = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
+    $clearOpenai = isset($_POST['clear_openai_api_token']);
     $batch = trim($_POST['ai_tag_batch_size'] ?? '');
     $aiModel = trim($_POST['ai_model'] ?? '');
     $aiTemp = trim($_POST['ai_temperature'] ?? '');
@@ -130,8 +132,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!array_key_exists($accentWeight, $weightOptions)) {
         $accentWeight = '';
     }
-    Setting::set('openai_api_token', $openai);
-    Log::write('Updated OpenAI API token');
+    if ($clearOpenai) {
+        Setting::set('openai_api_token', '');
+        $openaiConfigured = false;
+        Log::write('Removed OpenAI API token');
+    } elseif ($openai !== '') {
+        Setting::set('openai_api_token', $openai);
+        $openaiConfigured = true;
+        Log::write('Updated OpenAI API token');
+    }
     if ($batch !== '') {
         Setting::set('ai_tag_batch_size', $batch);
         Log::write('Updated AI tag batch size');
@@ -220,7 +229,14 @@ $bg600 = "bg-{$colorScheme}-600";
                 <?php endif; ?>
                 <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label class="block">OpenAI API Token:
-                <input type="text" name="openai_api_token" value="<?= htmlspecialchars($openai) ?>" class="border p-2 rounded w-full" data-help="Token used for AI tagging">
+                <input type="password" name="openai_api_token" value="" autocomplete="new-password" placeholder="<?= $openaiConfigured ? 'Token configured — enter a replacement' : 'Enter an API token' ?>" class="border p-2 rounded w-full" data-help="Enter a new token to replace the configured OpenAI API token">
+                <span class="block mt-2 text-gray-600"><?= $openaiConfigured ? 'A token is configured. Its saved value is never returned to the browser.' : 'No token is currently configured.' ?></span>
+                <?php if ($openaiConfigured): ?>
+                    <span class="inline-flex items-center gap-2 mt-2">
+                        <input type="checkbox" name="clear_openai_api_token" value="1">
+                        Remove the saved token
+                    </span>
+                <?php endif; ?>
             </label>
             <label class="block">AI Tag Batch Size:
                 <input type="number" name="ai_tag_batch_size" value="<?= htmlspecialchars($batch) ?>" class="border p-2 rounded w-full" data-help="How many transactions to submit for AI tagging at once">

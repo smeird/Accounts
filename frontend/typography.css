@@ -1,0 +1,440 @@
+/*
+ * Shared readable type scale.
+ *
+ * This file is intentionally loaded after specialist page styles by menu.js.
+ * It keeps the established visual systems while preventing operational text
+ * from shrinking below a comfortable reading size.
+ */
+:root {
+    --type-caption: .75rem;
+    --type-meta: .8125rem;
+    --type-body: .875rem;
+    --type-control: .875rem;
+    --type-table: .8125rem;
+    --type-table-heading: .75rem;
+}
+
+.page-subtitle {
+    font-size: var(--type-body);
+    line-height: 1.5;
+}
+
+.page-breadcrumb {
+    font-size: .6875rem;
+    line-height: 1.4;
+}
+
+/* Financial Pulse and legacy operational pages. */
+.site-system-page .page-subtitle,
+.instant-page .page-subtitle,
+.project-page .page-subtitle,
+.transaction-page .page-subtitle,
+.budget-page .page-subtitle,
+.yearly-page .page-subtitle {
+    font-size: var(--type-body);
+    line-height: 1.5;
+}
+
+.site-system-page .page-breadcrumb {
+    font-size: .6875rem;
+}
+
+.site-system-page .site-intro,
+.site-system-page .cards > p,
+.site-system-page .ops-section > p {
+    font-size: var(--type-body);
+}
+
+.site-system-page .site-metric-card p:first-child,
+.site-system-page .site-metric-label {
+    font-size: var(--type-caption) !important;
+}
+
+.site-system-page form:not(#sidebar-search-form) label,
+.site-system-page .site-field-label,
+.site-system-page .ops-label {
+    font-size: var(--type-meta);
+}
+
+.site-system-page input:not([type="checkbox"]):not([type="radio"]):not(.unstyled),
+.site-system-page select:not(.unstyled),
+.site-system-page textarea:not(.unstyled),
+.site-system-page .ops-input,
+.site-system-page .ops-select,
+.site-system-page .choices__inner {
+    font-size: var(--type-control);
+}
+
+.site-system-page input[type="file"]::file-selector-button,
+.site-system-page .ops-help,
+.site-system-page .choices__list--multiple .choices__item {
+    font-size: var(--type-caption);
+}
+
+.site-system-page .site-button,
+.site-system-page .ops-btn-primary {
+    font-size: var(--type-control);
+}
+
+.site-system-page .ops-titlebar h2,
+.site-system-page .ops-titlebar h3 {
+    font-size: 1rem;
+}
+
+.site-system-page .tabulator,
+.ops-main .tabulator {
+    font-size: var(--type-table);
+}
+
+.site-system-page .tabulator .tabulator-header .tabulator-col-title,
+.ops-main .tabulator .tabulator-header .tabulator-col-title,
+.site-system-page .ops-native-table th {
+    font-size: var(--type-table-heading);
+}
+
+.site-system-page [data-chart-desc] + p,
+.site-system-page [data-chart-desc] ~ p,
+.site-system-page .site-status,
+.highcharts-axis-labels text,
+.highcharts-legend-item text {
+    font-size: var(--type-caption) !important;
+}
+
+/* Landing page: keep the display confident without crowding the content. */
+.landing-title.page-title {
+    font-size: clamp(2.75rem, 4.2vw, 4rem) !important;
+}
+
+.landing-page :is(.landing-stat__label, .landing-snapshot__kicker, .landing-section__eyebrow),
+.landing-page [class*="__eyebrow"] {
+    font-size: var(--type-caption);
+}
+
+.landing-page :is(.landing-feature p, .landing-journey p, .landing-snapshot p, .landing-footer p) {
+    font-size: var(--type-meta);
+    line-height: 1.55;
+}
+
+/* Specialist dashboards and planning workspaces. */
+:is(.instant-page, .project-page, .budget-page, .yearly-page, .transaction-page)
+    :is([class$="-kicker"], [class*="__kicker"], [class$="-eyebrow"], [class*="__eyebrow"], [class$="-section-label"], [class*="__label"]) {
+    font-size: var(--type-caption);
+}
+
+:is(.instant-page, .project-page, .budget-page, .yearly-page, .transaction-page)
+    :is([class$="-header-link"], [class$="-refresh-button"], [class$="-primary-button"], [class$="-secondary-button"], [class$="-button"]):not([class*="icon"]) {
+    font-size: var(--type-control);
+}
+
+:is(.instant-page, .project-page, .budget-page, .yearly-page, .transaction-page)
+    :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+    font-size: var(--type-control);
+}
+
+:is(.instant-page, .project-page, .budget-page, .yearly-page, .transaction-page)
+    :is([class*="__copy"], [class*="__description"], [class$="-form-note"], [class$="-save-note"], [class$="-status"], [class$="-tip"]) {
+    font-size: var(--type-meta);
+    line-height: 1.5;
+}
+
+:is(.instant-page, .project-page, .budget-page, .yearly-page, .transaction-page)
+    :is([class*="__metrics"] p, [class*="__metrics"] small, [class*="summary"] p, [class*="summary"] small) {
+    font-size: var(--type-caption);
+}
+
+.instant-balance,
+.project-hero__value,
+.budget-remaining,
+.yearly-cashflow,
+.transaction-hero__value {
+    font-size: clamp(2.75rem, 4.4vw, 4rem) !important;
+}
+
+.project-hero__signal strong,
+.budget-used-block strong,
+.transaction-hero__signal strong {
+    font-size: clamp(1.8rem, 3vw, 2.75rem);
+}
+
+/* Projects. */
+.project-field,
+.project-form label,
+.project-control-group label {
+    font-size: var(--type-meta);
+}
+
+.project-button,
+.project-header-link {
+    font-size: var(--type-control);
+}
+
+.project-chip,
+.project-score,
+.project-funding,
+.project-cost-line span,
+.project-progress-note,
+.project-benefit span,
+.project-archive-stat span,
+.project-preview__range,
+.project-preview__benefit span {
+    font-size: var(--type-caption);
+}
+
+.project-card__copy,
+.project-tile__description,
+.project-tile__title p,
+.project-archive-row p,
+.project-form-section p,
+.project-preview__description,
+.project-save-note {
+    font-size: var(--type-meta);
+}
+
+.project-tile__title h3,
+.project-archive-row h3 {
+    font-size: 1rem;
+}
+
+/* Budgets. */
+.budget-header-controls label,
+.budget-form label > span,
+.budget-row__meta,
+.budget-row__footer,
+.budget-legend,
+.budget-status,
+.budget-used-block span {
+    font-size: var(--type-caption);
+}
+
+.budget-form select,
+.budget-form input,
+.budget-primary-button,
+.budget-secondary-button {
+    font-size: var(--type-control);
+}
+
+.budget-ai__copy,
+.budget-ai__result,
+.budget-form-note,
+.budget-empty p {
+    font-size: var(--type-meta);
+}
+
+.budget-row__name strong,
+.budget-row__figures strong {
+    font-size: var(--type-body);
+}
+
+/* Yearly dashboard. */
+.yearly-header-controls label,
+.yearly-eyebrow,
+.yearly-coverage,
+.yearly-kicker,
+.yearly-metrics p,
+.yearly-metrics small,
+.yearly-month span,
+.yearly-quarter__details,
+.yearly-category small,
+.yearly-link,
+.yearly-rate small {
+    font-size: var(--type-caption);
+}
+
+.yearly-header-controls select,
+.yearly-category__line strong,
+.yearly-category__line span,
+.yearly-insight strong,
+.yearly-insight p,
+.yearly-empty {
+    font-size: var(--type-meta);
+}
+
+/* Transaction search, reporting and detail workspaces. */
+.transaction-header-link,
+.transaction-button,
+.transaction-field input,
+.transaction-field select,
+.transaction-natural-input,
+.transaction-page .choices__inner {
+    font-size: var(--type-control);
+}
+
+.transaction-hero__topline,
+.transaction-pulse,
+.transaction-kicker,
+.transaction-hero__signal span,
+.transaction-hero__metrics p,
+.transaction-hero__metrics small,
+.transaction-section-label,
+.transaction-count,
+.transaction-field small,
+.transaction-natural__label,
+.transaction-debug summary,
+.transaction-status,
+.transaction-page .choices__list--multiple .choices__item {
+    font-size: var(--type-caption);
+}
+
+.transaction-card__copy,
+.transaction-field,
+.transaction-ai-status,
+.transaction-tip,
+.transaction-empty__body p,
+.transaction-error {
+    font-size: var(--type-meta);
+}
+
+.transaction-debug pre {
+    font-size: var(--type-caption);
+}
+
+.transaction-page .tabulator {
+    font-size: var(--type-table);
+}
+
+.transaction-meta-chip,
+.transaction-receipt__mark span,
+.transaction-detail-row dt,
+.transaction-technical summary,
+.transaction-editor__note {
+    font-size: var(--type-caption);
+}
+
+.transaction-detail-row dd {
+    font-size: var(--type-body);
+}
+
+/* Monthly Statement native responsive table. */
+.statement-kicker,
+.statement-count,
+.statement-sort,
+.statement-filter,
+.statement-ledger-header > div > p:last-child,
+.statement-chart-panel header > p,
+.statement-date span,
+.statement-date small,
+.statement-memo,
+.statement-amount-kind,
+.statement-table-footer,
+.statement-empty p,
+.statement-chart-empty,
+.statement-toast {
+    font-size: var(--type-caption);
+}
+
+.site-system-page.monthly-statement-page #statement-search,
+.site-system-page.monthly-statement-page #statement-sort,
+.statement-table-status,
+#statement-load-more,
+.statement-empty-reset {
+    font-size: var(--type-meta);
+}
+
+.statement-table th {
+    font-size: var(--type-table-heading);
+}
+
+.statement-table td {
+    font-size: var(--type-table);
+}
+
+.statement-description,
+.statement-amount {
+    font-size: var(--type-body);
+}
+
+.statement-pill,
+.statement-group-select {
+    font-size: .6875rem;
+}
+
+.statement-pill-kind {
+    font-size: .625rem;
+}
+
+/* Account Dashboard native responsive table. */
+.account-summary-label,
+.account-summary-helper,
+.account-kicker,
+.account-count,
+.account-ledger-header > div > p:last-child,
+.account-chart-panel header > p,
+.account-sort,
+.account-filter {
+    font-size: var(--type-caption);
+}
+
+.site-system-page.account-dashboard-page #account-search,
+.account-dashboard-page .account-sort select,
+.account-table-status {
+    font-size: var(--type-meta);
+}
+
+.account-table th {
+    font-size: var(--type-table-heading);
+}
+
+.account-table td,
+.account-identifier-number,
+.account-activity-date,
+.account-transactions,
+.account-balance-value {
+    font-size: var(--type-table) !important;
+}
+
+.account-name {
+    font-size: var(--type-body);
+}
+
+.account-type,
+.account-identifier-sort,
+.account-activity-state,
+.account-rename-error,
+.account-empty p {
+    font-size: var(--type-caption);
+}
+
+.account-rename-input,
+.account-rename-save,
+.account-rename-cancel,
+.account-empty-reset {
+    font-size: var(--type-meta) !important;
+}
+
+@media (max-width: 767px) {
+    .page-title,
+    .site-system-page .page-title,
+    .instant-page .page-title,
+    .project-page .page-title,
+    .transaction-page .page-title,
+    .budget-page .page-title,
+    .yearly-page .page-title {
+        font-size: 1.4rem !important;
+    }
+
+    .landing-title.page-title {
+        font-size: clamp(2.5rem, 11vw, 3rem) !important;
+    }
+
+    .instant-balance,
+    .project-hero__value,
+    .budget-remaining,
+    .yearly-cashflow,
+    .transaction-hero__value {
+        font-size: clamp(2.5rem, 12vw, 3.25rem) !important;
+    }
+
+    .statement-table td::before,
+    .account-table td::before {
+        font-size: .6875rem;
+    }
+
+    .statement-pill,
+    .statement-group-select {
+        font-size: var(--type-caption);
+    }
+
+    .account-summary-helper {
+        font-size: var(--type-caption);
+    }
+}
