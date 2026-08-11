@@ -42,6 +42,26 @@ const attachSidebarSearchHandler = (root = document) => {
     document.head.appendChild(themeLink);
   }
 
+  const hasSpecialistPageDesign = document.body.matches([
+    '.landing-page',
+    '.instant-page',
+    '.project-page',
+    '.transaction-page',
+    '.budget-page',
+    '.yearly-page'
+  ].join(','));
+
+  if (!hasSpecialistPageDesign) {
+    document.body.classList.add('site-system-page');
+    if (!document.getElementById('site-system-css')) {
+      const siteSystemLink = document.createElement('link');
+      siteSystemLink.id = 'site-system-css';
+      siteSystemLink.rel = 'stylesheet';
+      siteSystemLink.href = resolveFrontendAsset('site_system.css');
+      document.head.appendChild(siteSystemLink);
+    }
+  }
+
   const PROFESSIONAL_THEME_KEY = 'professionalThemeEnabled';
   const professionalThemeEnabled = localStorage.getItem(PROFESSIONAL_THEME_KEY) === 'true';
   document.body.classList.toggle('theme-professional', professionalThemeEnabled);
@@ -434,3 +454,9 @@ const attachSidebarSearchHandler = (root = document) => {
   const fullscreenScript = document.createElement('script');
   fullscreenScript.src = resolveFrontendAsset('js/chart_fullscreen.js');
   document.body.appendChild(fullscreenScript);
+
+  if (document.body.classList.contains('site-system-page')) {
+    const siteSystemScript = document.createElement('script');
+    siteSystemScript.src = resolveFrontendAsset('js/site_system.js');
+    document.body.appendChild(siteSystemScript);
+  }

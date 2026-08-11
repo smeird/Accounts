@@ -78,3 +78,4 @@
 - Project `spent` totals count outgoing transactions as positive expenses and exclude incoming transactions.
 - The landing page uses a task-first structure (capture, understand, plan) and keeps live workspace totals in a compact hero snapshot; landing-specific styling belongs in `frontend/landing.css`.
 - The Instant dashboard is the glanceable cross-feature overview. Its snapshot is assembled by `InstantDashboard`, and its page-specific presentation belongs in `frontend/instant.css` and `frontend/js/instant_dashboard.js`.
+- Authenticated pages without a specialist page design use the shared Financial Pulse layer in `frontend/site_system.css`, with semantic styling hooks added by `frontend/js/site_system.js`. Landing, Instant, Projects, Transactions, Budgets, and Yearly pages retain their dedicated page-specific systems.
