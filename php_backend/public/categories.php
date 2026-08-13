@@ -74,6 +74,36 @@ try {
                     echo json_encode(['error' => $e->getMessage()]);
                 }
                 break;
+            case 'assign_tag':
+                $tagId = (int)($data['tag_id'] ?? 0);
+                $categoryId = array_key_exists('category_id', $data) && $data['category_id'] !== null
+                    ? (int)$data['category_id']
+                    : null;
+                try {
+                    $result = CategoryTag::assign($categoryId, $tagId);
+                    $destination = $categoryId === null ? 'unassigned' : 'category ' . $categoryId;
+                    Log::write("Assigned tag $tagId to $destination; updated " . $result['updated_transactions'] . ' transactions');
+                    echo json_encode($result);
+                } catch (InvalidArgumentException $e) {
+                    http_response_code(400);
+                    echo json_encode(['error' => $e->getMessage()]);
+                }
+                break;
+            case 'assign_tags':
+                $tagIds = is_array($data['tag_ids'] ?? null) ? $data['tag_ids'] : [];
+                $categoryId = array_key_exists('category_id', $data) && $data['category_id'] !== null
+                    ? (int)$data['category_id']
+                    : null;
+                try {
+                    $result = CategoryTag::assignMany($categoryId, $tagIds);
+                    $destination = $categoryId === null ? 'unassigned' : 'category ' . $categoryId;
+                    Log::write('Assigned ' . count($result['tag_ids']) . " tags to $destination; updated " . $result['updated_transactions'] . ' transactions');
+                    echo json_encode($result);
+                } catch (InvalidArgumentException $e) {
+                    http_response_code(400);
+                    echo json_encode(['error' => $e->getMessage()]);
+                }
+                break;
             default:
                 http_response_code(400);
                 echo json_encode(['error' => 'Invalid action']);
@@ -93,12 +123,13 @@ try {
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
         $segmentId = isset($data['segment_id']) ? (int)$data['segment_id'] : null;
+        $shadeIndex = isset($data['shade_index']) ? (int)$data['shade_index'] : null;
         if ($id <= 0 || $name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'ID and name required']);
             return;
         }
-        Category::update($id, $name, $description, $segmentId);
+        Category::update($id, $name, $description, $segmentId, $shadeIndex);
         Log::write("Updated category $id");
         echo json_encode(['status' => 'ok']);
     } else {

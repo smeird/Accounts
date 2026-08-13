@@ -14,26 +14,128 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="category_manager.css?v=20260813-one-click-assignments">
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="ops-body">
+<body class="ops-body transaction-page category-manager-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Create categories and assign tags to organise your transactions. A well-maintained list keeps reports clear and makes searching easier.</p>
-            <section class="cards cards-tight">
-            <form id="category-form" class="space-y-4">
-                <label class="block">Category Name<br><input type="text" id="category-name" class="border p-2 rounded w-full" data-help="Name for the category"></label>
-                <label class="block">Description<br><textarea id="category-description" class="border p-2 rounded w-full" data-help="Description for the category"></textarea></label>
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Create Category</button>
-            </form>
-            </section>
+        <main class="ops-main flex-1 min-w-0" id="categories-main">
+            <div id="category-toast" class="category-toast" role="status" aria-live="polite" hidden></div>
 
-            <section class="cards mt-6">
-                <div id="category-layout" class="flex flex-col gap-4">
-                <div id="unassigned"></div>
-                <div id="category-container" class="flex flex-col gap-4"></div>
-                </div>
+            <section class="category-workspace" aria-label="Category and tag assignments" data-no-card="true">
+                <aside class="category-rail" aria-label="Categories">
+                    <div class="category-rail-header">
+                        <div>
+                            <p class="category-eyebrow">Step 1</p>
+                            <h2>Choose a category</h2>
+                        </div>
+                        <span class="category-count" id="category-count">0</span>
+                    </div>
+
+                    <label class="category-search" for="category-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <span class="sr-only">Search categories</span>
+                        <input id="category-search" type="search" placeholder="Find a category…" autocomplete="off" data-help="Filter the category list without leaving this page">
+                    </label>
+
+                    <div id="category-list" class="category-list" aria-label="Available categories"></div>
+
+                    <form id="category-form" class="category-quick-add">
+                        <label for="category-name">New category</label>
+                        <div class="category-quick-add-row">
+                            <input id="category-name" type="text" maxlength="100" placeholder="e.g. Household" required data-help="Enter a name and add the category in one step">
+                            <button type="submit" aria-label="Add category">
+                                <i class="fas fa-plus" aria-hidden="true"></i>
+                                <span>Add</span>
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+
+                <section class="category-tag-panel" aria-label="Tag assignments">
+                    <div id="category-loading" class="category-state" role="status">
+                        <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                        <p>Loading categories and tags…</p>
+                    </div>
+
+                    <div id="category-empty" class="category-state" hidden>
+                        <i class="fas fa-folder-plus" aria-hidden="true"></i>
+                        <h2>Create your first category</h2>
+                        <p>Add a category on the left, then assign tags here without leaving the page.</p>
+                    </div>
+
+                    <div id="category-manager" hidden>
+                        <header class="category-selection-header">
+                            <div class="category-selection-copy">
+                                <p class="category-eyebrow">Step 2 · assign tags</p>
+                                <div class="category-selection-title">
+                                    <h2 id="selected-category-name">Category</h2>
+                                    <span id="selected-category-total" class="category-linked-total">0 linked</span>
+                                </div>
+                                <p id="selected-category-description" class="category-description"></p>
+                            </div>
+                            <div class="category-actions">
+                                <button id="edit-category-button" type="button" class="category-icon-button" aria-label="Edit selected category">
+                                    <i class="fas fa-pen" aria-hidden="true"></i>
+                                </button>
+                                <button id="delete-category-button" type="button" class="category-icon-button is-danger" aria-label="Delete selected category">
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </header>
+
+                        <form id="category-edit-form" class="category-edit-form" hidden>
+                            <label for="category-edit-name">Category name</label>
+                            <input id="category-edit-name" type="text" maxlength="100" required>
+                            <label for="category-edit-description">Description</label>
+                            <textarea id="category-edit-description" rows="2" maxlength="500"></textarea>
+                            <div class="category-edit-actions">
+                                <button type="submit" class="category-primary-button">Save changes</button>
+                                <button id="cancel-category-edit" type="button" class="category-secondary-button">Cancel</button>
+                            </div>
+                        </form>
+
+                        <div class="category-assignment-summary" aria-label="Assignment summary">
+                            <div>
+                                <span id="summary-linked">0</span>
+                                <small>Linked here</small>
+                            </div>
+                            <div>
+                                <span id="summary-unassigned">0</span>
+                                <small>Still unassigned</small>
+                            </div>
+                            <p>Choose <strong>Add</strong>, <strong>Move here</strong>, or <strong>Remove</strong>. Changes save immediately.</p>
+                        </div>
+
+                        <div class="category-tag-tools">
+                            <label class="category-search category-tag-search" for="tag-search">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <span class="sr-only">Search tags</span>
+                                <input id="tag-search" type="search" placeholder="Search tags or keywords…" autocomplete="off" data-help="Find a tag by name, keyword, or its current category">
+                            </label>
+                            <div class="category-filters" role="group" aria-label="Filter tags">
+                                <button type="button" data-tag-filter="unassigned">Unassigned <span id="filter-unassigned-count">0</span></button>
+                                <button type="button" data-tag-filter="all">All <span id="filter-all-count">0</span></button>
+                                <button type="button" data-tag-filter="linked">Linked here <span id="filter-linked-count">0</span></button>
+                            </div>
+                        </div>
+
+                        <div id="tag-results-summary" class="category-results-summary" aria-live="polite"></div>
+                        <div class="category-bulk-bar" aria-label="Bulk tag assignment">
+                            <label for="select-visible-tags">
+                                <input id="select-visible-tags" type="checkbox">
+                                <span>Select visible</span>
+                            </label>
+                            <span id="selected-tag-count">0 selected</span>
+                            <div class="category-bulk-actions">
+                                <button id="assign-selected-tags" type="button" class="category-primary-button" disabled>Assign selected</button>
+                                <button id="unassign-selected-tags" type="button" class="category-secondary-button" disabled>Remove links</button>
+                            </div>
+                        </div>
+                        <div id="tag-list" class="category-tag-list"></div>
+                    </div>
+                </section>
             </section>
         </main>
     </div>
@@ -43,12 +145,12 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Manage Categories',
     breadcrumb: 'Transactions / Configuration',
-    subtitle: 'Create and maintain categories used to organise transactions and reporting.'
+    subtitle: 'Choose a category once, then add, move or remove tags with a single click.'
 });
 </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
-    <script src="js/category_drag.js"></script>
+    <script src="js/category_manager.js?v=20260813-one-click-assignments"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>

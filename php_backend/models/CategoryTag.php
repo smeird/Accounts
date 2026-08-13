@@ -4,6 +4,101 @@ require_once __DIR__ . '/../Database.php';
 
 class CategoryTag {
     /**
+     * Set the one category implied by a tag, or clear the assignment with null.
+     * The mapping and existing tagged transactions are updated atomically.
+     *
+     * @return array{previous_category_id:?int,category_id:?int,updated_transactions:int}
+     */
+    public static function assign(?int $categoryId, int $tagId): array {
+        $batch = self::assignMany($categoryId, [$tagId]);
+        $assignment = $batch['assignments'][0];
+        return [
+            'previous_category_id' => $assignment['previous_category_id'],
+            'category_id' => $batch['category_id'],
+            'updated_transactions' => $batch['updated_transactions'],
+        ];
+    }
+
+    /**
+     * Assign several tags to one category in a single transaction.
+     *
+     * @return array{tag_ids:array,category_id:?int,updated_transactions:int,assignments:array}
+     */
+    public static function assignMany(?int $categoryId, array $tagIds): array {
+        $tagIds = array_values(array_unique(array_filter(array_map('intval', $tagIds), function ($tagId) {
+            return $tagId > 0;
+        })));
+        if (empty($tagIds) || ($categoryId !== null && $categoryId <= 0)) {
+            throw new InvalidArgumentException('Valid tag and category IDs are required');
+        }
+
+        $db = Database::getConnection();
+        $db->beginTransaction();
+        try {
+            if ($categoryId !== null) {
+                $categoryCheck = $db->prepare('SELECT `id` FROM `categories` WHERE `id` = :id LIMIT 1');
+                $categoryCheck->execute(['id' => $categoryId]);
+                if (!$categoryCheck->fetchColumn()) {
+                    throw new InvalidArgumentException('Category not found');
+                }
+            }
+
+            $placeholders = implode(',', array_fill(0, count($tagIds), '?'));
+            $tagCheck = $db->prepare("SELECT `id` FROM `tags` WHERE `id` IN ($placeholders)");
+            $tagCheck->execute($tagIds);
+            $existingTagIds = array_map('intval', $tagCheck->fetchAll(PDO::FETCH_COLUMN));
+            sort($existingTagIds);
+            $requestedTagIds = $tagIds;
+            sort($requestedTagIds);
+            if ($existingTagIds !== $requestedTagIds) {
+                throw new InvalidArgumentException('One or more tags were not found');
+            }
+
+            $current = $db->prepare("SELECT `tag_id`, `category_id` FROM `category_tags` WHERE `tag_id` IN ($placeholders)");
+            $current->execute($tagIds);
+            $previousByTag = [];
+            foreach ($current->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $previousByTag[(int)$row['tag_id']] = (int)$row['category_id'];
+            }
+
+            $remove = $db->prepare("DELETE FROM `category_tags` WHERE `tag_id` IN ($placeholders)");
+            $remove->execute($tagIds);
+
+            if ($categoryId !== null) {
+                $insert = $db->prepare('INSERT INTO `category_tags` (`category_id`, `tag_id`) VALUES (:category, :tag)');
+                foreach ($tagIds as $tagId) {
+                    $insert->execute(['category' => $categoryId, 'tag' => $tagId]);
+                }
+            }
+
+            $update = $db->prepare("UPDATE `transactions` SET `category_id` = ? WHERE `tag_id` IN ($placeholders)");
+            $update->execute(array_merge([$categoryId], $tagIds));
+            $updatedTransactions = $update->rowCount();
+
+            $assignments = [];
+            foreach ($tagIds as $tagId) {
+                $assignments[] = [
+                    'tag_id' => $tagId,
+                    'previous_category_id' => $previousByTag[$tagId] ?? null,
+                ];
+            }
+
+            $db->commit();
+            return [
+                'tag_ids' => $tagIds,
+                'category_id' => $categoryId,
+                'updated_transactions' => $updatedTransactions,
+                'assignments' => $assignments,
+            ];
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /**
      * Link a tag to a category, ensuring it isn't already assigned.
      */
     public static function add(int $categoryId, int $tagId): void {

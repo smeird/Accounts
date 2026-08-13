@@ -37,7 +37,7 @@ class Category {
     public static function allWithTags(): array {
         $db = Database::getConnection();
         $sql = 'SELECT c.id AS category_id, c.name AS category_name, c.description AS category_description, '
-             . 'c.segment_id AS segment_id, s.name AS segment_name, '
+             . 'c.segment_id AS segment_id, c.shade_index AS shade_index, s.name AS segment_name, '
              . 't.id AS tag_id, t.name AS tag_name '
              . 'FROM categories c '
              . 'LEFT JOIN segments s ON c.segment_id = s.id '
@@ -56,6 +56,7 @@ class Category {
                     'name' => $row['category_name'],
                     'description' => $row['category_description'],
                     'segment_id' => $row['segment_id'] !== null ? (int)$row['segment_id'] : null,
+                    'shade_index' => $row['shade_index'] !== null ? (int)$row['shade_index'] : null,
                     'segment_name' => $row['segment_name'],
                     'tags' => []
                 ];
