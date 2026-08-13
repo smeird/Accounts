@@ -123,13 +123,12 @@ try {
         $name = trim($data['name'] ?? '');
         $description = $data['description'] ?? null;
         $segmentId = isset($data['segment_id']) ? (int)$data['segment_id'] : null;
-        $shadeIndex = isset($data['shade_index']) ? (int)$data['shade_index'] : null;
         if ($id <= 0 || $name === '') {
             http_response_code(400);
             echo json_encode(['error' => 'ID and name required']);
             return;
         }
-        Category::update($id, $name, $description, $segmentId, $shadeIndex);
+        Category::update($id, $name, $description, $segmentId);
         Log::write("Updated category $id");
         echo json_encode(['status' => 'ok']);
     } else {

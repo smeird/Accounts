@@ -82,7 +82,6 @@
         <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="categories.html"><i class="fas fa-folder-open w-4 text-center text-slate-400"></i> Manage Categories</a></li>
         <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="groups.html"><i class="fas fa-layer-group w-4 text-center text-slate-400"></i> Manage Groups</a></li>
         <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="segments.html"><i class="fas fa-chart-pie w-4 text-center text-slate-400"></i> Manage Segments</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="palette.html"><i class="fas fa-palette w-4 text-center text-slate-400"></i> Colour Palette</a></li>
       </ul>
   </div>
 

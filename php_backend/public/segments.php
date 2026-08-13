@@ -80,16 +80,12 @@ try {
             $id = (int)($input['id'] ?? 0);
             $name = trim($input['name'] ?? '');
             $description = $input['description'] ?? null;
-            $hueDeg = isset($input['hue_deg']) ? (float)$input['hue_deg'] : null;
-            $baseLPct = isset($input['base_l_pct']) ? (float)$input['base_l_pct'] : null;
-            $baseC = isset($input['base_c']) ? (float)$input['base_c'] : null;
-            $locked = !empty($input['locked']);
             if ($id <= 0 || $name === '') {
                 http_response_code(400);
                 echo json_encode(['error' => 'ID and name required']);
                 break;
             }
-            Segment::update($id, $name, $description, $hueDeg, $baseLPct, $baseC, $locked);
+            Segment::update($id, $name, $description);
             Log::write("Updated segment $id");
             echo json_encode(['status' => 'ok']);
             break;
