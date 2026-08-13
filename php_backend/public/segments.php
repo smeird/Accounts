@@ -29,6 +29,36 @@ try {
                         Log::write("Removed category {$input['category_id']} from segment");
                         echo json_encode(['status' => 'ok']);
                         break;
+                    case 'assign_category':
+                        $categoryId = (int)($input['category_id'] ?? 0);
+                        $segmentId = array_key_exists('segment_id', $input) && $input['segment_id'] !== null
+                            ? (int)$input['segment_id']
+                            : null;
+                        try {
+                            $result = Segment::assignCategories($segmentId, [$categoryId]);
+                            $destination = $segmentId === null ? 'unassigned' : 'segment ' . $segmentId;
+                            Log::write("Assigned category $categoryId to $destination; updated " . $result['updated_transactions'] . ' transactions');
+                            echo json_encode($result);
+                        } catch (InvalidArgumentException $e) {
+                            http_response_code(400);
+                            echo json_encode(['error' => $e->getMessage()]);
+                        }
+                        break;
+                    case 'assign_categories':
+                        $categoryIds = is_array($input['category_ids'] ?? null) ? $input['category_ids'] : [];
+                        $segmentId = array_key_exists('segment_id', $input) && $input['segment_id'] !== null
+                            ? (int)$input['segment_id']
+                            : null;
+                        try {
+                            $result = Segment::assignCategories($segmentId, $categoryIds);
+                            $destination = $segmentId === null ? 'unassigned' : 'segment ' . $segmentId;
+                            Log::write('Assigned ' . count($result['category_ids']) . " categories to $destination; updated " . $result['updated_transactions'] . ' transactions');
+                            echo json_encode($result);
+                        } catch (InvalidArgumentException $e) {
+                            http_response_code(400);
+                            echo json_encode(['error' => $e->getMessage()]);
+                        }
+                        break;
                     default:
                         http_response_code(400);
                         echo json_encode(['error' => 'Unknown action']);
@@ -47,10 +77,19 @@ try {
             }
             break;
         case 'PUT':
-            $id = (int)$input['id'];
-            $name = $input['name'] ?? '';
+            $id = (int)($input['id'] ?? 0);
+            $name = trim($input['name'] ?? '');
             $description = $input['description'] ?? null;
-            Segment::update($id, $name, $description);
+            $hueDeg = isset($input['hue_deg']) ? (float)$input['hue_deg'] : null;
+            $baseLPct = isset($input['base_l_pct']) ? (float)$input['base_l_pct'] : null;
+            $baseC = isset($input['base_c']) ? (float)$input['base_c'] : null;
+            $locked = !empty($input['locked']);
+            if ($id <= 0 || $name === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'ID and name required']);
+                break;
+            }
+            Segment::update($id, $name, $description, $hueDeg, $baseLPct, $baseC, $locked);
             Log::write("Updated segment $id");
             echo json_encode(['status' => 'ok']);
             break;
@@ -67,5 +106,5 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     Log::write('Segment error: ' . $e->getMessage(), 'ERROR');
-    echo json_encode([]);
+    echo json_encode(['error' => 'Server error']);
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Page for creating segments and assigning categories -->
+<!-- One-screen workspace for creating segments and assigning categories -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,25 +14,128 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="segment_manager.css?v=20260813-one-click-assignments">
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="ops-body">
+<body class="ops-body transaction-page segment-manager-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Create segments to group categories for broader analysis. Drag categories between segments to adjust their grouping.</p>
-            <section class="cards cards-tight">
-            <form id="segment-form" class="space-y-4">
-                <label class="block">Segment Name<br><input type="text" id="segment-name" class="border p-2 rounded w-full" data-help="Name for the segment"></label>
-                <label class="block">Description<br><textarea id="segment-description" class="border p-2 rounded w-full" data-help="Description for the segment"></textarea></label>
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Create Segment</button>
-            </form>
-            </section>
-            <section class="cards mt-6">
-                <div id="segment-layout" class="flex items-start gap-4">
-                <div id="unassigned" class="flex-shrink-0"></div>
-                <div id="segment-container" class="flex-1 flex gap-4 overflow-x-auto items-start"></div>
-                </div>
+        <main class="ops-main flex-1 min-w-0" id="segments-main">
+            <div id="segment-toast" class="segment-toast" role="status" aria-live="polite" hidden></div>
+
+            <section class="segment-workspace" aria-label="Segment and category assignments" data-no-card="true">
+                <aside class="segment-rail" aria-label="Segments">
+                    <div class="segment-rail-header">
+                        <div>
+                            <p class="segment-eyebrow">Step 1</p>
+                            <h2>Choose a segment</h2>
+                        </div>
+                        <span class="segment-count" id="segment-count">0</span>
+                    </div>
+
+                    <label class="segment-search" for="segment-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <span class="sr-only">Search segments</span>
+                        <input id="segment-search" type="search" placeholder="Find a segment…" autocomplete="off" data-help="Filter the segment list without leaving this page">
+                    </label>
+
+                    <div id="segment-list" class="segment-list" aria-label="Available segments"></div>
+
+                    <form id="segment-form" class="segment-quick-add">
+                        <label for="segment-name">New segment</label>
+                        <div class="segment-quick-add-row">
+                            <input id="segment-name" type="text" maxlength="100" placeholder="e.g. Essentials" required data-help="Enter a name and add the segment in one step">
+                            <button type="submit" aria-label="Add segment">
+                                <i class="fas fa-plus" aria-hidden="true"></i>
+                                <span>Add</span>
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+
+                <section class="segment-category-panel" aria-label="Category assignments">
+                    <div id="segment-loading" class="segment-state" role="status">
+                        <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                        <p>Loading segments and categories…</p>
+                    </div>
+
+                    <div id="segment-empty" class="segment-state" hidden>
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <h2>Create your first segment</h2>
+                        <p>Add a segment on the left, then assign categories here without leaving the page.</p>
+                    </div>
+
+                    <div id="segment-manager" hidden>
+                        <header class="segment-selection-header">
+                            <div class="segment-selection-copy">
+                                <p class="segment-eyebrow">Step 2 · assign categories</p>
+                                <div class="segment-selection-title">
+                                    <h2 id="selected-segment-name">Segment</h2>
+                                    <span id="selected-segment-total" class="segment-linked-total">0 linked</span>
+                                </div>
+                                <p id="selected-segment-description" class="segment-description"></p>
+                            </div>
+                            <div class="segment-actions">
+                                <button id="edit-segment-button" type="button" class="segment-icon-button" aria-label="Edit selected segment">
+                                    <i class="fas fa-pen" aria-hidden="true"></i>
+                                </button>
+                                <button id="delete-segment-button" type="button" class="segment-icon-button is-danger" aria-label="Delete selected segment">
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </header>
+
+                        <form id="segment-edit-form" class="segment-edit-form" hidden>
+                            <label for="segment-edit-name">Segment name</label>
+                            <input id="segment-edit-name" type="text" maxlength="100" required>
+                            <label for="segment-edit-description">Description</label>
+                            <textarea id="segment-edit-description" rows="2" maxlength="500"></textarea>
+                            <div class="segment-edit-actions">
+                                <button type="submit" class="segment-primary-button">Save changes</button>
+                                <button id="cancel-segment-edit" type="button" class="segment-secondary-button">Cancel</button>
+                            </div>
+                        </form>
+
+                        <div class="segment-assignment-summary" aria-label="Assignment summary">
+                            <div>
+                                <span id="summary-linked">0</span>
+                                <small>Linked here</small>
+                            </div>
+                            <div>
+                                <span id="summary-unassigned">0</span>
+                                <small>Still unassigned</small>
+                            </div>
+                            <p>Choose <strong>Add</strong>, <strong>Move here</strong>, or <strong>Remove</strong>. Changes save immediately.</p>
+                        </div>
+
+                        <div class="segment-category-tools">
+                            <label class="segment-search segment-category-search" for="category-search">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <span class="sr-only">Search categories</span>
+                                <input id="category-search" type="search" placeholder="Search categories…" autocomplete="off" data-help="Find a category by name, description, or its current segment">
+                            </label>
+                            <div class="segment-filters" role="group" aria-label="Filter categories">
+                                <button type="button" data-category-filter="unassigned">Unassigned <span id="filter-unassigned-count">0</span></button>
+                                <button type="button" data-category-filter="all">All <span id="filter-all-count">0</span></button>
+                                <button type="button" data-category-filter="linked">Linked here <span id="filter-linked-count">0</span></button>
+                            </div>
+                        </div>
+
+                        <div id="category-results-summary" class="segment-results-summary" aria-live="polite"></div>
+                        <div class="segment-bulk-bar" aria-label="Bulk category assignment">
+                            <label for="select-visible-categories">
+                                <input id="select-visible-categories" type="checkbox">
+                                <span>Select visible</span>
+                            </label>
+                            <span id="selected-category-count">0 selected</span>
+                            <div class="segment-bulk-actions">
+                                <button id="assign-selected-categories" type="button" class="segment-primary-button" disabled>Assign selected</button>
+                                <button id="unassign-selected-categories" type="button" class="segment-secondary-button" disabled>Remove links</button>
+                            </div>
+                        </div>
+                        <div id="category-list" class="segment-category-list"></div>
+                    </div>
+                </section>
             </section>
         </main>
     </div>
@@ -42,12 +145,12 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Manage Segments',
     breadcrumb: 'Transactions / Configuration',
-    subtitle: 'Maintain spending segments used for deeper analysis and reporting.'
+    subtitle: 'Choose a segment once, then add, move or remove categories with a single click.'
 });
 </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
-    <script src="js/segment_drag.js"></script>
+    <script src="js/segment_manager.js?v=20260813-one-click-assignments"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>
