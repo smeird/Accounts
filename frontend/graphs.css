@@ -15,7 +15,8 @@
 .graphs-page .ops-main {
     max-width: 112rem;
     margin: 0 auto;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .graphs-toolbar {
