@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../php_backend/models/User.php';
 require_once __DIR__ . '/../php_backend/models/Tag.php';
 require_once __DIR__ . '/../php_backend/models/Category.php';
+require_once __DIR__ . '/../php_backend/models/CategoryTag.php';
 require_once __DIR__ . '/../php_backend/models/Transaction.php';
 require_once __DIR__ . '/../php_backend/models/Segment.php';
 require_once __DIR__ . '/../php_backend/models/TransactionGroup.php';
@@ -189,6 +190,32 @@ assertEqual('Essentials', $cats[0]['name'] ?? null, 'Category retrieved with tag
 assertEqual($tagId, $cats[0]['tags'][0]['id'] ?? null, 'Category has associated tag');
 assertEqual($segmentId, $cats[0]['segment_id'] ?? null, 'Category segment id stored');
 assertEqual('Living', $cats[0]['segment_name'] ?? null, 'Category segment name retrieved');
+
+$assignmentTransactionId = Transaction::create(1, '2024-03-05', -45.0, 'Fuel assignment test', null, null, $tag2);
+$assigned = CategoryTag::assign($catId, $tag2);
+assertEqual($catId, $assigned['category_id'] ?? null, 'One-click assignment links a tag to a category');
+$assignedCategory = $db->query("SELECT category_id FROM transactions WHERE id = $assignmentTransactionId")->fetchColumn();
+assertEqual($catId, (int)$assignedCategory, 'One-click assignment updates existing tagged transactions');
+
+$moveCategoryId = Category::create('Travel', 'Travel spend');
+$moved = CategoryTag::assign($moveCategoryId, $tag2);
+assertEqual($catId, $moved['previous_category_id'] ?? null, 'One-click assignment reports the previous category');
+assertEqual($moveCategoryId, CategoryTag::getCategoryId($tag2), 'One-click assignment moves a tag atomically');
+$movedCategory = $db->query("SELECT category_id FROM transactions WHERE id = $assignmentTransactionId")->fetchColumn();
+assertEqual($moveCategoryId, (int)$movedCategory, 'Moving a tag updates existing transaction categories');
+
+$unassigned = CategoryTag::assign(null, $tag2);
+assertEqual(null, $unassigned['category_id'] ?? null, 'One-click assignment can leave a tag unassigned');
+assertEqual(null, CategoryTag::getCategoryId($tag2), 'Unassigning removes the category-tag mapping');
+$clearedCategory = $db->query("SELECT category_id FROM transactions WHERE id = $assignmentTransactionId")->fetchColumn();
+assertEqual(null, $clearedCategory, 'Unassigning clears the category on existing tagged transactions');
+$bulkAssigned = CategoryTag::assignMany($catId, [$tag2, $streamingTagId]);
+assertEqual(2, count($bulkAssigned['tag_ids'] ?? []), 'Bulk category assignment saves several tags together');
+assertEqual($catId, CategoryTag::getCategoryId($tag2), 'Bulk category assignment links the first selected tag');
+assertEqual($catId, CategoryTag::getCategoryId($streamingTagId), 'Bulk category assignment links the second selected tag');
+CategoryTag::assignMany(null, [$tag2, $streamingTagId]);
+$db->exec("DELETE FROM transactions WHERE id = $assignmentTransactionId");
+Category::delete($moveCategoryId);
 
 Category::update($catId, 'Essentials Updated', 'Updated desc', $segmentId);
 $cats = Category::allWithTags();
