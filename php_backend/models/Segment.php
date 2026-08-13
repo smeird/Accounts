@@ -92,9 +92,79 @@ class Segment {
      * Assign a category to a segment. Pass null to remove the category from any segment.
      */
     public static function assignCategory(?int $segmentId, int $categoryId): void {
+        self::assignCategories($segmentId, [$categoryId]);
+    }
+
+    /**
+     * Assign several categories to one segment in a single transaction.
+     * Existing transactions using those categories receive the same segment.
+     *
+     * @return array{category_ids:array,segment_id:?int,updated_transactions:int,assignments:array}
+     */
+    public static function assignCategories(?int $segmentId, array $categoryIds): array {
+        $categoryIds = array_values(array_unique(array_filter(array_map('intval', $categoryIds), function ($categoryId) {
+            return $categoryId > 0;
+        })));
+        if (empty($categoryIds) || ($segmentId !== null && $segmentId <= 0)) {
+            throw new InvalidArgumentException('Valid category and segment IDs are required');
+        }
+
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE categories SET segment_id = :segment WHERE id = :category');
-        $stmt->execute(['segment' => $segmentId, 'category' => $categoryId]);
+        $db->beginTransaction();
+        try {
+            if ($segmentId !== null) {
+                $segmentCheck = $db->prepare('SELECT `id` FROM `segments` WHERE `id` = :id LIMIT 1');
+                $segmentCheck->execute(['id' => $segmentId]);
+                if (!$segmentCheck->fetchColumn()) {
+                    throw new InvalidArgumentException('Segment not found');
+                }
+            }
+
+            $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
+            $categoryCheck = $db->prepare("SELECT `id`, `segment_id` FROM `categories` WHERE `id` IN ($placeholders)");
+            $categoryCheck->execute($categoryIds);
+            $previousByCategory = [];
+            $existingCategoryIds = [];
+            foreach ($categoryCheck->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $categoryId = (int)$row['id'];
+                $existingCategoryIds[] = $categoryId;
+                $previousByCategory[$categoryId] = $row['segment_id'] !== null ? (int)$row['segment_id'] : null;
+            }
+            sort($existingCategoryIds);
+            $requestedCategoryIds = $categoryIds;
+            sort($requestedCategoryIds);
+            if ($existingCategoryIds !== $requestedCategoryIds) {
+                throw new InvalidArgumentException('One or more categories were not found');
+            }
+
+            $assign = $db->prepare("UPDATE `categories` SET `segment_id` = ? WHERE `id` IN ($placeholders)");
+            $assign->execute(array_merge([$segmentId], $categoryIds));
+
+            $updateTransactions = $db->prepare("UPDATE `transactions` SET `segment_id` = ? WHERE `category_id` IN ($placeholders)");
+            $updateTransactions->execute(array_merge([$segmentId], $categoryIds));
+            $updatedTransactions = $updateTransactions->rowCount();
+
+            $assignments = [];
+            foreach ($categoryIds as $categoryId) {
+                $assignments[] = [
+                    'category_id' => $categoryId,
+                    'previous_segment_id' => $previousByCategory[$categoryId],
+                ];
+            }
+
+            $db->commit();
+            return [
+                'category_ids' => $categoryIds,
+                'segment_id' => $segmentId,
+                'updated_transactions' => $updatedTransactions,
+                'assignments' => $assignments,
+            ];
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**

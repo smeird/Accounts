@@ -241,22 +241,46 @@ assertEqual(0, $groups[0]['active'], 'Group updated to inactive returns 0');
 $db->exec('DELETE FROM segments');
 $catId = Category::create('Food', 'Groceries');
 $segId = Segment::create('Living', 'Living costs');
-Segment::assignCategory($segId, $catId);
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id) VALUES (1, '2024-07-01', -20, 'Grocery run', $catId)");
+$segmentAssignment = Segment::assignCategories($segId, [$catId]);
+assertEqual(null, $segmentAssignment['assignments'][0]['previous_segment_id'] ?? null, 'One-click segment assignment reports an unassigned category');
+assertEqual(1, $segmentAssignment['updated_transactions'] ?? 0, 'One-click segment assignment updates existing categorised transactions');
 $segs = Segment::allWithCategories();
 assertEqual('Living', $segs[0]['name'] ?? null, 'Segment retrieved with category');
 assertEqual($catId, $segs[0]['categories'][0]['id'] ?? null, 'Segment linked to category');
+$txSegment = $db->query("SELECT segment_id FROM transactions WHERE description = 'Grocery run'")->fetchColumn();
+assertEqual($segId, (int)$txSegment, 'One-click segment assignment propagates to existing transactions');
+
+$otherSegId = Segment::create('Lifestyle', 'Optional spending');
+$segmentMove = Segment::assignCategories($otherSegId, [$catId]);
+assertEqual($segId, $segmentMove['assignments'][0]['previous_segment_id'] ?? null, 'Moving a category reports its previous segment');
+$txSegment = $db->query("SELECT segment_id FROM transactions WHERE description = 'Grocery run'")->fetchColumn();
+assertEqual($otherSegId, (int)$txSegment, 'Moving a category updates existing transaction segments atomically');
+
+Segment::assignCategories(null, [$catId]);
+$catSegment = $db->query("SELECT segment_id FROM categories WHERE id = $catId")->fetchColumn();
+assertEqual(null, $catSegment, 'Removing a category clears its segment link');
+$txSegment = $db->query("SELECT segment_id FROM transactions WHERE description = 'Grocery run'")->fetchColumn();
+assertEqual(null, $txSegment, 'Removing a category clears existing transaction segments');
+Segment::delete($otherSegId);
+Segment::assignCategories($segId, [$catId]);
 
 Segment::update($segId, 'Living Updated', 'Updated desc');
 $segs = Segment::allWithCategories();
 assertEqual('Living Updated', $segs[0]['name'] ?? null, 'Segment updated');
 
-$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id) VALUES (1, '2024-07-01', -20, 'Grocery run', $catId)");
 $filtered = Transaction::filter($catId);
 assertEqual(1, count($filtered), 'Transaction::filter returns one result for category');
 assertEqual('Grocery run', $filtered[0]['description'] ?? null, 'Filtered transaction matches description');
 
 $catId2 = Category::create('Bills', 'Utilities');
 $db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id) VALUES (1, '2024-07-02', -30, 'Electric', $catId2)");
+$bulkSegmentAssignment = Segment::assignCategories($segId, [$catId, $catId2]);
+assertEqual(2, count($bulkSegmentAssignment['category_ids'] ?? []), 'Bulk segment assignment saves several categories together');
+$bulkSegmentCount = $db->query("SELECT COUNT(*) FROM categories WHERE id IN ($catId, $catId2) AND segment_id = $segId")->fetchColumn();
+assertEqual(2, (int)$bulkSegmentCount, 'Bulk segment assignment links every selected category');
+$bulkTransactionCount = $db->query("SELECT COUNT(*) FROM transactions WHERE category_id IN ($catId, $catId2) AND segment_id = $segId")->fetchColumn();
+assertEqual(2, (int)$bulkTransactionCount, 'Bulk segment assignment propagates to matching transactions');
 $multi = Transaction::filter([$catId, $catId2]);
 assertEqual(2, count($multi), 'Transaction::filter supports multiple categories');
 
