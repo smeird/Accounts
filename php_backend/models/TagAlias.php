@@ -8,7 +8,7 @@ class TagAlias {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.active, ta.created_at, ta.updated_at '
+        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.active '
              . 'FROM tag_aliases ta '
              . 'INNER JOIN tags t ON t.id = ta.tag_id '
              . 'ORDER BY ta.alias ASC';

@@ -12,9 +12,10 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="tag_aliases.css?v=20260813-lazy-tag-picker">
     <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
 </head>
-<body class="ops-body">
+<body class="ops-body tag-alias-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
@@ -23,11 +24,32 @@
             <section class="cards cards-tight">
                 <form id="tag-alias-form" class="space-y-4">
                     <label class="block">Alias
-                        <input type="text" id="alias" class="border p-2 rounded w-full" data-help="Descriptor to match in transaction descriptions, for example Tesco.">
+                        <input type="text" id="alias" class="border p-2 rounded w-full" required data-help="Descriptor to match in transaction descriptions, for example Tesco.">
                     </label>
-                    <label class="block">Canonical Tag
-                        <select id="tag_id" class="border p-2 rounded w-full" data-help="Tag that should be applied when this alias matches."></select>
-                    </label>
+                    <div class="block">
+                        <label for="tag-search">Canonical Tag</label>
+                        <div id="tag-picker" class="tag-picker">
+                            <div class="tag-picker-field">
+                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                                <input
+                                    type="search"
+                                    id="tag-search"
+                                    class="tag-picker-input"
+                                    placeholder="Search canonical tags…"
+                                    autocomplete="off"
+                                    role="combobox"
+                                    aria-autocomplete="list"
+                                    aria-expanded="false"
+                                    aria-controls="tag-results"
+                                    aria-describedby="tag-search-status"
+                                    data-help="Type at least two characters, then choose the canonical tag that should receive this alias."
+                                >
+                            </div>
+                            <input type="hidden" id="tag_id" value="">
+                            <div id="tag-search-status" class="tag-picker-status" role="status" aria-live="polite">Type at least two characters to find a canonical tag.</div>
+                            <div id="tag-results" class="tag-picker-results" role="listbox" aria-label="Canonical tag matches" hidden></div>
+                        </div>
+                    </div>
                     <label class="block">Match Type
                         <select id="match_type" class="border p-2 rounded w-full" data-help="Contains matches text fragments; Exact only matches full descriptor.">
                             <option value="contains">Contains</option>

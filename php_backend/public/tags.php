@@ -78,7 +78,18 @@ if ($method === 'POST') {
     }
 } elseif ($method === 'GET') {
     try {
-        if (isset($_GET['unassigned'])) {
+        if (isset($_GET['options'])) {
+            $queryValue = $_GET['q'] ?? '';
+            $limitValue = $_GET['limit'] ?? 20;
+            $query = is_string($queryValue) ? trim($queryValue) : '';
+            $requestedLimit = is_scalar($limitValue) ? (int)$limitValue : 20;
+            $limit = max(1, min(50, $requestedLimit));
+            $matches = Tag::searchOptions($query, $limit + 1);
+            echo json_encode([
+                'tags' => array_slice($matches, 0, $limit),
+                'has_more' => count($matches) > $limit,
+            ]);
+        } elseif (isset($_GET['unassigned'])) {
             echo json_encode(Tag::unassigned());
         } else {
             echo json_encode(Tag::all());

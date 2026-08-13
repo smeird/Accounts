@@ -76,6 +76,34 @@ class Tag {
     }
 
     /**
+     * Return compact tag choices for autocomplete controls.
+     *
+     * Results beginning with the query are ranked ahead of other contains
+     * matches. The bounded response avoids sending every tag to controls that
+     * only need a short list of relevant choices.
+     */
+    public static function searchOptions(string $query = '', int $limit = 20): array {
+        $db = Database::getConnection();
+        $query = trim($query);
+        $limit = max(1, min(100, $limit));
+        $escaped = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query);
+        $queryEmpty = $query === '' ? 1 : 0;
+
+        $sql = 'SELECT `id`, `name` FROM `tags` '
+             . 'WHERE (:query_empty = 1 OR `name` LIKE :contains ESCAPE \'!\') '
+             . 'ORDER BY CASE WHEN :prefix_empty = 0 AND `name` LIKE :prefix ESCAPE \'!\' THEN 0 ELSE 1 END, '
+             . '`name` ASC, `id` ASC LIMIT :result_limit';
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':query_empty', $queryEmpty, PDO::PARAM_INT);
+        $stmt->bindValue(':contains', '%' . $escaped . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':prefix_empty', $queryEmpty, PDO::PARAM_INT);
+        $stmt->bindValue(':prefix', $escaped . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':result_limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Retrieve tags that are not assigned to any category.
      */
     public static function unassigned(): array {
