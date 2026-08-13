@@ -117,6 +117,7 @@ window.renderPageHeader(pageMain, {
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="js/report_pdf.js?v=20260812-professional-report"></script>
     <script>
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
@@ -671,7 +672,7 @@ window.renderPageHeader(pageMain, {
         if (typeof showMessage === 'function') showMessage('Saved report deleted');
     });
 
-    document.getElementById('download-pdf').addEventListener('click', async function() {
+    async function downloadLegacyPdf() {
 
         if (!window.reportTable) {
             await runReport();
@@ -977,6 +978,54 @@ window.renderPageHeader(pageMain, {
         doc.save(filename);
         showMessage('PDF downloaded');
 
+    }
+
+    document.getElementById('download-pdf').addEventListener('click', async function() {
+        const button = this;
+        const buttonLabel = button.querySelector('span');
+        if (!window.reportTable) {
+            await runReport();
+            if (!window.reportTable) return;
+        }
+        button.disabled = true;
+        if (buttonLabel) buttonLabel.textContent = 'Preparing PDF...';
+        try {
+            if (!window.ReportPdfExport) {
+                await downloadLegacyPdf();
+                return;
+            }
+            await window.ReportPdfExport.download({
+                siteTitle:document.querySelector('#site-title')?.textContent?.trim() || 'Accounts',
+                reportName:currentReportName,
+                reportDescription:currentReportDesc,
+                reportId:document.getElementById('saved-reports').value,
+                data:window.reportTable.getData(),
+                filters:{
+                    start:document.getElementById('start').value,
+                    end:document.getElementById('end').value,
+                    categories:getSelectedLabels(window.catChoices),
+                    tags:getSelectedLabels(window.tagChoices),
+                    groups:getSelectedLabels(window.groupChoices),
+                    segments:getSelectedLabels(window.segmentChoices),
+                    text:document.getElementById('text').value.trim(),
+                    memo:document.getElementById('memo').value.trim()
+                },
+                charts:{
+                    movement:document.getElementById('chart'),
+                    category:document.getElementById('category-chart'),
+                    segment:document.getElementById('segment-chart'),
+                    tag:document.getElementById('tag-chart')
+                }
+            });
+            showMessage('Professional PDF downloaded');
+        } catch (error) {
+            const errorBox = document.getElementById('report-error');
+            errorBox.textContent = 'The PDF could not be generated. Please try again.';
+            errorBox.hidden = false;
+        } finally {
+            button.disabled = false;
+            if (buttonLabel) buttonLabel.textContent = 'Download PDF';
+        }
     });
 
     setReportEmpty(document.getElementById('results-grid'), 'Build your first report', 'Choose filters or ask in plain English, then run the report to see its evidence.', 'fa-file-lines');
