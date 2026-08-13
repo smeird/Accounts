@@ -390,8 +390,7 @@
                     id: Number(category.id),
                     name: name,
                     description: editDescription.value.trim(),
-                    segment_id: category.segment_id,
-                    shade_index: category.shade_index
+                    segment_id: category.segment_id
                 })
             });
             editForm.hidden = true;

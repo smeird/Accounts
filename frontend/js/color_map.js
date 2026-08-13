@@ -1,18 +1,18 @@
 const chartColors = [
     '#4F46E5', // indigo-600
-    '#4338CA', // indigo-700
-    '#3730A3', // indigo-800
-    '#6366F1', // indigo-500
-    '#818CF8', // indigo-400
-    '#A5B4FC', // indigo-300
-    '#C7D2FE', // indigo-200
-    '#E0E7FF'  // indigo-100
+    '#0F766E', // teal-700
+    '#D97706', // amber-600
+    '#E11D48', // rose-600
+    '#0284C7', // sky-600
+    '#7C3AED', // violet-600
+    '#059669', // emerald-600
+    '#EA580C', // orange-600
+    '#C026D3', // fuchsia-600
+    '#475569'  // slate-600
 ];
 const segmentColorMap = {};
 const categoryColorMap = {};
-const categorySegmentMap = {};
 const tagColorMap = {};
-let nextSegmentIndex = 0;
 
 function hashString(str) {
     let h = 0;
@@ -23,34 +23,9 @@ function hashString(str) {
     return Math.abs(h);
 }
 
-// Load palette CSS and data synchronously so colours are available immediately
-try {
-    const cssReq = new XMLHttpRequest();
-    cssReq.open('GET', '../php_backend/public/palette_css.php', false);
-    cssReq.send(null);
-    if (cssReq.status === 200) {
-        const style = document.createElement('style');
-        style.textContent = cssReq.responseText;
-        document.head.appendChild(style);
-    }
-    const req = new XMLHttpRequest();
-    req.open('GET', '../php_backend/public/palette.php', false);
-    req.send(null);
-    if (req.status === 200) {
-        const data = JSON.parse(req.responseText);
-        const styles = getComputedStyle(document.documentElement);
-        (data.segments || []).forEach(seg => {
-            const base = styles.getPropertyValue(`--segment-${seg.id}-base`).trim();
-            if (base) {
-                segmentColorMap[seg.name] = base;
-            }
-            (seg.categories || []).forEach(cat => {
-                categorySegmentMap[cat.name] = seg.name;
-            });
-        });
-    }
-} catch (e) {
-    console.error('Failed to load colour palette', e);
+function colourForKey(type, name) {
+    const key = `${type}:${name || ''}`;
+    return chartColors[hashString(key) % chartColors.length];
 }
 
 function getChartTheme() {
@@ -156,24 +131,25 @@ document.addEventListener('theme-changed', () => {
 function getSegmentColor(name) {
     if (!name) name = 'Not Segmented';
     if (!segmentColorMap[name]) {
-        segmentColorMap[name] = chartColors[nextSegmentIndex % chartColors.length];
-        nextSegmentIndex++;
+        segmentColorMap[name] = colourForKey('segment', name);
     }
     return segmentColorMap[name];
 }
 
 function getCategoryColor(name, segmentName = null) {
-    if (categoryColorMap[name]) return categoryColorMap[name];
-    const seg = segmentName || categorySegmentMap[name];
-    if (seg) {
-        const base = getSegmentColor(seg);
+    if (!name) name = 'Unspecified';
+    const key = `${segmentName || ''}|${name}`;
+    if (categoryColorMap[key]) return categoryColorMap[key];
+    if (segmentName) {
+        const base = getSegmentColor(segmentName);
         const hash = hashString(name);
-        const shift = ((hash % 40) - 20) / 100; // -0.20..0.19
+        const shift = ((hash % 31) - 15) / 100; // -0.15..0.15
         const color = Highcharts.color(base).brighten(shift).get();
-        categoryColorMap[name] = color;
+        categoryColorMap[key] = color;
         return color;
     }
-    return chartColors[0];
+    categoryColorMap[key] = colourForKey('category', name);
+    return categoryColorMap[key];
 }
 
 function getTagColor(name, categoryName, categoryColor = null) {
@@ -181,7 +157,7 @@ function getTagColor(name, categoryName, categoryColor = null) {
     if (tagColorMap[key]) return tagColorMap[key];
     const base = categoryColor || getCategoryColor(categoryName);
     const hash = hashString(key);
-    const shift = ((hash % 40) - 20) / 100; // -0.20..0.19
+    const shift = ((hash % 25) - 12) / 100; // -0.12..0.12
     const color = Highcharts.color(base).brighten(shift).get();
     tagColorMap[key] = color;
     return color;

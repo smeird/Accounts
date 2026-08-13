@@ -392,11 +392,7 @@
                 body: JSON.stringify({
                     id: Number(segment.id),
                     name: name,
-                    description: editDescription.value.trim(),
-                    hue_deg: segment.hue_deg,
-                    base_l_pct: segment.base_l_pct,
-                    base_c: segment.base_c,
-                    locked: segment.locked
+                    description: editDescription.value.trim()
                 })
             });
             editForm.hidden = true;

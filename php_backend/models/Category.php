@@ -6,29 +6,20 @@ class Category {
     /**
      * Insert a new category and return its ID.
      */
-    public static function create(string $name, ?string $description = null, ?int $segmentId = null, ?int $shadeIndex = null): int {
+    public static function create(string $name, ?string $description = null, ?int $segmentId = null): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO categories (name, description, segment_id, shade_index) VALUES (:name, :description, :segment_id, :shade_index)');
-        $stmt->execute(['name' => $name, 'description' => $description, 'segment_id' => $segmentId, 'shade_index' => $shadeIndex]);
+        $stmt = $db->prepare('INSERT INTO categories (name, description, segment_id) VALUES (:name, :description, :segment_id)');
+        $stmt->execute(['name' => $name, 'description' => $description, 'segment_id' => $segmentId]);
         return (int)$db->lastInsertId();
     }
 
     /**
      * Update the name, description and segment of an existing category.
      */
-    public static function update(int $id, string $name, ?string $description = null, ?int $segmentId = null, ?int $shadeIndex = null): void {
+    public static function update(int $id, string $name, ?string $description = null, ?int $segmentId = null): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE categories SET name = :name, description = :description, segment_id = :segment_id, shade_index = :shade_index WHERE id = :id');
-        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description, 'segment_id' => $segmentId, 'shade_index' => $shadeIndex]);
-    }
-
-    /**
-     * Update only the shade index for a category.
-     */
-    public static function setShadeIndex(int $id, ?int $shadeIndex): void {
-        $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE categories SET shade_index = :shade_index WHERE id = :id');
-        $stmt->execute(['id' => $id, 'shade_index' => $shadeIndex]);
+        $stmt = $db->prepare('UPDATE categories SET name = :name, description = :description, segment_id = :segment_id WHERE id = :id');
+        $stmt->execute(['id' => $id, 'name' => $name, 'description' => $description, 'segment_id' => $segmentId]);
     }
 
     /**
@@ -37,7 +28,7 @@ class Category {
     public static function allWithTags(): array {
         $db = Database::getConnection();
         $sql = 'SELECT c.id AS category_id, c.name AS category_name, c.description AS category_description, '
-             . 'c.segment_id AS segment_id, c.shade_index AS shade_index, s.name AS segment_name, '
+             . 'c.segment_id AS segment_id, s.name AS segment_name, '
              . 't.id AS tag_id, t.name AS tag_name '
              . 'FROM categories c '
              . 'LEFT JOIN segments s ON c.segment_id = s.id '
@@ -56,7 +47,6 @@ class Category {
                     'name' => $row['category_name'],
                     'description' => $row['category_description'],
                     'segment_id' => $row['segment_id'] !== null ? (int)$row['segment_id'] : null,
-                    'shade_index' => $row['shade_index'] !== null ? (int)$row['shade_index'] : null,
                     'segment_name' => $row['segment_name'],
                     'tags' => []
                 ];
