@@ -4,614 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Graphs</title>
+    <title>Financial Picture</title>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="graphs.css?v=20260813-financial-picture">
 </head>
-<body class="ops-body">
+<body class="ops-body graphs-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-4">
-<p class="mb-4">Explore a collection of charts that illustrate your income and spending patterns. Choose a year to see how your finances evolve and compare categories or tags visually.</p>
-            <label for="year-select" class="block">Year:
-                <select id="year-select" class="border p-2 rounded w-full"></select>
-            </label>
+        <main class="ops-main flex-1 min-w-0" id="graphs-main">
+            <section class="graphs-toolbar cards cards-solid" aria-label="Graph controls">
+                <div>
+                    <p class="graphs-eyebrow">Selected reporting period</p>
+                    <p class="graphs-scope" id="graphs-scope">Loading your financial picture…</p>
+                    <p class="graphs-scope-note" id="graphs-scope-note">Confirmed account transfers are excluded from the analysis.</p>
+                </div>
+                <label class="graphs-year-control" for="year-select">
+                    <span>Financial year</span>
+                    <select id="year-select" data-help="Choose the calendar year used by every chart on this page" disabled></select>
+                </label>
+            </section>
 
-            <div class="mb-4 border-b" id="graph-tab-bar">
-                <nav class="flex flex-wrap gap-2" id="graph-tabs">
-                    <button class="tab-button px-3 py-2 rounded bg-indigo-100 text-indigo-700" data-target="income-sunburst">Income Sunburst</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="outgoing-sunburst">Outgoing Sunburst</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="monthly-chart-container">Monthly Spend</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="cumulative-chart-container">Cumulative Spend</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="pie-chart-container">Category Pie</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="income-tag-container">Income Tags</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="outgoing-tag-container">Outgoing Tags</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="scatter-chart-container">Scatter</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="stream-chart-container" aria-label="Cumulative category stream graph">Category Stream (Cumulative)</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="area-range-chart-container" aria-label="Spending range chart">Spend Range</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="network-graph-container">Segment Network</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="treegraph-container">Segment Tree</button>
-                    <button class="tab-button px-3 py-2 rounded" data-target="segment-section">Segments</button>
-                </nav>
+            <div id="graphs-status" class="graphs-status" role="status" aria-live="polite">
+                <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                <span>Building the financial picture…</span>
             </div>
 
-            <div id="income-sunburst" class="tab-content cards"><div id="income-sunburst-chart" class="h-[80vh]" data-chart-desc="Sunburst chart of income by segment, category and tag."></div></div>
-            <div id="outgoing-sunburst" class="tab-content cards hidden"><div id="outgoing-sunburst-chart" class="h-[80vh]" data-chart-desc="Sunburst chart of outgoings by segment, category and tag."></div></div>
-            <div id="monthly-chart-container" class="tab-content cards hidden"><div id="monthly-chart" class="h-[80vh]" data-chart-desc="Column chart of monthly spending totals."></div></div>
-            <div id="cumulative-chart-container" class="tab-content cards hidden"><div id="cumulative-chart" class="h-[80vh]" data-chart-desc="Line chart of cumulative spending through the year."></div></div>
-            <div id="pie-chart-container" class="tab-content cards hidden"><div id="pie-chart" class="h-[80vh]" data-chart-desc="Pie chart of spending by category."></div></div>
-            <div id="income-tag-container" class="tab-content cards hidden"><div id="income-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of income totals by tag."></div></div>
-            <div id="outgoing-tag-container" class="tab-content cards hidden"><div id="outgoing-tag-chart" class="h-[80vh]" data-chart-desc="Column chart of outgoing totals by tag."></div></div>
-            <div id="scatter-chart-container" class="tab-content cards hidden"><div id="scatter-chart" class="h-[80vh]" data-chart-desc="Bubble chart comparing monthly income and outgoings."></div></div>
-            <div id="stream-chart-container" class="tab-content cards hidden"><div id="stream-chart" class="h-[80vh]" data-chart-desc="Stream graph of category spending over the year."></div></div>
+            <section id="graphs-content" hidden>
+                <div class="graphs-metrics" id="graphs-metrics" aria-label="Financial summary"></div>
 
-            <div id="area-range-chart-container" class="tab-content cards hidden"><div id="area-range-chart" class="h-[80vh]" data-chart-desc="Area spline chart of min and max monthly spending."></div></div>
-            <div id="network-graph-container" class="tab-content cards hidden"><div id="network-graph" class="h-[80vh]" data-chart-desc="Network graph linking segments and categories."></div></div>
+                <section class="graphs-insights" id="graphs-insights" aria-label="Key observations"></section>
 
-            <div id="treegraph-container" class="tab-content cards hidden"><div id="treegraph-chart" data-chart-desc="Tree graph of segments and categories."></div></div>
+                <div class="graphs-layout">
+                    <article class="graphs-card graphs-card--wide">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Movement</p>
+                                <h2>Income, spending and cash flow</h2>
+                                <p>Monthly amounts for the selected year. Bars show money in and out; the line shows what remained.</p>
+                            </div>
+                            <div class="graphs-legend" aria-label="Chart legend">
+                                <span><i class="graphs-key graphs-key--income"></i>Income</span>
+                                <span><i class="graphs-key graphs-key--spending"></i>Spending</span>
+                                <span><i class="graphs-key graphs-key--cashflow"></i>Cash flow</span>
+                            </div>
+                        </header>
+                        <div id="movement-chart" class="graphs-chart-frame"></div>
+                    </article>
 
-            <div id="segment-section" class="tab-content cards hidden space-y-4">
-                <h2 class="text-xl font-semibold">Segment Totals</h2>
-                <div id="segment-table"></div>
-                <div id="segment-chart" class="h-[80vh]" data-chart-desc="Column chart of segment totals."></div>
-            </div>
+                    <article class="graphs-card">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Pressure</p>
+                                <h2>Cash flow by month</h2>
+                                <p>Months to the right added cash; months to the left used more than they received.</p>
+                            </div>
+                        </header>
+                        <div id="cashflow-chart" class="graphs-list-chart"></div>
+                    </article>
+
+                    <article class="graphs-card">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Drivers</p>
+                                <h2>Largest spending categories</h2>
+                                <p>Ranked by outgoing value, with each category’s share of total spending.</p>
+                            </div>
+                        </header>
+                        <div id="category-chart" class="graphs-list-chart"></div>
+                    </article>
+
+                    <article class="graphs-card graphs-card--wide">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Pattern</p>
+                                <h2>When spending landed</h2>
+                                <p>Monthly intensity for the largest categories. Darker cells represent more spending within that category.</p>
+                            </div>
+                        </header>
+                        <div id="spending-heatmap" class="graphs-heatmap-wrap"></div>
+                    </article>
+
+                    <article class="graphs-card">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Composition</p>
+                                <h2>Spending by segment</h2>
+                                <p>A high-level view of how outgoings are distributed across financial needs.</p>
+                            </div>
+                        </header>
+                        <div id="segment-chart"></div>
+                    </article>
+
+                    <article class="graphs-card">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Current position</p>
+                                <h2>Account balances</h2>
+                                <p id="accounts-chart-note">Latest ledger balances. These are current snapshots, not historical year-end values.</p>
+                            </div>
+                        </header>
+                        <div id="account-chart" class="graphs-list-chart"></div>
+                    </article>
+
+                    <article class="graphs-card graphs-card--wide">
+                        <header class="graphs-card-header">
+                            <div>
+                                <p class="graphs-card-kicker">Patterns</p>
+                                <h2>Largest tagged spending patterns</h2>
+                                <p>Reusable transaction tags reveal the merchants and payment types creating the most outgoing value.</p>
+                            </div>
+                        </header>
+                        <div id="tag-chart" class="graphs-tag-grid"></div>
+                    </article>
+                </div>
+            </section>
         </main>
     </div>
 
     <script src="js/page_header.js"></script>
     <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Graphs',
-    breadcrumb: 'Reports & Analysis',
-    subtitle: 'Visualise transaction data through interactive charts.'
-});
-</script>
-    <script src="js/menu.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/highcharts-more.js"></script>
-    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
-    <script src="https://code.highcharts.com/modules/streamgraph.js"></script>
-    <script src="https://code.highcharts.com/modules/sunburst.js"></script>
-    <script src="https://code.highcharts.com/modules/networkgraph.js"></script>
-    <script src="https://code.highcharts.com/modules/treegraph.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-    <script src="js/color_map.js"></script>
-
-    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js?v=20260811-modern-tables"></script>
-    <script>
-
-    // Retrieve data for the chosen year and draw charts with 3D bars where applicable
-
-    let segmentTable;
-
-    function columnTooltip(){
-        const total = this.series.yData.reduce((sum, v) => sum + v, 0);
-        const pct = total ? (this.y / total * 100) : 0;
-        return `<b>${this.series.name}</b><br/>${this.category}: £${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(pct, 1)}% of total)`;
-    }
-
-    function pieTooltip(){
-        return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(this.y, 2)} (${Highcharts.numberFormat(this.percentage, 1)}%)`;
-    }
-
-    function sunburstTooltip(){
-        const sum = (this.node && this.node.childrenTotal) || this.value;
-        const total = this.series.points[0].node.childrenTotal;
-        const pct = total ? (sum / total * 100) : 0;
-        return `<b>${this.point.name}</b><br/>£${Highcharts.numberFormat(sum, 2)} (${Highcharts.numberFormat(pct, 1)}%)`;
-    }
-
-
-    function buildHierarchy(yearly, categories, includeTags = true){
-
-        const makeId = str => (str ? String(str).replace(/\s+/g, '_') : '');
-        const categoryMap = {};
-        categories.forEach(c => {
-            if (c.name) {
-                categoryMap[c.name] = c.segment_name || 'Not Segmented';
-            }
+        const pageMain = document.getElementById('graphs-main');
+        window.renderPageHeader(pageMain, {
+            title: 'Financial Picture',
+            breadcrumb: 'Reports & Analysis',
+            subtitle: 'Understand your position, movement and biggest financial pressures in one view.'
         });
-        const data = [{ id: 'root', name: 'Total' }];
-        const segmentIds = {};
-        const segmentTotals = {};
-        const categoryTotals = {};
-        (yearly.categories || []).forEach(c => {
-            if (!c.name) return;
-            const segName = categoryMap[c.name] || 'Not Segmented';
-            let segId = segmentIds[segName];
-            if (!segId) {
-                segId = 'seg_' + makeId(segName);
-                segmentIds[segName] = segId;
-                data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
-            }
-            const catId = 'cat_' + makeId(c.name);
-
-            const total = Math.abs(parseFloat(c.total));
-            const catColor = getCategoryColor(c.name, segName);
-            const catNode = { id: catId, parent: segId, name: c.name, color: catColor };
-            if (!includeTags) { catNode.value = total; }
-            data.push(catNode);
-            categoryTotals[c.name] = { id: catId, total, segment: segName, fromYearly: true, color: catColor };
-            segmentTotals[segName] = (segmentTotals[segName] || 0) + total;
-        });
-        if (includeTags) {
-            const tagSums = {};
-            (yearly.tags || []).forEach(t => {
-                if (!t.name || !t.category) return;
-                let catInfo = categoryTotals[t.category];
-                let catId;
-                if (catInfo) {
-                    catId = catInfo.id;
-                } else {
-                    const segName = categoryMap[t.category] || 'Not Segmented';
-                    let segId = segmentIds[segName];
-                    if (!segId) {
-                        segId = 'seg_' + makeId(segName);
-                        segmentIds[segName] = segId;
-                        data.push({ id: segId, parent: 'root', name: segName, color: getSegmentColor(segName) });
-                    }
-                    catId = 'cat_' + makeId(t.category);
-                    const catColor = getCategoryColor(t.category, segName);
-                    data.push({ id: catId, parent: segId, name: t.category, color: catColor });
-                    catInfo = categoryTotals[t.category] = { id: catId, total: 0, segment: segName, fromYearly: false, color: catColor };
-                }
-                const tagId = 'tag_' + makeId(t.name) + '_' + makeId(t.category);
-                const value = Math.abs(parseFloat(t.total));
-                const tagColor = getTagColor(t.name, t.category, catInfo.color);
-                data.push({ id: tagId, parent: catId, name: t.name, value, color: tagColor });
-                tagSums[catId] = (tagSums[catId] || 0) + value;
-                if (!catInfo.fromYearly) {
-                    catInfo.total += value;
-                    segmentTotals[catInfo.segment] = (segmentTotals[catInfo.segment] || 0) + value;
-                }
-            });
-            Object.values(categoryTotals).forEach(ct => {
-                const tagged = tagSums[ct.id] || 0;
-                const diff = ct.total - tagged;
-                if (Math.abs(diff) > 0.01) {
-                    const otherColor = getTagColor('Other', ct.name, ct.color);
-                    data.push({ id: 'tag_other_' + ct.id, parent: ct.id, name: 'Other', value: diff, color: otherColor });
-                }
-            });
-        }
-
-        if (yearly.segments) {
-            const check = {};
-            yearly.segments.forEach(s => {
-                if (s.name) {
-                    check[s.name] = Math.abs(parseFloat(s.total));
-                }
-            });
-            Object.entries(segmentTotals).forEach(([name, total]) => {
-                const reported = check[name] || 0;
-                if (Math.abs(reported - total) > 0.01) {
-                    console.warn(`Segment total mismatch for ${name}: expected ${reported} calculated ${total}`);
-                }
-            });
-        }
-        return { data, segmentTotals };
-    }
-
-    function loadYear(year){
-        Promise.all([
-            fetch('../php_backend/public/dashboard.php?year=' + year).then(r => r.json()),
-            fetch('../php_backend/public/yearly_dashboard.php?year=' + year).then(r => r.json()),
-            fetch('../php_backend/public/categories.php').then(r => r.json())
-        ]).then(([monthly, yearly, categories]) => {
-            const months = monthly.map(m => new Date(0, m.month - 1).toLocaleString('default', { month: 'short' }));
-            const totals = monthly.map(m => parseFloat(m.spent));
-            const bubbleData = monthly.map((m, i) => ({
-                name: months[i],
-                x: parseFloat(m.income || 0),
-                y: parseFloat(m.spent),
-                z: Math.abs(parseFloat(m.income || 0) - parseFloat(m.spent))
-            }));
-            const catColors = {};
-            const categorySeries = yearly.categories.map(c => {
-                const seg = c.segment_name || 'Not Segmented';
-                const color = getCategoryColor(c.name, seg);
-                catColors[c.name] = color;
-                return {
-                    name: c.name,
-                    data: months.map((_, i) => parseFloat(c[String(i + 1)]) || 0),
-                    color
-                };
-            });
-
-            Highcharts.chart('monthly-chart', {
-
-                colors: chartColors,
-
-                chart: {
-                    type: 'column',
-
-                    options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
-
-                },
-                title: { text: 'Monthly Spending by Category' },
-                xAxis: { categories: months },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: { pointFormatter: columnTooltip },
-                plotOptions: { column: { stacking: 'normal', depth: 40 } },
-                series: categorySeries
-            });
-
-            const cumulative = totals.reduce((acc, val) => {
-                const last = acc.length ? acc[acc.length - 1] : 0;
-                acc.push(last + val);
-                return acc;
-            }, []);
-            const categoryCumulative = categorySeries.map(cs => ({
-                name: cs.name,
-                color: cs.color,
-                data: cs.data.reduce((acc, val) => {
-                    const last = acc.length ? acc[acc.length - 1] : 0;
-                    acc.push(last + val);
-                    return acc;
-                }, [])
-            }));
-            Highcharts.chart('cumulative-chart', {
-
-                colors: chartColors,
-
-                chart: {
-                    type: 'column',
-
-                    options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
-
-                },
-                title: { text: 'Cumulative Spending by Category' },
-                xAxis: { categories: months },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: { pointFormatter: columnTooltip },
-                plotOptions: { column: { stacking: 'normal', depth: 40 } },
-                series: categoryCumulative
-            });
-
-            const catData = yearly.categories
-                .filter(c => parseFloat(c.total) < 0)
-                .map(c => ({ name: c.name, y: Math.abs(parseFloat(c.total)), color: catColors[c.name] }));
-            Highcharts.chart('pie-chart', {
-
-                colors: chartColors,
-
-                chart: {
-
-                    type: 'pie'
-
-                },
-                title: { text: 'Outgoing Category Breakdown' },
-                tooltip: { pointFormatter: pieTooltip },
-                plotOptions: { pie: { depth: 35 } },
-                series: [{ name: 'Categories', data: catData }]
-            });
-
-            const incomeTags = yearly.tags.filter(t => parseFloat(t.total) > 0);
-            const outgoingTags = yearly.tags.filter(t => parseFloat(t.total) < 0);
-
-            Highcharts.chart('income-tag-chart', {
-                colors: chartColors,
-                chart: {
-                    type: 'bar',
-                    options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
-                },
-                title: { text: 'Income Tag Totals' },
-                xAxis: { categories: incomeTags.map(t => t.name) },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: { pointFormatter: columnTooltip },
-                plotOptions: { bar: { depth: 40 } },
-                series: [{ name: 'Total', data: incomeTags.map(t => parseFloat(t.total)), colorByPoint: true }]
-            });
-
-            Highcharts.chart('outgoing-tag-chart', {
-                colors: chartColors,
-                chart: {
-                    type: 'bar',
-                    options3d: { enabled: true, alpha: 0, beta: 0, depth: 50 }
-                },
-                title: { text: 'Outgoing Tag Totals' },
-                xAxis: { categories: outgoingTags.map(t => t.name) },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: { pointFormatter: columnTooltip },
-                plotOptions: { bar: { depth: 40 } },
-                series: [{ name: 'Total', data: outgoingTags.map(t => Math.abs(parseFloat(t.total))), colorByPoint: true }]
-            });
-
-            Highcharts.chart('scatter-chart', {
-                colors: chartColors,
-                chart: { type: 'bubble', plotBorderWidth: 0 },
-                title: { text: 'Income vs Outgoings' },
-                xAxis: {
-                    title: { text: 'Income (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                yAxis: {
-                    title: { text: 'Outgoings (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: {
-                    formatter: function(){
-                        return `<b>${this.point.name}</b><br/>Income: £${Highcharts.numberFormat(this.x, 2)}<br/>Outgoings: £${Highcharts.numberFormat(this.y, 2)}<br/>Delta: £${Highcharts.numberFormat(this.point.z, 2)}`;
-                    }
-                },
-                plotOptions: {
-                    series: { dataLabels: { enabled: true, format: '{point.name}' } }
-                },
-                series: [{ name: 'Months', data: bubbleData, colorByPoint: true }]
-            });
-
-            Highcharts.chart('stream-chart', {
-                colors: chartColors,
-                chart: { type: 'streamgraph' },
-                title: { text: 'Cumulative Category Spending Streamgraph' },
-                xAxis: { categories: months },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: { pointFormatter: columnTooltip },
-                series: categoryCumulative
-            });
-
-            const monthExtremes = months.map((_, i) => {
-                const vals = categorySeries.map(cs => cs.data[i]);
-                return [Math.min(...vals), Math.max(...vals)];
-            });
-            Highcharts.chart('area-range-chart', {
-                colors: chartColors,
-                chart: { type: 'areasplinerange' },
-                title: { text: 'Monthly Spending Range' },
-                xAxis: { categories: months },
-                yAxis: {
-                    title: { text: 'Amount (£)' },
-                    labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } }
-                },
-                tooltip: {
-                    formatter: function(){
-                        return `<b>${this.x}</b><br/>Min: £${Highcharts.numberFormat(this.point.low, 2)}<br/>Max: £${Highcharts.numberFormat(this.point.high, 2)}`;
-                    }
-                },
-                series: [{ name: 'Range', data: monthExtremes, color: chartColors[0], fillOpacity: 0.3 }]
-            });
-
-            const incomeYearly = {
-                segments: yearly.segments.filter(s => parseFloat(s.total) > 0),
-                categories: yearly.categories.filter(c => parseFloat(c.total) > 0),
-                tags: yearly.tags.filter(t => parseFloat(t.total) > 0)
-            };
-            const outgoingYearly = {
-                segments: yearly.segments.filter(s => parseFloat(s.total) < 0),
-                categories: yearly.categories.filter(c => parseFloat(c.total) < 0),
-                tags: yearly.tags.filter(t => parseFloat(t.total) < 0)
-            };
-            const segmentTotals = renderSunburst(outgoingYearly, categories, 'outgoing-sunburst-chart', 'Outgoing Segments, Categories and Tags');
-            renderSunburst(incomeYearly, categories, 'income-sunburst-chart', 'Income Segments, Categories and Tags');
-            const allYearly = { segments: yearly.segments, categories: yearly.categories, tags: yearly.tags };
-
-            const { data: hierarchyData } = buildHierarchy(allYearly, categories, false);
-
-            renderHierarchyCharts(hierarchyData);
-            if (segmentTotals.length) {
-                renderSegments(segmentTotals);
-            }
-        }).catch(err => console.error('Graph data load failed', err));
-    }
-
-    function renderSunburst(yearly, categories, chartId, chartTitle){
-        const { data, segmentTotals } = buildHierarchy(yearly, categories);
-        Highcharts.chart(chartId, {
-
-            colors: chartColors,
-
-            series: [{
-                type: 'sunburst',
-                data: data,
-                allowDrillToNode: true,
-                cursor: 'pointer',
-                dataLabels: {
-                    formatter: function(){
-                        const sum = (this.point.node && this.point.node.childrenTotal) || this.point.value;
-                        return sum !== undefined ? `${this.point.name}: £${Highcharts.numberFormat(sum, 2)}` : this.point.name;
-                    },
-                    filter: { property: 'innerArcLength', operator: '>', value: 8 },
-                    style: { fontWeight: 'normal' }
-                },
-                levels: [
-                    { level: 1, colorByPoint: true, dataLabels: { rotationMode: 'parallel', style: { fontWeight: 'normal' } } },
-                    { level: 2, colorByPoint: true },
-                    { level: 3, colorByPoint: true }
-                ]
-            }],
-            title: { text: chartTitle },
-            tooltip: { pointFormatter: sunburstTooltip }
-        });
-        return Object.entries(segmentTotals).map(([name, total]) => ({ name, total }));
-    }
-
-    function renderHierarchyCharts(data){
-        const edges = data.filter(d => d.parent).map(d => [d.parent, d.id]);
-
-        const nodes = data.map((d, i) => {
-            let color = d.color;
-            if (!color) {
-                if (d.id.startsWith('seg_')) {
-                    color = getSegmentColor(d.name);
-                } else if (d.id.startsWith('cat_')) {
-                    const parent = data.find(p => p.id === d.parent);
-                    color = getCategoryColor(d.name, parent ? parent.name : null);
-                } else {
-                    color = chartColors[i % chartColors.length];
-                }
-                d.color = color;
-            }
-            return { id: d.id, name: d.name, color };
-        });
-        Highcharts.chart('network-graph', {
-            chart: { type: 'networkgraph' },
-
-            title: { text: 'Segment / Category Network' },
-
-            series: [{
-                data: edges,
-                nodes: nodes,
-                dataLabels: { enabled: true, linkFormat: '' }
-            }]
-        });
-        Highcharts.chart('treegraph-chart', {
-
-            chart: {
-                spacingBottom: 30,
-                marginRight: 120,
-                height: 1200
-            },
-            title: { text: 'Segment / Category Tree' },
-
-            tooltip: { pointFormatter: sunburstTooltip },
-            series: [{
-                type: 'treegraph',
-                data: data,
-
-                clip: false,
-                marker: {
-                    symbol: 'circle',
-                    radius: 6,
-                    fillColor: '#ffffff',
-                    lineWidth: 3
-                },
-                dataLabels: {
-                    align: 'left',
-                    pointFormat: '{point.name}',
-                    style: {
-                        color: 'var(--highcharts-neutral-color-100, #000)',
-                        textOutline: '3px contrast',
-                        whiteSpace: 'nowrap'
-                    },
-                    x: 24,
-                    crop: false,
-                    overflow: 'none'
-                },
-                levels: [{
-                    level: 1,
-                    levelIsConstant: false
-                }, {
-                    level: 2,
-                    colorByPoint: true
-                }, {
-                    level: 3,
-                    colorVariation: {
-                        key: 'brightness',
-                        to: -0.5
-                    }
-                }, {
-                    level: 4,
-                    colorVariation: {
-                        key: 'brightness',
-                        to: 0.5
-                    }
-                }, {
-                    level: 6,
-                    dataLabels: {
-                        x: 10
-                    },
-                    marker: {
-                        radius: 4
-                    }
-                }]
-
-            }]
-        });
-    }
-
-    function renderSegments(segments){
-        const tableEl = document.getElementById('segment-table');
-        tableEl.innerHTML = '';
-        segmentTable = tailwindTabulator(tableEl, {
-            data: segments,
-            layout: 'fitDataStretch',
-            rowFormatter: row => {
-                row.getElement().style.backgroundColor = '#fff';
-            },
-            columns: [
-                { title: 'Name', field: 'name', formatter: function(cell){
-                    const value = cell.getValue();
-                    const color = getSegmentColor(value);
-                    const badge = createBadge(value, '');
-                    badge.style.backgroundColor = color;
-                    badge.style.color = '#fff';
-                    const link = document.createElement('a');
-                    link.href = `search.html?value=${encodeURIComponent(value)}`;
-                    link.appendChild(badge);
-                    return link;
-                } },
-                { title: 'Total', field: 'total', formatter: 'money', formatterParams: { symbol: '£', precision: 2 }, hozAlign: 'right', bottomCalc: 'sum', bottomCalcFormatter: 'money', bottomCalcFormatterParams: { symbol: '£', precision: 2 } }
-            ]
-        });
-        Highcharts.chart('segment-chart', {
-            chart: { type: 'column' },
-            title: { text: 'Segment Totals' },
-            xAxis: { categories: segments.map(s => s.name) },
-            yAxis: { title: { text: 'Amount (£)' }, labels: { formatter: function(){ return '£' + Highcharts.numberFormat(this.value, 2); } } },
-            tooltip: { pointFormatter: columnTooltip },
-            series: [{ name: 'Total', data: segments.map(s => ({ y: parseFloat(s.total), color: getSegmentColor(s.name) })) }]
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        fetch('../php_backend/public/transaction_months.php')
-            .then(resp => resp.json())
-            .then(months => {
-                const years = Array.from(new Set(months.map(m => m.year))).sort((a,b) => b - a);
-                const select = document.getElementById('year-select');
-                years.forEach(y => {
-                    const opt = document.createElement('option');
-                    opt.value = y;
-                    opt.textContent = y;
-                    select.appendChild(opt);
-                });
-                const initial = select.value || years[0];
-                select.value = initial;
-                loadYear(initial);
-            });
-
-        document.getElementById('year-select').addEventListener('change', e => loadYear(e.target.value));
-
-        const tabs = document.querySelectorAll('.tab-button');
-        const contents = document.querySelectorAll('.tab-content');
-        tabs.forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabs.forEach(b => b.classList.remove('bg-indigo-100', 'text-indigo-700'));
-                contents.forEach(c => c.classList.add('hidden'));
-                document.getElementById(btn.dataset.target).classList.remove('hidden');
-                btn.classList.add('bg-indigo-100', 'text-indigo-700');
-                Highcharts.charts.forEach(c => { if (c) c.reflow(); });
-                if (btn.dataset.target === 'segment-section' && segmentTable) {
-                    segmentTable.redraw();
-                }
-            });
-        });
-    });
     </script>
+    <script src="js/menu.js"></script>
+    <script src="js/graphs_dashboard.js?v=20260813-financial-picture"></script>
+    <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>
