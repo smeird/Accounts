@@ -31,24 +31,31 @@ if (!$transactionId || !$accountId || (!$tagId && !$tagName) || !$description) {
 }
 
 try {
+    $sourceTransaction = Transaction::get((int)$transactionId);
+    if (!$sourceTransaction || (int)$sourceTransaction['account_id'] !== (int)$accountId) {
+        throw new InvalidArgumentException('Transaction does not belong to the supplied account');
+    }
     if (!$tagId && $tagName) {
         $existing = Tag::getIdByName($tagName);
         if ($existing === null) {
-            $tagId = Tag::create($tagName, $description);
+            $tagId = Tag::create($tagName);
             Log::write("Created tag $tagName");
         } else {
             $tagId = $existing;
-            Tag::setKeyword((int)$tagId, $description);
             Log::write("Reused existing tag $tagName via normalized lookup");
         }
-    } else {
-        Tag::setKeyword((int)$tagId, $description);
     }
 
     Transaction::setTag((int)$transactionId, (int)$tagId);
+    if ($sourceTransaction['transfer_id'] === null) {
+        $learnedAlias = Tag::learnTransactionAlias((int)$tagId, (string)$sourceTransaction['description'], $sourceTransaction['memo']);
+        if ($learnedAlias['status'] === 'conflict') {
+            Log::write('Tag alias conflict while updating transaction ' . $transactionId . ': ' . json_encode($learnedAlias), 'WARNING');
+        }
+    }
 
-    $applied = Tag::applyToAccountTransactions((int)$accountId);
-    $categorised = CategoryTag::applyToAccountTransactions((int)$accountId);
+    $applied = Tag::applyToAllTransactions();
+    $categorised = CategoryTag::applyToAllTransactions();
     $segmented = Segment::applyToTransactions();
 
     echo json_encode([

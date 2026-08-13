@@ -341,7 +341,7 @@ class InstantDashboard {
     }
 
     private static function untaggedCount(PDO $db): int {
-        $value = $db->query('SELECT COUNT(*) FROM `transactions` WHERE `tag_id` IS NULL')->fetchColumn();
+        $value = $db->query('SELECT COUNT(*) FROM `transactions` WHERE `tag_id` IS NULL AND `transfer_id` IS NULL')->fetchColumn();
         return $value === false ? 0 : (int)$value;
     }
 

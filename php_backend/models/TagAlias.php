@@ -67,7 +67,7 @@ class TagAlias {
              . 'FROM tag_aliases ta '
              . 'INNER JOIN tags t ON t.id = ta.tag_id '
              . 'WHERE ta.active = 1 '
-             . 'ORDER BY CASE WHEN ta.match_type = "exact" THEN 0 ELSE 1 END, ta.id ASC';
+             . 'ORDER BY CASE WHEN ta.match_type = "exact" THEN 0 ELSE 1 END, LENGTH(ta.alias_normalized) DESC, ta.id ASC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

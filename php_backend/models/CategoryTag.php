@@ -96,7 +96,7 @@ class CategoryTag {
      */
     public static function applyToAllTransactions(): int {
         $db = Database::getConnection();
-        $accountIds = $db->query('SELECT `id` FROM `accounts`')->fetchAll(PDO::FETCH_COLUMN);
+        $accountIds = $db->query('SELECT DISTINCT `account_id` FROM `transactions`')->fetchAll(PDO::FETCH_COLUMN);
         $total = 0;
         foreach ($accountIds as $accId) {
             $total += self::applyToAccountTransactions((int)$accId);

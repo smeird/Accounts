@@ -12,6 +12,7 @@ require_once __DIR__ . '/../php_backend/models/TagAlias.php';
 require_once __DIR__ . '/../php_backend/models/InstantDashboard.php';
 require_once __DIR__ . '/../php_backend/models/YearlyDashboard.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
+require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 
 // Use an in-memory SQLite database for tests.
@@ -32,6 +33,7 @@ $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT
 $db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, amount REAL);');
 $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
+$db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, archived TINYINT DEFAULT 0, group_id INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1);');
 
 $results = [];
 
@@ -134,6 +136,12 @@ assertEqual($tagId, $resolvedAlias['id'] ?? null, 'Model alias output resolves t
 $resolvedUnknown = AiTaggingPipeline::resolveCanonicalTag('Unknown Vendor', $ctx['canonicalByName'], $ctx['aliasToCanonical']);
 assertEqual(null, $resolvedUnknown, 'Unknown alias does not resolve to canonical tag');
 
+$contextWithAliaslessTag = AiTaggingPipeline::buildAliasAwareTagContext([
+    ['tag_id' => $tagId, 'tag_name' => 'Food', 'alias' => null],
+    ['tag_id' => 99, 'tag_name' => 'Household Bills', 'alias' => null],
+]);
+assertEqual(true, strpos($contextWithAliaslessTag['text'], 'Household Bills') !== false, 'AI context includes canonical tags that do not have aliases yet');
+
 $tag2 = Tag::create('Fuel', null, null);
 Tag::setKeywordIfMissing($tag2, 'petrol');
 $kw = $db->query('SELECT keyword FROM tags WHERE id = '.$tag2)->fetchColumn();
@@ -143,11 +151,32 @@ Tag::setKeywordIfMissing($tagId, 'grocery');
 $kw1 = $db->query('SELECT keyword FROM tags WHERE id = '.$tagId)->fetchColumn();
 assertEqual('supermarket', $kw1, 'Existing keyword not overwritten');
 
+$learnedFuelAlias = Tag::learnTransactionAlias($tag2, 'CARD PAYMENT SHELL SERVICE STATION 4837');
+assertEqual('created', $learnedFuelAlias['status'] ?? null, 'A tagged transaction learns a reusable merchant alias');
+$learnedFuelMatch = Tag::findMatch('CARD PAYMENT SHELL EXPRESS 9921');
+assertEqual($tag2, $learnedFuelMatch, 'Learned merchant alias tags a similar transaction with a different reference');
+$streamingTagId = Tag::create('Entertainment');
+$memoAlias = Tag::learnTransactionAlias($streamingTagId, 'CARD PAYMENT', 'PAYPAL NETFLIX 883920');
+assertEqual('netflix', $memoAlias['alias'] ?? null, 'Alias learning skips bank and payment-processor boilerplate and uses the memo merchant');
+assertEqual($streamingTagId, Tag::findMatch('NETFLIX.COM 129334'), 'Memo-derived merchant alias is reusable');
+$conflictingAlias = Tag::learnTransactionAlias($tagId, 'SHELL GARAGE 7711');
+assertEqual('conflict', $conflictingAlias['status'] ?? null, 'Learned aliases are not silently reassigned to another tag');
+assertEqual($tag2, Tag::findMatch('SHELL GARAGE 7711'), 'Existing canonical alias wins after a conflicting suggestion');
+$tagCountBeforeCanonicalReuse = (int)$db->query('SELECT COUNT(*) FROM tags')->fetchColumn();
+$reusedFuelTagId = Tag::create('  fuel  ');
+assertEqual($tag2, $reusedFuelTagId, 'Normalized canonical names reuse an existing tag');
+assertEqual($tagCountBeforeCanonicalReuse, (int)$db->query('SELECT COUNT(*) FROM tags')->fetchColumn(), 'Canonical reuse does not create a tag per transaction');
+
 $db->exec("INSERT INTO transactions (description, account_id) VALUES ('Paid at supermarket', 1)");
+$db->exec("INSERT INTO transactions (description, account_id) VALUES ('Supermarket account transfer', 1)");
+$tagRuleTransferId = (int)$db->lastInsertId();
+$db->exec("UPDATE transactions SET transfer_id = $tagRuleTransferId WHERE id = $tagRuleTransferId");
 $updatedCount = Tag::applyToAccountTransactions(1);
 assertEqual(1, $updatedCount, 'applyToAccountTransactions updates one row');
 $txTag = $db->query('SELECT tag_id FROM transactions WHERE id = 1')->fetchColumn();
 assertEqual($tagId, (int)$txTag, 'Transaction tagged correctly');
+$transferRuleTag = $db->query("SELECT tag_id FROM transactions WHERE id = $tagRuleTransferId")->fetchColumn();
+assertEqual(null, $transferRuleTag, 'Automatic tag rules leave confirmed transfers out of classification');
 
 // --- Category tests ---
 $db->exec("INSERT INTO segments (name) VALUES ('Living')");
@@ -229,6 +258,7 @@ $e2 = date('Y-m-25', strtotime('-2 months', $now));
 $e3 = date('Y-m-25', strtotime('-1 month', $now));
 $old1 = date('Y-m-d', strtotime('-7 months', $now));
 $old2 = date('Y-m-d', strtotime('-6 months', $now));
+$latestUtility = date('Y-m-15', $now);
 
 $db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES
     (1, '$u1', -100, 'Utility Co'),
@@ -238,9 +268,12 @@ $db->exec("INSERT INTO transactions (account_id, date, amount, description) VALU
     (1, '$e2', 2100, 'Employer'),
     (1, '$e3', 2200, 'Employer'),
     (1, '$old1', -30, 'OldService'),
-    (1, '$old2', -35, 'OldService')
+    (1, '$old2', -35, 'OldService'),
+    (1, '$latestUtility', -999, 'Utility Co')
 
 ");
+$latestUtilityId = (int)$db->lastInsertId();
+$db->exec("UPDATE transactions SET transfer_id = $latestUtilityId WHERE id = $latestUtilityId");
 $recSpend = Transaction::getRecurringSpend(false);
 $recIncome = Transaction::getRecurringSpend(true);
 assertEqual(1, count($recSpend), 'Recurring spend detected');
@@ -307,6 +340,35 @@ $autoInId = Transaction::create(2, '2024-09-04', 75.00, 'Savings transfer in');
 $autoTransferIds = $db->query("SELECT transfer_id FROM transactions WHERE id IN ($autoOutId, $autoInId) ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
 assertEqual(true, !empty($autoTransferIds[0]) && $autoTransferIds[0] == $autoTransferIds[1], 'Auto transfer linking matches equal and opposite amounts despite different descriptions');
 
+// Bank transfer legs can settle on different dates and OFX may mark the first leg
+// as XFER before the matching account is imported. The first leg is not excluded
+// from spending until the corresponding arrival is present.
+$delayedOutId = Transaction::create(1, '2024-09-10', -125.00, 'Online transfer to savings', null, null, null, null, null, 'XFER');
+$unpairedOfxTransferId = $db->query("SELECT transfer_id FROM transactions WHERE id = $delayedOutId")->fetchColumn();
+assertEqual(null, $unpairedOfxTransferId, 'A one-sided OFX transfer is not excluded before its counterpart exists');
+$delayedInId = Transaction::create(2, '2024-09-12', 125.00, 'Transfer received from current', null, null, null, null, null, 'XFER');
+$delayedTransferIds = $db->query("SELECT transfer_id FROM transactions WHERE id IN ($delayedOutId, $delayedInId) ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+assertEqual(true, !empty($delayedTransferIds[0]) && $delayedTransferIds[0] == $delayedTransferIds[1], 'OFX transfer legs settle within three days and link regardless of import order');
+
+$protectedOutId = Transaction::create(1, '2024-09-13', -90.00, 'Transfer to reserve');
+$protectedInId = Transaction::create(2, '2024-09-13', 90.00, 'Transfer from current');
+$thirdLegId = Transaction::create(3, '2024-09-13', 90.00, 'Transfer received elsewhere');
+$thirdLegTransferId = $db->query("SELECT transfer_id FROM transactions WHERE id = $thirdLegId")->fetchColumn();
+assertEqual(null, $thirdLegTransferId, 'A completed transfer pair cannot absorb an unrelated third leg');
+
+// Similar values across accounts should not be linked across dates without a
+// transfer signal in either description or OFX type.
+$unrelatedOutId = Transaction::create(1, '2024-09-15', -20.00, 'Coffee shop purchase');
+$unrelatedInId = Transaction::create(2, '2024-09-16', 20.00, 'Promotional cashback');
+$unrelatedTransferIds = $db->query("SELECT transfer_id FROM transactions WHERE id IN ($unrelatedOutId, $unrelatedInId) ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+assertEqual([null, null], $unrelatedTransferIds, 'Different-day equal values without transfer evidence remain ordinary transactions');
+
+$untaggedBeforeTransfer = Transaction::getUntaggedTotal();
+$transferTagOutId = Transaction::create(1, '2024-09-18', -65.00, 'Internal transfer to savings');
+$transferTagInId = Transaction::create(2, '2024-09-18', 65.00, 'Internal transfer from current');
+$untaggedAfterTransfer = Transaction::getUntaggedTotal();
+assertEqual($untaggedBeforeTransfer, $untaggedAfterTransfer, 'Linked transfers do not inflate the untagged transaction count');
+
 // Transfer candidate matching should tolerate minor float representation differences
 $db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-05', -33.335, 'Rounding out'), (2, '2024-09-05', 33.3349, 'Rounding in')");
 $roundedCandidates = Transaction::getTransferCandidates();
@@ -323,6 +385,12 @@ assertEqual(false, $sameAccountLinked, 'Manual transfer linking rejects same-acc
 $sameAccountTransferCount = (int)$db->query("SELECT COUNT(*) FROM transactions WHERE id IN ({$sameAccountIds[0]}, {$sameAccountIds[1]}) AND transfer_id IS NOT NULL")->fetchColumn();
 assertEqual(0, $sameAccountTransferCount, 'Rejected same-account pair remains unlinked');
 
+// Zero-value bookkeeping rows are not account transfers, even across accounts.
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-02', 0, 'Balance marker'), (2, '2024-09-02', 0, 'Balance marker')");
+$zeroValueIds = $db->query("SELECT id FROM transactions WHERE description = 'Balance marker' ORDER BY id ASC")->fetchAll(PDO::FETCH_COLUMN);
+$zeroValueLinked = Transaction::linkTransfer((int)$zeroValueIds[0], (int)$zeroValueIds[1]);
+assertEqual(false, $zeroValueLinked, 'Manual transfer linking rejects zero-value bookkeeping rows');
+
 
 // Transactions already linked to a different transfer cannot be relinked
 $db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2024-09-03', -40, 'Move out A'), (2, '2024-09-03', -40, 'Move out B'), (3, '2024-09-03', 40, 'Move in')");
@@ -333,6 +401,12 @@ $relinkAttempt = Transaction::linkTransfer((int)$relinkIds[0], (int)$relinkIds[2
 assertEqual(false, $relinkAttempt, 'Manual transfer linking rejects relinking to different transfer');
 $originalTransferId = $db->query("SELECT transfer_id FROM transactions WHERE id = {$relinkIds[2]}")->fetchColumn();
 assertEqual((int)$relinkIds[1], (int)$originalTransferId, 'Original transfer link remains deterministic after failed relink');
+
+$db->exec("INSERT INTO projects (archived, group_id) VALUES (0, 777)");
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, group_id) VALUES (1, '2024-09-20', -100, 'Project purchase', 777)");
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, group_id, transfer_id) VALUES (1, '2024-09-21', -200, 'Project account transfer', 777, 9001)");
+$projectRows = Project::all(false);
+assertEqual(100.0, (float)($projectRows[0]['spent'] ?? 0), 'Project spending excludes internal account transfers');
 
 // --- Link preview test ---
 $sample = 'file://' . realpath(__DIR__ . '/../sample_data/link_preview.html');
@@ -412,6 +486,7 @@ assertEqual(850.0, (float)$instant['metrics']['spending'], 'Instant dashboard ex
 assertEqual(2350.0, (float)$instant['metrics']['cashflow'], 'Instant dashboard calculates monthly cash flow');
 assertEqual(85.0, (float)$instant['budget']['used'], 'Instant dashboard calculates budget pressure');
 assertEqual(true, (bool)$instant['recent'][0]['is_transfer'], 'Instant dashboard keeps transfers in recent activity');
+assertEqual(0, (int)$instant['data_quality']['untagged_transactions'], 'Instant dashboard excludes transfers from untagged attention counts');
 assertEqual(6, count($instant['trend']), 'Instant dashboard returns a six-month trend');
 
 // --- Yearly dashboard snapshot and portable monthly budgets ---

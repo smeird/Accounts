@@ -44,7 +44,7 @@
     }
 
     function needsClassification(transaction) {
-        return !transaction.category_name || !transaction.tag_name || !transaction.segment_name;
+        return !isTransfer(transaction) && (!transaction.category_name || !transaction.tag_name || !transaction.segment_name);
     }
 
     function escapeMarkup(value) {

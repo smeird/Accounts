@@ -45,7 +45,7 @@ try {
         $data['categories'] = $getAll('SELECT id, segment_id, name, description FROM categories ORDER BY id');
     }
     if (in_array('tags', $parts)) {
-        $data['tags'] = $getAll('SELECT id, name, keyword, description FROM tags ORDER BY id');
+        $data['tags'] = $getAll('SELECT id, name, name_normalized, keyword, description FROM tags ORDER BY id');
         $data['tag_aliases'] = $getAll('SELECT id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at FROM tag_aliases ORDER BY id');
     }
     if (in_array('categories', $parts) || in_array('tags', $parts)) {

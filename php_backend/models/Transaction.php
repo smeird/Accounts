@@ -11,16 +11,116 @@ class Transaction {
     const TYPE_MAX_LENGTH = 50;
     const REF_MAX_LENGTH = 32;
     const CHECK_MAX_LENGTH = 20;
+    const TRANSFER_MATCH_WINDOW_DAYS = 3;
 
     /**
      * Determine whether two values are equal and opposite at currency precision.
      */
     private static function amountsAreOpposite(float $amountA, float $amountB): bool {
+        if (abs($amountA) < 0.00001 || abs($amountB) < 0.00001) {
+            return false;
+        }
         if (($amountA < 0 && $amountB <= 0) || ($amountA > 0 && $amountB >= 0)) {
             return false;
         }
 
         return abs(round($amountA + $amountB, 2)) < 0.00001;
+    }
+
+    /**
+     * Banks often describe the two legs differently and can settle them on
+     * different days. Treat explicit OFX types and conservative bank wording as
+     * evidence that an opposite amount is an internal transfer.
+     */
+    private static function hasTransferSignal(array $row): bool {
+        if (strtoupper(trim((string)($row['ofx_type'] ?? ''))) === 'XFER') {
+            return true;
+        }
+        $text = strtolower(trim((string)($row['description'] ?? '') . ' ' . (string)($row['memo'] ?? '')));
+        return preg_match('/\b(?:transfer|xfer|internal\s+(?:move|transfer)|own\s+account|to\s+savings|from\s+savings)\b/i', $text) === 1;
+    }
+
+    private static function daysApart(string $dateA, string $dateB): int {
+        try {
+            $a = new DateTimeImmutable($dateA);
+            $b = new DateTimeImmutable($dateB);
+            return (int)$a->diff($b)->format('%a');
+        } catch (Exception $e) {
+            return PHP_INT_MAX;
+        }
+    }
+
+    /**
+     * Return a lower-is-better confidence score, or null when two rows are not a
+     * safe automatic transfer match.
+     */
+    private static function transferMatchScore(array $rowA, array $rowB): ?int {
+        if ((int)$rowA['account_id'] === (int)$rowB['account_id']) {
+            return null;
+        }
+        if (!self::amountsAreOpposite((float)$rowA['amount'], (float)$rowB['amount'])) {
+            return null;
+        }
+        $days = self::daysApart((string)$rowA['date'], (string)$rowB['date']);
+        if ($days > self::TRANSFER_MATCH_WINDOW_DAYS) {
+            return null;
+        }
+        $signalA = self::hasTransferSignal($rowA);
+        $signalB = self::hasTransferSignal($rowB);
+        if ($days > 0 && !$signalA && !$signalB) {
+            return null;
+        }
+
+        $score = $days * 100;
+        if ($signalA) $score -= 15;
+        if ($signalB) $score -= 15;
+        if (strcasecmp(trim((string)$rowA['description']), trim((string)$rowB['description'])) === 0) {
+            $score -= 10;
+        }
+        return $score;
+    }
+
+    /**
+     * Find a unique best match for a newly imported transaction. An existing
+     * explicit singleton marker (transfer_id = id) remains eligible for pairing.
+     */
+    private static function findAutomaticTransferMatch(array $transaction): ?int {
+        $db = Database::getConnection();
+        $start = date('Y-m-d', strtotime($transaction['date'] . ' -' . self::TRANSFER_MATCH_WINDOW_DAYS . ' days'));
+        $end = date('Y-m-d', strtotime($transaction['date'] . ' +' . self::TRANSFER_MATCH_WINDOW_DAYS . ' days'));
+        $stmt = $db->prepare(
+            'SELECT `id`, `account_id`, `date`, `amount`, `description`, `memo`, `ofx_type`, `transfer_id` '
+            . 'FROM `transactions` WHERE `id` != :id AND `account_id` != :account '
+            . 'AND `date` BETWEEN :start AND :end '
+            . 'AND ABS(`amount` + :amount_sum) < 0.005 AND `amount` * :amount_sign < 0 '
+            . 'AND (`transfer_id` IS NULL OR `transfer_id` = `id`)'
+        );
+        $stmt->execute([
+            'id' => (int)$transaction['id'],
+            'account' => (int)$transaction['account_id'],
+            'start' => $start,
+            'end' => $end,
+            'amount_sum' => (float)$transaction['amount'],
+            'amount_sign' => (float)$transaction['amount'],
+        ]);
+
+        $matches = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $candidate) {
+            if (!self::transferRowAvailableForPairing($db, $candidate)) {
+                continue;
+            }
+            $score = self::transferMatchScore($transaction, $candidate);
+            if ($score !== null) {
+                $matches[] = ['id' => (int)$candidate['id'], 'score' => $score];
+            }
+        }
+        usort($matches, function ($a, $b) {
+            return $a['score'] === $b['score'] ? $a['id'] <=> $b['id'] : $a['score'] <=> $b['score'];
+        });
+        if (!$matches || (isset($matches[1]) && $matches[0]['score'] === $matches[1]['score'])) {
+            return null;
+        }
+        return $matches[0]['id'];
     }
 
     /**
@@ -129,22 +229,17 @@ class Transaction {
         ]);
         $id = (int)$db->lastInsertId();
 
-        // Attempt to detect matching transfer (opposite entry in another account)
-        $matchStmt = $db->prepare('SELECT id FROM transactions WHERE account_id != :account AND `date` = :date AND ABS(`amount` + :amount) < 0.005 AND `amount` * :amount < 0 AND transfer_id IS NULL ORDER BY CASE WHEN `description` = :description THEN 0 ELSE 1 END, id LIMIT 1');
-        $matchStmt->execute([
-            'account' => $account,
-            'date' => $date,
-            'description' => $description,
-            'amount' => $amount
-        ]);
-        if ($row = $matchStmt->fetch(PDO::FETCH_ASSOC)) {
-            $matchId = (int)$row['id'];
-            $transferId = min($id, $matchId);
-            $upd = $db->prepare('UPDATE transactions SET transfer_id = :tid WHERE id IN (:id1, :id2)');
-            $upd->execute(['tid' => $transferId, 'id1' => $id, 'id2' => $matchId]);
-        } elseif ($ofx_type === 'XFER') {
-            $upd = $db->prepare('UPDATE transactions SET transfer_id = :tid WHERE id = :id');
-            $upd->execute(['tid' => $id, 'id' => $id]);
+        // Attempt to detect the opposite leg in another owned account. Matching
+        // spans the normal settlement window while avoiding ambiguous equal-value
+        // pairs and different-day matches with no transfer evidence.
+        $inserted = [
+            'id' => $id, 'account_id' => $account, 'date' => $date, 'amount' => $amount,
+            'description' => $description, 'memo' => $memo, 'ofx_type' => $ofx_type,
+            'transfer_id' => null,
+        ];
+        $matchId = self::findAutomaticTransferMatch($inserted);
+        if ($matchId !== null) {
+            self::linkTransfer($id, $matchId);
         }
 
         return $id;
@@ -292,7 +387,7 @@ class Transaction {
              . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
              . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
         if ($onlyUntagged) {
-            $sql .= ' AND t.`tag_id` IS NULL';
+            $sql .= ' AND t.`tag_id` IS NULL AND t.`transfer_id` IS NULL';
         }
         $sql .= ' ORDER BY t.`date`';
         $stmt = $db->prepare($sql);
@@ -307,7 +402,7 @@ class Transaction {
     public static function getByAccount(int $accountId): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
+        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
@@ -950,8 +1045,9 @@ class Transaction {
 
     /**
      * Locate transactions that appear to be transfers but are not yet linked.
-     * Matches items on the same date with opposite amounts where neither side
-     * has a transfer_id.
+     * Matches opposite amounts within the normal bank settlement window. Same-
+     * day matches retain the existing exact-amount behaviour; different-day
+     * matches require an explicit transfer signal. Ambiguous matches are omitted.
      *
      * @return array<int, array{date:string, from_id:int, from_account:string, from_amount:float, from_description:string,
      *                          to_id:int, to_account:string, to_amount:float, to_description:string}>
@@ -959,47 +1055,75 @@ class Transaction {
     public static function getTransferCandidates(): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $dateDistance = $driver === 'sqlite'
+            ? 'ABS(julianday(t1.`date`) - julianday(t2.`date`))'
+            : 'ABS(DATEDIFF(t1.`date`, t2.`date`))';
         $sql = 'SELECT t1.id AS id1, t1.amount AS amt1, t1.description AS desc1, a1.name AS acc1, '
+             . 't1.memo AS memo1, t1.ofx_type AS type1, t1.transfer_id AS transfer1, t1.account_id AS account1, t1.date AS date1, '
              . 't2.id AS id2, t2.amount AS amt2, t2.description AS desc2, a2.name AS acc2, '
-             . 't1.date '
+             . 't2.memo AS memo2, t2.ofx_type AS type2, t2.transfer_id AS transfer2, t2.account_id AS account2, t2.date AS date2 '
              . 'FROM `transactions` t1 '
-             . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
-             . 'AND ABS(t1.`amount` + t2.`amount`) < 0.005 '
+             . 'JOIN `transactions` t2 ON ABS(t1.`amount` + t2.`amount`) < 0.005 '
              . 'AND t1.`amount` * t2.`amount` < 0 '
              . 'AND t1.`id` < t2.`id` '
              . 'AND t1.`account_id` != t2.`account_id` '
+             . 'AND ' . $dateDistance . ' <= ' . self::TRANSFER_MATCH_WINDOW_DAYS . ' '
              . 'JOIN `accounts` a1 ON t1.`account_id` = a1.`id` '
              . 'JOIN `accounts` a2 ON t2.`account_id` = a2.`id` '
-             . 'WHERE t1.`transfer_id` IS NULL '
-             . 'AND t2.`transfer_id` IS NULL '
+             . 'WHERE (t1.`transfer_id` IS NULL OR t1.`transfer_id` = t1.`id`) '
+             . 'AND (t2.`transfer_id` IS NULL OR t2.`transfer_id` = t2.`id`) '
              . 'AND (t1.`tag_id` IS NULL OR t1.`tag_id` != :ignore) '
              . 'AND (t2.`tag_id` IS NULL OR t2.`tag_id` != :ignore)';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $result = [];
+        $possible = [];
         foreach ($rows as $row) {
+            $first = [
+                'id' => (int)$row['id1'], 'account_id' => (int)$row['account1'], 'date' => $row['date1'],
+                'amount' => (float)$row['amt1'], 'description' => $row['desc1'], 'memo' => $row['memo1'],
+                'ofx_type' => $row['type1'], 'transfer_id' => $row['transfer1'],
+            ];
+            $second = [
+                'id' => (int)$row['id2'], 'account_id' => (int)$row['account2'], 'date' => $row['date2'],
+                'amount' => (float)$row['amt2'], 'description' => $row['desc2'], 'memo' => $row['memo2'],
+                'ofx_type' => $row['type2'], 'transfer_id' => $row['transfer2'],
+            ];
+            if (!self::transferRowAvailableForPairing($db, $first) || !self::transferRowAvailableForPairing($db, $second)) {
+                continue;
+            }
+            $score = self::transferMatchScore($first, $second);
+            if ($score === null) {
+                continue;
+            }
             if ((float)$row['amt1'] < 0) {
                 $fromId = (int)$row['id1'];
                 $fromAcc = $row['acc1'];
                 $fromAmt = (float)$row['amt1'];
                 $fromDesc = $row['desc1'];
+                $fromDate = $row['date1'];
                 $toId = (int)$row['id2'];
                 $toAcc = $row['acc2'];
                 $toAmt = (float)$row['amt2'];
                 $toDesc = $row['desc2'];
+                $toDate = $row['date2'];
             } else {
                 $fromId = (int)$row['id2'];
                 $fromAcc = $row['acc2'];
                 $fromAmt = (float)$row['amt2'];
                 $fromDesc = $row['desc2'];
+                $fromDate = $row['date2'];
                 $toId = (int)$row['id1'];
                 $toAcc = $row['acc1'];
                 $toAmt = (float)$row['amt1'];
                 $toDesc = $row['desc1'];
+                $toDate = $row['date1'];
             }
-            $result[] = [
-                'date' => $row['date'],
+            $possible[] = [
+                'date' => $fromDate,
+                'from_date' => $fromDate,
+                'to_date' => $toDate,
                 'from_id' => $fromId,
                 'from_account' => $fromAcc,
                 'from_amount' => $fromAmt,
@@ -1007,9 +1131,37 @@ class Transaction {
                 'to_id' => $toId,
                 'to_account' => $toAcc,
                 'to_amount' => $toAmt,
-                'to_description' => $toDesc
+                'to_description' => $toDesc,
+                '_score' => $score,
             ];
         }
+
+        // Only surface reciprocal, unique best matches. This prevents "Mark all"
+        // from arbitrarily pairing several identical-value transactions.
+        $best = [];
+        foreach ($possible as $pair) {
+            foreach ([$pair['from_id'], $pair['to_id']] as $id) {
+                if (!isset($best[$id]) || $pair['_score'] < $best[$id]['score']) {
+                    $best[$id] = ['score' => $pair['_score'], 'count' => 1];
+                } elseif ($pair['_score'] === $best[$id]['score']) {
+                    $best[$id]['count']++;
+                }
+            }
+        }
+        $result = [];
+        foreach ($possible as $pair) {
+            $fromBest = $best[$pair['from_id']];
+            $toBest = $best[$pair['to_id']];
+            if ($pair['_score'] !== $fromBest['score'] || $fromBest['count'] !== 1
+                || $pair['_score'] !== $toBest['score'] || $toBest['count'] !== 1) {
+                continue;
+            }
+            unset($pair['_score']);
+            $result[] = $pair;
+        }
+        usort($result, function ($a, $b) {
+            return strcmp($a['date'], $b['date']) ?: ($a['from_id'] <=> $b['from_id']);
+        });
         return $result;
     }
 
@@ -1045,12 +1197,32 @@ class Transaction {
         $tid = min($id1, $id2);
         $transfer1 = $row1['transfer_id'] === null ? null : (int)$row1['transfer_id'];
         $transfer2 = $row2['transfer_id'] === null ? null : (int)$row2['transfer_id'];
-        if (($transfer1 !== null && $transfer1 !== $tid) || ($transfer2 !== null && $transfer2 !== $tid)) {
+        if ($transfer1 === $tid && $transfer2 === $tid) {
+            return true;
+        }
+        if (!self::transferRowAvailableForPairing($db, $row1) || !self::transferRowAvailableForPairing($db, $row2)) {
             return false;
         }
 
         $upd = $db->prepare('UPDATE `transactions` SET `transfer_id` = :tid WHERE `id` IN (:a, :b)');
         return $upd->execute(['tid' => $tid, 'a' => $id1, 'b' => $id2]);
+    }
+
+    /**
+     * A self marker represents an explicitly marked singleton and can be upgraded
+     * to a pair. A marker already shared by two rows must remain immutable.
+     */
+    private static function transferRowAvailableForPairing(PDO $db, array $row): bool {
+        if ($row['transfer_id'] === null) {
+            return true;
+        }
+        $current = (int)$row['transfer_id'];
+        if ($current !== (int)$row['id']) {
+            return false;
+        }
+        $stmt = $db->prepare('SELECT COUNT(*) FROM `transactions` WHERE `transfer_id` = :tid');
+        $stmt->execute(['tid' => $current]);
+        return (int)$stmt->fetchColumn() === 1;
     }
 
     /**
@@ -1089,31 +1261,15 @@ class Transaction {
     }
 
     /**
-     * Link any unpaired transactions that have matching dates and opposite amounts.
-     * Useful when descriptions differ but the amounts cancel out.
+     * Link unambiguous, unpaired transactions within the settlement window when
+     * their amounts cancel out and their transfer signals are compatible.
      *
      * @return int Number of pairs linked.
      */
     public static function assistTransfers(): int {
-        $db = Database::getConnection();
-        $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT t1.id AS id1, t2.id AS id2 '
-             . 'FROM `transactions` t1 '
-             . 'JOIN `transactions` t2 ON t1.`date` = t2.`date` '
-             . 'AND ABS(t1.`amount` + t2.`amount`) < 0.005 '
-             . 'AND t1.`amount` * t2.`amount` < 0 '
-             . 'AND t1.`id` < t2.`id` '
-             . 'AND t1.`account_id` != t2.`account_id` '
-             . 'WHERE t1.`transfer_id` IS NULL '
-             . 'AND t2.`transfer_id` IS NULL '
-             . 'AND (t1.`tag_id` IS NULL OR t1.`tag_id` != :ignore) '
-             . 'AND (t2.`tag_id` IS NULL OR t2.`tag_id` != :ignore)';
-        $stmt = $db->prepare($sql);
-        $stmt->execute(['ignore' => $ignore]);
-        $pairs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $count = 0;
-        foreach ($pairs as $p) {
-            if (self::linkTransfer((int)$p['id1'], (int)$p['id2'])) {
+        foreach (self::getTransferCandidates() as $pair) {
+            if (self::linkTransfer((int)$pair['from_id'], (int)$pair['to_id'])) {
                 $count++;
             }
         }
@@ -1127,7 +1283,7 @@ class Transaction {
     public static function getUntaggedCounts(): array {
         $db = Database::getConnection();
         $sql = 'SELECT `description`, `memo`, COUNT(*) AS `count`, SUM(`amount`) AS `total` '
-             . 'FROM `transactions` WHERE `tag_id` IS NULL '
+             . 'FROM `transactions` WHERE `tag_id` IS NULL AND `transfer_id` IS NULL '
              . 'GROUP BY `description`, `memo` ORDER BY `count` DESC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1138,7 +1294,7 @@ class Transaction {
      */
     public static function getUntaggedTotal(): int {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT COUNT(*) FROM `transactions` WHERE `tag_id` IS NULL');
+        $stmt = $db->query('SELECT COUNT(*) FROM `transactions` WHERE `tag_id` IS NULL AND `transfer_id` IS NULL');
         return (int)$stmt->fetchColumn();
     }
 
@@ -1186,8 +1342,10 @@ class Transaction {
             // fetch the most recent amount for next-month estimates
             $stmtLast = $db->prepare('SELECT `amount` FROM `transactions` '
                 . 'WHERE `description` = :desc AND ' . $dayExpr . ' = :day '
+                . 'AND `amount` ' . $sign . ' 0 AND `transfer_id` IS NULL '
+                . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
                 . 'ORDER BY `date` DESC LIMIT 1');
-            $stmtLast->execute(['desc' => $row['description'], 'day' => $row['day']]);
+            $stmtLast->execute(['desc' => $row['description'], 'day' => $row['day'], 'ignore' => $ignore]);
             $last = $stmtLast->fetchColumn();
             $row['last_amount'] = $last !== false ? abs((float)$last) : $row['average'];
             unset($row['last_date']);
