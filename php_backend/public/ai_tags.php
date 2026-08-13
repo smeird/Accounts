@@ -6,6 +6,7 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/../models/TagAlias.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
+require_once __DIR__ . '/../models/Segment.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../AiTaggingPipeline.php';
@@ -24,12 +25,18 @@ if (!$apiKey) {
 }
 
 $db = Database::getConnection();
+// Apply learned local rules before spending an AI request on the same pattern.
+$processedLocally = Tag::applyToAllTransactions();
+if ($processedLocally > 0) {
+    CategoryTag::applyToAllTransactions();
+    Segment::applyToTransactions();
+}
 // Identify the most common untagged transactions by description and memo
 $limit = (int)(Setting::get('ai_tag_batch_size') ?? 100);
 if ($limit <= 0) $limit = 100;
-$txns = $db->query('SELECT MIN(id) AS id, description, memo, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL GROUP BY description, memo ORDER BY cnt DESC LIMIT ' . $limit)->fetchAll(PDO::FETCH_ASSOC);
+$txns = $db->query('SELECT MIN(id) AS id, description, memo, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL AND transfer_id IS NULL GROUP BY description, memo ORDER BY cnt DESC LIMIT ' . $limit)->fetchAll(PDO::FETCH_ASSOC);
 if (!$txns) {
-    echo json_encode(['processed' => 0, 'tokens' => 0]);
+    echo json_encode(['processed' => $processedLocally, 'tokens' => 0]);
     exit;
 }
 $categories = $db->query('SELECT id, name FROM categories')->fetchAll(PDO::FETCH_ASSOC);
@@ -125,96 +132,9 @@ $txnMap = [];
 $aliasResolutions = [];
 $learnedAliases = [];
 
-/**
- * Build a conservative descriptor string from transaction fields for alias learning.
- */
-function buildAliasDescriptor(array $txn): string {
-    $parts = [];
-    if (!empty($txn['description'])) {
-        $parts[] = trim((string)$txn['description']);
-    }
-    if (!empty($txn['memo'])) {
-        $parts[] = trim((string)$txn['memo']);
-    }
-    return trim(implode(' ', array_filter($parts, function ($part) {
-        return $part !== '';
-    })));
-}
-
-/**
- * Exclude low-signal alias candidates.
- */
-function isValidLearnedAlias(string $alias): bool {
-    $alias = trim($alias);
-    if ($alias === '') {
-        return false;
-    }
-    if (strlen($alias) < 4 || strlen($alias) > 150) {
-        return false;
-    }
-    if (preg_match('/^\d+(?:[\s\-\._]?\d+)*$/', $alias)) {
-        return false;
-    }
-    if (preg_match('/^[\W_]+$/u', $alias)) {
-        return false;
-    }
-
-    $genericWords = [
-        'payment', 'purchase', 'transfer', 'transaction', 'card', 'debit', 'credit',
-        'cash', 'online', 'bank', 'account', 'pending', 'charge', 'refund'
-    ];
-    $normalized = TagAlias::normalizeAlias($alias);
-    if (in_array($normalized, $genericWords, true)) {
-        return false;
-    }
-
-    return true;
-}
-
-/**
- * Persist alias safely, handling duplicate-key conflicts gracefully.
- */
-function createLearnedAlias(PDO $db, int $tagId, string $alias): array {
-    $alias = trim($alias);
-    $normalized = TagAlias::normalizeAlias($alias);
-    $result = [
-        'alias' => $alias,
-        'alias_normalized' => $normalized,
-        'tag_id' => $tagId,
-        'status' => 'ignored',
-        'reason' => null,
-    ];
-
-    if ($normalized === '') {
-        $result['reason'] = 'empty_normalized';
-        return $result;
-    }
-
-    try {
-        TagAlias::create($tagId, $alias, 'contains', true);
-        $result['status'] = 'created';
-        return $result;
-    } catch (PDOException $e) {
-        // 23000 is SQLSTATE integrity constraint violation (e.g., duplicate key).
-        if (($e->getCode() === '23000' || $e->getCode() === 23000) && stripos($e->getMessage(), 'duplicate') !== false) {
-            $upd = $db->prepare('UPDATE tag_aliases SET tag_id = :tag_id, alias = :alias, match_type = :match_type, active = 1 WHERE alias_normalized = :alias_normalized');
-            $upd->execute([
-                'tag_id' => $tagId,
-                'alias' => $alias,
-                'match_type' => 'contains',
-                'alias_normalized' => $normalized,
-            ]);
-            $result['status'] = $upd->rowCount() > 0 ? 'updated' : 'unchanged';
-            return $result;
-        }
-        $result['status'] = 'error';
-        $result['reason'] = $e->getMessage();
-        return $result;
-    }
-}
-
-$prompt = "You are a financial assistant. For each transaction provide a short canonical tag and an optional brief description for that tag. If the transaction details are ambiguous, use a generic canonical tag name. ";
+$prompt = "You are a financial assistant. For each transaction provide a short, broad, reusable canonical tag and an optional brief description for that tag. Never invent a merchant-specific or transaction-specific tag. ";
 $prompt .= "Aliases are examples that map to canonical tags. Always return the canonical tag name in the tag field, never an alias literal. ";
+$prompt .= "Reuse an existing canonical tag whenever it reasonably fits. Create a new canonical tag only when none of the supplied tags represents the durable spending or income type. ";
 $prompt .= "Prioritise canonical tag selection accuracy over other metadata. Category is optional metadata and may be omitted. ";
 $prompt .= "If you provide category, use canonical category names as reference guidance only; tagging should still proceed even when category is uncertain. ";
 $prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"optional category name\"} ";
@@ -331,7 +251,7 @@ if (!is_array($suggestions)) {
     exit;
 }
 
-$processed = 0;
+$processed = $processedLocally;
 $categoryMapped = 0;
 $categoryUnresolved = 0;
 $unresolvedCategorySuggestions = [];
@@ -345,56 +265,44 @@ foreach ($suggestions as $s) {
 
     $txn = $txnMap[$txId] ?? null;
     if (!$txn) continue;
-    $keyword = substr($txn['description'], 0, 100);
-
     $resolved = AiTaggingPipeline::resolveCanonicalTag((string)$tagName, $tagContext['canonicalByName'], $tagContext['aliasToCanonical']);
-    $modelTagText = trim((string)$tagName);
     if ($resolved !== null) {
         $tagId = (int)$resolved['id'];
         $canonicalTagName = $resolved['name'];
-        $canonicalDiffers = strcasecmp($modelTagText, (string)$canonicalTagName) !== 0;
         if ($resolved['source'] === 'alias') {
             $aliasResolutions[] = ['input' => $tagName, 'canonical' => $canonicalTagName, 'id' => $tagId];
         }
         $tagName = $canonicalTagName;
-        Tag::setKeywordIfMissing($tagId, $keyword);
         if ($tagDesc) {
             Tag::setDescriptionIfMissing($tagId, $tagDesc);
-        }
-
-        if ($resolved['source'] === 'alias' || $canonicalDiffers) {
-            $aliasCandidate = buildAliasDescriptor($txn);
-            if (isValidLearnedAlias($aliasCandidate)) {
-                $learned = createLearnedAlias($db, (int)$tagId, $aliasCandidate);
-                $learned['tx_id'] = (int)$txId;
-                $learned['canonical'] = $canonicalTagName;
-                $learned['trigger'] = $resolved['source'] === 'alias' ? 'resolved_from_alias' : 'mapped_to_canonical';
-                $learnedAliases[] = $learned;
-                if ($learned['status'] === 'created' || $learned['status'] === 'updated') {
-                    Log::write("AI learned tag alias '{$learned['alias']}' for canonical tag '{$canonicalTagName}' (tag_id={$tagId}, trigger={$learned['trigger']}, status={$learned['status']})");
-                }
-            } else {
-                $learnedAliases[] = [
-                    'tx_id' => (int)$txId,
-                    'canonical' => $canonicalTagName,
-                    'alias' => $aliasCandidate,
-                    'status' => 'filtered',
-                    'trigger' => $resolved['source'] === 'alias' ? 'resolved_from_alias' : 'mapped_to_canonical',
-                ];
-            }
         }
     } else {
         $tagId = Tag::getIdByName($tagName);
         if ($tagId === null) {
-            $tagId = Tag::create($tagName, $keyword, $tagDesc);
+            $tagId = Tag::create($tagName, null, $tagDesc);
         } else {
             // getIdByName performs normalized lookup to prevent duplicate tags.
-            Tag::setKeywordIfMissing($tagId, $keyword);
             if ($tagDesc) {
                 Tag::setDescriptionIfMissing($tagId, $tagDesc);
             }
         }
     }
+
+    // Every accepted AI decision teaches the deterministic application matcher.
+    // This is deliberately separate from the tag name so one canonical tag can
+    // accumulate many merchants without creating a tag per transaction.
+    $learned = Tag::learnTransactionAlias((int)$tagId, (string)$txn['description'], $txn['memo']);
+    $learned['tx_id'] = (int)$txId;
+    $learned['canonical'] = (string)$tagName;
+    $learned['trigger'] = $resolved !== null ? $resolved['source'] : 'new_or_normalized_canonical';
+    if ($learned['status'] === 'conflict' && !empty($learned['existing_tag_id'])) {
+        $tagId = (int)$learned['existing_tag_id'];
+        $learned['resolved_to_existing_tag'] = $tagId;
+        Log::write('AI tag alias conflict resolved to existing canonical mapping: ' . json_encode($learned), 'WARNING');
+    } elseif ($learned['status'] === 'created') {
+        Log::write("AI learned reusable alias '{$learned['alias']}' for tag_id={$tagId}");
+    }
+    $learnedAliases[] = $learned;
 
     $catId = CategoryTag::getCategoryId((int)$tagId);
     if ($catId === null && $catName) {
@@ -423,14 +331,23 @@ foreach ($suggestions as $s) {
     }
 
     if ($catId !== null) {
-        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL');
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL AND transfer_id IS NULL');
         $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
     } else {
-        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL');
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL AND transfer_id IS NULL');
         $upd->execute(['tag' => $tagId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
     }
     $processed += $upd->rowCount();
 }
+
+// Replay the accumulated deterministic rules across every account. AI is used
+// once for a pattern; matching transactions are handled locally from then on.
+$replayed = Tag::applyToAllTransactions();
+$processed += $replayed;
+if ($replayed > 0) {
+    CategoryTag::applyToAllTransactions();
+}
+Segment::applyToTransactions();
 
 Log::write("AI tagged $processed transactions using $usage tokens");
 if (!empty($learnedAliases)) {

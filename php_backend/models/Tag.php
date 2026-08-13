@@ -143,12 +143,16 @@ class Tag {
             self::$aliasCache = TagAlias::activeMappings();
         }
 
-        $normalizedText = strtolower(trim($text));
+        $normalizedText = self::normalizeMatchPhrase($text);
         foreach (self::$aliasCache as $row) {
-            if ($row['match_type'] === 'exact' && $normalizedText === $row['alias_normalized']) {
+            $normalizedAlias = self::normalizeMatchPhrase((string)$row['alias']);
+            if ($normalizedAlias === '') {
+                continue;
+            }
+            if ($row['match_type'] === 'exact' && $normalizedText === $normalizedAlias) {
                 return (int)$row['tag_id'];
             }
-            if ($row['match_type'] !== 'exact' && stripos($text, $row['alias']) !== false) {
+            if ($row['match_type'] !== 'exact' && strpos(' ' . $normalizedText . ' ', ' ' . $normalizedAlias . ' ') !== false) {
                 return (int)$row['tag_id'];
             }
         }
@@ -164,6 +168,113 @@ class Tag {
             }
         }
         return null;
+    }
+
+    /**
+     * Learn a conservative merchant alias from a transaction that a person or AI
+     * has assigned to a canonical tag. Existing aliases are never reassigned to a
+     * different tag: a conflict is returned for review instead.
+     *
+     * @return array{status:string,alias:?string,tag_id:int,existing_tag_id:?int}
+     */
+    public static function learnTransactionAlias(int $tagId, string $description, ?string $memo = null): array {
+        $alias = self::buildReusableAlias($description, $memo);
+        $result = [
+            'status' => 'filtered',
+            'alias' => $alias,
+            'tag_id' => $tagId,
+            'existing_tag_id' => null,
+        ];
+        if ($alias === null) {
+            return $result;
+        }
+
+        $db = Database::getConnection();
+        $normalized = TagAlias::normalizeAlias($alias);
+        $stmt = $db->prepare('SELECT `id`, `tag_id` FROM `tag_aliases` WHERE `alias_normalized` = :alias LIMIT 1');
+        $stmt->execute(['alias' => $normalized]);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($existing) {
+            $existingTagId = (int)$existing['tag_id'];
+            $result['existing_tag_id'] = $existingTagId;
+            if ($existingTagId !== $tagId) {
+                $result['status'] = 'conflict';
+                return $result;
+            }
+
+            $activate = $db->prepare('UPDATE `tag_aliases` SET `active` = 1, `match_type` = :match_type WHERE `id` = :id');
+            $activate->execute(['match_type' => 'contains', 'id' => (int)$existing['id']]);
+            self::clearMatchCaches();
+            $result['status'] = 'existing';
+            return $result;
+        }
+
+        try {
+            TagAlias::create($tagId, $alias, 'contains', true);
+            self::clearMatchCaches();
+            $result['status'] = 'created';
+            return $result;
+        } catch (PDOException $e) {
+            // A concurrent request may have inserted the alias after our lookup.
+            $stmt->execute(['alias' => $normalized]);
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($existing) {
+                $existingTagId = (int)$existing['tag_id'];
+                $result['existing_tag_id'] = $existingTagId;
+                $result['status'] = $existingTagId === $tagId ? 'existing' : 'conflict';
+                self::clearMatchCaches();
+                return $result;
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Derive a stable first merchant token while removing bank boilerplate,
+     * dates, card suffixes and reference numbers that change per transaction.
+     */
+    private static function buildReusableAlias(string $description, ?string $memo = null): ?string {
+        $text = trim($description . ' ' . (string)$memo);
+        $normalized = self::normalizeMatchPhrase($text);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $generic = array_fill_keys([
+            'a', 'account', 'an', 'at', 'bank', 'banking', 'bacs', 'bill', 'card',
+            'cash', 'charge', 'contactless', 'credit', 'debit', 'deposit', 'direct',
+            'faster', 'from', 'klarna', 'mobile', 'monthly', 'online', 'order', 'payment',
+            'payments', 'paypal', 'pending', 'pos', 'purchase', 'receipt', 'received',
+            'recurring', 'ref', 'reference', 'refund', 'sent', 'square', 'standing',
+            'stripe', 'sumup', 'the', 'to', 'transaction', 'transfer', 'xfer', 'zettle'
+        ], true);
+        foreach (explode(' ', $normalized) as $token) {
+            if ($token === '' || isset($generic[$token]) || preg_match('/\d/', $token)) {
+                continue;
+            }
+            if (strlen($token) < 4 || strlen($token) > 60 || !preg_match('/\p{L}/u', $token)) {
+                continue;
+            }
+            return $token;
+        }
+        return null;
+    }
+
+    /**
+     * Normalize free-form bank text for whole-token alias matching.
+     */
+    private static function normalizeMatchPhrase(string $value): string {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (function_exists('mb_strtolower')) {
+            $value = mb_strtolower($value, 'UTF-8');
+        } else {
+            $value = strtolower($value);
+        }
+        $value = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $value);
+        return trim(preg_replace('/\s+/u', ' ', $value));
     }
 
     /**
@@ -266,7 +377,7 @@ class Tag {
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `description`, `memo`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL');
+        $stmt = $db->prepare('SELECT `id`, `description`, `memo`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL AND `transfer_id` IS NULL');
         $stmt->execute(['acc' => $accountId]);
         $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
         $updated = 0;
@@ -289,7 +400,7 @@ class Tag {
      */
     public static function applyToAllTransactions(): int {
         $db = Database::getConnection();
-        $accountIds = $db->query('SELECT `id` FROM `accounts`')->fetchAll(PDO::FETCH_COLUMN);
+        $accountIds = $db->query('SELECT DISTINCT `account_id` FROM `transactions`')->fetchAll(PDO::FETCH_COLUMN);
         $total = 0;
         foreach ($accountIds as $accId) {
             $total += self::applyToAccountTransactions((int)$accId);
@@ -305,7 +416,7 @@ class Tag {
      */
     public static function remapAllTransactionsToCanonicalTags(bool $applyChanges = false): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `description`, `memo`, `ofx_type`, `tag_id` FROM `transactions`');
+        $stmt = $db->query('SELECT `id`, `description`, `memo`, `ofx_type`, `tag_id` FROM `transactions` WHERE `transfer_id` IS NULL');
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $moves = [];

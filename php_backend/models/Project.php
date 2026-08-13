@@ -53,7 +53,7 @@ class Project {
             ) AS score,
             COALESCE(SUM(CASE WHEN t.amount < 0 THEN -t.amount ELSE 0 END),0) AS spent
             FROM projects p
-            LEFT JOIN transactions t ON t.group_id = p.group_id
+            LEFT JOIN transactions t ON t.group_id = p.group_id AND t.transfer_id IS NULL
             WHERE p.archived = :archived
             GROUP BY p.id
             ORDER BY score DESC, p.id ASC';

@@ -175,6 +175,7 @@ try {
                 if ($bankId !== null) {
                     $duplicates[] = $bankId;
                 }
+            } else {
                 $inserted++;
             }
         }

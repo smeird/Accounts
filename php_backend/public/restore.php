@@ -7,6 +7,7 @@ require_once __DIR__ . '/../auth.php';
 require_api_auth();
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
+require_once __DIR__ . '/../models/Tag.php';
 
 try {
     if (!isset($_FILES['backup_file'])) {
@@ -147,15 +148,31 @@ try {
         }
     }
 
+    $tagIdMap = [];
     if (isset($data['tags'])) {
-        $stmtTag = $db->prepare('INSERT INTO tags (id, name, keyword, description) VALUES (:id, :name, :keyword, :description)');
+        $stmtTag = $db->prepare('INSERT INTO tags (id, name, name_normalized, keyword, description) VALUES (:id, :name, :name_normalized, :keyword, :description)');
+        $canonicalTagIds = [];
         foreach ($data['tags'] as $row) {
-            $stmtTag->execute(['id' => $row['id'], 'name' => $row['name'], 'keyword' => $row['keyword'], 'description' => $row['description'] ?? null]);
+            $oldTagId = (int)$row['id'];
+            $normalizedName = Tag::normalizeName((string)$row['name']);
+            if (isset($canonicalTagIds[$normalizedName])) {
+                $tagIdMap[$oldTagId] = $canonicalTagIds[$normalizedName];
+                continue;
+            }
+            $stmtTag->execute([
+                'id' => $oldTagId,
+                'name' => $row['name'],
+                'name_normalized' => $normalizedName,
+                'keyword' => $row['keyword'] ?? null,
+                'description' => $row['description'] ?? null
+            ]);
+            $canonicalTagIds[$normalizedName] = $oldTagId;
+            $tagIdMap[$oldTagId] = $oldTagId;
         }
     }
 
     if (isset($data['tag_aliases'])) {
-        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :created_at, :updated_at)');
+        $stmtAlias = $db->prepare('INSERT IGNORE INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :created_at, :updated_at)');
         foreach ($data['tag_aliases'] as $row) {
             $alias = trim((string)($row['alias'] ?? ''));
             if ($alias === '') {
@@ -164,9 +181,9 @@ try {
 
             $stmtAlias->execute([
                 'id' => $row['id'],
-                'tag_id' => $row['tag_id'],
+                'tag_id' => $tagIdMap[(int)$row['tag_id']] ?? $row['tag_id'],
                 'alias' => $alias,
-                'alias_normalized' => $row['alias_normalized'] ?? strtolower($alias),
+                'alias_normalized' => TagAlias::normalizeAlias($alias),
                 'match_type' => ($row['match_type'] ?? 'contains') === 'exact' ? 'exact' : 'contains',
                 'active' => isset($row['active']) ? (int)$row['active'] : 1,
                 'created_at' => $row['created_at'] ?? null,
@@ -243,7 +260,7 @@ try {
                 'memo' => $row['memo'],
                 'category_id' => $row['category_id'],
                 'segment_id' => $row['segment_id'] ?? null,
-                'tag_id' => $row['tag_id'],
+                'tag_id' => $row['tag_id'] === null ? null : ($tagIdMap[(int)$row['tag_id']] ?? $row['tag_id']),
                 'group_id' => $row['group_id'],
                 'transfer_id' => $row['transfer_id'],
                 'ofx_id' => $row['ofx_id'],
@@ -254,9 +271,12 @@ try {
     }
 
     if (isset($data['category_tags'])) {
-        $stmtCT = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
+        $stmtCT = $db->prepare('INSERT IGNORE INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
         foreach ($data['category_tags'] as $row) {
-            $stmtCT->execute(['category_id' => $row['category_id'], 'tag_id' => $row['tag_id']]);
+            $stmtCT->execute([
+                'category_id' => $row['category_id'],
+                'tag_id' => $tagIdMap[(int)$row['tag_id']] ?? $row['tag_id']
+            ]);
         }
     }
     Log::write('Restore completed for parts: ' . implode(',', array_keys($data)));

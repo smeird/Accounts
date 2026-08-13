@@ -49,6 +49,7 @@ class AiTaggingPipeline {
             $name = $entry['name'];
             $aliases = array_values($entry['aliases']);
             if (empty($aliases)) {
+                $lines[] = $name;
                 continue;
             }
             $aliases = array_slice($aliases, 0, $maxAliasesPerTag);
