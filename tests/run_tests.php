@@ -145,6 +145,13 @@ $contextWithAliaslessTag = AiTaggingPipeline::buildAliasAwareTagContext([
 assertEqual(true, strpos($contextWithAliaslessTag['text'], 'Household Bills') !== false, 'AI context includes canonical tags that do not have aliases yet');
 
 $tag2 = Tag::create('Fuel', null, null);
+$fuelOptions = Tag::searchOptions('fuel', 10);
+assertEqual($tag2, (int)($fuelOptions[0]['id'] ?? 0), 'Compact tag search returns the matching canonical tag');
+assertEqual(['id', 'name'], array_keys($fuelOptions[0] ?? []), 'Compact tag search returns only picker fields');
+$limitedTagOptions = Tag::searchOptions('', 2);
+assertEqual(2, count($limitedTagOptions), 'Compact tag search respects its result limit');
+$literalWildcardOptions = Tag::searchOptions('%', 10);
+assertEqual(0, count($literalWildcardOptions), 'Compact tag search treats wildcard characters literally');
 Tag::setKeywordIfMissing($tag2, 'petrol');
 $kw = $db->query('SELECT keyword FROM tags WHERE id = '.$tag2)->fetchColumn();
 assertEqual('petrol', $kw, 'Keyword set when missing');

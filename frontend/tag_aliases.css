@@ -1,0 +1,108 @@
+.tag-alias-page .tag-picker {
+    position:relative;
+    margin-top:.35rem;
+}
+
+.tag-alias-page .tag-picker-field {
+    display:flex;
+    min-height:2.75rem;
+    align-items:center;
+    gap:.65rem;
+    padding:0 .8rem;
+    border:1px solid #cbd5e1;
+    border-radius:.65rem;
+    background:#fff;
+    transition:border-color 150ms ease,box-shadow 150ms ease;
+}
+
+.tag-alias-page .tag-picker-field:focus-within {
+    border-color:#6366f1;
+    box-shadow:0 0 0 3px rgba(99,102,241,.14);
+}
+
+.tag-alias-page .tag-picker-field i {
+    flex:0 0 auto;
+    color:#94a3b8;
+    font-size:.78rem;
+}
+
+.tag-alias-page .tag-picker-input {
+    min-width:0;
+    width:100%;
+    padding:.7rem 0;
+    border:0;
+    color:#172033;
+    background:transparent;
+    outline:0;
+    box-shadow:none;
+}
+
+.tag-alias-page .tag-picker-input::-webkit-search-cancel-button { cursor:pointer; }
+
+.tag-alias-page .tag-picker-status {
+    min-height:1.3rem;
+    margin-top:.35rem;
+    color:#64748b;
+    font-size:.72rem;
+}
+
+.tag-alias-page .tag-picker-status.is-selected {
+    color:#047857;
+    font-weight:750;
+}
+
+.tag-alias-page .tag-picker-status.is-error { color:#b91c1c; }
+
+.tag-alias-page .tag-picker-results {
+    position:absolute;
+    z-index:40;
+    top:calc(100% + .25rem);
+    left:0;
+    right:0;
+    max-height:18rem;
+    overflow-y:auto;
+    padding:.35rem;
+    border:1px solid #dbe3ef;
+    border-radius:.75rem;
+    background:#fff;
+    box-shadow:0 20px 45px -24px rgba(15,23,42,.65);
+}
+
+.tag-alias-page .tag-picker-results[hidden] { display:none; }
+
+.tag-alias-page .tag-picker-option,
+.tag-alias-page .tag-picker-empty {
+    width:100%;
+    padding:.65rem .75rem;
+    border:0;
+    border-radius:.55rem;
+    text-align:left;
+}
+
+.tag-alias-page .tag-picker-option {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+    color:#334155;
+    background:transparent;
+    cursor:pointer;
+}
+
+.tag-alias-page .tag-picker-option:hover,
+.tag-alias-page .tag-picker-option[aria-selected="true"] {
+    color:#3730a3;
+    background:linear-gradient(120deg,#eef2ff,#ecfeff);
+}
+
+.tag-alias-page .tag-picker-option-name { font-weight:760; }
+.tag-alias-page .tag-picker-option-id { color:#94a3b8; font-size:.65rem; }
+.tag-alias-page .tag-picker-empty { color:#64748b; background:#f8fafc; font-size:.75rem; }
+
+@media(max-width:640px) {
+    .tag-alias-page .tag-picker-results { max-height:14rem; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .tag-alias-page .tag-picker-field { transition:none; }
+}
