@@ -15,7 +15,7 @@
 
     <link rel="stylesheet" href="operational_ui.css">
 
-    <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_simple.min.css">
+    <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
     <link rel="stylesheet" href="operational_ui.css">
 
 </head>
@@ -68,11 +68,11 @@ window.renderPageHeader(pageMain, {
 });
 </script>
     <script src="js/menu.js"></script>
-    <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js?v=20260811-modern-tables"></script>
+    <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
+    <script src="js/tabulator-tailwind.js?v=20260814-table-performance"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/sunburst.js"></script>
-    <script src="js/color_map.js"></script>
+    <script src="js/color_map.js?v=20260814-lazy-charts"></script>
     <script>
     function columnTooltip(){
         const total = this.series.yData.reduce((sum, v) => sum + v, 0);
@@ -131,6 +131,7 @@ window.renderPageHeader(pageMain, {
             data: data,
             layout: 'fitDataStretch',
             modernResponsive: false,
+            modernFreezeFirst: true,
             columns: columns
         });
     }

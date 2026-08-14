@@ -176,16 +176,21 @@ document.addEventListener('pointerdown', event => {
 });
 
 async function loadAliases() {
-    const aliases = await fetchJson('../php_backend/public/tag_aliases.php');
-
     if (tagAliasTable) {
-        tagAliasTable.setData(aliases);
-        return;
+        return tagAliasTable.setData();
     }
 
     tagAliasTable = tailwindTabulator('#tag-alias-table', {
-        data: aliases,
+        ajaxURL: '../php_backend/public/tag_aliases.php',
         layout: 'fitDataStretch',
+        pagination: true,
+        paginationMode: 'remote',
+        paginationSize: 25,
+        paginationSizeSelector: [25, 50, 100],
+        sortMode: 'remote',
+        initialSort: [{ column: 'alias', dir: 'asc' }],
+        modernRemoteSearchParam: 'q',
+        modernMaxHeight: '70vh',
         columns: [
             { title: 'Alias', field: 'alias' },
             { title: 'Canonical Tag', field: 'tag_name', formatter: badgeFormatter('bg-indigo-200 text-indigo-800') },

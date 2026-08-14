@@ -366,6 +366,11 @@ class Transaction {
     public static function getByMonth(int $month, int $year, bool $onlyUntagged = false): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
+        if ($month < 1 || $month > 12 || $year < 1) {
+            throw new InvalidArgumentException('A valid statement month and year are required.');
+        }
+        $start = sprintf('%04d-%02d-01', $year, $month);
+        $end = (new DateTimeImmutable($start))->modify('+1 month')->format('Y-m-d');
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
              . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
@@ -374,14 +379,14 @@ class Transaction {
              . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
-             . 'WHERE MONTH(t.`date`) = :month AND YEAR(t.`date`) = :year '
+             . 'WHERE t.`date` >= :start AND t.`date` < :end '
              . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
         if ($onlyUntagged) {
             $sql .= ' AND t.`tag_id` IS NULL AND t.`transfer_id` IS NULL';
         }
         $sql .= ' ORDER BY t.`date`';
         $stmt = $db->prepare($sql);
-        $stmt->execute(['month' => $month, 'year' => $year, 'ignore' => $ignore]);
+        $stmt->execute(['start' => $start, 'end' => $end, 'ignore' => $ignore]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

@@ -139,6 +139,20 @@ Tag::clearMatchCaches();
 $aliasMatch = Tag::findMatch('TESCO SUPERSTORE 1234');
 assertEqual($tagId, $aliasMatch, 'Alias contains match finds canonical tag');
 
+for ($aliasNumber = 1; $aliasNumber <= 12; $aliasNumber++) {
+    TagAlias::create($tagId, sprintf('pagination-sample-%02d', $aliasNumber));
+}
+$aliasPage = TagAlias::page(1, 10, 'pagination-sample', 'alias', 'desc');
+assertEqual(12, $aliasPage['total'], 'Alias paging reports the filtered total');
+assertEqual(2, $aliasPage['last_page'], 'Alias paging reports the final page');
+assertEqual(10, count($aliasPage['data']), 'Alias paging limits the returned rows');
+assertEqual('pagination-sample-12', $aliasPage['data'][0]['alias'] ?? null, 'Alias paging applies an allowlisted remote sort');
+$aliasSecondPage = TagAlias::page(2, 10, 'pagination-sample');
+assertEqual(2, count($aliasSecondPage['data']), 'Alias paging returns the remaining rows');
+$literalAliasSearch = TagAlias::page(1, 10, '%');
+assertEqual(0, $literalAliasSearch['total'], 'Alias search treats wildcard characters literally');
+assertEqual(true, count(TagAlias::all()) >= 13, 'Legacy alias listing remains available');
+
 $ctxRows = [
     ['tag_id' => $tagId, 'tag_name' => 'Food', 'alias' => 'Tesco'],
 ];
@@ -354,6 +368,19 @@ assertEqual(6300.0, (float)$recIncome[0]['total'], 'Recurring income total summe
 assertEqual(90.0, (float)$recSpend[0]['last_amount'], 'Recurring spend last amount stored');
 assertEqual(2200.0, (float)$recIncome[0]['last_amount'], 'Recurring income last amount stored');
 $db->exec('DELETE FROM transactions');
+
+$januaryTransactionId = Transaction::create(1, '2024-01-31', -12.50, 'January boundary test');
+$februaryTransactionId = Transaction::create(1, '2024-02-01', -15.00, 'February boundary test');
+$januaryRows = Transaction::getByMonth(1, 2024);
+assertEqual([$januaryTransactionId], array_map('intval', array_column($januaryRows, 'id')), 'Monthly statement query uses an exact date range');
+$invalidStatementMonthRejected = false;
+try {
+    Transaction::getByMonth(13, 2024);
+} catch (InvalidArgumentException $e) {
+    $invalidStatementMonthRejected = true;
+}
+assertEqual(true, $invalidStatementMonthRejected, 'Monthly statement rejects an invalid month');
+$db->exec("DELETE FROM transactions WHERE id IN ($januaryTransactionId, $februaryTransactionId)");
 
 // --- Duplicate FITID test ---
 $first = Transaction::create(1, '2024-08-01', 10, 'First', null, null, null, null, 'ofx1', 'DEBIT', 'DUP123');
@@ -640,6 +667,8 @@ $healthySchemaSnapshot = SchemaHealthService::expectedSnapshot();
 $healthySchemaAudit = SchemaHealthService::analyseSnapshot($healthySchemaSnapshot);
 assertEqual(true, $healthySchemaAudit['healthy'], 'Database Health accepts the canonical schema snapshot');
 assertEqual(0, (int)$healthySchemaAudit['summary']['issues'], 'Canonical schema has no health issues');
+assertEqual(['date'], $healthySchemaSnapshot['tables']['transactions']['indexes']['idx_transactions_date']['columns'] ?? null, 'Database Health includes the statement date index');
+assertEqual(['created_at'], $healthySchemaSnapshot['tables']['logs']['indexes']['idx_logs_created_at']['columns'] ?? null, 'Database Health includes the log date index');
 $emptySchemaAudit = SchemaHealthService::analyseSnapshot([
     'driver' => 'mysql',
     'database' => 'empty',

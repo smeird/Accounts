@@ -156,6 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
         columns,
         layout: 'fitDataStretch',
         modernResponsive: false,
+        modernFreezeFirst: true,
+        modernMaxHeight: '70vh',
 
         pagination: false,
         dataTree: true,
@@ -197,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detailTable = tailwindTabulator('#detail-table', {
         data: rows,
         layout: 'fitDataStretch',
+        modernMaxHeight: '60vh',
         pagination: false,
         columns: [
           { title: 'Date', field: 'date' },
@@ -245,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detailTable = tailwindTabulator('#detail-table', {
         data: rows,
         layout: 'fitDataStretch',
+        modernMaxHeight: '60vh',
         pagination: false,
         columns: [
           { title: 'Date', field: 'date' },
@@ -291,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detailTable = tailwindTabulator('#detail-table', {
         data: rows,
         layout: 'fitDataStretch',
+        modernMaxHeight: '60vh',
         pagination: false,
         columns: [
           { title: 'Date', field: 'date' },
@@ -307,4 +312,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
-
