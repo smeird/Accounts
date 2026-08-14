@@ -235,6 +235,14 @@ php php_backend/migrations/20260814_transaction_identity.php
 
 The migration removes the legacy `unique_txn` index, which could reject genuine same-day matching purchases, and replaces it with a non-unique lookup index. The per-account `unique_bank_fitid` constraint remains in place.
 
+## Database Health
+
+Authenticated users can open **Admin Tools → Database Health** to compare an installation with the canonical schema in `php_backend/SchemaCatalog.php`. The audit covers managed tables, columns, primary keys, indexes, foreign keys, storage engines, and explicitly obsolete indexes.
+
+Repairs are review-first and schema-only. The browser can select only catalogue-generated `CREATE TABLE`, `ALTER TABLE`, and `DROP INDEX` operations; it cannot submit SQL. The utility never generates `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, or record-backfill statements. Definition changes that could transform existing values are reported for manual review instead of being applied.
+
+Every application schema change should update `SchemaCatalog.php` as part of the same change so fresh installs and the Database Health audit share the same target structure. Data migrations remain separate, explicit scripts in `php_backend/migrations/`.
+
 ## Running Tests
 
 The repository includes a small test script that exercises the user model using

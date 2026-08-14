@@ -1,6 +1,7 @@
 <?php
 // Resets and creates all database tables used by the application.
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/SchemaCatalog.php';
 require_once __DIR__ . '/models/Transaction.php';
 require_once __DIR__ . '/models/Log.php';
 
@@ -200,6 +201,10 @@ CREATE TABLE IF NOT EXISTS logs (
 );
 SQL;
 
+// Keep fresh installs and the non-destructive Database Health utility on one
+// canonical schema definition. The catalogue supersedes the legacy literal
+// block above while it remains in place for readable historical context.
+$createSql = implode(";\n", array_values(SchemaCatalog::createStatements())) . ';';
 $db->exec($createSql);
 
 // Ensure keyword column exists if the tags table pre-dates it
