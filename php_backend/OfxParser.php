@@ -39,13 +39,13 @@ class OfxParser {
         'currency' => null,
         'fields' => [
             'CHECKNUM' => ['regex' => '/[^0-9]/'],
-            'REFNUM' => ['uppercase' => true, 'max_length' => 15],
-            'MEMO' => ['max_length' => 10],
+            'REFNUM' => ['uppercase' => true, 'max_length' => 32],
+            'MEMO' => ['max_length' => 255],
             'ACCTID' => ['regex' => '/[^A-Za-z0-9*]/'],
             'BANKID' => ['regex' => '/[^A-Za-z0-9]/'],
-            'ACCTNAME' => ['max_length' => 32],
-            'NAME' => ['max_length' => 32],
-            'FITID' => ['max_length' => 32],
+            'ACCTNAME' => ['max_length' => 100],
+            'NAME' => ['max_length' => 255],
+            'FITID' => ['max_length' => 255],
         ],
     ];
 
@@ -291,6 +291,9 @@ class OfxParser {
             }
 
         $trnTypeRaw = $trn->TRNTYPE ? strtoupper(trim((string)$trn->TRNTYPE)) : null;
+        // SimpleXML reserves NAME internally, so direct `$trn->NAME` access can
+        // return a neighbouring element when the OFX NAME field is absent.
+        $name = self::applyFieldProfile($profile, 'NAME', self::childValue($trn, 'NAME'));
         $memo = self::applyFieldProfile($profile, 'MEMO', trim((string)$trn->MEMO));
         if ($trnTypeRaw === null) {
             if ($strict) {
@@ -301,12 +304,15 @@ class OfxParser {
         } else {
             $trnType = self::TRNTYPE_MAP[$trnTypeRaw] ?? TransactionType::UNKNOWN;
         }
-        if ($memo === '') {
+        if ($name === '' && $memo === '') {
             if ($strict) {
-                throw new Exception('Missing MEMO');
+                throw new Exception('Missing NAME and MEMO');
             }
-            self::log($warnings, $warningCounts, 'Missing MEMO, using placeholder', $line, $raw, 'structure');
-            $memo = 'N/A';
+            self::log($warnings, $warningCounts, 'Missing NAME and MEMO, using placeholder', $line, $raw, 'structure');
+            $name = 'Unlabelled transaction';
+        } elseif ($name === '') {
+            self::log($warnings, $warningCounts, 'Missing NAME, using MEMO as description', $line, $raw, 'structure');
+            $name = $memo;
         }
 
         if ($trn->RUNNINGBAL && $trn->RUNNINGBAL->BALAMT) {
@@ -332,13 +338,12 @@ class OfxParser {
 
         $extensions = [];
         foreach ($trn->children() as $child) {
-            $name = strtoupper($child->getName());
-            if (!in_array($name, ['DTPOSTED','TRNAMT','NAME','MEMO','TRNTYPE','REFNUM','CHECKNUM','FITID','RUNNINGBAL'])) {
-                $extensions[$name] = trim((string)$child);
+            $extensionName = strtoupper($child->getName());
+            if (!in_array($extensionName, ['DTPOSTED','TRNAMT','NAME','MEMO','TRNTYPE','REFNUM','CHECKNUM','FITID','RUNNINGBAL'])) {
+                $extensions[$extensionName] = trim((string)$child);
             }
         }
 
-        $name = self::applyFieldProfile($profile, 'NAME', trim((string)$trn->NAME));
         $ref = self::applyFieldProfile($profile, 'REFNUM', trim((string)$trn->REFNUM));
         $check = self::applyFieldProfile($profile, 'CHECKNUM', trim((string)$trn->CHECKNUM));
         $fitid = self::applyFieldProfile($profile, 'FITID', trim((string)$trn->FITID));
@@ -367,6 +372,15 @@ class OfxParser {
         return $profile;
     }
 
+    private static function childValue(SimpleXMLElement $node, string $field): string {
+        foreach ($node->children() as $child) {
+            if (strtoupper($child->getName()) === strtoupper($field)) {
+                return trim((string)$child);
+            }
+        }
+        return '';
+    }
+
     private static function applyFieldProfile(array $profile, string $field, string $value): string {
         $value = trim($value);
         $fieldProfile = $profile['fields'][$field] ?? null;
@@ -380,7 +394,9 @@ class OfxParser {
             $value = strtoupper($value);
         }
         if (!empty($fieldProfile['max_length'])) {
-            $value = substr($value, 0, (int)$fieldProfile['max_length']);
+            $value = function_exists('mb_substr')
+                ? mb_substr($value, 0, (int)$fieldProfile['max_length'])
+                : substr($value, 0, (int)$fieldProfile['max_length']);
             $value = rtrim($value);
         }
         return $value;

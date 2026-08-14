@@ -223,6 +223,18 @@ Tag aliases let you map many bank descriptors to one canonical tag without renam
 
 Use `frontend/tag_aliases.html` to manage mappings and the backend endpoint `php_backend/public/tag_aliases.php` for CRUD operations.
 
+## Transaction Imports
+
+`frontend/upload.html` imports OFX and QFX statements through a structured, per-file workflow. Each file is committed atomically, bank-provided FITIDs are authoritative within their account, and files without FITIDs use a fallback signature containing the account, date, amount, description, memo, and transaction type.
+
+Existing installations must run the non-destructive identity migration once before deploying this importer:
+
+```bash
+php php_backend/migrations/20260814_transaction_identity.php
+```
+
+The migration removes the legacy `unique_txn` index, which could reject genuine same-day matching purchases, and replaces it with a non-unique lookup index. The per-account `unique_bank_fitid` constraint remains in place.
+
 ## Running Tests
 
 The repository includes a small test script that exercises the user model using

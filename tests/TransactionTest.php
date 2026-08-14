@@ -45,6 +45,15 @@ class TransactionTest extends TestCase
         $this->assertSame(1, (int)$count);
     }
 
+    public function testDistinctBankIdsPreserveMatchingPurchases(): void
+    {
+        $first = Transaction::create(1, '2024-08-03', 30.0, 'Same merchant', 'Same memo', null, 0, null, 'identity-a', 'DEBIT', 'BANK-A');
+        $second = Transaction::create(1, '2024-08-03', 30.0, 'Same merchant', 'Same memo', null, 0, null, 'identity-b', 'DEBIT', 'BANK-B');
+        $this->assertGreaterThan(0, $first);
+        $this->assertGreaterThan(0, $second);
+        $this->assertSame(2, (int)$this->db->query("SELECT COUNT(*) FROM transactions WHERE description = 'Same merchant'")->fetchColumn());
+    }
+
     public function testRecurringIncomeAndSpendDetection(): void
     {
 

@@ -127,12 +127,6 @@ class Transaction {
      * Insert a new transaction and attempt to auto-tag and link transfers.
      */
     public static function create(int $account, string $date, float $amount, string $description, ?string $memo = null, ?int $category = null, ?int $tag = null, ?int $group = null, ?string $ofx_id = null, ?string $ofx_type = null, ?string $bank_ofx_id = null): int {
-        if ($tag === null) {
-            $tag = Tag::findMatch(Tag::buildMatchText($description, $memo));
-            if ($tag === null && $ofx_type === 'INT') {
-                $tag = Tag::getInterestChargeId();
-            }
-        }
         $db = Database::getConnection();
 
         $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
@@ -141,19 +135,12 @@ class Transaction {
         $ofx_id = $ofx_id === null ? null : $substr($ofx_id, 0, self::ID_MAX_LENGTH);
         $ofx_type = $ofx_type === null ? null : $substr($ofx_type, 0, self::TYPE_MAX_LENGTH);
         $bank_ofx_id = $bank_ofx_id === null ? null : $substr($bank_ofx_id, 0, self::ID_MAX_LENGTH);
+        $ofx_id = $ofx_id === null || trim($ofx_id) === '' ? null : trim($ofx_id);
+        $bank_ofx_id = $bank_ofx_id === null || trim($bank_ofx_id) === '' ? null : trim($bank_ofx_id);
 
-        // avoid duplicate inserts when an OFX id already exists
-        if ($ofx_id !== null) {
-            $check = $db->prepare('SELECT id FROM `transactions` WHERE `ofx_id` = :oid LIMIT 1');
-            $check->execute(['oid' => $ofx_id]);
-            if ($check->fetch(PDO::FETCH_ASSOC)) {
-                return 0;
-            }
-        }
-
-
-        // Secondary duplicate check using bank-provided FITID. Exact duplicates
-        // are silently skipped, but conflicting details are logged for review.
+        // A bank-provided FITID is authoritative within its account. Core field
+        // comparisons must not discard a different FITID: two genuine purchases
+        // can have the same merchant, amount, and date.
         if ($bank_ofx_id !== null) {
             $dupCheck = $db->prepare(
                 'SELECT id, date, amount, description, IFNULL(memo, "") AS memo '
@@ -173,43 +160,46 @@ class Transaction {
             }
         }
 
-        // Fallback duplicate check on core fields when no OFX identifiers are available.
-        // Ignore memo differences and normalise description to prevent near-identical duplicates.
-        $coreCheck = $db->prepare(
-            'SELECT id FROM `transactions` '
-            . 'WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount '
-            . 'AND UPPER(TRIM(`description`)) = UPPER(TRIM(:description)) '
-            . 'LIMIT 1'
-        );
-        $coreCheck->execute([
-            'account' => $account,
-            'date' => $date,
-            'amount' => $amount,
-            'description' => $description
-        ]);
-        if ($coreCheck->fetch(PDO::FETCH_ASSOC)) {
-            return 0;
+        if ($ofx_id !== null) {
+            $check = $db->prepare('SELECT `id`, `bank_ofx_id` FROM `transactions` WHERE `ofx_id` = :oid LIMIT 1');
+            $check->execute(['oid' => $ofx_id]);
+            if ($row = $check->fetch(PDO::FETCH_ASSOC)) {
+                $storedBankId = $row['bank_ofx_id'] === null ? null : trim((string)$row['bank_ofx_id']);
+                if ($bank_ofx_id !== null && $storedBankId !== null && $storedBankId !== $bank_ofx_id) {
+                    throw new RuntimeException('OFX identity collision detected');
+                }
+                return 0;
+            }
         }
 
-        // Collapse pending vs posted duplicates by checking for matching amount and
-        // description within a small date window.
-        $start = date('Y-m-d', strtotime($date . ' -3 days'));
-        $end   = date('Y-m-d', strtotime($date . ' +3 days'));
-        $nearCheck = $db->prepare(
-            'SELECT id FROM `transactions` '
-            . 'WHERE `account_id` = :account AND `amount` = :amount '
-            . 'AND UPPER(TRIM(`description`)) = UPPER(TRIM(:description)) '
-            . 'AND `date` BETWEEN :start AND :end LIMIT 1'
-        );
-        $nearCheck->execute([
-            'account' => $account,
-            'amount' => $amount,
-            'description' => $description,
-            'start' => $start,
-            'end' => $end
-        ]);
-        if ($nearCheck->fetch(PDO::FETCH_ASSOC)) {
-            return 0;
+        // Only use a core-field fallback when the caller has no stable identity.
+        // Include the memo and exact date; fuzzy multi-day matching can silently
+        // remove legitimate repeated purchases.
+        if ($bank_ofx_id === null && $ofx_id === null) {
+            $coreCheck = $db->prepare(
+                'SELECT `id` FROM `transactions` '
+                . 'WHERE `account_id` = :account AND `date` = :date AND `amount` = :amount '
+                . 'AND UPPER(TRIM(`description`)) = UPPER(TRIM(:description)) '
+                . 'AND UPPER(TRIM(COALESCE(`memo`, \'\'))) = UPPER(TRIM(:memo)) '
+                . 'LIMIT 1'
+            );
+            $coreCheck->execute([
+                'account' => $account,
+                'date' => $date,
+                'amount' => $amount,
+                'description' => $description,
+                'memo' => $memo ?? '',
+            ]);
+            if ($coreCheck->fetch(PDO::FETCH_ASSOC)) {
+                return 0;
+            }
+        }
+
+        if ($tag === null) {
+            $tag = Tag::findMatch(Tag::buildMatchText($description, $memo));
+            if ($tag === null && $ofx_type === 'INT') {
+                $tag = Tag::getInterestChargeId();
+            }
         }
 
 

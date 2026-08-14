@@ -6,6 +6,20 @@ use Ofx\TransactionType;
 
 class OfxParserTest extends TestCase
 {
+    public function testMemoAndLongFitidArePreserved(): void
+    {
+        $fitid = str_repeat('A', 40) . '1';
+        $ofx = <<<OFX
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><BANKTRANLIST><STMTTRN>
+<DTPOSTED>20240101</DTPOSTED><TRNAMT>-10.00</TRNAMT><FITID>{$fitid}</FITID><MEMO>Full merchant memo for classification</MEMO>
+</STMTTRN></BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
+OFX;
+        $transaction = OfxParser::parse($ofx)['statements'][0]['transactions'][0];
+        $this->assertSame('Full merchant memo for classification', $transaction->memo);
+        $this->assertSame('Full merchant memo for classification', $transaction->desc);
+        $this->assertSame($fitid, $transaction->bankId);
+    }
+
     public function testAccountExtraction(): void
     {
         $ofx = <<<OFX

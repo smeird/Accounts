@@ -1,44 +1,130 @@
 <!DOCTYPE html>
-<!-- Form for uploading OFX files to import transactions -->
+<!-- Guided OFX/QFX import with persistent per-file results. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Upload OFX</title>
+    <title>Import Transactions</title>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="upload.css?v=20260814-import-results">
 </head>
-<body class="ops-body">
+<body class="ops-body upload-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<form action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" class="space-y-4">
-                <input type="file" name="ofx_files[]" accept=".ofx" multiple required class="block w-full" data-help="Select one or more OFX files to upload">
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Upload</button>
-                <div id="progress-container" class="space-y-2"></div>
-            </form>
+        <main class="ops-main upload-main flex-1 min-w-0 overflow-x-auto">
+            <section class="upload-workspace" aria-labelledby="upload-workspace-title">
+                <div class="upload-workspace__intro">
+                    <span class="upload-eyebrow"><i class="fas fa-shield-check" aria-hidden="true"></i> Safe statement import</span>
+                    <h2 id="upload-workspace-title">Bring in your latest bank activity</h2>
+                    <p>Select one or more OFX or QFX statements. Existing bank transaction IDs are skipped safely; distinct transactions are preserved even when their merchant and amount match.</p>
+                    <div class="upload-assurances" aria-label="Import safeguards">
+                        <span><i class="fas fa-fingerprint" aria-hidden="true"></i> Bank-ID deduplication</span>
+                        <span><i class="fas fa-layer-group" aria-hidden="true"></i> Multiple files</span>
+                        <span><i class="fas fa-rotate-left" aria-hidden="true"></i> Atomic per file</span>
+                    </div>
+                </div>
+
+                <form id="upload-form" action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" novalidate>
+                    <label id="upload-dropzone" class="upload-dropzone" for="ofx-files" tabindex="0" role="button">
+                        <input id="ofx-files" class="upload-file-input" type="file" name="ofx_files[]" accept=".ofx,.qfx,application/x-ofx" multiple required aria-describedby="upload-guidance upload-selection-summary">
+                        <span class="upload-dropzone__icon" aria-hidden="true"><i class="fas fa-cloud-arrow-up"></i></span>
+                        <span class="upload-dropzone__copy">
+                            <strong>Choose statement files</strong>
+                            <small>or drag and drop them here</small>
+                        </span>
+                        <span class="upload-dropzone__action">Browse files</span>
+                    </label>
+                    <p id="upload-guidance" class="upload-guidance">OFX and QFX files only · up to 20 files in one import</p>
+
+                    <div id="upload-selection" class="upload-selection" hidden>
+                        <div class="upload-selection__heading">
+                            <div>
+                                <span>Ready to import</span>
+                                <strong id="upload-selection-summary">No files selected</strong>
+                            </div>
+                            <button id="clear-selection" type="button">Clear</button>
+                        </div>
+                        <ul id="upload-file-list" class="upload-file-list" aria-label="Selected statement files"></ul>
+                    </div>
+
+                    <div id="upload-validation" class="upload-validation" role="alert" hidden></div>
+
+                    <div class="upload-submit-row">
+                        <button id="upload-submit" class="upload-submit" type="submit" disabled>
+                            <i class="fas fa-arrow-up-from-bracket" aria-hidden="true"></i>
+                            <span>Import transactions</span>
+                        </button>
+                        <p>Your existing transactions remain unchanged when a file fails.</p>
+                    </div>
+
+                    <div id="upload-progress" class="upload-progress" aria-live="polite" hidden>
+                        <div class="upload-progress__copy">
+                            <span id="upload-progress-label">Uploading statements…</span>
+                            <strong id="upload-progress-value">0%</strong>
+                        </div>
+                        <div class="upload-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="upload-progress-label">
+                            <span id="upload-progress-bar"></span>
+                        </div>
+                        <p id="upload-progress-detail">Keep this page open while the statements are processed.</p>
+                    </div>
+                </form>
+            </section>
+
+            <section id="upload-result" class="upload-result" aria-labelledby="upload-result-title" hidden>
+                <header class="upload-result__header">
+                    <span id="upload-result-icon" class="upload-result__icon" aria-hidden="true"><i class="fas fa-check"></i></span>
+                    <div>
+                        <span id="upload-result-kicker" class="upload-result__kicker">Import complete</span>
+                        <h2 id="upload-result-title" tabindex="-1">Your transactions are ready</h2>
+                        <p id="upload-result-message"></p>
+                    </div>
+                </header>
+
+                <dl class="upload-result__metrics" aria-label="Import totals">
+                    <div class="upload-metric upload-metric--primary"><dt>New transactions</dt><dd id="upload-total-inserted">0</dd></div>
+                    <div><dt>Duplicates skipped</dt><dd id="upload-total-duplicates">0</dd></div>
+                    <div><dt>Tagged</dt><dd id="upload-total-tagged">0</dd></div>
+                    <div><dt>Categorised</dt><dd id="upload-total-categorised">0</dd></div>
+                    <div><dt>Warnings</dt><dd id="upload-total-warnings">0</dd></div>
+                    <div><dt>Files failed</dt><dd id="upload-total-failed">0</dd></div>
+                </dl>
+
+                <div class="upload-result__body">
+                    <div>
+                        <h3>File details</h3>
+                        <div id="upload-result-files" class="upload-result-files"></div>
+                    </div>
+                    <aside class="upload-next-steps">
+                        <span class="upload-next-steps__eyebrow">Next step</span>
+                        <h3>Review what changed</h3>
+                        <p>Open your statement to check the new transactions and fill any remaining classification gaps.</p>
+                        <a href="monthly_statement.html"><i class="fas fa-table-list" aria-hidden="true"></i> Review monthly statement</a>
+                        <a href="search.html" class="upload-next-steps__secondary"><i class="fas fa-magnifying-glass" aria-hidden="true"></i> Search transactions</a>
+                        <button id="upload-another" type="button"><i class="fas fa-rotate" aria-hidden="true"></i> Import another statement</button>
+                    </aside>
+                </div>
+            </section>
         </main>
     </div>
 
     <script src="js/page_header.js"></script>
     <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Upload OFX Files',
-    breadcrumb: 'Data Management',
-    subtitle: 'Upload one or more OFX statements from your bank to import transactions into the system. The file contents will be processed and your data added to the database for review.'
-});
-</script>
+        const pageMain = document.querySelector('main.ops-main');
+        window.renderPageHeader(pageMain, {
+            title: 'Import Transactions',
+            breadcrumb: 'Data Management',
+            subtitle: 'Add new bank activity with a clear result for every statement, including duplicates, classifications, warnings, and failures.'
+        });
+    </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-    <script src="js/upload.js"></script>
+    <script src="js/upload.js?v=20260814-structured-import"></script>
 </body>
 </html>
