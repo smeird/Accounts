@@ -17,6 +17,7 @@ require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
+require_once __DIR__ . '/../php_backend/services/SchemaHealthService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -633,6 +634,73 @@ $atomicOfx = str_replace(['20260814', 'LONG-BANK-IDENTIFIER-12345678901234567890
 $atomicFailure = $importService->importContent('atomic.ofx', $atomicOfx);
 assertEqual('error', $atomicFailure['status'] ?? null, 'Downstream import failure is reported');
 assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Failed file rolls back transactions inserted earlier in that file');
+
+// --- Schema-only Database Health catalogue and repair workflow ---
+$healthySchemaSnapshot = SchemaHealthService::expectedSnapshot();
+$healthySchemaAudit = SchemaHealthService::analyseSnapshot($healthySchemaSnapshot);
+assertEqual(true, $healthySchemaAudit['healthy'], 'Database Health accepts the canonical schema snapshot');
+assertEqual(0, (int)$healthySchemaAudit['summary']['issues'], 'Canonical schema has no health issues');
+$emptySchemaAudit = SchemaHealthService::analyseSnapshot([
+    'driver' => 'mysql',
+    'database' => 'empty',
+    'server_version' => 'test',
+    'tables' => [],
+]);
+$unsafeSchemaStatements = array_filter($emptySchemaAudit['issues'], function($issue) {
+    return !empty($issue['repairable'])
+        && preg_match('/^(?:CREATE\s+TABLE|ALTER\s+TABLE)\b/i', trim((string)($issue['sql'] ?? ''))) !== 1;
+});
+assertEqual(0, count($unsafeSchemaStatements), 'Every automatic repair is catalogue-generated schema DDL');
+
+$driftedSchemaSnapshot = $healthySchemaSnapshot;
+$driftedSchemaSnapshot['record_marker'] = ['unchanged-business-record'];
+unset($driftedSchemaSnapshot['tables']['accounts']['columns']['ledger_balance_date']);
+unset($driftedSchemaSnapshot['tables']['transactions']['indexes']['idx_transaction_fallback']);
+$driftedSchemaSnapshot['tables']['transactions']['indexes']['unique_txn'] = [
+    'unique' => true,
+    'columns' => ['account_id', 'date', 'amount', 'description', 'memo'],
+];
+$driftedSchemaSnapshot['tables']['projects']['columns']['name']['length'] = 100;
+
+$schemaExecutorCalls = [];
+$schemaSnapshotProvider = function() use (&$driftedSchemaSnapshot) {
+    return $driftedSchemaSnapshot;
+};
+$schemaExecutor = function(array $issue) use (&$driftedSchemaSnapshot, &$schemaExecutorCalls, $healthySchemaSnapshot) {
+    $schemaExecutorCalls[] = $issue;
+    $table = $issue['table'];
+    $object = $issue['object'];
+    if ($issue['kind'] === 'column') {
+        $driftedSchemaSnapshot['tables'][$table]['columns'][$object] = $healthySchemaSnapshot['tables'][$table]['columns'][$object];
+    } elseif ($issue['kind'] === 'index') {
+        $driftedSchemaSnapshot['tables'][$table]['indexes'][$object] = $healthySchemaSnapshot['tables'][$table]['indexes'][$object];
+    } elseif ($issue['kind'] === 'obsolete_index') {
+        unset($driftedSchemaSnapshot['tables'][$table]['indexes'][$object]);
+    }
+};
+$schemaHealthService = new SchemaHealthService(null, $schemaSnapshotProvider, $schemaExecutor);
+$driftedSchemaAudit = $schemaHealthService->audit();
+assertEqual(4, (int)$driftedSchemaAudit['summary']['issues'], 'Database Health finds missing, obsolete, and definition drift');
+assertEqual(3, (int)$driftedSchemaAudit['summary']['repairable'], 'Database Health separates safe repairs from manual review');
+assertEqual(1, (int)$driftedSchemaAudit['summary']['manual'], 'Definition changes remain manual');
+
+$selectedSchemaRepairs = array_map(function($issue) {
+    return $issue['id'];
+}, array_values(array_filter($driftedSchemaAudit['issues'], function($issue) {
+    return !empty($issue['repairable']);
+})));
+assertEqual(0, count($schemaExecutorCalls), 'Database Health audit is read-only');
+$schemaRepairResult = $schemaHealthService->repair($selectedSchemaRepairs);
+assertEqual('success', $schemaRepairResult['status'], 'Database Health applies selected catalogue repairs');
+assertEqual(3, (int)$schemaRepairResult['summary']['succeeded'], 'Database Health reports each successful schema repair');
+assertEqual(1, (int)$schemaRepairResult['audit']['summary']['issues'], 'Follow-up audit retains only the manual definition issue');
+assertEqual(['unchanged-business-record'], $driftedSchemaSnapshot['record_marker'], 'Schema repairs leave business-record state untouched');
+$recordChangingSql = array_filter($schemaExecutorCalls, function($issue) {
+    return preg_match('/\b(?:INSERT|UPDATE|DELETE|TRUNCATE|REPLACE)\b/i', (string)($issue['sql'] ?? '')) === 1;
+});
+assertEqual(0, count($recordChangingSql), 'Database Health generates no record-changing SQL');
+$secondSchemaRepair = $schemaHealthService->repair($selectedSchemaRepairs);
+assertEqual(0, (int)$secondSchemaRepair['summary']['attempted'], 'Database Health repairs are idempotent');
 
 // Output results and set exit code
 $failed = false;

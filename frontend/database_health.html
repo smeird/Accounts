@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!-- Schema-only database audit and repair utility. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Database Health</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="site_system.css">
+    <link rel="stylesheet" href="database_health.css?v=20260814-schema-health">
+</head>
+<body class="ops-body database-health-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main database-health-main flex-1 min-w-0 overflow-x-auto">
+            <section id="database-health-status" class="database-health-hero is-checking" aria-live="polite" aria-busy="true">
+                <div class="database-health-hero__icon" aria-hidden="true"><i class="fas fa-wave-square"></i></div>
+                <div class="database-health-hero__copy">
+                    <span id="database-health-kicker">Schema audit</span>
+                    <h2 id="database-health-title">Checking database structure…</h2>
+                    <p id="database-health-message">Comparing this installation with the application’s current schema catalogue.</p>
+                    <div id="database-health-meta" class="database-health-meta"></div>
+                </div>
+                <button id="database-health-refresh" type="button" class="database-health-refresh">
+                    <i class="fas fa-rotate" aria-hidden="true"></i>
+                    <span>Run check again</span>
+                </button>
+            </section>
+
+            <section class="database-health-scope" aria-label="Safety scope">
+                <div><i class="fas fa-shield-halved" aria-hidden="true"></i><span><strong>Schema only</strong>No business records are rewritten.</span></div>
+                <div><i class="fas fa-list-check" aria-hidden="true"></i><span><strong>Review first</strong>Every proposed change is shown before repair.</span></div>
+                <div><i class="fas fa-lock" aria-hidden="true"></i><span><strong>Catalogue controlled</strong>The browser cannot submit arbitrary SQL.</span></div>
+            </section>
+
+            <section class="database-health-metrics" aria-label="Database health summary">
+                <div><span>Managed tables</span><strong id="health-total-tables">—</strong></div>
+                <div><span>Checks passed</span><strong id="health-passed-checks">—</strong></div>
+                <div><span>Safe repairs</span><strong id="health-safe-repairs">—</strong></div>
+                <div><span>Manual review</span><strong id="health-manual-issues">—</strong></div>
+            </section>
+
+            <section id="database-health-results" class="database-health-results" hidden>
+                <div class="database-health-results__heading">
+                    <div>
+                        <span class="database-health-eyebrow">Audit findings</span>
+                        <h2>Schema issues</h2>
+                        <p id="database-health-summary"></p>
+                    </div>
+                    <button id="database-health-select-all" type="button">Select all safe repairs</button>
+                </div>
+                <div id="database-health-issues" class="database-health-issues"></div>
+                <div class="database-health-actions">
+                    <div>
+                        <strong id="database-health-selected-count">0 repairs selected</strong>
+                        <span>Manual-review items are never changed automatically.</span>
+                    </div>
+                    <button id="database-health-repair" type="button" disabled data-help="Runs only the selected schema statements shown above">
+                        <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i>
+                        <span>Repair selected issues</span>
+                    </button>
+                </div>
+            </section>
+
+            <section id="database-health-clean" class="database-health-clean" hidden>
+                <i class="fas fa-circle-check" aria-hidden="true"></i>
+                <div><h2>Schema is current</h2><p>All managed tables, columns, indexes, and relationships match the current application catalogue.</p></div>
+            </section>
+
+            <section id="database-health-repair-result" class="database-health-repair-result" aria-live="polite" hidden></section>
+        </main>
+    </div>
+
+    <dialog id="database-health-dialog" class="database-health-dialog" aria-labelledby="database-health-dialog-title">
+        <form method="dialog">
+            <div class="database-health-dialog__icon" aria-hidden="true"><i class="fas fa-database"></i></div>
+            <span class="database-health-eyebrow">Confirm schema repair</span>
+            <h2 id="database-health-dialog-title">Apply selected database changes?</h2>
+            <p id="database-health-dialog-message"></p>
+            <div class="database-health-dialog__note"><i class="fas fa-circle-info" aria-hidden="true"></i>Only the displayed CREATE, ALTER, and DROP INDEX statements will run. No record-changing SQL is accepted.</div>
+            <div class="database-health-dialog__actions">
+                <button id="database-health-cancel" type="button">Cancel</button>
+                <button id="database-health-confirm" type="button"><i class="fas fa-check" aria-hidden="true"></i> Apply repairs</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        const pageMain = document.querySelector('main.ops-main');
+        window.renderPageHeader(pageMain, {
+            title: 'Database Health',
+            breadcrumb: 'Administration',
+            subtitle: 'Check this installation against the current application schema and safely repair structural drift.'
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="js/database_health.js?v=20260814-schema-health"></script>
+</body>
+</html>
