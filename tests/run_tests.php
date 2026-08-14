@@ -16,6 +16,7 @@ require_once __DIR__ . '/../php_backend/models/GraphsDashboard.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
+require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -23,7 +24,7 @@ $db = Database::getConnection();
 
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
-$db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);');
+$db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT);');
 $db->exec('CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT, match_type TEXT, active TINYINT DEFAULT 1);');
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
@@ -79,7 +80,7 @@ OFX;
 $parsedCompact = OfxParser::parse($compactOfx)['statements'][0];
 assertEqual(2, count($parsedCompact['transactions']), 'Parser handles tags without newlines');
 
-// Profile-based normalisation and field caps
+// Profile-based normalisation and storage-safe field caps
 $profileOfx = <<<OFX
 <OFX>
 <SIGNONMSGSRSV1><SONRS><FI><ORG>TESTBANK</ORG></FI></SONRS></SIGNONMSGSRSV1>
@@ -91,8 +92,16 @@ OFX;
 $parsedProfile = OfxParser::parse($profileOfx)['statements'][0];
 $tx = $parsedProfile['transactions'][0];
 assertEqual('1234', $tx->check, 'Profile regex removes non-digits from CHECKNUM');
-assertEqual('REF-ABCDEFGHIJK', $tx->ref, 'Profile uppercases and truncates REFNUM');
-assertEqual('Some memo', $tx->memo, 'Profile enforces MEMO length cap');
+assertEqual('REF-ABCDEFGHIJKLMNOPQRSTUVWXYZ', $tx->ref, 'Profile uppercases REFNUM without premature truncation');
+assertEqual('Some memo that exceeds', $tx->memo, 'Parser preserves the complete transaction memo');
+assertEqual('Some memo that exceeds', $tx->desc, 'Parser uses MEMO when NAME is absent');
+
+$longFitidA = str_repeat('A', 40) . '1';
+$longFitidB = str_repeat('A', 40) . '2';
+$longFitidParsedA = OfxParser::parse(str_replace('<FITID>1</FITID>', '<FITID>' . $longFitidA . '</FITID>', $profileOfx))['statements'][0]['transactions'][0]->bankId;
+$longFitidParsedB = OfxParser::parse(str_replace('<FITID>1</FITID>', '<FITID>' . $longFitidB . '</FITID>', $profileOfx))['statements'][0]['transactions'][0]->bankId;
+assertEqual($longFitidA, $longFitidParsedA, 'Parser preserves a bank FITID up to the database limit');
+assertEqual(false, $longFitidParsedA === $longFitidParsedB, 'Distinct long bank FITIDs remain distinct');
 
 // Test user creation and retrieval
 $userId = User::create('alice', 'secret');
@@ -370,11 +379,22 @@ assertEqual(true, $sur1 > 0, 'Surrogate transaction inserted');
 $sur2 = Transaction::create(1, '2024-08-04', 40, 'SURR', null, null, null, null, $surrogate, 'DEBIT', $surrogate);
 assertEqual(0, $sur2, 'Surrogate ID prevents duplicate');
 
-// Pending vs posted duplicate collapse
+// Distinct bank identities must survive matching merchant, date, and amount fields.
+$sameCoreA = Transaction::create(1, '2024-08-05', 50, 'Repeated purchase', 'First', null, null, null, sha1('same-core-a'), 'DEBIT', 'CORE-A');
+$sameCoreB = Transaction::create(1, '2024-08-05', 50, 'Repeated purchase', 'First', null, null, null, sha1('same-core-b'), 'DEBIT', 'CORE-B');
+assertEqual(true, $sameCoreA > 0 && $sameCoreB > 0, 'Different bank FITIDs preserve same-day matching purchases');
+
+// Similar transactions on nearby days are not silently collapsed.
 $pending = Transaction::create(1, '2024-08-05', 50, 'PendingTx', null, null, null, null, sha1('p1'), 'DEBIT', 'PEN1');
 assertEqual(true, $pending > 0, 'Pending transaction inserted');
 $posted = Transaction::create(1, '2024-08-06', 50, 'PendingTx', null, null, null, null, sha1('p2'), 'DEBIT', 'POS1');
-assertEqual(0, $posted, 'Pending vs posted duplicate collapsed');
+assertEqual(true, $posted > 0, 'Different bank FITIDs on nearby days remain distinct');
+
+$fallbackA = Transaction::create(1, '2024-08-07', 15, 'No bank ID', 'Memo A');
+$fallbackDuplicate = Transaction::create(1, '2024-08-07', 15, 'No bank ID', 'Memo A');
+$fallbackDifferentMemo = Transaction::create(1, '2024-08-07', 15, 'No bank ID', 'Memo B');
+assertEqual(0, $fallbackDuplicate, 'Identifier-less exact duplicate is skipped');
+assertEqual(true, $fallbackDifferentMemo > 0, 'Identifier-less transaction with a different memo is preserved');
 
 $finalLog = $db->query("SELECT COUNT(*) FROM logs WHERE level = 'WARNING'")->fetchColumn();
 assertEqual(1, (int)$finalLog, 'No extra warnings from exact duplicates or pending collapse');
@@ -517,8 +537,6 @@ $afterDel = SavedReport::all();
 assertEqual(0, count($afterDel), 'SavedReport::delete removes report');
 
 // --- Instant dashboard snapshot ---
-$db->exec('ALTER TABLE accounts ADD COLUMN ledger_balance REAL DEFAULT 0');
-$db->exec('ALTER TABLE accounts ADD COLUMN ledger_balance_date TEXT');
 $db->exec('ALTER TABLE budgets ADD COLUMN month INTEGER');
 $db->exec('ALTER TABLE budgets ADD COLUMN year INTEGER');
 $db->exec('DELETE FROM transactions');
@@ -576,6 +594,45 @@ assertEqual(4150.0, (float)$graphs['months'][7]['cumulative_cashflow'], 'Graphs 
 $monthlyBudgets = Budget::getMonthly(8, 2026);
 assertEqual(850.0, (float)$monthlyBudgets[0]['spent'], 'Budget dashboard totals monthly category spending with date ranges');
 assertEqual(150.0, (float)$monthlyBudgets[0]['left'], 'Budget dashboard calculates remaining category runway');
+
+// --- Atomic, structured OFX import service ---
+$db->exec('DELETE FROM transactions');
+$db->exec('DELETE FROM accounts');
+$db->exec('DELETE FROM category_tags');
+$db->exec('DELETE FROM categories');
+$db->exec('DELETE FROM tag_aliases');
+$db->exec('DELETE FROM tags');
+$importTagId = Tag::create('Import test', 'Complete merchant');
+$db->exec("INSERT INTO categories (name) VALUES ('Imported activity')");
+$importCategoryId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO category_tags (category_id, tag_id) VALUES ($importCategoryId, $importTagId)");
+Tag::clearMatchCaches();
+$serviceOfx = <<<OFX
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS>
+<CURDEF>GBP</CURDEF><BANKACCTFROM><BANKID>101010</BANKID><ACCTID>99887766</ACCTID><ACCTNAME>Import Test</ACCTNAME></BANKACCTFROM>
+<BANKTRANLIST><DTSTART>20260801</DTSTART><DTEND>20260831</DTEND><STMTTRN><TRNTYPE>DEBIT</TRNTYPE><DTPOSTED>20260814</DTPOSTED><TRNAMT>-12.34</TRNAMT><FITID>LONG-BANK-IDENTIFIER-12345678901234567890</FITID><MEMO>Complete merchant statement memo</MEMO></STMTTRN></BANKTRANLIST>
+<LEDGERBAL><BALAMT>1234.56</BALAMT><DTASOF>20260814</DTASOF></LEDGERBAL>
+</STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
+OFX;
+$importService = new OfxImportService($db);
+$firstImport = $importService->importContent('current.ofx', $serviceOfx);
+assertEqual('success', $firstImport['status'] ?? null, 'Structured importer reports a successful file');
+assertEqual(1, (int)($firstImport['totals']['inserted'] ?? 0), 'Structured importer reports inserted transactions');
+assertEqual(1, (int)($firstImport['totals']['tagged'] ?? 0), 'Structured importer reports newly tagged transactions');
+assertEqual(1, (int)($firstImport['totals']['categorised'] ?? 0), 'Structured importer reports newly categorised transactions');
+assertEqual('Complete merchant statement memo', $db->query('SELECT memo FROM transactions')->fetchColumn(), 'Imported transaction retains its complete memo');
+assertEqual('Complete merchant statement memo', $db->query('SELECT description FROM transactions')->fetchColumn(), 'Imported transaction falls back to memo for its description');
+$repeatImport = $importService->importContent('current.ofx', $serviceOfx);
+assertEqual(1, (int)($repeatImport['totals']['duplicates'] ?? 0), 'Repeat import reports the bank-ID duplicate');
+assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Repeat import does not add a duplicate row');
+$brokenImport = $importService->importContent('broken.ofx', 'not an OFX statement');
+assertEqual('error', $brokenImport['status'] ?? null, 'Malformed statement produces a structured error');
+
+$db->exec('DROP TABLE category_tags');
+$atomicOfx = str_replace(['20260814', 'LONG-BANK-IDENTIFIER-12345678901234567890'], ['20260815', 'ATOMIC-ROLLBACK-2'], $serviceOfx);
+$atomicFailure = $importService->importContent('atomic.ofx', $atomicOfx);
+assertEqual('error', $atomicFailure['status'] ?? null, 'Downstream import failure is reported');
+assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Failed file rolls back transactions inserted earlier in that file');
 
 // Output results and set exit code
 $failed = false;

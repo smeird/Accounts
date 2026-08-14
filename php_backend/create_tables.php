@@ -182,9 +182,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     ofx_id VARCHAR(255) UNIQUE,
     ofx_type VARCHAR(50) DEFAULT NULL,
     bank_ofx_id VARCHAR(255) DEFAULT NULL,
-    UNIQUE KEY unique_txn (account_id, date, amount, description(150), memo(150)),
-
     UNIQUE KEY unique_bank_fitid (account_id, bank_ofx_id),
+    KEY idx_transaction_fallback (account_id, date, amount),
 
     FOREIGN KEY (account_id) REFERENCES accounts(id),
     FOREIGN KEY (category_id) REFERENCES categories(id),
@@ -395,10 +394,16 @@ if ($result->rowCount() === 0) {
 }
 
 
-// Ensure unique constraint on core transaction fields to prevent duplicates
+// Remove the legacy core-field uniqueness rule. Different bank FITIDs can
+// legitimately share a merchant, amount, date, description, and memo.
 $result = $db->query("SHOW INDEX FROM `transactions` WHERE Key_name = 'unique_txn'");
+if ($result->rowCount() > 0) {
+    $db->exec("ALTER TABLE `transactions` DROP INDEX `unique_txn`");
+}
+
+$result = $db->query("SHOW INDEX FROM `transactions` WHERE Key_name = 'idx_transaction_fallback'");
 if ($result->rowCount() === 0) {
-    $db->exec("ALTER TABLE `transactions` ADD UNIQUE KEY `unique_txn` (`account_id`,`date`,`amount`,`description`(150),`memo`(150))");
+    $db->exec("ALTER TABLE `transactions` ADD KEY `idx_transaction_fallback` (`account_id`,`date`,`amount`)");
 }
 
 // Ensure ledger balance columns exist in accounts
@@ -422,8 +427,9 @@ if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance_date` DATE DEFAULT NULL");
 }
 
-// Backfill synthetic OFX IDs using the extended scheme
-$txs = $db->query('SELECT id, account_id, date, amount, description, memo, ofx_id FROM transactions');
+// Backfill only missing OFX IDs. Existing IDs remain stable so exports and
+// repeat imports continue to recognise historical rows.
+$txs = $db->query("SELECT id, account_id, date, amount, description, memo, ofx_type, bank_ofx_id FROM transactions WHERE ofx_id IS NULL OR ofx_id = ''");
 $upd = $db->prepare('UPDATE transactions SET ofx_id = :oid WHERE id = :id');
 while ($row = $txs->fetch(PDO::FETCH_ASSOC)) {
     $amountStr = number_format((float)$row['amount'], 2, '.', '');
@@ -442,17 +448,18 @@ while ($row = $txs->fetch(PDO::FETCH_ASSOC)) {
             $chk = substr(trim($m[1]), 0, Transaction::CHECK_MAX_LENGTH);
         }
     }
-    // Legacy transactions lack raw STMTTRN blocks, so include an empty placeholder
-    $components = [$row['account_id'], $row['date'], $amountStr, $normDesc, ''];
-    if ($ref !== '') { $components[] = $ref; }
-    if ($chk !== '') { $components[] = $chk; }
+    if (!empty($row['bank_ofx_id'])) {
+        $components = ['fitid', $row['account_id'], $row['bank_ofx_id']];
+    } else {
+        $components = ['fallback', $row['account_id'], $row['date'], $amountStr, $normDesc, trim((string)$row['memo']), (string)$row['ofx_type']];
+        if ($ref !== '') { $components[] = $ref; }
+        if ($chk !== '') { $components[] = $chk; }
+    }
     $ofxId = sha1(implode('|', $components));
-    if ($row['ofx_id'] !== $ofxId) {
-        try {
-            $upd->execute(['oid' => $ofxId, 'id' => $row['id']]);
-        } catch (PDOException $e) {
-            // Ignore duplicates
-        }
+    try {
+        $upd->execute(['oid' => $ofxId, 'id' => $row['id']]);
+    } catch (PDOException $e) {
+        // Leave ambiguous legacy duplicates unset for manual review.
     }
 }
 

@@ -1,210 +1,79 @@
 <?php
-// Handles OFX file uploads and imports transactions into the database.
+// Handles OFX/QFX uploads and returns a structured import summary.
 require_once __DIR__ . '/../auth.php';
 require_api_auth();
-require_once __DIR__ . '/../models/Account.php';
-require_once __DIR__ . '/../models/Transaction.php';
-require_once __DIR__ . '/../models/Log.php';
-require_once __DIR__ . '/../models/Tag.php';
-require_once __DIR__ . '/../models/CategoryTag.php';
-require_once __DIR__ . '/../Database.php';
-require_once __DIR__ . '/../OfxParser.php';
+require_once __DIR__ . '/../services/OfxImportService.php';
 
-use Ofx\TransactionType;
-try {
-    if (!isset($_FILES['ofx_files'])) {
-        http_response_code(400);
-        $msg = "No files uploaded.";
-        Log::write($msg, 'ERROR');
-        echo $msg;
-        exit;
+header('Content-Type: application/json; charset=utf-8');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    echo json_encode(['status' => 'error', 'message' => 'Use POST to upload statement files.']);
+    exit;
+}
+
+if (!isset($_FILES['ofx_files']) || !is_array($_FILES['ofx_files'])) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Choose at least one OFX or QFX file.']);
+    exit;
+}
+
+$files = $_FILES['ofx_files'];
+$names = isset($files['name']) ? (array)$files['name'] : [];
+$temporaryNames = isset($files['tmp_name']) ? (array)$files['tmp_name'] : [];
+$errors = isset($files['error']) ? (array)$files['error'] : [];
+$results = [];
+$service = new OfxImportService();
+$uploadErrorMessages = [
+    UPLOAD_ERR_INI_SIZE => 'The file is larger than the server upload limit.',
+    UPLOAD_ERR_FORM_SIZE => 'The file is larger than the permitted form limit.',
+    UPLOAD_ERR_PARTIAL => 'The file upload was interrupted before it completed.',
+    UPLOAD_ERR_NO_FILE => 'No file was supplied.',
+    UPLOAD_ERR_NO_TMP_DIR => 'The server upload folder is unavailable.',
+    UPLOAD_ERR_CANT_WRITE => 'The server could not save the uploaded file.',
+    UPLOAD_ERR_EXTENSION => 'A server extension stopped the upload.',
+];
+
+if (!$names) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Choose at least one OFX or QFX file.']);
+    exit;
+}
+if (count($names) > 20) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Import no more than 20 statement files at once.']);
+    exit;
+}
+
+foreach ($names as $index => $rawName) {
+    $filename = basename((string)$rawName) ?: 'statement.ofx';
+    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $error = (int)($errors[$index] ?? UPLOAD_ERR_NO_FILE);
+
+    if ($error !== UPLOAD_ERR_OK) {
+        $message = $uploadErrorMessages[$error] ?? 'The file could not be uploaded.';
+        $results[] = OfxImportService::uploadErrorResult($filename, $message);
+        Log::write("OFX upload error for $filename: $message", 'ERROR');
+        continue;
+    }
+    if (!in_array($extension, ['ofx', 'qfx'], true)) {
+        $results[] = OfxImportService::uploadErrorResult($filename, 'Only OFX and QFX statement files are supported.');
+        continue;
     }
 
-    $files = $_FILES['ofx_files'];
-    $messages = [];
-    for ($i = 0; $i < count($files['name']); $i++) {
-        $error = $files['error'][$i];
-        if ($error !== UPLOAD_ERR_OK) {
-            $errMap = [
-                UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini.',
-                UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive specified in the HTML form.',
-                UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded.',
-                UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
-                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder.',
-                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
-                UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.'
-            ];
-            $msg = ($errMap[$error] ?? 'Unknown upload error') . ' File: ' . $files['name'][$i];
-            $messages[] = $msg;
-            Log::write($msg, 'ERROR');
-            continue;
-        }
-
-        $ofxData = file_get_contents($files['tmp_name'][$i]);
-        if ($ofxData === false) {
-            $msg = "Unable to read uploaded file " . $files['name'][$i] . ".";
-            $messages[] = $msg;
-            Log::write($msg, 'ERROR');
-            continue;
-        }
-
-        // Normalise line endings and strip unprintable characters that may
-        // cause issues for some financial software when parsing carriage
-        // returns.
-        $ofxData = str_replace(["\r\n", "\r"], "\n", $ofxData);
-        $ofxData = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $ofxData);
-
-
-        // Convert to UTF-8 if the file uses a different character set. On
-        // systems without the mbstring extension fall back to iconv or assume
-        // the data is already UTF-8 encoded.
-        $encoding = 'UTF-8';
-        if (function_exists('mb_detect_encoding')) {
-            $detected = mb_detect_encoding($ofxData, 'UTF-8, ISO-8859-1, Windows-1252', true);
-            if ($detected) {
-                $encoding = $detected;
-            }
-        }
-        if ($encoding !== 'UTF-8') {
-            if (function_exists('mb_convert_encoding')) {
-                $ofxData = mb_convert_encoding($ofxData, 'UTF-8', $encoding);
-            } elseif (function_exists('iconv')) {
-                $ofxData = iconv($encoding, 'UTF-8//TRANSLIT', $ofxData);
-            }
-
-        }
-
-        try {
-            $result = OfxParser::parse($ofxData);
-            $statements = $result['statements'];
-            $warningCounts = $result['warningCounts'];
-            // Iterate over each parsed account separately.
-        } catch (Exception $e) {
-            $msg = 'Error parsing ' . $files['name'][$i] . ': ' . $e->getMessage();
-            $messages[] = $msg;
-            Log::write($msg, 'ERROR');
-            continue;
-        }
-
-        foreach ($statements as $parsed) {
-            $sortCode = $parsed['account']->sortCode;
-            $accountNumber = $parsed['account']->number;
-            $accountName = $parsed['account']->name;
-
-            $db = Database::getConnection();
-            // Match existing accounts using account number and sort code. When the
-            // sort code is null (credit cards) prepared statements can behave
-            // unpredictably if we rely on ":sort IS NULL" checks. Build the query
-            // dynamically to ensure NULL is handled correctly and credit card
-            // accounts are not mistaken for existing bank accounts.
-            if ($sortCode === null) {
-                $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code IS NULL LIMIT 1');
-                $stmt->execute(['num' => $accountNumber]);
-            } else {
-                $stmt = $db->prepare('SELECT id, name FROM accounts WHERE account_number = :num AND sort_code = :sort LIMIT 1');
-                $stmt->execute(['num' => $accountNumber, 'sort' => $sortCode]);
-            }
-            $account = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($account) {
-                $accountId = (int)$account['id'];
-            } else {
-                $accountId = Account::create($accountName, $sortCode, $accountNumber);
-            }
-
-            if ($parsed['ledger']) {
-                Account::updateLedgerBalance($accountId, $parsed['ledger']->balance, $parsed['ledger']->date);
-            }
-
-
-        $inserted = 0;
-        $duplicates = [];
-        $fileLedger = [];
-
-
-            foreach ($parsed['transactions'] as $txn) {
-                $amount = $txn->amount;
-                $date = $txn->date;
-                $desc = $txn->desc;
-                $memo = $txn->memo;
-                // TransactionType is represented by string constants; cast to string if present
-                $type = $txn->type === null ? null : (string)$txn->type;
-                $bankId = $txn->bankId ? $txn->bankId : null;
-
-                if ($txn->ref) {
-                    $ref = substr($txn->ref, 0, Transaction::REF_MAX_LENGTH);
-                    $memo .= ($memo === '' ? '' : ' ') . 'Ref:' . $ref;
-                }
-                if ($txn->check) {
-                    $chk = substr($txn->check, 0, Transaction::CHECK_MAX_LENGTH);
-                    $memo .= ($memo === '' ? '' : ' ') . 'Chk:' . $chk;
-                }
-
-
-            $substr = function_exists('mb_substr') ? 'mb_substr' : 'substr';
-            $desc = $substr($desc, 0, Transaction::DESC_MAX_LENGTH);
-            $memo = $memo === '' ? null : $substr($memo, 0, Transaction::MEMO_MAX_LENGTH);
-            $bankId = $bankId === null ? null : $substr($bankId, 0, Transaction::ID_MAX_LENGTH);
-            $type = $type === null ? null : $substr($type, 0, Transaction::TYPE_MAX_LENGTH);
-
-            $amountStr = number_format($amount, 2, '.', '');
-            $normalise = function (string $text): string {
-                $text = strtoupper(trim($text));
-                return preg_replace('/\s+/', ' ', $text);
-            };
-            $normDesc = $normalise($desc);
-            $baseHash = sha1($accountId . $date . $amountStr . $normDesc);
-
-            if ($bankId === null || $bankId === '') {
-                $bankId = $baseHash;
-            }
-
-            $idKey = $bankId;
-            if (isset($fileLedger[$idKey])) {
-                $prev = $fileLedger[$idKey];
-                if ($prev['amount'] != $amount || $prev['date'] !== $date || $prev['desc'] !== $desc || $prev['memo'] !== ($memo ?? '')) {
-                    Log::write("FITID $idKey conflict within file", 'WARNING');
-                }
-                continue;
-            }
-            $fileLedger[$idKey] = ['amount' => $amount, 'date' => $date, 'desc' => $desc, 'memo' => $memo ?? ''];
-
-            $syntheticId = $baseHash;
-
-            $createdId = Transaction::create($accountId, $date, $amount, $desc, $memo, null, null, null, $syntheticId, $type, $bankId);
-            if ($createdId === 0) {
-                if ($bankId !== null) {
-                    $duplicates[] = $bankId;
-                }
-            } else {
-                $inserted++;
-            }
-        }
-
-        // Apply tags and categories after processing all transactions for the account
-        // Only run if new transactions were inserted to avoid unnecessary work
-        $tagged = $categorised = 0;
-        if ($inserted > 0) {
-            $tagged = Tag::applyToAccountTransactions($accountId);
-            $categorised = CategoryTag::applyToAccountTransactions($accountId);
-        }
-
-        // Summarise the results for this account
-        $msg = "Inserted $inserted transactions for account $accountName. Tagged $tagged transactions. Categorised $categorised transactions.";
-        if (!empty($duplicates)) {
-            $count = count($duplicates);
-            $msg .= " Skipped $count duplicate transaction" . ($count === 1 ? '' : 's') . '.';
-        }
-        $messages[] = $msg;
-        Log::write($msg);
-      }
-  }
-
-  echo implode("\n", $messages);
+    $temporaryName = (string)($temporaryNames[$index] ?? '');
+    $contents = $temporaryName !== '' ? file_get_contents($temporaryName) : false;
+    if ($contents === false) {
+        $results[] = OfxImportService::uploadErrorResult($filename, 'The uploaded file could not be read.');
+        Log::write("OFX upload read error for $filename", 'ERROR');
+        continue;
+    }
+    $results[] = $service->importContent($filename, $contents);
 }
-catch (Exception $e) {
-    http_response_code(500);
-    $msg = 'Error: ' . $e->getMessage();
-    Log::write($msg, 'ERROR');
-    echo $msg;
+
+$response = OfxImportService::summarise($results);
+if ($response['status'] === 'error') {
+    http_response_code(422);
 }
-?>
+echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
