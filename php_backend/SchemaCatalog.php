@@ -151,6 +151,7 @@ class SchemaCatalog {
                 'ofx_id' => self::index(['ofx_id'], true),
                 'unique_bank_fitid' => self::index(['account_id', 'bank_ofx_id'], true),
                 'idx_transaction_fallback' => self::index(['account_id', 'date', 'amount']),
+                'idx_transactions_date' => self::index(['date']),
             ], [
                 'fk_transactions_account' => self::foreignKey(['account_id'], 'accounts', ['id']),
                 'fk_transactions_category' => self::foreignKey(['category_id'], 'categories', ['id']),
@@ -163,7 +164,9 @@ class SchemaCatalog {
                 'level' => self::column('VARCHAR(10) NOT NULL', 'varchar', false, false, 10),
                 'message' => self::column('TEXT NOT NULL', 'text', false, false),
                 'created_at' => self::column('TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'timestamp', null, true),
-            ], ['id']),
+            ], ['id'], [
+                'idx_logs_created_at' => self::index(['created_at']),
+            ]),
         ];
     }
 

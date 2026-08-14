@@ -82,3 +82,6 @@
 - Saved OpenAI API tokens must never be returned to the browser. Token-management views expose only configured/not-configured state and accept explicit replacement or removal.
 - Remaining data views use the shared modern-table adapter in `frontend/js/tabulator-tailwind.js`: conventional tables become labelled card rows on small screens, wide matrix/pivot tables retain horizontal navigation, and classification pills use consistent type colours and visible missing states.
 - Large tag collections use bounded search endpoints and lazy typeahead controls; do not render the complete tag catalogue into native selects.
+- Tabulator is self-hosted and pinned under `frontend/vendor/tabulator`; update every table page and the vendored licence together when changing versions.
+- Keep frozen columns opt-in, decorate rows only via `rowFormatter`, use bounded-height virtual rendering for unpaginated large views, and prefer remote pagination/search for datasets that can grow without a practical bound.
+- Monthly Statement must render its current transaction rows before secondary metrics, comparison data, or chart libraries are awaited.

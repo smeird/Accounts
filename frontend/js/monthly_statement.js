@@ -23,6 +23,8 @@
     const longMonth = new Intl.DateTimeFormat('en-GB', { month:'long' });
     const shortMonth = new Intl.DateTimeFormat('en-GB', { month:'short' });
     const state = { transactions:[], groups:[], query:'', filter:'all', category:null, sort:'date-desc', limit:PAGE_SIZE, chart:null };
+    let loadSequence = 0;
+    let highchartsPromise = null;
     const urlParams = new URLSearchParams(window.location.search);
     const paramYear = urlParams.get('year');
     const paramMonth = urlParams.get('month');
@@ -57,6 +59,27 @@
         return response.json();
     }
 
+    function afterNextPaint() {
+        return new Promise(resolve => window.requestAnimationFrame(() => resolve()));
+    }
+
+    function loadHighcharts() {
+        if (window.Highcharts) return Promise.resolve(window.Highcharts);
+        if (highchartsPromise) return highchartsPromise;
+        highchartsPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://code.highcharts.com/highcharts.js';
+            script.async = true;
+            script.onload = () => {
+                if (window.applyChartTheme) window.applyChartTheme();
+                resolve(window.Highcharts);
+            };
+            script.onerror = () => reject(new Error('The spending chart library could not be loaded.'));
+            document.head.appendChild(script);
+        });
+        return highchartsPromise;
+    }
+
     function setLines(id, lines) {
         const target = document.getElementById(id);
         target.replaceChildren();
@@ -84,20 +107,32 @@
     }
 
     const groupsPromise = requestJson('../php_backend/public/groups.php').then(rows => Array.isArray(rows) ? rows : []).catch(() => []);
-    const recurringPromise = requestJson('../php_backend/public/recurring_spend.php').then(data => {
-        const recurring = new Set();
-        const rows = []
-            .concat(data && data.outgoings && Array.isArray(data.outgoings.results) ? data.outgoings.results : [])
-            .concat(data && data.income && Array.isArray(data.income.results) ? data.income.results : [])
-            .concat(data && Array.isArray(data.results) ? data.results : []);
-        rows.forEach(item => {
-            if (item.description) recurring.add(String(item.description).toLowerCase());
-        });
-        return recurring;
-    }).catch(() => new Set());
-    const balancePromise = requestJson('../php_backend/public/account_dashboard.php')
-        .then(rows => Array.isArray(rows) ? rows.reduce((sum, row) => sum + numberValue(row.balance), 0) : 0)
-        .catch(() => 0);
+
+    async function loadRecurringDescriptions() {
+        try {
+            const data = await requestJson('../php_backend/public/recurring_spend.php');
+            const recurring = new Set();
+            const rows = []
+                .concat(data && data.outgoings && Array.isArray(data.outgoings.results) ? data.outgoings.results : [])
+                .concat(data && data.income && Array.isArray(data.income.results) ? data.income.results : [])
+                .concat(data && Array.isArray(data.results) ? data.results : []);
+            rows.forEach(item => {
+                if (item.description) recurring.add(String(item.description).toLowerCase());
+            });
+            return recurring;
+        } catch (error) {
+            return new Set();
+        }
+    }
+
+    async function loadTotalBalance() {
+        try {
+            const rows = await requestJson('../php_backend/public/account_dashboard.php');
+            return Array.isArray(rows) ? rows.reduce((sum, row) => sum + numberValue(row.balance), 0) : 0;
+        } catch (error) {
+            return 0;
+        }
+    }
 
     function renderMetrics(data, previous, recurringSet, totalBalance, year, month) {
         let income = 0;
@@ -154,7 +189,8 @@
         const daysInMonth = new Date(year, month, 0).getDate();
         const burnRate = (outgoings - income) / daysInMonth;
         document.getElementById('days-negative').textContent = burnRate > 0 && totalBalance > 0 ? integer.format(Math.floor(totalBalance / burnRate)) : 'N/A';
-        renderChart(spending, previousSpending);
+        if (window.Highcharts) renderChart(spending, previousSpending);
+        return { spending, previousSpending };
     }
 
     function setCellLabel(cell, label) {
@@ -457,7 +493,8 @@
         resultCount.textContent = 'Unavailable';
     }
 
-    async function loadTransactions(retry) {
+    async function loadTransactions() {
+        const sequence = ++loadSequence;
         const month = Number(monthSelect.value);
         const year = Number(yearSelect.value);
         if (!month || !year) return;
@@ -469,19 +506,12 @@
         const previousDate = new Date(year, month - 2, 1);
         const untagged = untaggedOnly.checked ? '&untagged=1' : '';
         try {
-            const [recurring, balance, groups, currentRaw, previousRaw] = await Promise.all([
-                recurringPromise,
-                balancePromise,
+            const [groups, currentRaw] = await Promise.all([
                 groupsPromise,
-                requestJson(`../php_backend/public/transactions.php?month=${month}&year=${year}${untagged}`),
-                requestJson(`../php_backend/public/transactions.php?month=${previousDate.getMonth() + 1}&year=${previousDate.getFullYear()}${untagged}`)
+                requestJson(`../php_backend/public/transactions.php?month=${month}&year=${year}${untagged}`)
             ]);
-            if (!Array.isArray(currentRaw) || !Array.isArray(previousRaw)) throw new Error('The statement data was not in the expected format.');
-            if (untaggedOnly.checked && currentRaw.length === 0 && !retry) {
-                untaggedOnly.checked = false;
-                await loadTransactions(true);
-                return;
-            }
+            if (sequence !== loadSequence) return;
+            if (!Array.isArray(currentRaw)) throw new Error('The statement data was not in the expected format.');
             state.groups = groups;
             state.transactions = currentRaw.map(normalise);
             state.limit = PAGE_SIZE;
@@ -492,9 +522,29 @@
                 button.classList.toggle('is-active', active);
                 button.setAttribute('aria-pressed', String(active));
             });
-            renderMetrics(state.transactions, previousRaw.map(normalise), recurring, balance, year, month);
             renderTable();
+            let chartData = renderMetrics(state.transactions, [], new Set(), 0, year, month);
+
+            // Give the browser a chance to paint the ledger before secondary
+            // analysis or the optional chart library does additional work.
+            await afterNextPaint();
+            if (sequence !== loadSequence) return;
+            const highchartsReady = loadHighcharts().catch(() => null);
+            const previousPromise = requestJson(`../php_backend/public/transactions.php?month=${previousDate.getMonth() + 1}&year=${previousDate.getFullYear()}${untagged}`)
+                .then(rows => Array.isArray(rows) ? rows : [])
+                .catch(() => []);
+            const [recurring, balance, previousRaw] = await Promise.all([
+                loadRecurringDescriptions(),
+                loadTotalBalance(),
+                previousPromise
+            ]);
+            if (sequence !== loadSequence) return;
+            chartData = renderMetrics(state.transactions, previousRaw.map(normalise), recurring, balance, year, month);
+            highchartsReady.then(highcharts => {
+                if (highcharts && sequence === loadSequence) renderChart(chartData.spending, chartData.previousSpending);
+            });
         } catch (error) {
+            if (sequence !== loadSequence) return;
             showError(error);
         }
     }
@@ -537,7 +587,7 @@
         const requestedMonth = Number(paramMonth);
         if (requestedMonth && monthsByYear[initialYear].includes(requestedMonth)) monthSelect.value = String(requestedMonth);
         yearSelect.addEventListener('change', () => populateMonthOptions(monthsByYear, yearSelect.value));
-        loadTransactions(false);
+        loadTransactions();
     }
 
     search.addEventListener('input', () => {
@@ -557,9 +607,9 @@
     });
     form.addEventListener('submit', event => {
         event.preventDefault();
-        loadTransactions(false);
+        loadTransactions();
     });
-    untaggedOnly.addEventListener('change', () => loadTransactions(false));
+    untaggedOnly.addEventListener('change', () => loadTransactions());
     [['income-card','income'], ['outgoings-card','spending']].forEach(([id, filter]) => {
         const card = document.getElementById(id);
         card.setAttribute('role', 'button');

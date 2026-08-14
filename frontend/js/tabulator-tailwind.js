@@ -9,7 +9,7 @@ function ensureModernTableStyles() {
     const source = document.currentScript && document.currentScript.src;
     link.id = 'modern-tables-css';
     link.rel = 'stylesheet';
-    link.href = source ? new URL('../modern_tables.css?v=20260811-modern-tables', source).href : 'modern_tables.css?v=20260811-modern-tables';
+    link.href = source ? new URL('../modern_tables.css?v=20260814-table-performance', source).href : 'modern_tables.css?v=20260814-table-performance';
     document.head.appendChild(link);
 }
 
@@ -128,6 +128,12 @@ function styleCalcRows(table) {
     });
 }
 
+function activeRowCount(table) {
+    if (typeof table.getDataCount === 'function') return table.getDataCount('active');
+    if (typeof table.getData === 'function') return table.getData('active').length;
+    return 0;
+}
+
 // Initialise a Tabulator table with Tailwind styling defaults
 function tailwindTabulator(element, options) {
     options = options || {};
@@ -137,10 +143,16 @@ function tailwindTabulator(element, options) {
     const requestedPageSize = options.paginationSize;
     const modernResponsiveOption = options.modernResponsive;
     const modernLabel = options.modernLabel;
+    const modernFreezeFirst = options.modernFreezeFirst === true;
+    const modernMaxHeight = options.modernMaxHeight;
+    const modernRemoteSearchParam = options.modernRemoteSearchParam;
     delete options.simpleSearch;
     delete options.searchFields;
     delete options.modernResponsive;
     delete options.modernLabel;
+    delete options.modernFreezeFirst;
+    delete options.modernMaxHeight;
+    delete options.modernRemoteSearchParam;
 
     // Allow rowClick handler to be bound after table creation
     const rowClickHandler = options.rowClick;
@@ -151,10 +163,28 @@ function tailwindTabulator(element, options) {
     const resolvedLabel = tableRegionLabel(tableElement, modernLabel);
     const isMatrix = modernResponsiveOption === false || /(^|-)pivot-table$/.test(tableElement.id || '') || (Array.isArray(options.columns) && options.columns.length > 10);
     const modernResponsive = !isMatrix;
+    let remoteSearchQuery = '';
+    let remoteTotal = null;
     if (modernResponsive && options.responsiveLayout) options.responsiveLayout = false;
 
-    // Apply the Simple theme to all Tabulator tables
-    options.theme = 'simple';
+    if (modernMaxHeight && !options.height && !options.maxHeight) {
+        options.maxHeight = modernMaxHeight;
+    }
+
+    if (modernRemoteSearchParam) {
+        const baseAjaxParams = options.ajaxParams;
+        const userAjaxResponse = options.ajaxResponse;
+        options.ajaxParams = function () {
+            const base = typeof baseAjaxParams === 'function' ? baseAjaxParams() : baseAjaxParams;
+            const params = Object.assign({}, base || {});
+            params[modernRemoteSearchParam] = remoteSearchQuery;
+            return params;
+        };
+        options.ajaxResponse = function (url, params, response) {
+            remoteTotal = response && Number.isFinite(Number(response.total)) ? Number(response.total) : null;
+            return userAjaxResponse ? userAjaxResponse(url, params, response) : response;
+        };
+    }
 
     if (!options.layout) {
         options.layout = 'fitDataStretch';
@@ -167,18 +197,23 @@ function tailwindTabulator(element, options) {
         if (userRowFormatter) userRowFormatter(row);
         decorateModernRow(row);
     };
-    if (options.pagination === undefined) {
-        options.pagination = 'local';
+    // Tabulator 6 uses a boolean switch plus an explicit mode. Normalise the
+    // older shorthand so existing callers keep working without deprecation
+    // warnings after the library upgrade.
+    if (typeof options.pagination === 'string') {
+        options.paginationMode = options.paginationMode || options.pagination;
+        options.pagination = true;
+    } else if (options.pagination === undefined) {
+        options.pagination = true;
+        options.paginationMode = options.paginationMode || 'local';
     }
-    options.paginationSize = requestedPageSize || 20;
+    if (options.pagination !== false) {
+        options.paginationSize = requestedPageSize || 20;
+    }
 
-    // Freeze the first column by default using the column definition to
-    // maintain compatibility across Tabulator versions. Earlier builds used
-    // `cols[0].freeze(true)` after the table was built, but newer versions
-    // (v6+) removed the freeze function from column components, triggering
-    // errors. Setting the `frozen` property avoids calling missing APIs while
-    // still freezing the column when the module is available.
-    if (Array.isArray(options.columns) && options.columns.length) {
+    // Frozen columns add measurable layout work, especially when widths are
+    // content-driven. Keep them for matrix views only when a caller opts in.
+    if (modernFreezeFirst && Array.isArray(options.columns) && options.columns.length) {
         options.columns[0].frozen = true;
     }
 
@@ -234,16 +269,20 @@ function tailwindTabulator(element, options) {
                 searchInProgress = true;
                 const normalisedQuery = query.toLowerCase();
                 try {
-                    if (!normalisedQuery) {
+                    if (modernRemoteSearchParam) {
+                        remoteSearchQuery = query.trim();
+                        remoteTotal = null;
+                        table.setData();
+                    } else if (!normalisedQuery) {
                         table.clearFilter();
-                        return;
-                    }
-                    table.setFilter(function(data) {
-                        return Object.entries(data).some(([field, v]) => {
-                            if (searchFields && !searchFields.includes(field)) return false;
-                            return v !== null && v !== undefined && v.toString().toLowerCase().includes(normalisedQuery);
+                    } else {
+                        table.setFilter(function(data) {
+                            return Object.entries(data).some(([field, v]) => {
+                                if (searchFields && !searchFields.includes(field)) return false;
+                                return v !== null && v !== undefined && v.toString().toLowerCase().includes(normalisedQuery);
+                            });
                         });
-                    });
+                    }
                 } finally {
                     searchInProgress = false;
                 }
@@ -251,7 +290,7 @@ function tailwindTabulator(element, options) {
         });
 
         const updateCount = function () {
-            const rows = typeof table.getRows === 'function' ? table.getRows('active').length : table.getData('active').length;
+            const rows = remoteTotal === null ? activeRowCount(table) : remoteTotal;
             count.textContent = `${rows.toLocaleString('en-GB')} ${rows === 1 ? 'row' : 'rows'}`;
         };
         const queueCountUpdate = function () { window.setTimeout(updateCount, 0); };
@@ -261,13 +300,9 @@ function tailwindTabulator(element, options) {
         table.on('tableDestroyed', function () { toolbar.remove(); });
         window.setTimeout(updateCount, 0);
     }
-    table.on('tableBuilt', function() {
-        styleCalcRows(table);
-        table.getRows('active').forEach(decorateModernRow);
-    });
+    table.on('tableBuilt', function() { styleCalcRows(table); });
     table.on('dataProcessed', function() {
         styleCalcRows(table);
-        table.getRows('active').forEach(decorateModernRow);
     });
     const header = el.querySelector('.tabulator-header');
     if (header) {
@@ -289,7 +324,7 @@ function tailwindTabulator(element, options) {
     }
 
     const media = window.matchMedia('(max-width: 720px)');
-    const redrawForViewport = function () { table.redraw(true); };
+    const redrawForViewport = function () { table.redraw(); };
     if (typeof media.addEventListener === 'function') media.addEventListener('change', redrawForViewport);
     else if (typeof media.addListener === 'function') media.addListener(redrawForViewport);
     return table;

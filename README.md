@@ -221,7 +221,13 @@ transactions as JSON.
 
 Tag aliases let you map many bank descriptors to one canonical tag without renaming the tag itself. For example, you can create aliases `Tesco`, `Sainsbury's`, and `Aldi` that all resolve to `Supermarkets`.
 
-Use `frontend/tag_aliases.html` to manage mappings and the backend endpoint `php_backend/public/tag_aliases.php` for CRUD operations.
+Use `frontend/tag_aliases.html` to manage mappings and the backend endpoint `php_backend/public/tag_aliases.php` for CRUD operations. The management table uses remote search, sorting, and pagination so the browser never has to build the complete alias catalogue. Omitting the `page` query parameter preserves the original array response for API clients.
+
+## Table performance
+
+Interactive data grids use the self-hosted Tabulator 6.5.0 distribution in `frontend/vendor/tabulator/6.5.0`; production pages do not depend on Unpkg to become usable. `frontend/js/tabulator-tailwind.js` decorates rows only through Tabulator's row formatter, keeps frozen columns opt-in, and supports bounded-height virtual rendering plus remote search and pagination. Simple read-only views such as Account Dashboard and Monthly Statement remain native semantic tables.
+
+Monthly Statement prioritises the selected month's transaction request and paints its first 50 rows before loading recurring analysis, account balances, the previous-month comparison, or Highcharts. Its database lookup uses an indexed half-open date range rather than applying `MONTH()` and `YEAR()` to every transaction date.
 
 ## Transaction Imports
 
@@ -242,6 +248,8 @@ Authenticated users can open **Admin Tools → Database Health** to compare an i
 Repairs are review-first and schema-only. The browser can select only catalogue-generated `CREATE TABLE`, `ALTER TABLE`, and `DROP INDEX` operations; it cannot submit SQL. The utility never generates `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, or record-backfill statements. Definition changes that could transform existing values are reported for manual review instead of being applied.
 
 Every application schema change should update `SchemaCatalog.php` as part of the same change so fresh installs and the Database Health audit share the same target structure. Data migrations remain separate, explicit scripts in `php_backend/migrations/`.
+
+The table-performance catalogue adds `transactions.idx_transactions_date` and `logs.idx_logs_created_at`. Existing installations can apply both through **Admin Tools → Database Health** without changing business records.
 
 ## Running Tests
 

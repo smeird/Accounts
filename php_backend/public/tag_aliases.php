@@ -11,12 +11,31 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    $isPagedRequest = isset($_GET['page']);
     try {
-        echo json_encode(TagAlias::all());
+        if ($isPagedRequest) {
+            $page = max(1, (int)$_GET['page']);
+            $size = isset($_GET['size']) ? max(10, min(100, (int)$_GET['size'])) : 25;
+            $query = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+            $sortField = 'alias';
+            $sortDirection = 'asc';
+            $sortersParam = $_GET['sorters'] ?? ($_GET['sort'] ?? '');
+            $sorters = is_string($sortersParam) ? json_decode($sortersParam, true) : $sortersParam;
+            if (is_array($sorters) && isset($sorters[0]) && is_array($sorters[0])) {
+                $sortField = isset($sorters[0]['field']) ? (string)$sorters[0]['field'] : $sortField;
+                $sortDirection = isset($sorters[0]['dir']) ? (string)$sorters[0]['dir'] : $sortDirection;
+            }
+            echo json_encode(TagAlias::page($page, $size, $query, $sortField, $sortDirection));
+        } else {
+            // Preserve the historical array response for existing API clients.
+            echo json_encode(TagAlias::all());
+        }
     } catch (Exception $e) {
         http_response_code(500);
         Log::write('Tag alias error: ' . $e->getMessage(), 'ERROR');
-        echo json_encode([]);
+        echo json_encode($isPagedRequest
+            ? ['last_page' => 1, 'data' => [], 'total' => 0]
+            : []);
     }
     exit;
 }

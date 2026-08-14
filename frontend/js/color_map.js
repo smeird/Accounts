@@ -74,8 +74,9 @@ function getChartTheme() {
 }
 
 function applyChartTheme() {
+    if (!window.Highcharts) return false;
     const opts = getChartTheme();
-    Highcharts.setOptions(opts);
+    window.Highcharts.setOptions(opts);
     const update = {
         colors: opts.colors,
         chart: {
@@ -105,7 +106,7 @@ function applyChartTheme() {
             sunburst: { shadow: opts.plotOptions.sunburst.shadow }
         }
     };
-    Highcharts.charts.forEach(c => {
+    window.Highcharts.charts.forEach(c => {
         if (c) {
             c.update(update, false);
             if (opts.chart.className && c.container) {
@@ -114,6 +115,7 @@ function applyChartTheme() {
             c.redraw();
         }
     });
+    return true;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -140,11 +142,11 @@ function getCategoryColor(name, segmentName = null) {
     if (!name) name = 'Unspecified';
     const key = `${segmentName || ''}|${name}`;
     if (categoryColorMap[key]) return categoryColorMap[key];
-    if (segmentName) {
+    if (segmentName && window.Highcharts && typeof window.Highcharts.color === 'function') {
         const base = getSegmentColor(segmentName);
         const hash = hashString(name);
         const shift = ((hash % 31) - 15) / 100; // -0.15..0.15
-        const color = Highcharts.color(base).brighten(shift).get();
+        const color = window.Highcharts.color(base).brighten(shift).get();
         categoryColorMap[key] = color;
         return color;
     }
@@ -158,7 +160,11 @@ function getTagColor(name, categoryName, categoryColor = null) {
     const base = categoryColor || getCategoryColor(categoryName);
     const hash = hashString(key);
     const shift = ((hash % 25) - 12) / 100; // -0.12..0.12
-    const color = Highcharts.color(base).brighten(shift).get();
+    if (!window.Highcharts || typeof window.Highcharts.color !== 'function') {
+        tagColorMap[key] = colourForKey('tag', key);
+        return tagColorMap[key];
+    }
+    const color = window.Highcharts.color(base).brighten(shift).get();
     tagColorMap[key] = color;
     return color;
 }

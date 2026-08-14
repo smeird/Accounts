@@ -17,6 +17,57 @@ class TagAlias {
     }
 
     /**
+     * Retrieve one filtered page for remote table rendering.
+     *
+     * @return array{last_page:int,data:array,total:int}
+     */
+    public static function page(int $page, int $size, string $query = '', string $sortField = 'alias', string $sortDirection = 'asc'): array {
+        $db = Database::getConnection();
+        $page = max(1, $page);
+        $size = max(10, min(100, $size));
+        $allowedSorts = [
+            'id' => 'ta.id',
+            'alias' => 'ta.alias',
+            'tag_name' => 't.name',
+            'match_type' => 'ta.match_type',
+            'active' => 'ta.active',
+        ];
+        $orderBy = $allowedSorts[$sortField] ?? $allowedSorts['alias'];
+        $direction = strtolower($sortDirection) === 'desc' ? 'DESC' : 'ASC';
+        $where = '';
+        $params = [];
+        $query = trim($query);
+        if ($query !== '') {
+            $where = " WHERE LOWER(ta.alias) LIKE :query ESCAPE '!' OR LOWER(t.name) LIKE :query ESCAPE '!' OR LOWER(ta.match_type) LIKE :query ESCAPE '!'";
+            $literalQuery = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], strtolower($query));
+            $params['query'] = '%' . $literalQuery . '%';
+        }
+
+        $countSql = 'SELECT COUNT(*) FROM tag_aliases ta INNER JOIN tags t ON t.id = ta.tag_id' . $where;
+        $count = $db->prepare($countSql);
+        $count->execute($params);
+        $total = (int)$count->fetchColumn();
+        $lastPage = max(1, (int)ceil($total / $size));
+        $page = min($page, $lastPage);
+        $offset = ($page - 1) * $size;
+
+        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.active '
+             . 'FROM tag_aliases ta '
+             . 'INNER JOIN tags t ON t.id = ta.tag_id'
+             . $where
+             . ' ORDER BY ' . $orderBy . ' ' . $direction . ', ta.id ASC'
+             . ' LIMIT ' . $size . ' OFFSET ' . $offset;
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        return [
+            'last_page' => $lastPage,
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'total' => $total,
+        ];
+    }
+
+    /**
      * Create a new alias mapping.
      */
     public static function create(int $tagId, string $alias, string $matchType = 'contains', bool $active = true): int {
