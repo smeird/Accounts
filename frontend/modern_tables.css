@@ -65,6 +65,15 @@
     letter-spacing:.02em;
 }
 
+.classification-key { display:flex; min-width:0; align-items:center; flex-wrap:wrap; gap:.35rem .52rem; color:#64748b; font-size:.56rem; font-weight:760; }
+.classification-key-title { color:#94a3b8; font-size:.5rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.classification-key-item { display:inline-flex; align-items:center; gap:.28rem; text-transform:capitalize; white-space:nowrap; }
+.classification-key-swatch { width:.48rem; height:.48rem; border:1px solid currentColor; border-radius:50%; }
+.classification-key-swatch--segment { color:#d97706; background:#fef3c7; }
+.classification-key-swatch--category { color:#059669; background:#d1fae5; }
+.classification-key-swatch--tag { color:#4f46e5; background:#e0e7ff; }
+.classification-key-swatch--group { color:#7c3aed; background:#ede9fe; }
+
 .modern-table.tabulator,
 .site-system-page .modern-table.tabulator,
 .transaction-page .modern-table.tabulator {
@@ -165,7 +174,6 @@
     line-height:1!important;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.58);
 }
-.modern-table-pill-label { font-size:.47rem; font-weight:900; letter-spacing:.055em; text-transform:uppercase; opacity:.72; }
 .modern-table-pill-value { overflow:hidden; font-weight:850; text-overflow:ellipsis; white-space:nowrap; }
 .modern-table-pill--category { border-color:#a7f3d0; color:#047857!important; background:linear-gradient(120deg,#ecfdf5,#f0fdfa)!important; }
 .modern-table-pill--segment { border-color:#fde68a; color:#a16207!important; background:linear-gradient(120deg,#fffbeb,#fff7ed)!important; }
@@ -228,6 +236,7 @@
 @media(max-width:720px) {
     .modern-table-toolbar { align-items:stretch; flex-direction:column; }
     .modern-table-search { width:100%; }
+    .modern-table-key { order:3; }
     .modern-table-count { align-self:flex-start; }
 
     .modern-table--cards.tabulator,

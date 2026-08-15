@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="transactions_workspace.css">
-    <link rel="stylesheet" href="transaction_detail.css">
+    <link rel="stylesheet" href="transaction_detail.css?v=20260815-pill-key">
 </head>
 <body class="ops-body transaction-page transaction-detail-page">
 <div class="flex min-h-screen">
@@ -53,6 +53,9 @@
                 <div class="transaction-card__header">
                     <div><p class="transaction-section-label">Movement record</p><h2>The transaction</h2><p class="transaction-card__copy">The original statement detail and identifiers behind this movement.</p></div>
                     <span id="transaction-type-badge" class="transaction-count">—</span>
+                </div>
+                <div class="transaction-classification-key" aria-label="Classification colour key">
+                    <span>Key</span><span><i class="is-tag" aria-hidden="true"></i>Tag</span><span><i class="is-category" aria-hidden="true"></i>Category</span><span><i class="is-segment" aria-hidden="true"></i>Segment</span><span><i class="is-group" aria-hidden="true"></i>Group</span>
                 </div>
                 <div id="transaction-meta" class="transaction-meta-chips" aria-label="Assigned transaction labels"></div>
                 <div class="transaction-receipt__body">
