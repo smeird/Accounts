@@ -92,84 +92,98 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="frontend/login.css?v=20260815-login-refresh">
     <style>
+        :root {
+            --login-brand: <?= htmlspecialchars($buttonColors['600']) ?>;
+            --login-brand-dark: <?= htmlspecialchars($buttonColors['700']) ?>;
+        }
+
         .brand-action-btn {
-            background-color: <?= htmlspecialchars($buttonColors['600']) ?>;
+            background-color: var(--login-brand);
             color: #ffffff;
         }
 
         .brand-action-btn:hover,
         .brand-action-btn:focus-visible {
-            background-color: <?= htmlspecialchars($buttonColors['700']) ?>;
+            background-color: var(--login-brand-dark);
             color: #ffffff;
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-900">
-    <div class="relative isolate min-h-screen overflow-hidden">
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.15),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(15,118,110,0.15),transparent_40%)]"></div>
-        <main class="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-12 lg:px-10">
-            <div class="grid w-full gap-8 rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/60 lg:grid-cols-2">
-                <section class="rounded-t-3xl bg-slate-900 p-8 text-slate-100 lg:rounded-l-3xl lg:rounded-tr-none lg:p-10">
-                    <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-100">
-                        <i class="fa-solid fa-shield-halved text-emerald-300"></i>
+<body class="login-page">
+    <div class="login-stage">
+        <div class="login-orb login-orb--one" aria-hidden="true"></div>
+        <div class="login-orb login-orb--two" aria-hidden="true"></div>
+        <main class="login-main">
+            <div class="login-shell">
+                <section class="login-story" aria-labelledby="login-site-name">
+                    <div class="login-security-badge">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
                         Secure Access
                     </div>
-                    <h1 class="mt-6 text-3xl font-semibold leading-tight"><?= htmlspecialchars($siteName) ?></h1>
-                    <p class="mt-4 text-sm leading-6 text-slate-300">Centralise your financial management with fast reporting, AI-assisted organisation, and secure account controls.</p>
-                    <dl class="mt-8 space-y-4 text-sm">
-                        <div class="flex items-start gap-3">
-                            <dt class="mt-0.5 text-emerald-300"><i class="fa-solid fa-chart-line"></i></dt>
-                            <dd class="text-slate-200">Track account activity, budgets, and project outcomes in one place.</dd>
+                    <h1 id="login-site-name"><?= htmlspecialchars($siteName) ?></h1>
+                    <p class="login-story-copy">Your complete financial position, organised clearly and available in an instant.</p>
+                    <dl class="login-benefits">
+                        <div class="login-benefit">
+                            <dt class="login-benefit-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></dt>
+                            <dd><strong>See the whole picture</strong><span>Accounts, budgets, projects and reporting in one place.</span></dd>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <dt class="mt-0.5 text-emerald-300"><i class="fa-solid fa-wand-magic-sparkles"></i></dt>
-                            <dd class="text-slate-200">Use AI-powered tagging and budgeting tools to reduce admin time.</dd>
+                        <div class="login-benefit">
+                            <dt class="login-benefit-icon login-benefit-icon--cyan"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></dt>
+                            <dd><strong>Less financial admin</strong><span>Reusable tagging and intelligent organisation save time.</span></dd>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <dt class="mt-0.5 text-emerald-300"><i class="fa-solid fa-lock"></i></dt>
-                            <dd class="text-slate-200">Protect data with role-based access and optional two-factor authentication.</dd>
+                        <div class="login-benefit">
+                            <dt class="login-benefit-icon login-benefit-icon--emerald"><i class="fa-solid fa-lock" aria-hidden="true"></i></dt>
+                            <dd><strong>Private by design</strong><span>Secure accounts with optional two-factor authentication.</span></dd>
                         </div>
                     </dl>
                 </section>
-                <section class="p-8 lg:p-10">
-                    <div class="mb-6 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <section class="login-panel" aria-labelledby="login-heading">
+                    <div class="login-panel-header">
                         <span>Authentication</span>
                         <span><?= $needsToken ? 'Two-Factor' : 'Login' ?></span>
                     </div>
-                    <div class="mb-6 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-                            <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-8 w-8" />
+                    <div class="login-welcome">
+                        <div class="login-logo">
+                            <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" />
                         </div>
                         <div>
-                            <p class="text-sm font-semibold text-slate-900"><?= $needsToken ? 'Two-factor verification' : 'Welcome back' ?></p>
-                            <p class="text-xs text-slate-600">Sign in to continue to your dashboard.</p>
+                            <h2 id="login-heading"><?= $needsToken ? 'Two-factor verification' : 'Welcome back' ?></h2>
+                            <p>Sign in to continue to your financial workspace.</p>
                         </div>
                     </div>
-                    <p class="mb-6 text-sm leading-6 text-slate-700">
+                    <p class="login-instruction">
                         <?= $needsToken ? 'Enter the 6-digit code from your authenticator app to complete sign in.' : 'Use your account credentials to access the ' . htmlspecialchars($siteName) . ' workspace.' ?>
                     </p>
                     <?php if ($error): ?>
-                        <p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700"><?= htmlspecialchars($error) ?></p>
+                        <p class="login-error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><?= htmlspecialchars($error) ?></p>
                     <?php endif; ?>
                     <?php if ($needsToken): ?>
-                        <form method="post" class="space-y-4" id="token-form">
-                            <label class="block text-sm font-semibold text-slate-700">Code
-                                <input type="text" name="token" autocomplete="one-time-code" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm focus:border-<?= $scheme ?>-500 focus:outline-none focus:ring-2 focus:ring-<?= $scheme ?>-200" data-help="Enter your 6-digit code">
+                        <form method="post" class="login-form" id="token-form">
+                            <label class="login-field" for="login-token">Authenticator code
+                                <span class="login-input-wrap"><i class="fa-solid fa-key" aria-hidden="true"></i>
+                                    <input id="login-token" type="text" name="token" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autofocus required data-help="Enter your 6-digit code">
+                                </span>
                             </label>
-                            <button type="submit" aria-label="Verify code" class="brand-action-btn w-full rounded-xl py-3 text-base font-semibold shadow-md shadow-slate-300 transition duration-150">Verify</button>
+                            <button type="submit" aria-label="Verify code" class="brand-action-btn login-submit">Verify code <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                         </form>
                     <?php else: ?>
-                        <form method="post" class="space-y-4" id="login-form" autocomplete="on">
-                            <label class="block text-sm font-semibold text-slate-700">Username
-                                <input type="text" name="username" autocomplete="username" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm focus:border-<?= $scheme ?>-500 focus:outline-none focus:ring-2 focus:ring-<?= $scheme ?>-200" data-help="Enter your username">
+                        <form method="post" class="login-form" id="login-form" autocomplete="on">
+                            <label class="login-field" for="login-username">Username
+                                <span class="login-input-wrap"><i class="fa-solid fa-user" aria-hidden="true"></i>
+                                    <input id="login-username" type="text" name="username" autocomplete="username" autofocus required data-help="Enter your username">
+                                </span>
                             </label>
-                            <label class="block text-sm font-semibold text-slate-700">Password
-                                <input type="password" name="password" autocomplete="current-password" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm focus:border-<?= $scheme ?>-500 focus:outline-none focus:ring-2 focus:ring-<?= $scheme ?>-200" data-help="Enter your password">
+                            <label class="login-field" for="login-password">Password
+                                <span class="login-input-wrap"><i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                    <input id="login-password" type="password" name="password" autocomplete="current-password" required data-help="Enter your password">
+                                </span>
                             </label>
-                            <button type="submit" aria-label="Log in" class="brand-action-btn w-full rounded-xl py-3 text-base font-semibold shadow-md shadow-slate-300 transition duration-150">Login</button>
+                            <button type="submit" aria-label="Log in" class="brand-action-btn login-submit">Open dashboard <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                         </form>
                     <?php endif; ?>
+                    <p class="login-trust"><i class="fa-solid fa-lock" aria-hidden="true"></i> Secure session · Private financial workspace</p>
                 </section>
             </div>
         </main>
