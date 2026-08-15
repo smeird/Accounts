@@ -247,7 +247,43 @@ class OfxImportService {
             $stmt->execute(['number' => $number, 'sort_code' => $sortCode]);
         }
         $id = $stmt->fetchColumn();
-        return $id !== false ? (int)$id : Account::create((string)$account->name, $sortCode, $number);
+        if ($id !== false) {
+            return (int)$id;
+        }
+
+        $matchedId = $this->findUniqueMaskedAccount($number, $sortCode);
+        return $matchedId ?? Account::create((string)$account->name, $sortCode, $number);
+    }
+
+    private function findUniqueMaskedAccount(string $number, ?string $sortCode): ?int {
+        if ($sortCode === null) {
+            $stmt = $this->db->query('SELECT `id`, `account_number` FROM `accounts` WHERE `sort_code` IS NULL');
+        } else {
+            $stmt = $this->db->prepare('SELECT `id`, `account_number` FROM `accounts` WHERE `sort_code` = :sort_code');
+            $stmt->execute(['sort_code' => $sortCode]);
+        }
+
+        $matches = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $candidate) {
+            if ($this->maskedAccountNumbersMatch($number, (string)($candidate['account_number'] ?? ''))) {
+                $matches[] = (int)$candidate['id'];
+            }
+        }
+        return count($matches) === 1 ? $matches[0] : null;
+    }
+
+    private function maskedAccountNumbersMatch(string $left, string $right): bool {
+        $left = strtoupper(trim($left));
+        $right = strtoupper(trim($right));
+        if ($left === '' || strlen($left) !== strlen($right) || (strpos($left, '*') === false && strpos($right, '*') === false)) {
+            return false;
+        }
+        for ($index = 0, $length = strlen($left); $index < $length; $index++) {
+            if ($left[$index] !== '*' && $right[$index] !== '*' && $left[$index] !== $right[$index]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** @return array<string,mixed> */

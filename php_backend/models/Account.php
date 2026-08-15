@@ -39,8 +39,67 @@ class Account {
      */
     public static function updateLedgerBalance(int $accountId, float $balance, string $date): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE accounts SET ledger_balance = :bal, ledger_balance_date = :dt WHERE id = :id');
-        $stmt->execute(['bal' => $balance, 'dt' => $date, 'id' => $accountId]);
+        $stmt = $db->prepare(
+            'UPDATE accounts SET ledger_balance = :bal, ledger_balance_date = :dt '
+            . 'WHERE id = :id AND (ledger_balance_date IS NULL OR ledger_balance_date <= :incoming_date)'
+        );
+        $stmt->execute(['bal' => $balance, 'dt' => $date, 'id' => $accountId, 'incoming_date' => $date]);
+    }
+
+    /**
+     * Build chronological balances around a bank-reported snapshot.
+     *
+     * @param array<int,array{date:string,amount:mixed,id?:mixed}> $transactions
+     * @return array<int,array{date:string,balance:float}>
+     */
+    public static function buildBalanceHistory(float $ledgerBalance, ?string $ledgerDate, array $transactions): array {
+        usort($transactions, static function (array $left, array $right): int {
+            $dateOrder = strcmp((string)$left['date'], (string)$right['date']);
+            return $dateOrder !== 0 ? $dateOrder : ((int)($left['id'] ?? 0) <=> (int)($right['id'] ?? 0));
+        });
+
+        if ($ledgerDate === null || $ledgerDate === '') {
+            $balance = $ledgerBalance;
+            $history = [];
+            foreach ($transactions as $transaction) {
+                $balance += (float)$transaction['amount'];
+                $history[] = ['date' => (string)$transaction['date'], 'balance' => $balance];
+            }
+            return $history;
+        }
+
+        $includedTotal = 0.0;
+        foreach ($transactions as $transaction) {
+            if ((string)$transaction['date'] <= $ledgerDate) {
+                $includedTotal += (float)$transaction['amount'];
+            }
+        }
+
+        $balance = $ledgerBalance - $includedTotal;
+        $history = [];
+        foreach ($transactions as $transaction) {
+            $date = (string)$transaction['date'];
+            if ($date > $ledgerDate) {
+                continue;
+            }
+            $balance += (float)$transaction['amount'];
+            $history[] = ['date' => $date, 'balance' => $balance];
+        }
+
+        if (!$history || $history[count($history) - 1]['date'] < $ledgerDate) {
+            $history[] = ['date' => $ledgerDate, 'balance' => $ledgerBalance];
+        }
+
+        $balance = $ledgerBalance;
+        foreach ($transactions as $transaction) {
+            $date = (string)$transaction['date'];
+            if ($date <= $ledgerDate) {
+                continue;
+            }
+            $balance += (float)$transaction['amount'];
+            $history[] = ['date' => $date, 'balance' => $balance];
+        }
+        return $history;
     }
 
     /**

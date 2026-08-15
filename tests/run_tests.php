@@ -650,9 +650,36 @@ assertEqual(1, (int)($firstImport['totals']['tagged'] ?? 0), 'Structured importe
 assertEqual(1, (int)($firstImport['totals']['categorised'] ?? 0), 'Structured importer reports newly categorised transactions');
 assertEqual('Complete merchant statement memo', $db->query('SELECT memo FROM transactions')->fetchColumn(), 'Imported transaction retains its complete memo');
 assertEqual('Complete merchant statement memo', $db->query('SELECT description FROM transactions')->fetchColumn(), 'Imported transaction falls back to memo for its description');
+$importAccountId = (int)$db->query("SELECT id FROM accounts WHERE account_number = '99887766'")->fetchColumn();
+assertEqual(1234.56, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'OFX ledger balance is stored on the matched account');
+$newerBalanceOfx = str_replace(['1234.56', '20260814'], ['1500.00', '20260815'], $serviceOfx);
+$importService->importContent('newer-balance.ofx', $newerBalanceOfx);
+$importService->importContent('older-balance.ofx', $serviceOfx);
+assertEqual(1500.0, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'An older OFX statement cannot overwrite a newer ledger balance');
+assertEqual('2026-08-15', $db->query("SELECT ledger_balance_date FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'The newest OFX balance date is retained');
 $repeatImport = $importService->importContent('current.ofx', $serviceOfx);
 assertEqual(1, (int)($repeatImport['totals']['duplicates'] ?? 0), 'Repeat import reports the bank-ID duplicate');
 assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Repeat import does not add a duplicate row');
+
+$fullCardId = Account::create('Existing card', null, '5522131234568609');
+$maskedCardOfx = <<<OFX
+<OFX><CREDITCARDMSGSRSV1><CCSTMTTRNRS><CCSTMTRS>
+<CURDEF>GBP</CURDEF><CCACCTFROM><ACCTID>552213******8609</ACCTID></CCACCTFROM>
+<LEDGERBAL><BALAMT>-2214.24</BALAMT><DTASOF>20260814</DTASOF></LEDGERBAL>
+</CCSTMTRS></CCSTMTTRNRS></CREDITCARDMSGSRSV1></OFX>
+OFX;
+$importService->importContent('masked-card.ofx', $maskedCardOfx);
+assertEqual(2, (int)$db->query('SELECT COUNT(*) FROM accounts')->fetchColumn(), 'A uniquely matching masked account does not create a duplicate account');
+assertEqual(-2214.24, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $fullCardId")->fetchColumn(), 'A masked OFX account updates its existing full-number account');
+
+$balanceHistory = Account::buildBalanceHistory(80.0, '2026-08-09', [
+    ['id' => 1, 'date' => '2026-08-08', 'amount' => 100.0],
+    ['id' => 2, 'date' => '2026-08-09', 'amount' => -20.0],
+    ['id' => 3, 'date' => '2026-08-10', 'amount' => -5.0],
+]);
+assertEqual(100.0, $balanceHistory[0]['balance'] ?? null, 'Balance history reconstructs the first post-transaction balance');
+assertEqual(80.0, $balanceHistory[1]['balance'] ?? null, 'Balance history reconciles to the OFX snapshot');
+assertEqual(75.0, $balanceHistory[2]['balance'] ?? null, 'Balance history applies transactions after the OFX snapshot forwards');
 $brokenImport = $importService->importContent('broken.ofx', 'not an OFX statement');
 assertEqual('error', $brokenImport['status'] ?? null, 'Malformed statement produces a structured error');
 

@@ -21,19 +21,13 @@ try {
     if (!$account) {
         throw new Exception('Account not found');
     }
-    $balance = (float)$account['ledger_balance'];
-    $history = [];
-    if ($account['ledger_balance_date']) {
-        $history[] = ['date' => $account['ledger_balance_date'], 'balance' => $balance];
-    }
-    $ignore = Tag::getIgnoreId();
-    $stmt = $db->prepare('SELECT date, amount FROM transactions WHERE account_id = :id AND (tag_id IS NULL OR tag_id != :ignore) ORDER BY date DESC, id DESC');
-    $stmt->execute(['id' => $id, 'ignore' => $ignore]);
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $balance -= (float)$row['amount'];
-        $history[] = ['date' => $row['date'], 'balance' => $balance];
-    }
-    $history = array_reverse($history);
+    $stmt = $db->prepare('SELECT id, date, amount FROM transactions WHERE account_id = :id ORDER BY date, id');
+    $stmt->execute(['id' => $id]);
+    $history = Account::buildBalanceHistory(
+        (float)$account['ledger_balance'],
+        $account['ledger_balance_date'] ?: null,
+        $stmt->fetchAll(PDO::FETCH_ASSOC)
+    );
     echo json_encode([
         'name' => $account['name'],
         'sort_code' => $account['sort_code'],
