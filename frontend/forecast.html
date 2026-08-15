@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- Forecast dashboard: a transparent 12-period outlook built from recorded activity. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Financial Forecast</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="forecast.css?v=20260815-forecast">
+</head>
+<body class="ops-body dashboard-page forecast-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main id="forecast-main" class="ops-main forecast-main flex-1 min-w-0 overflow-x-hidden" aria-busy="true">
+            <div id="forecast-error" class="forecast-alert forecast-alert--error" role="alert" hidden></div>
+            <div id="forecast-empty" class="forecast-alert forecast-alert--empty" role="status" hidden>
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                <div><strong>More history will improve this forecast</strong><span>No complete transaction months were found. The page currently holds your recorded balance flat.</span></div>
+            </div>
+
+            <section class="forecast-hero" data-no-card="true" aria-labelledby="forecast-position-title">
+                <div class="forecast-hero__glow" aria-hidden="true"></div>
+                <div class="forecast-hero__topline">
+                    <span class="forecast-eyebrow"><span aria-hidden="true"></span>12-month outlook</span>
+                    <span id="forecast-confidence" class="forecast-confidence forecast-confidence--loading">Building model…</span>
+                </div>
+                <div class="forecast-hero__body">
+                    <div class="forecast-hero__headline">
+                        <p class="forecast-kicker">Expected closing position</p>
+                        <h1 id="forecast-position-title" class="forecast-position">£—</h1>
+                        <p id="forecast-message" class="forecast-message">Reading your latest income and spending patterns…</p>
+                    </div>
+                    <div class="forecast-range" aria-label="Forecast ending scenarios">
+                        <p>Possible range at period end</p>
+                        <div class="forecast-range__track" aria-hidden="true"><span></span><i></i></div>
+                        <div class="forecast-range__values">
+                            <div><span>Conservative</span><strong id="forecast-conservative">£—</strong></div>
+                            <div><span>Optimistic</span><strong id="forecast-optimistic">£—</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="forecast-hero__footer">
+                    <span id="forecast-period">Next 12 months</span>
+                    <span id="forecast-as-of">Latest data: —</span>
+                </div>
+            </section>
+
+            <section class="forecast-metrics" data-no-card="true" aria-label="Forecast headline metrics">
+                <article>
+                    <span class="forecast-metric-icon forecast-metric-icon--net"><i class="fas fa-arrow-right-arrow-left" aria-hidden="true"></i></span>
+                    <div><p>Projected net movement</p><strong id="forecast-cashflow">£—</strong><small id="forecast-savings-rate">—% of income retained</small></div>
+                </article>
+                <article>
+                    <span class="forecast-metric-icon forecast-metric-icon--income"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span>
+                    <div><p>Projected income</p><strong id="forecast-income">£—</strong><small>Observed pattern carried forward</small></div>
+                </article>
+                <article>
+                    <span class="forecast-metric-icon forecast-metric-icon--spend"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span>
+                    <div><p>Projected spending</p><strong id="forecast-spending">£—</strong><small>Transfers and ignored items removed</small></div>
+                </article>
+                <article>
+                    <span class="forecast-metric-icon forecast-metric-icon--pressure"><i class="fas fa-calendar-minus" aria-hidden="true"></i></span>
+                    <div><p>Cash-flow pressure</p><strong id="forecast-negative-months">—</strong><small>Forecast months below zero</small></div>
+                </article>
+            </section>
+
+            <section class="forecast-card forecast-card--movement" data-no-card="true">
+                <div class="forecast-card__header">
+                    <div><p class="forecast-section-label">Pattern into outlook</p><h2>Observed and forecast monthly cash movement</h2><p>Solid lines are recorded months. Dashed lines are the baseline forecast.</p></div>
+                    <a href="monthly_statement.html" class="forecast-link">Inspect transactions <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div id="forecast-movement-chart" class="forecast-chart forecast-chart--movement" data-chart-desc="Line chart comparing recorded and forecast monthly income and spending."></div>
+            </section>
+
+            <div class="forecast-grid">
+                <section class="forecast-card" data-no-card="true">
+                    <div class="forecast-card__header">
+                        <div><p class="forecast-section-label">Balance runway</p><h2>Three planning paths</h2><p>Expected, conservative and optimistic—not a guarantee.</p></div>
+                    </div>
+                    <div id="forecast-balance-chart" class="forecast-chart" data-chart-desc="Line chart showing expected, conservative and optimistic projected account balances."></div>
+                </section>
+
+                <section class="forecast-card" data-no-card="true">
+                    <div class="forecast-card__header">
+                        <div><p class="forecast-section-label">Spending shape</p><h2>Likely cost drivers</h2><p>Projected from each category's share of observed spending.</p></div>
+                    </div>
+                    <div id="forecast-categories" class="forecast-category-list"></div>
+                </section>
+            </div>
+
+            <section class="forecast-card" data-no-card="true">
+                <div class="forecast-card__header"><div><p class="forecast-section-label">What to notice</p><h2>Signals from the baseline</h2></div></div>
+                <div id="forecast-insights" class="forecast-insight-grid"></div>
+            </section>
+
+            <details class="forecast-method" data-no-card="true">
+                <summary><span><i class="fas fa-circle-info" aria-hidden="true"></i> How this forecast is built</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+                <div class="forecast-method__body">
+                    <div><h2>Model approach</h2><p id="forecast-method-approach"></p><p id="forecast-method-exclusions"></p></div>
+                    <div><h2>Assumptions</h2><ul id="forecast-method-assumptions"></ul></div>
+                    <div class="forecast-method__coverage"><h2>Data coverage</h2><dl id="forecast-coverage"></dl></div>
+                    <p id="forecast-method-notice" class="forecast-method__notice"></p>
+                </div>
+            </details>
+        </main>
+    </div>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Forecast',
+            breadcrumb: 'Dashboards / Forecast',
+            subtitle: 'A practical view of where today’s income and spending patterns could take you over the next year.'
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/forecast_dashboard.js?v=20260815-forecast"></script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

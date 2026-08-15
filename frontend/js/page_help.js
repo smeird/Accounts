@@ -41,6 +41,7 @@ const init = () => {
     'transfers.html': `Use Assist to search for equal and opposite transactions across the normal bank settlement window. Review each suggested pair and mark it individually or mark all at once so confirmed transfers are ignored in reports. Undo any transfer if you mark it by mistake to keep totals accurate and prevent the same money being counted twice.`,
 
     'yearly_dashboard.html': `Analyse totals for a chosen year using charts and tables. Look through the months to see how spending and income evolved as the year progressed. This broader view helps you understand whether you are meeting your long‑term goals and where you might need to cut back.`,
+    'forecast.html': `Project your financial position across the next 12 months using your latest complete transaction history. Compare the expected path with conservative and optimistic planning scenarios, review likely spending drivers, and open the methodology panel to see the assumptions and data coverage behind the forecast.`,
     'recurring_spend.html': `Identify expenses that recur over the past year so you are aware of ongoing commitments. The page highlights regular payments like subscriptions or rent and shows how much they cost overall. Spotting these repeated charges helps you decide which ones are essential and which could be reduced or cancelled.`,
     'pivot.html': `Explore transactions with a pivot table. Choose a year or view all records to break down amounts by category, month or other fields. Use the export options to save the results for further analysis.`
 
