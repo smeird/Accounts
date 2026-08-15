@@ -9,7 +9,7 @@ function ensureModernTableStyles() {
     const source = document.currentScript && document.currentScript.src;
     link.id = 'modern-tables-css';
     link.rel = 'stylesheet';
-    link.href = source ? new URL('../modern_tables.css?v=20260814-table-performance', source).href : 'modern_tables.css?v=20260814-table-performance';
+    link.href = source ? new URL('../modern_tables.css?v=20260815-pill-key', source).href : 'modern_tables.css?v=20260815-pill-key';
     document.head.appendChild(link);
 }
 
@@ -24,18 +24,39 @@ function classificationKind(colorClasses) {
     return 'label';
 }
 
+const classificationKeyOrder = ['segment', 'category', 'tag', 'group'];
+
+function createClassificationKey(kinds) {
+    const key = document.createElement('div');
+    const title = document.createElement('span');
+    key.className = 'classification-key modern-table-key';
+    key.setAttribute('aria-label', 'Classification colour key');
+    title.className = 'classification-key-title';
+    title.textContent = 'Key';
+    key.appendChild(title);
+    kinds.forEach(kind => {
+        const item = document.createElement('span');
+        const swatch = document.createElement('i');
+        item.className = 'classification-key-item';
+        swatch.className = `classification-key-swatch classification-key-swatch--${kind}`;
+        swatch.setAttribute('aria-hidden', 'true');
+        item.append(swatch, document.createTextNode(kind));
+        key.appendChild(item);
+    });
+    return key;
+}
+
 // Create a coloured badge element used in table cells
 function createBadge(text, colorClasses, kind) {
     const span = document.createElement('span');
     const resolvedKind = kind || classificationKind(colorClasses);
-    const label = document.createElement('strong');
     const value = document.createElement('span');
-    label.className = 'modern-table-pill-label';
-    label.textContent = resolvedKind;
     value.className = 'modern-table-pill-value';
     value.textContent = text;
     span.className = `modern-table-pill modern-table-pill--${resolvedKind} ${colorClasses || ''}`.trim();
-    span.append(label, value);
+    span.setAttribute('aria-label', `${resolvedKind}: ${text}`);
+    span.title = `${resolvedKind.charAt(0).toUpperCase() + resolvedKind.slice(1)}: ${text}`;
+    span.appendChild(value);
     return span;
 }
 
@@ -45,7 +66,8 @@ function badgeFormatter(colorClasses, kind) {
         const value = cell.getValue();
         const resolvedKind = kind || classificationKind(colorClasses);
         if (!value) {
-            const missing = createBadge(`No ${resolvedKind}`, colorClasses, resolvedKind);
+            const missing = createBadge('Unassigned', colorClasses, resolvedKind);
+            missing.setAttribute('aria-label', `No ${resolvedKind} assigned`);
             missing.classList.add('is-missing');
             return missing;
         }
@@ -161,6 +183,9 @@ function tailwindTabulator(element, options) {
     const tableElement = typeof element === 'string' ? document.querySelector(element) : element;
     if (!tableElement) throw new Error('The table container could not be found.');
     const resolvedLabel = tableRegionLabel(tableElement, modernLabel);
+    const classificationKinds = classificationKeyOrder.filter(kind =>
+        Array.isArray(options.columns) && options.columns.some(column => modernCellKind(column) === kind)
+    );
     const isMatrix = modernResponsiveOption === false || /(^|-)pivot-table$/.test(tableElement.id || '') || (Array.isArray(options.columns) && options.columns.length > 10);
     const modernResponsive = !isMatrix;
     let remoteSearchQuery = '';
@@ -257,7 +282,9 @@ function tailwindTabulator(element, options) {
         count.setAttribute('role', 'status');
         count.setAttribute('aria-live', 'polite');
         searchLabel.append(searchIcon, searchInput);
-        toolbar.append(searchLabel, count);
+        toolbar.appendChild(searchLabel);
+        if (classificationKinds.length) toolbar.appendChild(createClassificationKey(classificationKinds));
+        toolbar.appendChild(count);
         tableElement.parentNode.insertBefore(toolbar, tableElement);
         let searchInProgress = false;
         let searchTimer = null;

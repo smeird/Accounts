@@ -205,7 +205,8 @@
         pill.setAttribute('aria-label', `${kind}: ${present ? value : missingLabel}`);
         const icon = element('i', `fas ${iconName}`);
         icon.setAttribute('aria-hidden', 'true');
-        pill.append(icon, element('strong', 'statement-pill-kind', kind), element('span', 'statement-pill-value', present ? value : missingLabel));
+        pill.title = `${kind.charAt(0).toUpperCase() + kind.slice(1)}: ${present ? value : missingLabel}`;
+        pill.append(icon, element('span', 'statement-pill-value', present ? value : 'Unassigned'));
         return pill;
     }
 
@@ -240,10 +241,10 @@
         const wrapper = element('label', `statement-pill statement-pill--group statement-group-editor${transaction.group_id ? '' : ' is-missing'}`);
         const icon = element('i', 'fas fa-layer-group');
         icon.setAttribute('aria-hidden', 'true');
-        wrapper.append(icon, element('strong', 'statement-pill-kind', 'Group'));
+        wrapper.appendChild(icon);
         const select = element('select', 'unstyled statement-group-select');
         select.setAttribute('aria-label', `Group for ${transaction.description}`);
-        select.appendChild(new Option('No group', ''));
+        select.appendChild(new Option('Unassigned', ''));
         state.groups.filter(group => Boolean(Number(group.active))).forEach(group => select.appendChild(new Option(group.name, String(group.id))));
         if (transaction.group_id && !Array.from(select.options).some(option => option.value === transaction.group_id)) {
             select.appendChild(new Option(transaction.group_name || 'Current group', transaction.group_id));

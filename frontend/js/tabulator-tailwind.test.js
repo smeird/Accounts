@@ -11,6 +11,11 @@ assert.doesNotMatch(adapter, /getRows\('active'\)\.forEach\(decorateModernRow\)/
 assert.match(adapter, /if \(modernFreezeFirst/, 'frozen columns should be opt-in');
 assert.doesNotMatch(adapter, /redraw\(true\)/, 'viewport changes must not force a full table redraw');
 assert.match(adapter, /options\.paginationMode = options\.paginationMode \|\| 'local'/, 'pagination should use the Tabulator 6 option shape');
+assert.doesNotMatch(adapter, /modern-table-pill-label/, 'classification pills should not repeat their type');
+assert.match(adapter, /createClassificationKey\(classificationKinds\)/, 'classification tables should include a compact colour key');
+
+const monthlyStatement = fs.readFileSync(path.join(frontendDirectory, 'monthly_statement.html'), 'utf8');
+assert.match(monthlyStatement, /statement-classification-key/, 'monthly statement should include the classification colour key');
 
 const tablePages = fs.readdirSync(frontendDirectory)
     .filter(file => file.endsWith('.html'))

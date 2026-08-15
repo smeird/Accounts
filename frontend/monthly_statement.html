@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
-    <link rel="stylesheet" href="monthly_statement.css">
+    <link rel="stylesheet" href="monthly_statement.css?v=20260815-pill-key">
 
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
@@ -81,7 +81,7 @@
                             <h2 id="statement-ledger-title">Monthly activity</h2>
                             <span id="statement-result-count" class="statement-count" aria-live="polite">Loading</span>
                         </div>
-                        <p>Every classification is labelled and colour-coded so gaps are immediately visible.</p>
+                        <p>Every classification follows the compact colour key below, so gaps remain easy to spot.</p>
                     </div>
                     <div class="statement-table-tools">
                         <label class="statement-search" for="statement-search">
@@ -109,6 +109,14 @@
                     <button type="button" class="statement-filter" data-statement-filter="spending" aria-pressed="false">Spending</button>
                     <button type="button" class="statement-filter statement-filter--attention" data-statement-filter="needs-classification" aria-pressed="false">Needs classification</button>
                     <button type="button" class="statement-filter" data-statement-filter="transfers" aria-pressed="false">Transfers</button>
+                </div>
+
+                <div class="classification-key statement-classification-key" aria-label="Classification colour key">
+                    <span class="classification-key-title">Key</span>
+                    <span class="classification-key-item"><i class="classification-key-swatch classification-key-swatch--segment" aria-hidden="true"></i>Segment</span>
+                    <span class="classification-key-item"><i class="classification-key-swatch classification-key-swatch--category" aria-hidden="true"></i>Category</span>
+                    <span class="classification-key-item"><i class="classification-key-swatch classification-key-swatch--tag" aria-hidden="true"></i>Tag</span>
+                    <span class="classification-key-item"><i class="classification-key-swatch classification-key-swatch--group" aria-hidden="true"></i>Group</span>
                 </div>
 
                 <div id="statement-table-status" class="statement-table-status" role="status" aria-live="polite">
@@ -140,13 +148,13 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Monthly Statement',
     breadcrumb: 'Transactions / Statements',
-    subtitle: 'Review every transaction with clear segment, category, tag and group labels, then open any line that needs attention.'
+    subtitle: 'Review every transaction with compact colour-coded classifications, then open any line that needs attention.'
 });
 </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/color_map.js?v=20260814-lazy-charts"></script>
-    <script src="js/monthly_statement.js?v=20260814-table-performance"></script>
+    <script src="js/monthly_statement.js?v=20260815-pill-key"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>

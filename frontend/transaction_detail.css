@@ -9,6 +9,14 @@
 .transaction-editor { position:sticky; top:1rem; }
 
 .transaction-meta-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin:-.2rem 0 1rem; }
+.transaction-classification-key { display:flex; align-items:center; flex-wrap:wrap; gap:.35rem .55rem; margin:-.2rem 0 .55rem; color:#64748b; font-size:.56rem; font-weight:760; }
+.transaction-classification-key>span { display:inline-flex; align-items:center; gap:.28rem; }
+.transaction-classification-key>span:first-child { color:#94a3b8; font-size:.5rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.transaction-classification-key i { width:.48rem; height:.48rem; border:1px solid currentColor; border-radius:50%; }
+.transaction-classification-key .is-tag { color:#4f46e5; background:#e0e7ff; }
+.transaction-classification-key .is-category { color:#059669; background:#d1fae5; }
+.transaction-classification-key .is-segment { color:#0891b2; background:#cffafe; }
+.transaction-classification-key .is-group { color:#7c3aed; background:#ede9fe; }
 .transaction-meta-chip { display:inline-flex; min-height:1.9rem; align-items:center; gap:.42rem; padding:.35rem .62rem; border:1px solid rgba(79,70,229,.14); border-radius:999px; color:var(--transaction-brand-dark); background:#eef2ff; font-size:.6rem; font-weight:800; }
 .transaction-meta-chip--category { border-color:rgba(16,185,129,.16); color:#047857; background:#ecfdf5; }
 .transaction-meta-chip--segment { border-color:rgba(6,182,212,.16); color:#0e7490; background:#ecfeff; }
