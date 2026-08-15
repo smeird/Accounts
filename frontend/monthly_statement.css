@@ -16,8 +16,9 @@
 .statement-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin-top:1rem; }
 .statement-summary .site-metric-card { min-height:6.7rem; }
 .statement-summary .site-metric-card p:last-child { overflow-wrap:anywhere; }
-#largest-category { font-size:clamp(1rem,1.7vw,1.45rem)!important; }
-#recurring-ratio,#avg-transaction { font-size:.7rem!important; line-height:1.5!important; letter-spacing:-.01em!important; }
+.monthly-statement-page .statement-summary .cards > p:first-child { font-size:.75rem!important; line-height:1.35; }
+.monthly-statement-page .statement-summary .cards > p:last-child { font-size:clamp(1.25rem,2.3vw,1.8125rem)!important; line-height:1.1!important; letter-spacing:-.03em; }
+.monthly-statement-page .statement-summary :is(#recurring-ratio,#avg-transaction) { font-size:.875rem!important; line-height:1.45!important; letter-spacing:-.01em; }
 
 .monthly-statement,.statement-chart-panel { overflow:hidden; border:1px solid var(--statement-line); border-radius:1.25rem; background:rgba(255,255,255,.84); box-shadow:0 24px 48px -40px rgba(15,23,42,.75); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
 .statement-ledger-header { display:flex; align-items:flex-end; justify-content:space-between; gap:1.3rem; padding:1.1rem 1.15rem .85rem; }
