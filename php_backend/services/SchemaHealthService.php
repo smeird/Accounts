@@ -201,6 +201,9 @@ class SchemaHealthService {
             foreach ($expectedTable['indexes'] as $indexName => $expectedIndex) {
                 $checks++;
                 if (!isset($actualIndexes[$indexName])) {
+                    if (self::hasEquivalentIndex($actualIndexes, $expectedIndex)) {
+                        continue;
+                    }
                     $canAddIndex = self::dependenciesRepairable($expectedIndex['columns'], $missingColumns);
                     $issues[] = self::issue(
                         'index:' . $tableName . '.' . $indexName,
@@ -506,12 +509,28 @@ class SchemaHealthService {
         return array_values($expected) === array_values($actual);
     }
 
+    private static function hasEquivalentIndex(array $actualIndexes, array $expected): bool {
+        foreach ($actualIndexes as $actualIndex) {
+            if ((bool)$expected['unique'] === (bool)($actualIndex['unique'] ?? false)
+                && self::sameColumns($expected['columns'], $actualIndex['columns'] ?? [])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function normaliseReferentialAction($action): string {
+        $normalised = strtoupper(trim((string)$action));
+        return $normalised === 'NO ACTION' ? 'RESTRICT' : $normalised;
+    }
+
     private static function hasForeignKey(array $actualForeignKeys, array $expected): bool {
         foreach ($actualForeignKeys as $foreignKey) {
             if (self::sameColumns($expected['columns'], $foreignKey['columns'] ?? [])
                 && (string)$expected['referenced_table'] === (string)($foreignKey['referenced_table'] ?? '')
                 && self::sameColumns($expected['referenced_columns'], $foreignKey['referenced_columns'] ?? [])
-                && strtoupper((string)$expected['delete_rule']) === strtoupper((string)($foreignKey['delete_rule'] ?? 'RESTRICT'))) {
+                && self::normaliseReferentialAction($expected['delete_rule'])
+                    === self::normaliseReferentialAction($foreignKey['delete_rule'] ?? 'RESTRICT')) {
                 return true;
             }
         }

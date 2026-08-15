@@ -669,6 +669,23 @@ assertEqual(true, $healthySchemaAudit['healthy'], 'Database Health accepts the c
 assertEqual(0, (int)$healthySchemaAudit['summary']['issues'], 'Canonical schema has no health issues');
 assertEqual(['date'], $healthySchemaSnapshot['tables']['transactions']['indexes']['idx_transactions_date']['columns'] ?? null, 'Database Health includes the statement date index');
 assertEqual(['created_at'], $healthySchemaSnapshot['tables']['logs']['indexes']['idx_logs_created_at']['columns'] ?? null, 'Database Health includes the log date index');
+
+$equivalentSchemaSnapshot = $healthySchemaSnapshot;
+foreach ($equivalentSchemaSnapshot['tables'] as &$equivalentTable) {
+    foreach ($equivalentTable['foreign_keys'] as &$equivalentForeignKey) {
+        if (($equivalentForeignKey['delete_rule'] ?? '') === 'RESTRICT') {
+            $equivalentForeignKey['delete_rule'] = 'NO ACTION';
+        }
+    }
+}
+unset($equivalentTable, $equivalentForeignKey);
+$equivalentSchemaSnapshot['tables']['transactions']['indexes']['date_lookup'] =
+    $equivalentSchemaSnapshot['tables']['transactions']['indexes']['idx_transactions_date'];
+unset($equivalentSchemaSnapshot['tables']['transactions']['indexes']['idx_transactions_date']);
+$equivalentSchemaAudit = SchemaHealthService::analyseSnapshot($equivalentSchemaSnapshot);
+assertEqual(true, $equivalentSchemaAudit['healthy'], 'Database Health accepts equivalent MySQL foreign-key actions and index names');
+assertEqual(0, (int)$equivalentSchemaAudit['summary']['issues'], 'Equivalent schema metadata produces no false-positive issues');
+
 $emptySchemaAudit = SchemaHealthService::analyseSnapshot([
     'driver' => 'mysql',
     'database' => 'empty',
