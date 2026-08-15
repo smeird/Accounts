@@ -33,6 +33,14 @@ const attachSidebarSearchHandler = (root = document) => {
     document.head.appendChild(cardLink);
   }
 
+  if (!document.getElementById('sidebar-css')) {
+    const sidebarLink = document.createElement('link');
+    sidebarLink.id = 'sidebar-css';
+    sidebarLink.rel = 'stylesheet';
+    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20260815-sidebar-refresh');
+    document.head.appendChild(sidebarLink);
+  }
+
 
   if (!document.getElementById('theme-professional-css')) {
     const themeLink = document.createElement('link');
@@ -214,6 +222,47 @@ const attachSidebarSearchHandler = (root = document) => {
 
 
   const menu = document.getElementById('menu');
+  const menuBackdrop = document.createElement('button');
+  menuBackdrop.type = 'button';
+  menuBackdrop.className = 'site-menu-backdrop';
+  menuBackdrop.setAttribute('aria-label', 'Close navigation');
+  menuBackdrop.hidden = true;
+
+  const toggle = document.createElement('button');
+  toggle.id = 'menu-toggle';
+  toggle.type = 'button';
+  toggle.className = 'site-menu-toggle';
+  toggle.setAttribute('aria-controls', 'menu');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-label', 'Open navigation');
+  toggle.innerHTML = '<i class="fas fa-bars" aria-hidden="true"></i>';
+
+  const setMobileMenuOpen = (open, returnFocus = false) => {
+    if (!menu) return;
+    menu.classList.toggle('is-open', open);
+    document.body.classList.toggle('site-menu-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Navigation open' : 'Open navigation');
+    menuBackdrop.hidden = !open;
+    if (open) {
+      window.setTimeout(() => menu.querySelector('#sidebar-search')?.focus(), 180);
+    } else if (returnFocus) {
+      toggle.focus();
+    }
+  };
+
+  toggle.addEventListener('click', () => setMobileMenuOpen(!menu?.classList.contains('is-open')));
+  menuBackdrop.addEventListener('click', () => setMobileMenuOpen(false, true));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && menu?.classList.contains('is-open')) {
+      setMobileMenuOpen(false, true);
+    }
+  });
+  window.matchMedia('(min-width: 768px)').addEventListener('change', event => {
+    if (event.matches) setMobileMenuOpen(false);
+  });
+  document.body.append(menuBackdrop, toggle);
+
   if (menu) {
     // Add responsive classes so the navigation can toggle on small screens
     menu.classList.add(
@@ -227,6 +276,12 @@ const attachSidebarSearchHandler = (root = document) => {
       'z-40'
     );
     menu.classList.remove(
+      'hidden',
+      'md:flex',
+      'md:flex-col',
+      'w-64',
+      'p-6',
+      'overflow-y-auto',
       'bg-gradient-to-b',
       'from-white/80',
       'backdrop-blur-xl',
@@ -235,13 +290,25 @@ const attachSidebarSearchHandler = (root = document) => {
       'shadow-2xl',
       `to-${colorScheme}-100/30`
     );
-    menu.classList.add('menu-surface', 'border-r');
+    menu.classList.add('menu-surface', 'site-menu');
 
     fetchNoCache(resolveFrontendAsset('menu.php'))
       .then(resp => resp.text())
       .then(html => {
         menu.innerHTML = html;
         attachSidebarSearchHandler(document);
+        const brand = menu.firstElementChild;
+        brand?.classList.add('site-menu-brand');
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'site-menu-close';
+        closeButton.setAttribute('aria-label', 'Close navigation');
+        closeButton.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
+        closeButton.addEventListener('click', () => setMobileMenuOpen(false, true));
+        brand?.appendChild(closeButton);
+        menu.querySelector('#sidebar-search-form')?.classList.add('site-menu-search');
+        menu.querySelector(':scope > .space-y-4')?.classList.add('site-menu-nav');
+        menu.querySelector('#user-info')?.classList.add('site-menu-user');
         if (frontendBase === 'frontend/') {
           menu.querySelectorAll('a[href]').forEach(linkEl => {
             const href = linkEl.getAttribute('href') || '';
@@ -276,27 +343,49 @@ const attachSidebarSearchHandler = (root = document) => {
               userEl.textContent = 'Guest';
             });
         }
-        // Enable collapsible sections with animated height transition
+        const setSectionExpanded = (section, expanded) => {
+          const button = section.querySelector('.site-menu-group-toggle');
+          const list = section.querySelector('.site-menu-list');
+          if (!button || !list) return;
+          button.setAttribute('aria-expanded', String(expanded));
+          section.classList.toggle('is-expanded', expanded);
+          list.style.maxHeight = expanded ? `${list.scrollHeight}px` : '0px';
+        };
+
+        // Turn the legacy headings into accessible disclosure controls.
         menu.querySelectorAll('.group').forEach(section => {
-          const header = section.querySelector('h3');
+          section.classList.add('site-menu-group');
+          const heading = section.querySelector('h3');
           const list = section.querySelector('ul');
-          if (header && list) {
-            header.addEventListener('click', () => {
-              const expanded = list.style.maxHeight && list.style.maxHeight !== '0px';
-              list.style.maxHeight = expanded ? '0px' : `${list.scrollHeight}px`;
-            });
+          if (heading && list) {
+            const button = document.createElement('button');
+            const listId = `site-menu-section-${Array.from(menu.querySelectorAll('.group')).indexOf(section) + 1}`;
+            button.type = 'button';
+            button.className = 'site-menu-group-toggle';
+            button.setAttribute('aria-controls', listId);
+            button.setAttribute('aria-expanded', 'false');
+            button.innerHTML = `<span>${heading.textContent.trim()}</span><i class="fas fa-chevron-down" aria-hidden="true"></i>`;
+            heading.replaceWith(button);
+            list.id = listId;
+            list.classList.add('site-menu-list');
+            list.style.maxHeight = '0px';
+            button.addEventListener('click', () => setSectionExpanded(section, button.getAttribute('aria-expanded') !== 'true'));
           }
         });
 
+        menu.querySelectorAll('a[href]').forEach(linkEl => linkEl.classList.add('site-menu-link'));
+
         const themeWrap = document.createElement('div');
-        themeWrap.className = 'mt-4 p-3 rounded-lg border border-slate-200 bg-slate-50';
+        themeWrap.className = 'site-menu-theme';
         themeWrap.innerHTML = `
-          <label class="flex items-center justify-between gap-3 text-sm text-slate-700" for="professional-theme-toggle">
-            <span class="font-medium">Professional theme</span>
-            <input id="professional-theme-toggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600" aria-label="Toggle professional theme">
+          <label for="professional-theme-toggle">
+            <span><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Professional theme</span>
+            <input id="professional-theme-toggle" type="checkbox" aria-label="Toggle professional theme">
           </label>
         `;
-        menu.appendChild(themeWrap);
+        const userInfo = menu.querySelector('#user-info');
+        if (userInfo) userInfo.before(themeWrap);
+        else menu.appendChild(themeWrap);
         const themeToggle = document.getElementById('professional-theme-toggle');
         if (themeToggle) {
           themeToggle.checked = document.body.classList.contains('theme-professional');
@@ -308,15 +397,19 @@ const attachSidebarSearchHandler = (root = document) => {
           });
         }
 
-        // Hide menu after clicking a link on mobile
+        // Close the drawer after choosing a destination on mobile.
         menu.querySelectorAll('a').forEach(a =>
-          a.addEventListener('click', () => menu.classList.add('hidden'))
+          a.addEventListener('click', () => {
+            if (window.matchMedia('(max-width: 767px)').matches) setMobileMenuOpen(false);
+          })
         );
 
         // Build breadcrumb text underneath the page title
         const current = location.pathname.split('/').pop();
         const link = menu.querySelector(`a[href="${current}"]`);
         if (link) {
+          link.classList.add('is-active');
+          link.setAttribute('aria-current', 'page');
           link.classList.add(
             'border-l-2',
             `border-${colorScheme}-600`,
@@ -329,7 +422,9 @@ const attachSidebarSearchHandler = (root = document) => {
             activeIcon.classList.remove('text-slate-400');
             activeIcon.classList.add(`text-${colorScheme}-600`);
           }
-          const section = link.closest('div')?.querySelector('h3')?.textContent?.trim();
+          const activeSection = link.closest('.site-menu-group');
+          if (activeSection) setSectionExpanded(activeSection, true);
+          const section = activeSection?.querySelector('.site-menu-group-toggle span')?.textContent?.trim();
           const page = link.textContent.trim();
           const main = document.querySelector('main.ops-main');
           const breadcrumb = section && page ? `${section} / ${page}` : '';
@@ -400,15 +495,6 @@ const attachSidebarSearchHandler = (root = document) => {
       main.classList.add('flex-1', 'min-w-0', 'h-full', 'overflow-y-auto', 'md:ml-64', 'pt-16', 'md:pt-0');
     }
   }
-
-  const toggle = document.createElement('button');
-  toggle.id = 'menu-toggle';
-  toggle.className = `fixed top-2 left-2 md:top-8 md:left-12 z-50 md:hidden bg-gradient-to-r from-white/80 to-${colorScheme}-100/40 backdrop-blur border border-white/40 text-${colorScheme}-700 p-2 rounded-xl shadow-lg transition-all hover:from-white/90 hover:to-${colorScheme}-100/60 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-${colorScheme}-200`;
-  toggle.innerHTML = '<i class="fas fa-bars"></i>';
-  toggle.addEventListener('click', () => {
-    if (menu) menu.classList.toggle('hidden');
-  });
-  document.body.appendChild(toggle);
 
   attachSidebarSearchHandler(document);
 
