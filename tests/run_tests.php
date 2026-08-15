@@ -13,6 +13,7 @@ require_once __DIR__ . '/../php_backend/models/TagAlias.php';
 require_once __DIR__ . '/../php_backend/models/InstantDashboard.php';
 require_once __DIR__ . '/../php_backend/models/YearlyDashboard.php';
 require_once __DIR__ . '/../php_backend/models/GraphsDashboard.php';
+require_once __DIR__ . '/../php_backend/models/ForecastDashboard.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
@@ -619,9 +620,38 @@ assertEqual('Household', $graphs['segments'][0]['name'] ?? null, 'Graphs dashboa
 assertEqual('Bills', $graphs['tags'][0]['name'] ?? null, 'Graphs dashboard ranks reusable tag patterns');
 assertEqual(2, count($graphs['accounts']), 'Graphs dashboard includes account balance context');
 assertEqual(4150.0, (float)$graphs['months'][7]['cumulative_cashflow'], 'Graphs dashboard calculates cumulative cash flow');
+
+// --- Transaction-backed 12-month forecast ---
+$forecastHistoryRows = [];
+foreach (['2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'] as $forecastMonth) {
+    $forecastHistoryRows[] = "(1, '$forecastMonth-01', 3000, 'Regular income', 1, 1)";
+    $forecastHistoryRows[] = "(1, '$forecastMonth-08', -1000, 'Regular home costs', 2, 2)";
+}
+$db->exec('INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES ' . implode(',', $forecastHistoryRows));
+$ignoreTagId = Tag::getIgnoreId();
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES (1, '2026-08-05', -9999, 'Ignored outlier', 2, $ignoreTagId)");
+$forecast = ForecastDashboard::getSnapshot(new DateTimeImmutable('2026-08-15T12:00:00+01:00'));
+assertEqual(true, (bool)$forecast['has_data'], 'Forecast reports usable transaction history');
+assertEqual(12, count($forecast['forecast']), 'Forecast returns twelve planning periods');
+assertEqual(true, (bool)$forecast['forecast'][0]['partial'], 'Forecast treats the first month as the remaining partial period');
+assertEqual(0.6774, (float)$forecast['forecast'][0]['factor'], 'Forecast anchors its first period after the latest ledger balance date');
+assertEqual(13, (int)$forecast['coverage']['active_months'], 'Forecast counts complete active history months');
+assertEqual(28, (int)$forecast['coverage']['transaction_count'], 'Forecast excludes confirmed transfers and IGNORE-tagged activity');
+assertEqual('low', $forecast['coverage']['confidence'], 'Forecast labels limited transaction coverage conservatively');
+assertEqual('Home', $forecast['top_categories'][0]['name'] ?? null, 'Forecast ranks projected spending drivers');
+assertEqual(12000.0, (float)($forecast['top_categories'][0]['historical_amount'] ?? 0), 'Forecast spending drivers use the latest twelve complete active months');
+assertEqual((float)$forecast['metrics']['ending_balance'], (float)$forecast['forecast'][11]['expected_balance'], 'Forecast headline reconciles to the monthly balance path');
+assertEqual(true, (float)$forecast['metrics']['conservative_ending_balance'] <= (float)$forecast['metrics']['optimistic_ending_balance'], 'Forecast scenario endpoints remain correctly ordered');
+
 $monthlyBudgets = Budget::getMonthly(8, 2026);
 assertEqual(850.0, (float)$monthlyBudgets[0]['spent'], 'Budget dashboard totals monthly category spending with date ranges');
 assertEqual(150.0, (float)$monthlyBudgets[0]['left'], 'Budget dashboard calculates remaining category runway');
+$db->exec('DELETE FROM transactions');
+$db->exec('DELETE FROM accounts');
+$emptyForecast = ForecastDashboard::getSnapshot(new DateTimeImmutable('2026-08-15T12:00:00+01:00'));
+assertEqual(false, (bool)$emptyForecast['has_data'], 'Forecast returns a clear no-history state');
+assertEqual(12, count($emptyForecast['forecast']), 'No-history forecast keeps a stable twelve-period response shape');
+assertEqual(0.0, (float)$emptyForecast['metrics']['ending_balance'], 'No-history forecast does not invent financial movement');
 
 // --- Atomic, structured OFX import service ---
 $db->exec('DELETE FROM transactions');

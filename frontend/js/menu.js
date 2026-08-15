@@ -56,7 +56,8 @@ const attachSidebarSearchHandler = (root = document) => {
     '.project-page',
     '.transaction-page',
     '.budget-page',
-    '.yearly-page'
+    '.yearly-page',
+    '.forecast-page'
   ].join(','));
 
   if (!hasSpecialistPageDesign) {
