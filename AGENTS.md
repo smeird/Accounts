@@ -88,3 +88,4 @@
 - Closed accounts retain their transaction history but have a zero live balance, are excluded from portfolio balance calculations, and ignore imported OFX balance refreshes until reopened.
 - AI tag categorisation may only link unassigned tags to existing categories; existing mappings are preserved and only allowlisted high-confidence suggestions are applied.
 - Run Processes is an operations hub: recommend the ordered tags-to-categories-to-segments refresh, keep individual processes available for fine control, and isolate assignment clearing behind an explicit confirmation without deleting rules.
+- Use `frontend/js/overlay.js` and `window.showMessage()` for transient site notifications; do not introduce page-specific toast implementations. The shared notification supports success, error, warning, info, and loading tones.

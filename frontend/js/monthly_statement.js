@@ -439,12 +439,7 @@
     }
 
     function showToast(message, tone) {
-        const existing = document.querySelector('.statement-toast');
-        if (existing) existing.remove();
-        const toast = element('div', `statement-toast statement-toast--${tone}`, message);
-        toast.setAttribute('role', tone === 'error' ? 'alert' : 'status');
-        document.body.appendChild(toast);
-        window.setTimeout(() => toast.remove(), 2800);
+        window.showMessage(message, tone);
     }
 
     function renderChart(spending, previousSpending) {
