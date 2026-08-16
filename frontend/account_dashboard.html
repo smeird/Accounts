@@ -61,10 +61,12 @@
                         </div>
                     </header>
 
-                    <div class="account-filter-row" aria-label="Filter account type">
-                        <button type="button" class="account-filter is-active" data-account-filter="all" aria-pressed="true">All accounts</button>
+                    <div class="account-filter-row" aria-label="Filter accounts">
+                        <button type="button" class="account-filter is-active" data-account-filter="active" aria-pressed="true">Active accounts</button>
+                        <button type="button" class="account-filter" data-account-filter="all" aria-pressed="false">All accounts</button>
                         <button type="button" class="account-filter" data-account-filter="bank" aria-pressed="false">Bank accounts</button>
                         <button type="button" class="account-filter" data-account-filter="credit" aria-pressed="false">Credit cards</button>
+                        <button type="button" class="account-filter" data-account-filter="closed" aria-pressed="false">Closed accounts</button>
                     </div>
 
                     <div id="account-table-status" class="account-table-status" role="status" aria-live="polite">

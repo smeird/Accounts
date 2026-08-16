@@ -87,7 +87,7 @@ class GraphsDashboard {
         $db = Database::getConnection();
         $rows = $db->query(
             'SELECT `id`, `name`, COALESCE(`ledger_balance`, 0) AS balance, `ledger_balance_date` '
-            . 'FROM `accounts` ORDER BY `name` ASC'
+            . 'FROM `accounts` WHERE `closed` = 0 ORDER BY `name` ASC'
         )->fetchAll(PDO::FETCH_ASSOC);
         $total = 0.0;
         $asOf = null;

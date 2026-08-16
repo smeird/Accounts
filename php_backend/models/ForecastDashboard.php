@@ -119,7 +119,7 @@ class ForecastDashboard {
 
     private static function accountPosition(PDO $db): array {
         $rows = $db->query(
-            'SELECT COALESCE(`ledger_balance`, 0) AS balance, `ledger_balance_date` FROM `accounts`'
+            'SELECT COALESCE(`ledger_balance`, 0) AS balance, `ledger_balance_date` FROM `accounts` WHERE `closed` = 0'
         )->fetchAll(PDO::FETCH_ASSOC);
         $total = 0.0;
         $asOf = null;

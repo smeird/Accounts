@@ -80,7 +80,8 @@ window.renderPageHeader(pageMain, {
                     return;
                 }
                 window.updatePageHeader(pageMain, { title: data.name });
-                const details = data.sort_code ? `Sort Code: ${data.sort_code}  Account Number: ${data.account_number}` : `Card Number: ${data.account_number}`;
+                let details = data.sort_code ? `Sort Code: ${data.sort_code}  Account Number: ${data.account_number}` : `Card Number: ${data.account_number}`;
+                if (data.closed) details += ` · Closed${data.closed_at ? ` on ${data.closed_at}` : ''} · Balance fixed at £0.00`;
                 document.getElementById('account-details').textContent = details;
                 const dates = data.history.map(h => h.date);
                 const balances = data.history.map(h => parseFloat(h.balance));

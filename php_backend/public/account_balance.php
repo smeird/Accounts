@@ -15,7 +15,7 @@ try {
     }
     $id = (int)$_GET['id'];
     $db = Database::getConnection();
-    $stmt = $db->prepare('SELECT name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts WHERE id = :id');
+    $stmt = $db->prepare('SELECT name, sort_code, account_number, ledger_balance, ledger_balance_date, closed, closed_at FROM accounts WHERE id = :id');
     $stmt->execute(['id' => $id]);
     $account = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$account) {
@@ -32,6 +32,8 @@ try {
         'name' => $account['name'],
         'sort_code' => $account['sort_code'],
         'account_number' => $account['account_number'],
+        'closed' => (bool)$account['closed'],
+        'closed_at' => $account['closed_at'],
         'history' => $history
     ]);
 } catch (Exception $e) {

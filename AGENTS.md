@@ -85,3 +85,5 @@
 - Tabulator is self-hosted and pinned under `frontend/vendor/tabulator`; update every table page and the vendored licence together when changing versions.
 - Keep frozen columns opt-in, decorate rows only via `rowFormatter`, use bounded-height virtual rendering for unpaginated large views, and prefer remote pagination/search for datasets that can grow without a practical bound.
 - Monthly Statement must render its current transaction rows before secondary metrics, comparison data, or chart libraries are awaited.
+- Closed accounts retain their transaction history but have a zero live balance, are excluded from portfolio balance calculations, and ignore imported OFX balance refreshes until reopened.
+- AI tag categorisation may only link unassigned tags to existing categories; existing mappings are preserved and only allowlisted high-confidence suggestions are applied.

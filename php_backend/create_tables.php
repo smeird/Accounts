@@ -62,7 +62,9 @@ CREATE TABLE IF NOT EXISTS accounts (
     sort_code VARCHAR(20) DEFAULT NULL,
     account_number VARCHAR(50) DEFAULT NULL,
     ledger_balance DECIMAL(10,2) DEFAULT 0,
-    ledger_balance_date DATE DEFAULT NULL
+    ledger_balance_date DATE DEFAULT NULL,
+    closed TINYINT NOT NULL DEFAULT 0,
+    closed_at DATE DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS segments (
@@ -430,6 +432,16 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'ledger_balance_date'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `accounts` ADD COLUMN `ledger_balance_date` DATE DEFAULT NULL");
+}
+
+$result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'closed'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `accounts` ADD COLUMN `closed` TINYINT NOT NULL DEFAULT 0");
+}
+
+$result = $db->query("SHOW COLUMNS FROM `accounts` LIKE 'closed_at'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `accounts` ADD COLUMN `closed_at` DATE DEFAULT NULL");
 }
 
 // Backfill only missing OFX IDs. Existing IDs remain stable so exports and

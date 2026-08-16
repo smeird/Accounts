@@ -13,7 +13,7 @@
     const currency = new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP' });
     const integer = new Intl.NumberFormat('en-GB');
     const date = new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'short', year:'numeric' });
-    const state = { accounts:[], query:'', type:'all', sort:'name-asc' };
+    const state = { accounts:[], query:'', type:'active', sort:'name-asc' };
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -47,8 +47,10 @@
             account_number:String(raw.account_number || ''),
             is_credit_card:Number(raw.is_credit_card) === 1 ? 1 : 0,
             transactions:numberValue(raw.transactions),
-            balance:numberValue(raw.balance),
-            last_transaction:raw.last_transaction ? String(raw.last_transaction) : ''
+            balance:Number(raw.closed) === 1 ? 0 : numberValue(raw.balance),
+            last_transaction:raw.last_transaction ? String(raw.last_transaction) : '',
+            closed:Number(raw.closed) === 1,
+            closed_at:raw.closed_at ? String(raw.closed_at) : ''
         };
     }
 
@@ -75,13 +77,15 @@
     }
 
     function renderSummary() {
-        const net = state.accounts.reduce((total, account) => total + account.balance, 0);
-        const bankCount = state.accounts.filter(account => !isCredit(account)).length;
-        const creditExposure = state.accounts.filter(isCredit).reduce((total, account) => total + Math.max(0, -account.balance), 0);
+        const active = state.accounts.filter(account => !account.closed);
+        const closedCount = state.accounts.length - active.length;
+        const net = active.reduce((total, account) => total + account.balance, 0);
+        const bankCount = active.filter(account => !isCredit(account)).length;
+        const creditExposure = active.filter(isCredit).reduce((total, account) => total + Math.max(0, -account.balance), 0);
         const transactions = state.accounts.reduce((total, account) => total + account.transactions, 0);
         summary.replaceChildren(
-            metric('fa-wallet', 'Net position', currency.format(net), 'Across every connected account', net < 0 ? 'rose' : 'indigo'),
-            metric('fa-building-columns', 'Bank accounts', integer.format(bankCount), `${integer.format(state.accounts.length)} account${state.accounts.length === 1 ? '' : 's'} in total`, 'cyan'),
+            metric('fa-wallet', 'Net position', currency.format(net), 'Active accounts only', net < 0 ? 'rose' : 'indigo'),
+            metric('fa-building-columns', 'Bank accounts', integer.format(bankCount), `${integer.format(active.length)} active${closedCount ? ` · ${integer.format(closedCount)} closed` : ''}`, 'cyan'),
             metric('fa-credit-card', 'Credit exposure', currency.format(creditExposure), creditExposure ? 'Outstanding card balances' : 'No card balance outstanding', 'rose'),
             metric('fa-arrow-trend-up', 'Transactions tracked', integer.format(transactions), 'Ignored activity excluded', 'emerald')
         );
@@ -90,7 +94,11 @@
     function filteredAccounts() {
         const query = state.query.toLowerCase();
         const rows = state.accounts.filter(account => {
-            const typeMatch = state.type === 'all' || (state.type === 'credit' ? isCredit(account) : !isCredit(account));
+            const typeMatch = state.type === 'all'
+                || (state.type === 'active' && !account.closed)
+                || (state.type === 'closed' && account.closed)
+                || (state.type === 'credit' && !account.closed && isCredit(account))
+                || (state.type === 'bank' && !account.closed && !isCredit(account));
             const searchMatch = !query || [account.name, account.sort_code, account.account_number].some(value => value.toLowerCase().includes(query));
             return typeMatch && searchMatch;
         });
@@ -182,9 +190,9 @@
         const link = element('a', 'account-name', account.name);
         link.href = `account.html?id=${encodeURIComponent(account.id)}`;
         const meta = element('span', 'account-type');
-        const icon = element('i', `fas ${isCredit(account) ? 'fa-credit-card' : 'fa-building-columns'}`);
+        const icon = element('i', `fas ${account.closed ? 'fa-box-archive' : isCredit(account) ? 'fa-credit-card' : 'fa-building-columns'}`);
         icon.setAttribute('aria-hidden', 'true');
-        meta.append(icon, document.createTextNode(isCredit(account) ? ' Credit card' : ' Bank account'));
+        meta.append(icon, document.createTextNode(account.closed ? ` Closed${account.closed_at ? ` ${date.format(new Date(account.closed_at + 'T00:00:00'))}` : ''}` : (isCredit(account) ? ' Credit card' : ' Bank account')));
         copy.append(link, meta);
         const rename = element('button', 'account-rename-button');
         rename.type = 'button';
@@ -209,13 +217,64 @@
     }
 
     function balanceCell(account, maximum) {
-        const cell = setCellLabel(element('td', `account-balance ${account.balance < 0 ? 'is-negative' : 'is-positive'}`), 'Balance');
-        const amount = element('strong', 'account-balance-value', currency.format(account.balance));
+        const cell = setCellLabel(element('td', `account-balance ${account.closed ? 'is-closed' : account.balance < 0 ? 'is-negative' : 'is-positive'}`), 'Balance');
+        const amount = element('strong', 'account-balance-value', account.closed ? 'Closed · £0.00' : currency.format(account.balance));
         const track = element('span', 'account-balance-track');
         const fill = element('span', 'account-balance-fill');
         fill.style.width = `${Math.max(7, Math.round(Math.abs(account.balance) / maximum * 100))}%`;
         track.appendChild(fill);
         cell.append(amount, track);
+        return cell;
+    }
+
+    async function setAccountClosed(account, closed, button) {
+        const verb = closed ? 'close' : 'reopen';
+        if (closed && !window.confirm(`Close ${account.name}? Its balance will be set to £0.00 and excluded from portfolio totals.`)) return;
+        if (!closed && !window.confirm(`Reopen ${account.name}? Its balance will remain £0.00 until a newer bank balance is imported.`)) return;
+        button.disabled = true;
+        try {
+            const response = await fetch('../php_backend/public/update_account.php', {
+                method:'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body:JSON.stringify({ account_id:account.id, operation:verb })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || `The account could not be ${closed ? 'closed' : 'reopened'}.`);
+            account.closed = closed;
+            account.closed_at = payload.account?.closed_at || '';
+            account.balance = 0;
+            renderSummary();
+            renderTable();
+            renderChart();
+            status.hidden = false;
+            status.className = 'account-table-status account-table-status--success';
+            status.textContent = `${account.name} is now ${closed ? 'closed and excluded from balances' : 'active with a £0.00 balance'}.`;
+            window.setTimeout(() => { status.hidden = true; }, 3200);
+        } catch (error) {
+            button.disabled = false;
+            showMessage(error.message, 'error');
+        }
+    }
+
+    function actionsCell(account) {
+        const cell = setCellLabel(element('td', 'account-open-cell'), 'Account actions');
+        const wrap = element('span', 'account-row-actions');
+        const lifecycle = element('button', `account-lifecycle-button ${account.closed ? 'is-reopen' : ''}`);
+        lifecycle.type = 'button';
+        lifecycle.setAttribute('aria-label', `${account.closed ? 'Reopen' : 'Close'} ${account.name}`);
+        lifecycle.setAttribute('data-tooltip', `${account.closed ? 'Reopen' : 'Close'} ${account.name}`);
+        const lifecycleIcon = element('i', `fas ${account.closed ? 'fa-rotate-left' : 'fa-box-archive'}`);
+        lifecycleIcon.setAttribute('aria-hidden', 'true');
+        lifecycle.appendChild(lifecycleIcon);
+        lifecycle.addEventListener('click', event => { event.stopPropagation(); setAccountClosed(account, !account.closed, lifecycle); });
+        const open = element('a', 'account-open-link');
+        open.href = `account.html?id=${encodeURIComponent(account.id)}`;
+        open.setAttribute('aria-label', `Open ${account.name}`);
+        const arrow = element('i', 'fas fa-arrow-right');
+        arrow.setAttribute('aria-hidden', 'true');
+        open.appendChild(arrow);
+        wrap.append(lifecycle, open);
+        cell.appendChild(wrap);
         return cell;
     }
 
@@ -248,10 +307,10 @@
         empty.append(icon, element('h3', '', 'No matching accounts'), element('p', '', 'Try a different search or account type.'), element('button', 'account-empty-reset', 'Clear filters'));
         empty.querySelector('button').addEventListener('click', () => {
             state.query = '';
-            state.type = 'all';
+            state.type = 'active';
             search.value = '';
             filters.forEach(button => {
-                const active = button.dataset.accountFilter === 'all';
+                const active = button.dataset.accountFilter === 'active';
                 button.classList.toggle('is-active', active);
                 button.setAttribute('aria-pressed', String(active));
             });
@@ -280,26 +339,17 @@
             headerCell('Last activity', 'last_transaction'),
             headerCell('Transactions', 'transactions', 'right'),
             headerCell('Balance', 'balance', 'right'),
-            element('th', 'account-open-heading', 'Open')
+            element('th', 'account-open-heading', 'Actions')
         );
         Array.from(headerRow.children).forEach(cell => { if (!cell.scope) cell.scope = 'col'; });
         head.appendChild(headerRow);
         const body = element('tbody');
-        const maximum = Math.max(1, ...state.accounts.map(account => Math.abs(account.balance)));
+        const maximum = Math.max(1, ...state.accounts.filter(account => !account.closed).map(account => Math.abs(account.balance)));
         rows.forEach(account => {
-            const row = element('tr');
+            const row = element('tr', account.closed ? 'is-closed' : '');
             row.append(identityCell(account), identifierCell(account), activityCell(account));
             const transactions = setCellLabel(element('td', 'account-transactions', integer.format(account.transactions)), 'Transactions');
-            row.append(transactions, balanceCell(account, maximum));
-            const openCell = setCellLabel(element('td', 'account-open-cell'), 'Open account');
-            const open = element('a', 'account-open-link');
-            open.href = `account.html?id=${encodeURIComponent(account.id)}`;
-            open.setAttribute('aria-label', `Open ${account.name}`);
-            const arrow = element('i', 'fas fa-arrow-right');
-            arrow.setAttribute('aria-hidden', 'true');
-            open.appendChild(arrow);
-            openCell.appendChild(open);
-            row.appendChild(openCell);
+            row.append(transactions, balanceCell(account, maximum), actionsCell(account));
             body.appendChild(row);
         });
         table.append(caption, head, body);
@@ -308,7 +358,7 @@
 
     function renderChart() {
         if (!window.Highcharts || !chart) return;
-        const rows = state.accounts.slice().sort((left, right) => Math.abs(right.balance) - Math.abs(left.balance));
+        const rows = state.accounts.filter(account => !account.closed).sort((left, right) => Math.abs(right.balance) - Math.abs(left.balance));
         chart.style.height = `${Math.max(300, rows.length * 44 + 110)}px`;
         Highcharts.chart(chart, {
             chart:{ type:'bar', backgroundColor:'transparent', spacing:[12, 16, 12, 4] },
