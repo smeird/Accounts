@@ -125,8 +125,6 @@ a.statement-pill:hover { transform:translateY(-1px); box-shadow:0 7px 12px -11px
 .statement-chart-panel header>p { max-width:24rem; text-align:right; }
 .statement-chart { min-height:420px; }
 .statement-chart-empty { display:grid; min-height:18rem; place-items:center; color:#64748b; font-size:.68rem; }
-.statement-toast { position:fixed; right:1rem; bottom:1rem; z-index:70; max-width:22rem; padding:.72rem .85rem; border:1px solid #a7f3d0; border-radius:.75rem; color:#047857; background:#ecfdf5; font-size:.63rem; font-weight:800; box-shadow:0 16px 32px -20px rgba(15,23,42,.65); }
-.statement-toast--error { border-color:#fecdd3; color:#9f1239; background:#fff1f2; }
 
 .theme-professional.monthly-statement-page .monthly-statement,.theme-professional.monthly-statement-page .statement-chart-panel { border-color:#e2e8f0; border-radius:.65rem; background:#fff; box-shadow:0 1px 3px rgba(15,23,42,.07); backdrop-filter:none; }
 

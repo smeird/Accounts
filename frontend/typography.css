@@ -317,8 +317,7 @@
 .statement-amount-kind,
 .statement-table-footer,
 .statement-empty p,
-.statement-chart-empty,
-.statement-toast {
+.statement-chart-empty {
     font-size: var(--type-caption);
 }
 

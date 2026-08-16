@@ -14,7 +14,6 @@
     const editForm = document.getElementById('segment-edit-form');
     const editName = document.getElementById('segment-edit-name');
     const editDescription = document.getElementById('segment-edit-description');
-    const toast = document.getElementById('segment-toast');
 
     const state = {
         segments: [],
@@ -26,8 +25,7 @@
         pendingCategoryId: null,
         isSaving: false,
         selectedCategoryIds: new Set(),
-        visibleCategoryIds: [],
-        toastTimer: null
+        visibleCategoryIds: []
     };
 
     function element(tag, className, text) {
@@ -52,11 +50,7 @@
     }
 
     function announce(message, isError) {
-        window.clearTimeout(state.toastTimer);
-        toast.textContent = message;
-        toast.classList.toggle('is-error', Boolean(isError));
-        toast.hidden = false;
-        state.toastTimer = window.setTimeout(() => { toast.hidden = true; }, isError ? 6000 : 3000);
+        window.showMessage(message, isError ? 'error' : 'success');
     }
 
     function selectedSegment() {

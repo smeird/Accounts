@@ -14,7 +14,6 @@
     const editForm = document.getElementById('category-edit-form');
     const editName = document.getElementById('category-edit-name');
     const editDescription = document.getElementById('category-edit-description');
-    const toast = document.getElementById('category-toast');
 
     const state = {
         categories: [],
@@ -26,8 +25,7 @@
         pendingTagId: null,
         isSaving: false,
         selectedTagIds: new Set(),
-        visibleTagIds: [],
-        toastTimer: null
+        visibleTagIds: []
     };
 
     function element(tag, className, text) {
@@ -52,11 +50,7 @@
     }
 
     function announce(message, isError) {
-        window.clearTimeout(state.toastTimer);
-        toast.textContent = message;
-        toast.classList.toggle('is-error', Boolean(isError));
-        toast.hidden = false;
-        state.toastTimer = window.setTimeout(() => { toast.hidden = true; }, isError ? 6000 : 3000);
+        window.showMessage(message, isError ? 'error' : 'success');
     }
 
     function selectedCategory() {
