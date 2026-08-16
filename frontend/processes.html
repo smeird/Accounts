@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Page for manually running tagging and categorisation processes -->
+<!-- Operations hub for manually running transaction enrichment processes. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,89 +10,141 @@
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="processes.css?v=20260816-process-hub">
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="ops-body">
+<body class="ops-body processes-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Run background tasks like auto-tagging, category or segment assignment. These automated processes tidy your data so reports stay accurate without manual effort.</p>
-            <div class="space-x-4">
-                <button id="tagging-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Run automatic tagging"><i class="fas fa-tags inline w-4 h-4 mr-1"></i>Run Tagging</button>
-                <button id="categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Apply categories"><i class="fas fa-folder-open inline w-4 h-4 mr-1"></i>Apply Categories</button>
-                <button id="segments-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Apply segments"><i class="fas fa-chart-pie inline w-4 h-4 mr-1"></i>Apply Segments</button>
-                <button id="ai-categories-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Open AI tag categorisation"><i class="fas fa-wand-magic-sparkles inline w-4 h-4 mr-1" aria-hidden="true"></i>AI Categorise Tags</button>
-                <button id="tag-aliases-btn" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Open tag aliases"><i class="fas fa-code-branch inline w-4 h-4 mr-1"></i>Tag Aliases</button>
-                <button id="clear-btn" class="bg-red-600 text-white px-4 py-2 rounded" aria-label="Clear tags categories and segments"><i class="fas fa-broom inline w-4 h-4 mr-1"></i>Clear Tags/Categories/Segments</button>
-            </div>
-            <div id="progress-container" class="w-full bg-gray-200 h-2 mt-4 rounded hidden">
-                <div id="progress-bar" class="h-full bg-indigo-600 w-0"></div>
-            </div>
+        <main class="ops-main processes-main flex-1 min-w-0 overflow-x-auto">
+            <section class="process-hero" aria-labelledby="process-hero-title">
+                <div class="process-hero__copy">
+                    <span class="process-eyebrow"><i class="fas fa-sparkles" aria-hidden="true"></i> Recommended maintenance</span>
+                    <h2 id="process-hero-title">Refresh all transaction insights</h2>
+                    <p>Run your saved rules in the right order so new transactions are tagged, categorised and segmented in one pass.</p>
+                    <ol class="process-sequence" aria-label="Refresh sequence">
+                        <li><span>1</span><strong>Tags</strong></li>
+                        <li aria-hidden="true"><i class="fas fa-chevron-right"></i></li>
+                        <li><span>2</span><strong>Categories</strong></li>
+                        <li aria-hidden="true"><i class="fas fa-chevron-right"></i></li>
+                        <li><span>3</span><strong>Segments</strong></li>
+                    </ol>
+                    <button id="all-btn" type="button" class="process-primary-action" data-process-action="all" aria-label="Run full transaction organisation refresh">
+                        <i class="fas fa-arrows-rotate" aria-hidden="true"></i><span>Run full refresh</span>
+                    </button>
+                </div>
+                <div class="process-hero__visual" aria-hidden="true">
+                    <div class="process-orbit process-orbit--outer"></div>
+                    <div class="process-orbit process-orbit--inner"></div>
+                    <div class="process-hero__core"><i class="fas fa-wand-magic-sparkles"></i></div>
+                    <span class="process-node process-node--tags"><i class="fas fa-tag"></i></span>
+                    <span class="process-node process-node--categories"><i class="fas fa-folder-open"></i></span>
+                    <span class="process-node process-node--segments"><i class="fas fa-chart-pie"></i></span>
+                </div>
+            </section>
+
+            <section id="process-run-status" class="process-run-status" aria-live="polite" aria-busy="false" hidden>
+                <div class="process-run-status__icon" aria-hidden="true"><i class="fas fa-spinner"></i></div>
+                <div class="process-run-status__copy">
+                    <span>Process status</span>
+                    <strong id="process-status-title">Preparing refresh…</strong>
+                    <p id="process-status-message">This can take a moment when there are lots of transactions.</p>
+                    <div id="progress-container" class="process-progress" role="progressbar" aria-label="Process running" aria-valuetext="Working"><span id="progress-bar"></span></div>
+                    <div id="process-results" class="process-results" hidden></div>
+                </div>
+            </section>
+
+            <section class="process-section" aria-labelledby="individual-processes-title">
+                <div class="process-section__heading">
+                    <div>
+                        <span class="process-eyebrow">Fine control</span>
+                        <h2 id="individual-processes-title">Run one step</h2>
+                        <p>Use these when you have changed one set of rules and only need to refresh that part of your data.</p>
+                    </div>
+                    <span class="process-section__note"><i class="fas fa-shield-halved" aria-hidden="true"></i> Uses saved rules</span>
+                </div>
+                <div class="process-card-grid">
+                    <article class="process-card" data-process-card="tagging">
+                        <div class="process-card__topline"><span class="process-card__step">Step 01</span><span class="process-card__state" data-process-state>Ready</span></div>
+                        <span class="process-card__icon process-card__icon--tags" aria-hidden="true"><i class="fas fa-tags"></i></span>
+                        <h3>Apply tags</h3>
+                        <p>Matches transaction descriptions against your tag names and aliases.</p>
+                        <button id="tagging-btn" type="button" class="process-card__action" data-process-action="tagging" aria-label="Run automatic transaction tagging"><span>Run tagging</span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                    </article>
+                    <article class="process-card" data-process-card="categories">
+                        <div class="process-card__topline"><span class="process-card__step">Step 02</span><span class="process-card__state" data-process-state>Ready</span></div>
+                        <span class="process-card__icon process-card__icon--categories" aria-hidden="true"><i class="fas fa-folder-open"></i></span>
+                        <h3>Apply categories</h3>
+                        <p>Uses your tag-to-category links to organise matching transactions.</p>
+                        <button id="categories-btn" type="button" class="process-card__action" data-process-action="categories" aria-label="Apply categories to transactions"><span>Run categories</span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                    </article>
+                    <article class="process-card" data-process-card="segments">
+                        <div class="process-card__topline"><span class="process-card__step">Step 03</span><span class="process-card__state" data-process-state>Ready</span></div>
+                        <span class="process-card__icon process-card__icon--segments" aria-hidden="true"><i class="fas fa-chart-pie"></i></span>
+                        <h3>Apply segments</h3>
+                        <p>Assigns segments using the segment rules configured for your transactions.</p>
+                        <button id="segments-btn" type="button" class="process-card__action" data-process-action="segments" aria-label="Apply segments to transactions"><span>Run segments</span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                    </article>
+                </div>
+            </section>
+
+            <section class="process-tools" aria-labelledby="process-tools-title">
+                <div class="process-tools__intro">
+                    <span class="process-eyebrow">Improve your rules</span>
+                    <h2 id="process-tools-title">Better matches start here</h2>
+                    <p>Teach the system how your data should be organised, then return here to apply those rules.</p>
+                </div>
+                <a id="ai-categories-btn" class="process-tool-card process-tool-card--ai" href="ai_tags.html#categorise-tags">
+                    <span class="process-tool-card__icon" aria-hidden="true"><i class="fas fa-wand-magic-sparkles"></i></span>
+                    <span><strong>AI categorise tags</strong><small>Suggest links from unassigned tags to your existing categories.</small></span>
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+                <a id="tag-aliases-btn" class="process-tool-card process-tool-card--aliases" href="tag_aliases.html">
+                    <span class="process-tool-card__icon" aria-hidden="true"><i class="fas fa-code-branch"></i></span>
+                    <span><strong>Manage tag aliases</strong><small>Connect different merchant descriptions to one reusable tag.</small></span>
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+            </section>
+
+            <section class="process-reset" aria-labelledby="process-reset-title">
+                <div class="process-reset__icon" aria-hidden="true"><i class="fas fa-eraser"></i></div>
+                <div>
+                    <span class="process-eyebrow">Start over</span>
+                    <h2 id="process-reset-title">Clear transaction assignments</h2>
+                    <p>Removes tags, categories and segments from transactions. Your saved rules and aliases are kept, so assignments can be rebuilt afterwards.</p>
+                </div>
+                <button id="clear-btn" type="button" class="process-reset__action" aria-label="Review clearing transaction assignments"><i class="fas fa-broom" aria-hidden="true"></i><span>Review reset</span></button>
+            </section>
         </main>
     </div>
+
+    <dialog id="process-clear-dialog" class="process-dialog" aria-labelledby="process-clear-dialog-title">
+        <form method="dialog">
+            <span class="process-dialog__icon" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+            <span class="process-eyebrow">Confirm reset</span>
+            <h2 id="process-clear-dialog-title">Clear current assignments?</h2>
+            <p>This removes every tag, category and segment currently assigned to a transaction. Rules and aliases are not deleted.</p>
+            <div class="process-dialog__note"><i class="fas fa-circle-info" aria-hidden="true"></i><span>Run the full refresh afterwards to rebuild assignments from your saved rules.</span></div>
+            <div class="process-dialog__actions">
+                <button id="process-clear-cancel" type="button" aria-label="Cancel clearing transaction assignments">Cancel</button>
+                <button id="process-clear-confirm" type="button" aria-label="Confirm clearing transaction assignments"><i class="fas fa-broom" aria-hidden="true"></i> Clear assignments</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="js/page_header.js"></script>
     <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Run Processes',
-    breadcrumb: 'Administration',
-    subtitle: 'Run maintenance and analysis processes to keep data and insights up to date.'
-});
-</script>
-    <script src="js/menu.js"></script>
-    <script>
-    // Trigger a backend process with a progress indicator
-    async function run(action){
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        progressContainer.classList.remove('hidden');
-        let width = 0;
-        const interval = setInterval(() => {
-            width = (width + 10) % 100;
-            progressBar.style.width = width + '%';
-        }, 200);
-        try {
-            const res = await fetch('../php_backend/public/run_processes.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action})
-            });
-            const data = await res.json();
-            if(data.error){
-                showMessage('Error: ' + data.error, 'error');
-                return;
-            }
-            if(action === 'tagging'){
-                showMessage(`Tagged ${data.tagged} transactions`);
-            } else if(action === 'categories') {
-                showMessage(`Categorised ${data.categorised} transactions`);
-            } else if(action === 'segments') {
-                showMessage(`Assigned segments to ${data.segmented} transactions`);
-            } else if(action === 'clear') {
-                showMessage(`Cleared tags from ${data.cleared_tags} transactions, categories from ${data.cleared_categories}, segments from ${data.cleared_segments}`);
-            }
-        } finally {
-            clearInterval(interval);
-            progressBar.style.width = '100%';
-            setTimeout(() => {
-                progressContainer.classList.add('hidden');
-                progressBar.style.width = '0%';
-            }, 200);
-        }
-    }
-    document.getElementById('tagging-btn').addEventListener('click', ()=>run('tagging'));
-    document.getElementById('categories-btn').addEventListener('click', ()=>run('categories'));
-    document.getElementById('segments-btn').addEventListener('click', ()=>run('segments'));
-    document.getElementById('ai-categories-btn').addEventListener('click', () => { window.location.href = 'ai_tags.html#categorise-tags'; });
-    document.getElementById('tag-aliases-btn').addEventListener('click', () => {
-        window.location.href = 'tag_aliases.html';
-    });
-    document.getElementById('clear-btn').addEventListener('click', ()=>run('clear'));
+        const pageMain = document.querySelector('main.ops-main');
+        window.renderPageHeader(pageMain, {
+            title: 'Run Processes',
+            breadcrumb: 'Administration',
+            subtitle: 'Refresh transaction organisation, improve matching rules and keep every dashboard accurate.'
+        });
     </script>
+    <script src="js/menu.js"></script>
     <script src="js/overlay.js"></script>
+    <script src="js/processes.js?v=20260816-process-hub"></script>
 </body>
 </html>
