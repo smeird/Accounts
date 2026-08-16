@@ -687,6 +687,27 @@ $importService->importContent('newer-balance.ofx', $newerBalanceOfx);
 $importService->importContent('older-balance.ofx', $serviceOfx);
 assertEqual(1500.0, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'An older OFX statement cannot overwrite a newer ledger balance');
 assertEqual('2026-08-15', $db->query("SELECT ledger_balance_date FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'The newest OFX balance date is retained');
+$emptyZeroBalanceOfx = <<<OFX
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS>
+<CURDEF>GBP</CURDEF><BANKACCTFROM><BANKID>101010</BANKID><ACCTID>99887766</ACCTID><ACCTNAME>Import Test</ACCTNAME></BANKACCTFROM>
+<LEDGERBAL><BALAMT>0.00</BALAMT><DTASOF>20260816</DTASOF></LEDGERBAL>
+</STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
+OFX;
+$protectedZeroImport = $importService->importContent('empty-zero-balance.ofx', $emptyZeroBalanceOfx);
+assertEqual('protected', $protectedZeroImport['accounts'][0]['balance_status'] ?? null, 'An empty OFX zero balance is identified as an unreliable placeholder');
+assertEqual(1, (int)($protectedZeroImport['totals']['balances_protected'] ?? 0), 'Protected balance placeholders are counted in import results');
+assertEqual(1, (int)($protectedZeroImport['totals']['warnings'] ?? 0), 'Protected balance placeholders are visible as import warnings');
+assertEqual(1500.0, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'An empty OFX zero balance cannot overwrite a known balance');
+assertEqual('2026-08-15', $db->query("SELECT ledger_balance_date FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'A protected zero placeholder cannot advance the balance date');
+
+// Simulate a zero placeholder saved by an older importer, then prove a real
+// non-zero snapshot can repair it when no transactions occurred in between.
+$db->exec("UPDATE accounts SET ledger_balance = 0, ledger_balance_date = '2026-08-16' WHERE id = $importAccountId");
+$recoveredBalanceImport = $importService->importContent('recover-balance.ofx', $newerBalanceOfx);
+assertEqual('recovered', $recoveredBalanceImport['accounts'][0]['balance_status'] ?? null, 'A genuine older snapshot repairs a newer zero placeholder without intervening activity');
+assertEqual(1, (int)($recoveredBalanceImport['totals']['balances_updated'] ?? 0), 'Recovered balances are reported as refreshed');
+assertEqual(1500.0, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'Recovered balance stores the genuine non-zero amount');
+assertEqual('2026-08-16', $db->query("SELECT ledger_balance_date FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'Balance recovery retains the later reconciled date');
 $repeatImport = $importService->importContent('current.ofx', $serviceOfx);
 assertEqual(1, (int)($repeatImport['totals']['duplicates'] ?? 0), 'Repeat import reports the bank-ID duplicate');
 assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Repeat import does not add a duplicate row');

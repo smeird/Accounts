@@ -1,6 +1,7 @@
 const assert = require('assert');
 const {
     MAX_UPLOAD_FILES,
+    balanceStatusText,
     formatFileSize,
     isSupportedStatementFile,
     normaliseUploadPayload
@@ -11,6 +12,10 @@ assert.strictEqual(isSupportedStatementFile({ name: 'statement.OFX' }), true);
 assert.strictEqual(isSupportedStatementFile({ name: 'credit-card.qfx' }), true);
 assert.strictEqual(isSupportedStatementFile({ name: 'transactions.csv' }), false);
 assert.strictEqual(formatFileSize(2048), '2.0 KB');
+assert.strictEqual(balanceStatusText({ balance_status: 'updated' }), 'balance refreshed');
+assert.strictEqual(balanceStatusText({ balance_status: 'recovered' }), 'balance repaired');
+assert.strictEqual(balanceStatusText({ balance_status: 'protected' }), 'empty zero balance ignored');
+assert.strictEqual(balanceStatusText({}), '');
 
 const success = normaliseUploadPayload(JSON.stringify({
     status: 'success',
