@@ -117,6 +117,7 @@
         text('yearly-rate', `${metrics.savings_rate.toFixed(1)}%`);
         const ring = document.getElementById('yearly-rate-ring'); ring.style.setProperty('--yearly-rate', `${Math.min(Math.abs(metrics.savings_rate), 100) * 3.6}deg`); ring.classList.toggle('is-negative', metrics.savings_rate < 0);
         text('yearly-income', money(metrics.income)); text('yearly-spending', money(metrics.spending)); text('yearly-positive-months', String(positiveMonths)); text('yearly-months-note', `of ${metrics.active_months || 12} active months`);
+        document.getElementById('yearly-trends-link').href = `financial_trends.html?period=year&year=${encodeURIComponent(data.year)}&dimension=category&compare=previous_year`;
         setChange('yearly-income-change', data.comparison.income, true); setChange('yearly-spending-change', data.comparison.spending, false);
         renderChart(data.months); renderMonths(data.months); renderQuarters(data.quarters); renderCategories(data.top_categories); renderInsights(data.insights);
     }

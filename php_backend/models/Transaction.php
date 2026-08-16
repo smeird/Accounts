@@ -913,14 +913,24 @@ class Transaction {
      * Search transactions across fields.
      * Supports partial matches for text fields and numeric range searches for the amount field.
      */
-    public static function search(?string $value, ?float $minAmount = null, ?float $maxAmount = null): array {
+    public static function search(
+        ?string $value,
+        ?float $minAmount = null,
+        ?float $maxAmount = null,
+        ?string $start = null,
+        ?string $end = null,
+        ?string $dimension = null,
+        ?int $dimensionId = null,
+        bool $unclassified = false,
+        bool $spendingOnly = false
+    ): array {
         $db = Database::getConnection();
 
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id`';
 
@@ -960,6 +970,37 @@ class Transaction {
         } elseif ($maxAmount !== null) {
             $conditions[] = 't.`amount` <= :max_amount';
             $params['max_amount'] = $maxAmount;
+        }
+
+        if ($start !== null && $start !== '') {
+            $conditions[] = 't.`date` >= :start';
+            $params['start'] = $start;
+        }
+        if ($end !== null && $end !== '') {
+            $conditions[] = 't.`date` <= :end';
+            $params['end'] = $end;
+        }
+
+        if ($dimension !== null) {
+            $dimensionColumns = [
+                'category' => 't.`category_id`',
+                'segment' => 'c.`segment_id`',
+                'group' => 't.`group_id`',
+                'tag' => 't.`tag_id`',
+            ];
+            if (!isset($dimensionColumns[$dimension])) {
+                throw new InvalidArgumentException('Unsupported search dimension');
+            }
+            if ($unclassified) {
+                $conditions[] = $dimensionColumns[$dimension] . ' IS NULL';
+            } elseif ($dimensionId !== null) {
+                $conditions[] = $dimensionColumns[$dimension] . ' = :dimension_id';
+                $params['dimension_id'] = $dimensionId;
+            }
+        }
+        if ($spendingOnly) {
+            $conditions[] = 't.`amount` < 0';
+            $conditions[] = 't.`transfer_id` IS NULL';
         }
 
         $ignore = Tag::getIgnoreId();

@@ -14,6 +14,7 @@ require_once __DIR__ . '/../php_backend/models/InstantDashboard.php';
 require_once __DIR__ . '/../php_backend/models/YearlyDashboard.php';
 require_once __DIR__ . '/../php_backend/models/GraphsDashboard.php';
 require_once __DIR__ . '/../php_backend/models/ForecastDashboard.php';
+require_once __DIR__ . '/../php_backend/models/FinancialTrends.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
@@ -620,6 +621,28 @@ assertEqual('Household', $graphs['segments'][0]['name'] ?? null, 'Graphs dashboa
 assertEqual('Bills', $graphs['tags'][0]['name'] ?? null, 'Graphs dashboard ranks reusable tag patterns');
 assertEqual(2, count($graphs['accounts']), 'Graphs dashboard includes account balance context');
 assertEqual(4150.0, (float)$graphs['months'][7]['cumulative_cashflow'], 'Graphs dashboard calculates cumulative cash flow');
+
+// --- Unified Financial Trends explorer ---
+$db->exec("INSERT INTO transaction_groups (id, name, description) VALUES (20, 'House projects', 'Project spending')");
+$db->exec("UPDATE transactions SET group_id = 20 WHERE amount < 0 AND transfer_id IS NULL");
+$trends = FinancialTrends::getSnapshot('2026-07-01', '2026-08-10', 'segment', '2025-07-01', '2025-08-10');
+assertEqual(6200.0, (float)$trends['metrics']['income'], 'Financial Trends totals income across the selected period');
+assertEqual(2050.0, (float)$trends['metrics']['spending'], 'Financial Trends totals expense-only spending and excludes transfers');
+assertEqual(4150.0, (float)$trends['metrics']['cashflow'], 'Financial Trends calculates net cash flow');
+assertEqual(1900.0, (float)$trends['comparison']['metrics']['spending'], 'Financial Trends uses the explicit like-for-like comparison period');
+assertEqual(150.0, (float)$trends['comparison']['changes']['spending']['amount'], 'Financial Trends reports absolute spending movement');
+assertEqual('Household', $trends['breakdown'][0]['name'] ?? null, 'Financial Trends derives segments from the canonical category relationship');
+assertEqual(2050.0, (float)($trends['breakdown'][0]['amount'] ?? 0), 'Financial Trends ranks expense-only drivers');
+assertEqual(100.0, (float)$trends['coverage']['segment']['percentage'], 'Financial Trends reports selected-dimension coverage');
+assertEqual('day', $trends['period']['grain'], 'Financial Trends uses a daily grain for short periods');
+assertEqual(41, count($trends['series']), 'Financial Trends fills every daily bucket in the selected range');
+$groupTrends = FinancialTrends::getSnapshot('2026-01-01', '2026-08-10', 'group');
+assertEqual('House projects', $groupTrends['breakdown'][0]['name'] ?? null, 'Groups are a selectable breakdown rather than a separate dashboard');
+assertEqual(100.0, (float)$groupTrends['coverage']['group']['percentage'], 'Group coverage is calculated from expense value');
+$trendDrilldown = Transaction::search('Home', null, null, '2026-08-01', '2026-08-10');
+assertEqual(1, count($trendDrilldown), 'Financial Trends drill-down links constrain transaction search to the selected period');
+$exactTrendDrilldown = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', 'segment', 10, false, true);
+assertEqual(2, count($exactTrendDrilldown), 'Financial Trends drill-down links use the exact classification and expense-only scope');
 
 // --- Transaction-backed 12-month forecast ---
 $forecastHistoryRows = [];
