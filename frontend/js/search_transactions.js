@@ -106,10 +106,11 @@
     }
     async function runSearch() {
         const term=byId('term').value.trim(), min=byId('min-amount').value, max=byId('max-amount').value;
+        const activeParams=new URLSearchParams(location.search), start=activeParams.get('start')||'', end=activeParams.get('end')||'', dimension=activeParams.get('dimension')||'', dimensionId=activeParams.get('dimension_id')||'', unclassified=activeParams.get('unclassified')==='1', spendingOnly=activeParams.get('spending_only')==='1', linkLabel=activeParams.get('label')||'';
         const error=byId('search-error'); error.hidden=true;
-        if (!term && !min && !max) { error.textContent='Enter a search term or at least one amount limit.'; error.hidden=false; byId('term').focus(); return; }
+        if (!term && !min && !max && !dimension) { error.textContent='Enter a search term or at least one amount limit.'; error.hidden=false; byId('term').focus(); return; }
         if (min && max && Number(min)>Number(max)) { error.textContent='The minimum amount cannot be greater than the maximum amount.'; error.hidden=false; byId('min-amount').focus(); return; }
-        const params=new URLSearchParams(); if(term)params.set('value',term); if(min)params.set('min_amount',min); if(max)params.set('max_amount',max);
+        const params=new URLSearchParams(); if(term)params.set('value',term); if(min)params.set('min_amount',min); if(max)params.set('max_amount',max); if(start)params.set('start',start); if(end)params.set('end',end); if(dimension)params.set('dimension',dimension); if(dimensionId)params.set('dimension_id',dimensionId); if(unclassified)params.set('unclassified','1'); if(spendingOnly)params.set('spending_only','1'); if(linkLabel)params.set('label',linkLabel);
         history.replaceState(null,'',location.pathname+'?'+params.toString());
         const submit=byId('search-submit'); submit.disabled=true; submit.querySelector('span').textContent='Searching…'; setText('search-status','Looking across every transaction field…');
         byId('results-grid').className='transaction-table transaction-loading';
@@ -117,7 +118,7 @@
             const response=await fetch('../php_backend/public/search_transactions.php?'+params.toString());
             const payload=await response.json().catch(()=>({})); if(!response.ok) throw new Error(payload.error||'Search could not be completed.');
             const rows=Array.isArray(payload.results)?payload.results:[];
-            byId('results-grid').className='transaction-table'; renderSummary(rows,queryLabel(term,min,max)); renderTable(rows); renderChart(rows); setText('search-status',rows.length+' result'+(rows.length===1?'':'s')+' found');
+            byId('results-grid').className='transaction-table'; renderSummary(rows,linkLabel||queryLabel(term,min,max)); renderTable(rows); renderChart(rows); setText('search-status',rows.length+' result'+(rows.length===1?'':'s')+' found');
         } catch (failure) {
             byId('results-grid').className='transaction-table'; error.textContent=failure.message||'Search could not be completed.'; error.hidden=false; setText('search-status','Search failed');
             byId('results-grid').replaceChildren(emptyState('Search unavailable', 'Please try again in a moment.', 'fa-triangle-exclamation'));

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!-- Unified period and classification explorer for historical financial trends. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Financial Trends</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {};
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="financial_trends.css">
+</head>
+<body class="ops-body dashboard-page trends-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main trends-main flex-1 min-w-0 overflow-x-hidden">
+            <div id="trends-error" class="trends-alert trends-alert--error" role="alert" hidden></div>
+
+            <section class="trends-controls" data-no-card="true" aria-label="Financial Trends filters">
+                <div class="trends-control-grid">
+                    <label class="trends-field" for="period-select">
+                        <span>Period</span>
+                        <select id="period-select">
+                            <option value="month">A month</option>
+                            <option value="ytd">Year to date</option>
+                            <option value="last12">Last 12 months</option>
+                            <option value="year">A year</option>
+                            <option value="all">All time</option>
+                            <option value="custom">Custom dates</option>
+                        </select>
+                    </label>
+                    <label class="trends-field trends-context-control" id="month-control" for="month-select" hidden>
+                        <span>Month</span>
+                        <select id="month-select"></select>
+                    </label>
+                    <label class="trends-field trends-context-control" id="year-control" for="year-select" hidden>
+                        <span>Year</span>
+                        <select id="year-select"></select>
+                    </label>
+                    <label class="trends-field trends-context-control" id="start-control" for="start-date" hidden>
+                        <span>From</span>
+                        <input id="start-date" type="date">
+                    </label>
+                    <label class="trends-field trends-context-control" id="end-control" for="end-date" hidden>
+                        <span>To</span>
+                        <input id="end-date" type="date">
+                    </label>
+                    <label class="trends-field" for="comparison-select">
+                        <span>Compare with</span>
+                        <select id="comparison-select">
+                            <option value="previous_year">Same dates last year</option>
+                            <option value="previous">Previous equivalent period</option>
+                            <option value="none">No comparison</option>
+                        </select>
+                    </label>
+                    <label class="trends-field" for="dimension-select">
+                        <span>Break spending down by</span>
+                        <select id="dimension-select">
+                            <option value="category">Category</option>
+                            <option value="segment">Segment</option>
+                            <option value="group">Group</option>
+                            <option value="tag">Tag</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="trends-control-footer">
+                    <p id="trends-range-summary">Preparing your financial view…</p>
+                    <button id="trends-refresh" type="button"><i class="fas fa-rotate" aria-hidden="true"></i> Refresh</button>
+                </div>
+            </section>
+
+            <div id="trends-partial" class="trends-alert trends-alert--info" role="status" hidden></div>
+
+            <section class="trends-summary" aria-label="Period summary" data-no-card="true">
+                <article class="trends-primary-card">
+                    <div class="trends-primary-card__orb" aria-hidden="true"></div>
+                    <p class="trends-eyebrow">Net cash flow</p>
+                    <strong id="trends-cashflow">£—</strong>
+                    <p id="trends-cashflow-story">Calculating the balance between money in and money out…</p>
+                    <span id="trends-cashflow-change" class="trends-change">Comparison loading…</span>
+                </article>
+                <div class="trends-metric-grid">
+                    <article class="trends-metric-card trends-metric-card--income">
+                        <span class="trends-metric-icon"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span>
+                        <div><p>Income</p><strong id="trends-income">£—</strong><small id="trends-income-change">—</small></div>
+                    </article>
+                    <article class="trends-metric-card trends-metric-card--spending">
+                        <span class="trends-metric-icon"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span>
+                        <div><p>Spending</p><strong id="trends-spending">£—</strong><small id="trends-spending-change">—</small></div>
+                    </article>
+                    <article class="trends-metric-card trends-metric-card--rate">
+                        <span class="trends-metric-icon"><i class="fas fa-piggy-bank" aria-hidden="true"></i></span>
+                        <div><p>Savings rate</p><strong id="trends-rate">—%</strong><small id="trends-rate-change">—</small></div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="trends-card trends-card--wide" data-no-card="true">
+                <header class="trends-card__header">
+                    <div><p class="trends-section-label">Movement</p><h2>Income, spending and cash flow</h2><p id="trends-series-copy">The chart grain adapts to the selected period.</p></div>
+                    <span id="trends-grain" class="trends-chip">—</span>
+                </header>
+                <div id="trends-cashflow-chart" class="trends-chart trends-chart--wide" data-chart-desc="Chart comparing income, spending and net cash flow over the selected period."></div>
+            </section>
+
+            <div class="trends-analysis-grid">
+                <section class="trends-card" data-no-card="true">
+                    <header class="trends-card__header">
+                        <div><p class="trends-section-label">Where it went</p><h2 id="trends-drivers-title">Biggest spending drivers</h2><p>Expense-only totals, ranked by impact.</p></div>
+                    </header>
+                    <div id="trends-drivers-chart" class="trends-chart" data-chart-desc="Ranked bar chart of the largest spending drivers."></div>
+                </section>
+                <section class="trends-card" data-no-card="true">
+                    <header class="trends-card__header">
+                        <div><p class="trends-section-label">What changed</p><h2>Movement versus comparison</h2><p>Positive values mean more was spent.</p></div>
+                    </header>
+                    <div id="trends-change-chart" class="trends-chart" data-chart-desc="Diverging bar chart of spending changes versus the comparison period."></div>
+                </section>
+            </div>
+
+            <section id="trends-coverage" class="trends-coverage" data-no-card="true">
+                <div class="trends-coverage__icon"><i class="fas fa-layer-group" aria-hidden="true"></i></div>
+                <div class="trends-coverage__body">
+                    <div><p class="trends-section-label">Classification coverage</p><h2 id="trends-coverage-title">Checking coverage…</h2></div>
+                    <p id="trends-coverage-copy">This shows how much spending can be explained by the selected breakdown.</p>
+                    <div class="trends-coverage__track" aria-hidden="true"><span id="trends-coverage-bar"></span></div>
+                </div>
+                <a id="trends-coverage-link" href="categories.html">Improve coverage <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            </section>
+
+            <section class="trends-card trends-card--table" data-no-card="true">
+                <header class="trends-card__header">
+                    <div><p class="trends-section-label">Exact values</p><h2 id="trends-table-title">Spending breakdown</h2><p>Open any row to inspect its matching transactions.</p></div>
+                    <span id="trends-row-count" class="trends-chip">—</span>
+                </header>
+                <div class="trends-table-wrap">
+                    <table class="trends-table">
+                        <thead><tr><th id="trends-dimension-heading" scope="col">Category</th><th scope="col">Spending</th><th scope="col">Share</th><th scope="col">Change</th><th scope="col">Transactions</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
+                        <tbody id="trends-table-body"></tbody>
+                    </table>
+                </div>
+                <button id="trends-show-more" class="trends-show-more" type="button" hidden>Show all rows</button>
+            </section>
+
+            <div id="trends-loading" class="trends-loading" role="status" aria-live="polite">
+                <span></span><p>Building your financial trends…</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Financial Trends',
+            breadcrumb: 'Dashboards / Trends',
+            subtitle: 'See whether your finances are improving, what changed, and where the money went.'
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/financial_trends.js"></script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>
