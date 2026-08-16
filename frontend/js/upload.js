@@ -40,6 +40,16 @@ function normaliseUploadPayload(text, httpStatus = 200) {
     };
 }
 
+function balanceStatusText(account) {
+    const status = String(account?.balance_status || '');
+    return {
+        updated: 'balance refreshed',
+        recovered: 'balance repaired',
+        protected: 'empty zero balance ignored',
+        stale: 'older balance ignored'
+    }[status] || '';
+}
+
 function initUpload() {
     const form = document.getElementById('upload-form');
     if (!form) return;
@@ -138,7 +148,8 @@ function initUpload() {
         accounts.forEach(account => {
             const item = document.createElement('span');
             const name = String(account.account_name || 'Account');
-            item.textContent = `${name}: ${Number(account.inserted) || 0} new, ${Number(account.duplicates) || 0} skipped`;
+            const balanceDetail = balanceStatusText(account);
+            item.textContent = `${name}: ${Number(account.inserted) || 0} new, ${Number(account.duplicates) || 0} skipped${balanceDetail ? ` · ${balanceDetail}` : ''}`;
             details.appendChild(item);
         });
         container.appendChild(details);
@@ -281,7 +292,7 @@ function initUpload() {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { MAX_UPLOAD_FILES, formatFileSize, isSupportedStatementFile, normaliseUploadPayload };
+    module.exports = { MAX_UPLOAD_FILES, balanceStatusText, formatFileSize, isSupportedStatementFile, normaliseUploadPayload };
 }
 
 if (typeof document !== 'undefined') {

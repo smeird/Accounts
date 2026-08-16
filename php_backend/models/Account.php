@@ -37,13 +37,54 @@ class Account {
     /**
      * Update the stored ledger balance for an account.
      */
-    public static function updateLedgerBalance(int $accountId, float $balance, string $date): void {
+    public static function updateLedgerBalance(
+        int $accountId,
+        float $balance,
+        string $date,
+        ?int $statementTransactionCount = null
+    ): string {
         $db = Database::getConnection();
-        $stmt = $db->prepare(
-            'UPDATE accounts SET ledger_balance = :bal, ledger_balance_date = :dt '
-            . 'WHERE id = :id AND (ledger_balance_date IS NULL OR ledger_balance_date <= :incoming_date)'
-        );
-        $stmt->execute(['bal' => $balance, 'dt' => $date, 'id' => $accountId, 'incoming_date' => $date]);
+        $stmt = $db->prepare('SELECT ledger_balance, ledger_balance_date FROM accounts WHERE id = :id');
+        $stmt->execute(['id' => $accountId]);
+        $current = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$current) {
+            throw new RuntimeException('Account not found while updating its ledger balance');
+        }
+
+        $incomingIsZero = abs($balance) < 0.005;
+        if ($statementTransactionCount === 0 && $incomingIsZero) {
+            return 'protected';
+        }
+
+        $currentDate = $current['ledger_balance_date'] ?: null;
+        if ($currentDate === null || $date >= $currentDate) {
+            $update = $db->prepare('UPDATE accounts SET ledger_balance = :bal, ledger_balance_date = :dt WHERE id = :id');
+            $update->execute(['bal' => $balance, 'dt' => $date, 'id' => $accountId]);
+            return 'updated';
+        }
+
+        // A bank may emit a dated zero placeholder for an inactive account.
+        // Recover from an existing placeholder only when the older non-zero
+        // snapshot has no recorded movements between its date and the newer
+        // zero date; in that case the two snapshots cannot both be genuine.
+        if (abs((float)$current['ledger_balance']) < 0.005 && !$incomingIsZero) {
+            $movement = $db->prepare(
+                'SELECT COUNT(*) FROM transactions '
+                . 'WHERE account_id = :account AND date > :incoming_date AND date <= :current_date'
+            );
+            $movement->execute([
+                'account' => $accountId,
+                'incoming_date' => $date,
+                'current_date' => $currentDate,
+            ]);
+            if ((int)$movement->fetchColumn() === 0) {
+                $update = $db->prepare('UPDATE accounts SET ledger_balance = :bal WHERE id = :id');
+                $update->execute(['bal' => $balance, 'id' => $accountId]);
+                return 'recovered';
+            }
+        }
+
+        return 'stale';
     }
 
     /**

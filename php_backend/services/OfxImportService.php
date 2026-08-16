@@ -47,10 +47,6 @@ class OfxImportService {
                 $accountId = $this->findOrCreateAccount($statement['account']);
                 $accountName = trim((string)$statement['account']->name) ?: 'Unnamed account';
 
-                if ($statement['ledger']) {
-                    Account::updateLedgerBalance($accountId, $statement['ledger']->balance, $statement['ledger']->date);
-                }
-
                 if (!isset($accountResults[$accountId])) {
                     $accountResults[$accountId] = [
                         'account_id' => $accountId,
@@ -60,6 +56,7 @@ class OfxImportService {
                         'tagged' => 0,
                         'categorised' => 0,
                         'inserted_ids' => [],
+                        'balance_status' => 'not_supplied',
                     ];
                 }
 
@@ -98,6 +95,30 @@ class OfxImportService {
                         $accountResults[$accountId]['inserted_ids'][] = $createdId;
                     }
                 }
+
+                if ($statement['ledger']) {
+                    $balanceStatus = Account::updateLedgerBalance(
+                        $accountId,
+                        $statement['ledger']->balance,
+                        $statement['ledger']->date,
+                        count($statement['transactions'])
+                    );
+                    $accountResults[$accountId]['balance_status'] = $balanceStatus;
+                    $accountResults[$accountId]['balance_date'] = $statement['ledger']->date;
+                    if ($balanceStatus === 'protected') {
+                        $warningCounts['balance'] = ($warningCounts['balance'] ?? 0) + 1;
+                        $warningTotal++;
+                        Log::write(
+                            "Protected account $accountId from an empty zero OFX balance in $filename",
+                            'WARNING'
+                        );
+                    } elseif ($balanceStatus === 'recovered') {
+                        Log::write(
+                            "Recovered account $accountId from a newer zero OFX balance using $filename",
+                            'INFO'
+                        );
+                    }
+                }
             }
 
             foreach ($accountResults as $accountId => &$accountResult) {
@@ -128,10 +149,24 @@ class OfxImportService {
         $accounts = array_values($accountResults);
         $totals = $this->sumAccounts($accounts);
         $message = $totals['inserted'] > 0
-            ? sprintf('Imported %d new transaction%s.', $totals['inserted'], $totals['inserted'] === 1 ? '' : 's')
+            ? sprintf(
+                'Imported %d new transaction%s.%s',
+                $totals['inserted'],
+                $totals['inserted'] === 1 ? '' : 's',
+                $totals['balances_updated'] > 0
+                    ? sprintf(' Refreshed %d account balance%s.', $totals['balances_updated'], $totals['balances_updated'] === 1 ? '' : 's')
+                    : ''
+            )
+            : ($totals['balances_updated'] > 0
+                ? sprintf(
+                    'No new transactions; refreshed %d account balance%s%s',
+                    $totals['balances_updated'],
+                    $totals['balances_updated'] === 1 ? '' : 's',
+                    $totals['duplicates'] > 0 ? sprintf(' and skipped %d duplicate%s.', $totals['duplicates'], $totals['duplicates'] === 1 ? '' : 's') : '.'
+                )
             : ($totals['duplicates'] > 0
                 ? sprintf('No new transactions; skipped %d duplicate%s.', $totals['duplicates'], $totals['duplicates'] === 1 ? '' : 's')
-                : 'No transactions were found in this file.');
+                : 'No transactions were found in this file.'));
 
         $result = [
             'file' => $filename,
@@ -144,6 +179,8 @@ class OfxImportService {
                 'duplicates' => $totals['duplicates'],
                 'tagged' => $totals['tagged'],
                 'categorised' => $totals['categorised'],
+                'balances_updated' => $totals['balances_updated'],
+                'balances_protected' => $totals['balances_protected'],
                 'warnings' => $warningTotal,
             ],
             'warning_counts' => $warningCounts,
@@ -168,13 +205,15 @@ class OfxImportService {
             'duplicates' => 0,
             'tagged' => 0,
             'categorised' => 0,
+            'balances_updated' => 0,
+            'balances_protected' => 0,
             'warnings' => 0,
         ];
 
         foreach ($files as $file) {
             $success = ($file['status'] ?? 'error') === 'success';
             $totals[$success ? 'successful_files' : 'failed_files']++;
-            foreach (['accounts', 'inserted', 'duplicates', 'tagged', 'categorised', 'warnings'] as $key) {
+            foreach (['accounts', 'inserted', 'duplicates', 'tagged', 'categorised', 'balances_updated', 'balances_protected', 'warnings'] as $key) {
                 $totals[$key] += (int)($file['totals'][$key] ?? 0);
             }
         }
@@ -207,7 +246,7 @@ class OfxImportService {
             'status' => 'error',
             'message' => $message,
             'accounts' => [],
-            'totals' => ['accounts' => 0, 'inserted' => 0, 'duplicates' => 0, 'tagged' => 0, 'categorised' => 0, 'warnings' => 0],
+            'totals' => ['accounts' => 0, 'inserted' => 0, 'duplicates' => 0, 'tagged' => 0, 'categorised' => 0, 'balances_updated' => 0, 'balances_protected' => 0, 'warnings' => 0],
             'warning_counts' => [],
         ];
     }
@@ -333,10 +372,15 @@ class OfxImportService {
 
     /** @param array<int,array<string,mixed>> $accounts */
     private function sumAccounts(array $accounts): array {
-        $totals = ['inserted' => 0, 'duplicates' => 0, 'tagged' => 0, 'categorised' => 0];
+        $totals = ['inserted' => 0, 'duplicates' => 0, 'tagged' => 0, 'categorised' => 0, 'balances_updated' => 0, 'balances_protected' => 0];
         foreach ($accounts as $account) {
-            foreach (array_keys($totals) as $key) {
+            foreach (['inserted', 'duplicates', 'tagged', 'categorised'] as $key) {
                 $totals[$key] += (int)($account[$key] ?? 0);
+            }
+            if (in_array($account['balance_status'] ?? '', ['updated', 'recovered'], true)) {
+                $totals['balances_updated']++;
+            } elseif (($account['balance_status'] ?? '') === 'protected') {
+                $totals['balances_protected']++;
             }
         }
         return $totals;
