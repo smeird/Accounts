@@ -67,6 +67,8 @@
 .account-table tbody tr { position:relative; border-bottom:1px solid #eef2f7; background:rgba(255,255,255,.58); transition:background-color 140ms ease,box-shadow 140ms ease; }
 .account-table tbody tr:last-child { border-bottom:0; }
 .account-table tbody tr:hover { z-index:1; background:linear-gradient(90deg,rgba(238,242,255,.84),rgba(236,254,255,.58)); box-shadow:inset .2rem 0 0 var(--account-indigo); }
+.account-table tbody tr.is-closed { background:rgba(248,250,252,.78); }
+.account-table tbody tr.is-closed .account-avatar { filter:grayscale(.45); opacity:.72; }
 .account-table td { padding:.78rem; color:#334155; font-size:.66rem; vertical-align:middle; }
 .account-table td:first-child { padding-left:1.15rem; }
 .account-identity { display:flex; min-width:0; align-items:center; gap:.68rem; }
@@ -93,13 +95,20 @@
 .account-balance { text-align:right; }
 .account-balance-value { display:block; color:#047857; font-size:.76rem; font-weight:880; letter-spacing:-.02em; }
 .account-balance.is-negative .account-balance-value { color:#be123c; }
+.account-balance.is-closed .account-balance-value { color:#64748b; font-size:.64rem; }
+.account-balance.is-closed .account-balance-track { display:none; }
 .account-balance-track { display:block; width:72%; height:.22rem; margin:.34rem 0 0 auto; overflow:hidden; border-radius:999px; background:#e2e8f0; }
 .account-balance-fill { display:block; height:100%; margin-left:auto; border-radius:inherit; background:linear-gradient(90deg,#4f46e5,#22d3ee,#34d399); }
 .account-balance.is-negative .account-balance-fill { background:linear-gradient(90deg,#fb7185,#e11d48); }
 .account-open-heading { color:transparent!important; }
 .account-open-cell { text-align:center; }
+.account-row-actions { display:flex; align-items:center; justify-content:center; gap:.3rem; }
 .account-open-link { display:grid; width:1.75rem; height:1.75rem; margin:auto; place-items:center; border:1px solid #e2e8f0; border-radius:.56rem; color:#64748b; background:#fff; font-size:.55rem; transition:transform 140ms ease,color 140ms ease,border-color 140ms ease,box-shadow 140ms ease; }
 .account-open-link:hover { transform:translateX(2px); border-color:#c7d2fe; color:#4338ca; box-shadow:0 7px 14px -11px rgba(79,70,229,.9); }
+.account-lifecycle-button { display:grid; width:1.75rem; height:1.75rem; place-items:center; border:1px solid #fed7aa; border-radius:.56rem; color:#c2410c; background:#fff7ed; font-size:.55rem; }
+.account-lifecycle-button:hover { border-color:#fdba74; background:#ffedd5; }
+.account-lifecycle-button.is-reopen { border-color:#a7f3d0; color:#047857; background:#ecfdf5; }
+.account-lifecycle-button:disabled { cursor:wait; opacity:.5; }
 
 .account-rename-form { display:flex; align-items:center; gap:.42rem; }
 .account-dashboard-page .account-rename-input { min-height:2.15rem!important; min-width:0; padding:.42rem .55rem!important; font-size:.66rem; }
@@ -162,7 +171,7 @@
     .account-open-cell { position:absolute; top:.82rem; right:.82rem; }
     .account-open-cell::before { display:none!important; }
     .account-rename-button { opacity:1; }
-    .account-identity { padding-right:2.2rem; }
+    .account-identity { padding-right:4.2rem; }
     .account-chart-panel header { align-items:flex-start; flex-direction:column; padding:.95rem .9rem .2rem; }
     .account-chart-panel header>p { margin-top:-.2rem; text-align:left; }
 }

@@ -36,7 +36,7 @@ try {
     $data = [];
     // Always include users and account details
     $data['users'] = $getAll('SELECT id, username, password FROM users ORDER BY id');
-    $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date FROM accounts ORDER BY id');
+    $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date, closed, closed_at FROM accounts ORDER BY id');
     if (in_array('settings', $parts)) {
         $data['settings'] = $getAll('SELECT name, value FROM settings ORDER BY name');
     }

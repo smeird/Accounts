@@ -17,7 +17,9 @@ require_once __DIR__ . '/../php_backend/models/ForecastDashboard.php';
 require_once __DIR__ . '/../php_backend/models/FinancialTrends.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
+require_once __DIR__ . '/../php_backend/models/Account.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
+require_once __DIR__ . '/../php_backend/AiCategoryTagger.php';
 require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
 require_once __DIR__ . '/../php_backend/services/SchemaHealthService.php';
 
@@ -27,7 +29,7 @@ $db = Database::getConnection();
 
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
-$db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT);');
+$db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT, closed INTEGER NOT NULL DEFAULT 0, closed_at TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT);');
 $db->exec('CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT, match_type TEXT, active TINYINT DEFAULT 1);');
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
@@ -169,6 +171,24 @@ $contextWithAliaslessTag = AiTaggingPipeline::buildAliasAwareTagContext([
     ['tag_id' => 99, 'tag_name' => 'Household Bills', 'alias' => null],
 ]);
 assertEqual(true, strpos($contextWithAliaslessTag['text'], 'Household Bills') !== false, 'AI context includes canonical tags that do not have aliases yet');
+
+$categoryPrompt = AiCategoryTagger::buildPrompt([
+    ['id' => 11, 'name' => 'Transport', 'description' => 'Travel and vehicle costs', 'assigned_tags' => ['Rail']],
+], [
+    ['id' => 7, 'name' => 'Fuel', 'keyword' => 'petrol', 'description' => '', 'transactions' => 4],
+]);
+assertEqual(true, strpos($categoryPrompt, '11: Transport') !== false && strpos($categoryPrompt, '7: Fuel') !== false, 'AI category prompt uses explicit existing category and candidate tag IDs');
+$validatedCategoryAssignments = AiCategoryTagger::validateAssignments([
+    'assignments' => [
+        ['tag_id' => 7, 'category_id' => 11, 'confidence' => 0.94, 'reason' => 'Fuel is a transport cost'],
+        ['tag_id' => 8, 'category_id' => 12, 'confidence' => 0.70, 'reason' => 'Uncertain'],
+        ['tag_id' => 999, 'category_id' => 11, 'confidence' => 0.99, 'reason' => 'Unknown tag'],
+        ['tag_id' => 7, 'category_id' => 12, 'confidence' => 0.99, 'reason' => 'Duplicate'],
+    ],
+], [7, 8], [11, 12]);
+assertEqual(1, count($validatedCategoryAssignments['accepted']), 'AI category assignment accepts one high-confidence allowlisted match');
+assertEqual(3, count($validatedCategoryAssignments['rejected']), 'AI category assignment rejects low-confidence, unknown, and duplicate suggestions');
+assertEqual('{"assignments":[]}', AiCategoryTagger::extractOutputText(['output_text' => "```json\n{\"assignments\":[]}\n```"]), 'AI category assignment strips response code fences');
 
 $tag2 = Tag::create('Fuel', null, null);
 $fuelOptions = Tag::searchOptions('fuel', 10);
@@ -595,6 +615,17 @@ assertEqual(85.0, (float)$instant['budget']['used'], 'Instant dashboard calculat
 assertEqual(true, (bool)$instant['recent'][0]['is_transfer'], 'Instant dashboard keeps transfers in recent activity');
 assertEqual(0, (int)$instant['data_quality']['untagged_transactions'], 'Instant dashboard excludes transfers from untagged attention counts');
 assertEqual(6, count($instant['trend']), 'Instant dashboard returns a six-month trend');
+$closedAccount = Account::setClosed(2, true, '2026-08-10');
+assertEqual(true, (bool)$closedAccount['closed'], 'An account can be marked closed');
+assertEqual(0.0, (float)$db->query('SELECT ledger_balance FROM accounts WHERE id = 2')->fetchColumn(), 'Closing an account fixes its stored balance at zero');
+assertEqual('closed', Account::updateLedgerBalance(2, 9000, '2026-08-11', 1), 'A closed account ignores later imported balances');
+$instantWithClosedAccount = InstantDashboard::getSnapshot(new DateTimeImmutable('2026-08-10T12:00:00+01:00'));
+assertEqual(2500.0, (float)$instantWithClosedAccount['headline']['balance'], 'Instant dashboard excludes closed accounts from its balance');
+assertEqual(1, count($instantWithClosedAccount['accounts']), 'Instant dashboard hides closed accounts from its active account summary');
+$closedSummaries = Account::getSummaries();
+assertEqual(0.0, (float)$closedSummaries[1]['balance'], 'Account summaries expose a zero balance for a closed account');
+Account::setClosed(2, false, '2026-08-10');
+assertEqual('updated', Account::updateLedgerBalance(2, 7500, '2026-08-10', 1), 'A reopened account accepts a fresh bank balance');
 
 // --- Yearly dashboard snapshot and portable monthly budgets ---
 $db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES
@@ -621,6 +652,13 @@ assertEqual('Household', $graphs['segments'][0]['name'] ?? null, 'Graphs dashboa
 assertEqual('Bills', $graphs['tags'][0]['name'] ?? null, 'Graphs dashboard ranks reusable tag patterns');
 assertEqual(2, count($graphs['accounts']), 'Graphs dashboard includes account balance context');
 assertEqual(4150.0, (float)$graphs['months'][7]['cumulative_cashflow'], 'Graphs dashboard calculates cumulative cash flow');
+$db->exec("UPDATE accounts SET closed = 1, closed_at = '2026-08-10', ledger_balance = 0 WHERE id = 2");
+$closedGraphs = GraphsDashboard::getSnapshot(2026);
+assertEqual(2500.0, (float)$closedGraphs['metrics']['balance'], 'Graphs excludes closed accounts from the net position');
+assertEqual(1, count($closedGraphs['accounts']), 'Graphs excludes closed accounts from balance composition');
+$closedForecast = ForecastDashboard::getSnapshot(new DateTimeImmutable('2026-08-10T12:00:00+01:00'));
+assertEqual(2500.0, (float)$closedForecast['metrics']['starting_balance'], 'Forecast excludes closed accounts from its starting balance');
+$db->exec("UPDATE accounts SET closed = 0, closed_at = NULL, ledger_balance = 7500 WHERE id = 2");
 
 // --- Unified Financial Trends explorer ---
 $db->exec("INSERT INTO transaction_groups (id, name, description) VALUES (20, 'House projects', 'Project spending')");
@@ -770,6 +808,7 @@ assertEqual(true, $healthySchemaAudit['healthy'], 'Database Health accepts the c
 assertEqual(0, (int)$healthySchemaAudit['summary']['issues'], 'Canonical schema has no health issues');
 assertEqual(['date'], $healthySchemaSnapshot['tables']['transactions']['indexes']['idx_transactions_date']['columns'] ?? null, 'Database Health includes the statement date index');
 assertEqual(['created_at'], $healthySchemaSnapshot['tables']['logs']['indexes']['idx_logs_created_at']['columns'] ?? null, 'Database Health includes the log date index');
+assertEqual(true, isset($healthySchemaSnapshot['tables']['accounts']['columns']['closed'], $healthySchemaSnapshot['tables']['accounts']['columns']['closed_at']), 'Database Health includes closed-account lifecycle fields');
 
 $equivalentSchemaSnapshot = $healthySchemaSnapshot;
 foreach ($equivalentSchemaSnapshot['tables'] as &$equivalentTable) {

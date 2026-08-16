@@ -33,6 +33,8 @@ class SchemaCatalog {
                 'account_number' => self::column('VARCHAR(50) DEFAULT NULL', 'varchar', true, true, 50),
                 'ledger_balance' => self::column('DECIMAL(10,2) DEFAULT 0', 'decimal', true, true, null, null, 10, 2),
                 'ledger_balance_date' => self::column('DATE DEFAULT NULL', 'date', true, true),
+                'closed' => self::column('TINYINT NOT NULL DEFAULT 0', 'tinyint', false, true),
+                'closed_at' => self::column('DATE DEFAULT NULL', 'date', true, true),
             ], ['id']),
             'segments' => self::table([
                 'id' => self::column('INT AUTO_INCREMENT', 'int', false, false, null, 'auto_increment'),

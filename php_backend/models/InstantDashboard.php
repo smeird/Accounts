@@ -196,6 +196,7 @@ class InstantDashboard {
              . 'a.`ledger_balance_date`, MAX(t.`date`) AS last_transaction '
              . 'FROM `accounts` a '
              . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
+             . 'WHERE a.`closed` = 0 '
              . 'GROUP BY a.`id`, a.`name`, a.`ledger_balance`, a.`ledger_balance_date` '
              . 'ORDER BY balance DESC, a.`name` ASC';
         $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);

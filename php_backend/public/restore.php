@@ -101,15 +101,17 @@ try {
     }
 
     if (isset($data['accounts'])) {
-        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, sort_code, account_number, ledger_balance, ledger_balance_date) VALUES (:id, :name, :sort_code, :account_number, :ledger_balance, :ledger_balance_date)');
+        $stmtAcct = $db->prepare('INSERT INTO accounts (id, name, sort_code, account_number, ledger_balance, ledger_balance_date, closed, closed_at) VALUES (:id, :name, :sort_code, :account_number, :ledger_balance, :ledger_balance_date, :closed, :closed_at)');
         foreach ($data['accounts'] as $row) {
             $stmtAcct->execute([
                 'id' => $row['id'],
                 'name' => $row['name'],
                 'sort_code' => $row['sort_code'] ?? null,
                 'account_number' => $row['account_number'] ?? null,
-                'ledger_balance' => $row['ledger_balance'],
-                'ledger_balance_date' => $row['ledger_balance_date'] ?? null
+                'ledger_balance' => !empty($row['closed']) ? 0 : $row['ledger_balance'],
+                'ledger_balance_date' => $row['ledger_balance_date'] ?? null,
+                'closed' => !empty($row['closed']) ? 1 : 0,
+                'closed_at' => $row['closed_at'] ?? null
             ]);
         }
     }

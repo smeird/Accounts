@@ -19,7 +19,7 @@
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<p class="mb-4">Configure OpenAI and automatically tag transactions.</p>
+<p class="mb-4">Configure OpenAI, automatically tag transactions, and link existing tags to your category structure.</p>
 
         <section>
             <h2 class="text-xl font-semibold mb-2">OpenAI Token</h2>
@@ -35,14 +35,22 @@
             <p class="mb-4">Use AI to suggest tags and categories for untagged transactions.</p>
             <button id="run" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fas fa-robot inline w-4 h-4 mr-1"></i>Run AI Tagging</button>
             <div id="result" class="mt-4"></div>
-            <div id="debug" class="mt-4 hidden">
-                <div class="cards cards-tight space-y-3">
-                    <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
-                    <p class="text-sm font-semibold">Prompt</p>
-                    <pre id="debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
-                    <p class="text-sm font-semibold">Response</p>
-                    <pre id="debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
-                </div>
+        </section>
+
+        <section id="categorise-tags">
+            <h2 class="text-xl font-semibold mb-2">Categorise Existing Tags</h2>
+            <p class="mb-4">Use AI to connect unassigned tags to categories you already have. Existing assignments are preserved and uncertain suggestions are skipped.</p>
+            <button id="run-category-tags" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Use AI to categorise existing tags"><i class="fas fa-wand-magic-sparkles inline w-4 h-4 mr-1" aria-hidden="true"></i>Auto-categorise Tags</button>
+            <div id="category-result" class="mt-4" aria-live="polite"></div>
+        </section>
+
+        <section id="debug" class="mt-4 hidden">
+            <div class="cards cards-tight space-y-3">
+                <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
+                <p class="text-sm font-semibold">Prompt</p>
+                <pre id="debug-request" class="text-xs bg-gray-100 p-2 mb-2 overflow-x-auto"></pre>
+                <p class="text-sm font-semibold">Response</p>
+                <pre id="debug-response" class="text-xs bg-gray-100 p-2 overflow-x-auto"></pre>
             </div>
         </section>
     </main>
@@ -53,7 +61,7 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'AI Tags',
     breadcrumb: 'AI',
-    subtitle: 'Use AI to suggest tags for uncategorised transactions and apply them in bulk.'
+    subtitle: 'Teach reusable transaction tags, then connect those tags safely to your existing categories.'
 });
 </script>
     <script src="js/menu.js"></script>
@@ -129,6 +137,50 @@ document.getElementById('run').addEventListener('click', async () => {
         resultEl.textContent = 'Request failed';
         showMessage('AI tagging failed', 'error');
         debugContainer.classList.add('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+});
+
+document.getElementById('run-category-tags').addEventListener('click', async () => {
+    const resultEl = document.getElementById('category-result');
+    const debugContainer = document.getElementById('debug');
+    const debugReq = document.getElementById('debug-request');
+    const debugRes = document.getElementById('debug-response');
+    const btn = document.getElementById('run-category-tags');
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    resultEl.textContent = 'Finding safe category matches…';
+    showMessage('AI tag categorisation started');
+    try {
+        const response = await fetch('../php_backend/public/ai_category_tags.php', {method:'POST'});
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.error) throw new Error(data.error || 'Tag categorisation failed');
+        const summary = document.createElement('p');
+        summary.textContent = `Assigned ${data.assigned} tag${data.assigned === 1 ? '' : 's'} to existing categories and updated ${data.updated_transactions} transaction${data.updated_transactions === 1 ? '' : 's'}. ${data.remaining} tag${data.remaining === 1 ? '' : 's'} remain unassigned.`;
+        resultEl.replaceChildren(summary);
+        if (Array.isArray(data.assignments) && data.assignments.length) {
+            const list = document.createElement('ul');
+            list.className = 'mt-3 space-y-1 text-sm text-slate-600';
+            data.assignments.forEach(assignment => {
+                const item = document.createElement('li');
+                item.textContent = `${assignment.tag} → ${assignment.category} (${Math.round(Number(assignment.confidence) * 100)}% confidence)`;
+                list.appendChild(item);
+            });
+            resultEl.appendChild(list);
+        }
+        showMessage('AI tag categorisation complete');
+        if (data.debug) {
+            debugReq.textContent = data.debug.prompt;
+            debugRes.textContent = typeof data.debug.response === 'string' ? data.debug.response : JSON.stringify(data.debug.response, null, 2);
+            debugContainer.classList.remove('hidden');
+        } else {
+            debugContainer.classList.add('hidden');
+        }
+    } catch (error) {
+        resultEl.textContent = error.message || 'Tag categorisation failed';
+        showMessage('AI tag categorisation failed', 'error');
     } finally {
         btn.disabled = false;
         btn.classList.remove('opacity-50', 'cursor-not-allowed');
