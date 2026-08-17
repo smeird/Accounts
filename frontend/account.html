@@ -13,23 +13,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="utility_refresh.css?v=20260817-completeness-audit">
 
 
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
 
 </head>
-<body class="ops-body">
+<body class="ops-body utility-refresh-page account-detail-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p id="account-details" class="mb-4 text-gray-600"></p>
-<div class="cards">
-                <div id="balance-chart" style="height:400px" data-chart-desc="Line chart of account balance over time."></div>
-            </div>
-
-            <div class="cards mt-6">
+            <p id="account-details" class="account-context" hidden></p>
+            <section id="account-load-state" class="utility-status is-loading" data-no-card role="status" aria-live="polite"><i class="fas fa-rotate" aria-hidden="true"></i><div><strong>Loading account history…</strong><p>Reconstructing the balance from statement activity.</p></div></section>
+            <section id="account-chart-panel" class="utility-panel" data-no-card hidden>
+                <div class="account-panel__header"><div><span class="utility-panel__step">Balance history</span><h2>How the balance changed</h2></div><p>Hover or tap a point to see the balance and movement.</p></div>
+                <div id="balance-chart" class="account-chart" data-chart-desc="Line chart of account balance over time."></div>
+            </section>
+            <section id="account-table-panel" class="utility-panel" data-no-card hidden>
+                <div class="account-panel__header"><div><span class="utility-panel__step">Statement activity</span><h2>Transactions in this account</h2></div><p>Select a row to inspect and edit the transaction.</p></div>
                 <div id="statement-table"></div>
-            </div>
+            </section>
 
         </main>
     </div>
@@ -71,18 +74,29 @@ window.renderPageHeader(pageMain, {
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    const loadState = document.getElementById('account-load-state');
+    const chartPanel = document.getElementById('account-chart-panel');
+    const tablePanel = document.getElementById('account-table-panel');
+    function showAccountError(message){
+        loadState.className = 'utility-status is-error';
+        loadState.innerHTML = '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i><div><strong>Account could not be loaded</strong><p></p></div>';
+        loadState.querySelector('p').textContent = message;
+    }
     if (id) {
         fetch(`../php_backend/public/account_balance.php?id=${id}`)
-            .then(r => r.json())
-            .then(data => {
+            .then(r => r.json().then(data => ({ok:r.ok,data})))
+            .then(({ok,data}) => {
+                if (!ok) throw new Error(data.error || 'The balance history request failed.');
                 if (data.error) {
-                    document.getElementById('balance-chart').textContent = 'Account not found.';
-                    return;
+                    throw new Error(data.error);
                 }
                 window.updatePageHeader(pageMain, { title: data.name });
                 let details = data.sort_code ? `Sort Code: ${data.sort_code}  Account Number: ${data.account_number}` : `Card Number: ${data.account_number}`;
                 if (data.closed) details += ` · Closed${data.closed_at ? ` on ${data.closed_at}` : ''} · Balance fixed at £0.00`;
                 document.getElementById('account-details').textContent = details;
+                document.getElementById('account-details').hidden = false;
+                loadState.hidden = true;
+                chartPanel.hidden = false;
                 const dates = data.history.map(h => h.date);
                 const balances = data.history.map(h => parseFloat(h.balance));
                 Highcharts.chart('balance-chart', {
@@ -93,28 +107,31 @@ window.renderPageHeader(pageMain, {
                     tooltip: { pointFormatter: balanceTooltip },
                     series: [{ name: 'Balance', data: balances, colorByPoint: true }]
                 });
-            });
+            }).catch(error => showAccountError(error.message || 'Please try again.'));
 
 
         fetch(`../php_backend/public/account_statement.php?id=${id}`)
-            .then(r => r.json())
-            .then(rows => {
+            .then(r => r.json().then(rows => ({ok:r.ok,rows})))
+            .then(({ok,rows}) => {
+                if (!ok || !Array.isArray(rows)) throw new Error('The account statement could not be loaded.');
+                tablePanel.hidden = false;
                 tailwindTabulator(document.getElementById('statement-table'), {
                     data: rows,
                     layout: 'fitDataStretch',
                     rowClick: (e, row) => {
                         window.location = `transaction.html?id=${row.getData().id}`;
                     },
+                    placeholder: 'No transactions are recorded for this account.',
                     columns: [
                         { title: 'Date', field: 'date' },
                         { title: 'Description', field: 'description' },
                         { title: 'Amount', field: 'amount', hozAlign: 'right', formatter: balanceFormatter }
                     ]
                 });
-            });
+            }).catch(error => showAccountError(error.message || 'Please try again.'));
 
     } else {
-        document.getElementById('balance-chart').textContent = 'No account specified.';
+        showAccountError('No account was selected. Return to Accounts & Balances and choose an account.');
     }
     </script>
     <script src="js/overlay.js"></script>

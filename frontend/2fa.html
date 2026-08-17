@@ -14,32 +14,33 @@
       <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="utility_refresh.css?v=20260817-completeness-audit">
 
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <!-- Icons provided by Font Awesome loaded via menu.js -->
 </head>
-<body class="ops-body" data-api-base="../php_backend/public">
+<body class="ops-body utility-refresh-page security-page" data-api-base="../php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<div class="cards mb-6">
-                  <h2 class="text-xl mb-4">Setup</h2>
+            <section class="utility-status" data-no-card><i class="fas fa-shield-halved" aria-hidden="true"></i><div><strong>Add a second layer of protection</strong><p>Generate a QR code, scan it with an authenticator app, then confirm one six-digit code.</p></div></section>
+            <div class="utility-grid">
+                <section class="utility-panel" data-no-card aria-labelledby="setup-title">
+                  <div class="utility-panel__header"><span class="utility-panel__icon" aria-hidden="true"><i class="fas fa-qrcode"></i></span><div><span class="utility-panel__step">Step 1</span><h2 id="setup-title">Connect an authenticator</h2><p>Use the username for the account you want to protect, then scan the generated code.</p></div></div>
                 <form id="generate-form" class="space-y-4">
-                    <input id="gen-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
-                      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-qrcode inline w-4 h-4 mr-2"></i>Generate QR</button>
+                    <div class="utility-field"><label for="gen-username">Account username</label><input id="gen-username" type="text" autocomplete="username" placeholder="Enter username" class="border p-2 rounded w-full" data-help="Enter your account username"></div>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-qrcode" aria-hidden="true"></i><span>Generate QR code</span></button>
                 </form>
-
-                <div id="qr" class="mt-4 mx-auto"></div>
-
-            </div>
-
-            <div class="cards">
-                  <h2 class="text-xl mb-4">Verify</h2>
+                <div id="qr" class="utility-qr" aria-live="polite"></div>
+                </section>
+                <section class="utility-panel" data-no-card aria-labelledby="verify-title">
+                  <div class="utility-panel__header"><span class="utility-panel__icon" aria-hidden="true"><i class="fas fa-mobile-screen-button"></i></span><div><span class="utility-panel__step">Step 2</span><h2 id="verify-title">Confirm the connection</h2><p>Enter the current code from your authenticator. Codes refresh about every 30 seconds.</p></div></div>
                 <form id="verify-form" class="space-y-4">
-                    <input id="ver-username" type="text" placeholder="Username" class="border p-2 rounded w-full" data-help="Enter your account username">
-                    <input id="token" type="text" placeholder="TOTP Code" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator">
-                      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-check inline w-4 h-4 mr-2"></i>Verify</button>
+                    <div class="utility-field"><label for="ver-username">Account username</label><input id="ver-username" type="text" autocomplete="username" placeholder="Enter username" class="border p-2 rounded w-full" data-help="Enter your account username"></div>
+                    <div class="utility-field"><label for="token">Six-digit code</label><input id="token" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" class="border p-2 rounded w-full" data-help="Enter the 6-digit code from your authenticator"></div>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded font-light"><i class="fas fa-check" aria-hidden="true"></i><span>Verify and enable</span></button>
                 </form>
+                </section>
             </div>
         </main>
     </div>

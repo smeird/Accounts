@@ -204,6 +204,7 @@ $bg600 = "bg-{$colorScheme}-600";
       <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css">
+    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260817-completeness-audit">
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <style>
           a { transition: color 0.2s ease; }
@@ -212,22 +213,25 @@ $bg600 = "bg-{$colorScheme}-600";
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="ops-body" data-api-base="php_backend/public">
+<body class="ops-body admin-refresh-page" data-api-base="php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <section class="max-w-4xl mx-auto">
+            <section class="max-w-4xl mx-auto admin-shell">
                 <header class="page-header">
                     <div>
                         <h1 class="text-2xl font-semibold <?= $text700 ?> page-title">System Settings</h1>
+                        <span class="page-breadcrumb">System / Settings</span>
                         <p class="page-subtitle">Adjust application configuration values.</p>
                     </div>
                 </header>
-                <div class="cards cards-solid border border-gray-400">
+                <div class="cards cards-solid border border-gray-400 admin-card">
                 <?php if ($message): ?>
                     <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
                 <?php endif; ?>
                 <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h2 class="admin-section-title">AI &amp; automation</h2>
+            <p class="admin-section-copy">Control how AI-assisted tagging and reviews connect to your account.</p>
             <label class="block">OpenAI API Token:
                 <input type="password" name="openai_api_token" value="" autocomplete="new-password" placeholder="<?= $openaiConfigured ? 'Token configured — enter a replacement' : 'Enter an API token' ?>" class="border p-2 rounded w-full" data-help="Enter a new token to replace the configured OpenAI API token">
                 <span class="block mt-2 text-gray-600"><?= $openaiConfigured ? 'A token is configured. Its saved value is never returned to the browser.' : 'No token is currently configured.' ?></span>
@@ -261,12 +265,16 @@ $bg600 = "bg-{$colorScheme}-600";
             <label class="block">AI Debug Mode:
                 <input type="checkbox" name="ai_debug" value="1" <?= $aiDebug ? 'checked' : '' ?> class="ml-2" data-help="Show AI request and response details on pages for troubleshooting">
             </label>
+            <h2 class="admin-section-title">Security &amp; maintenance</h2>
+            <p class="admin-section-copy">Choose retention and inactivity limits for this installation.</p>
             <label class="block">Log Retention Days:
                 <input type="number" name="log_retention_days" value="<?= htmlspecialchars($retention) ?>" class="border p-2 rounded w-full" data-help="Automatically prune logs older than this many days">
             </label>
             <label class="block">Auto-Logout Minutes:
                 <input type="number" name="session_timeout_minutes" value="<?= htmlspecialchars($timeout) ?>" class="border p-2 rounded w-full" data-help="Minutes of inactivity before automatic logout">
             </label>
+            <h2 class="admin-section-title">Brand &amp; typography</h2>
+            <p class="admin-section-copy">Preview the identity and type choices used throughout the site.</p>
             <label class="block">Site Name:
                 <input type="text" name="site_name" value="<?= htmlspecialchars($siteName) ?>" class="border p-2 rounded w-full" data-help="Displayed name of the website">
             </label>
@@ -317,12 +325,12 @@ $bg600 = "bg-{$colorScheme}-600";
                 </select>
                 <p id="font-preview-weight" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Accent weight preview: Search, filters and highlights.</p>
             </label>
-                    <button
+                    <div class="admin-actions"><button
                         type="submit"
-                        class="text-white px-4 py-2 rounded md:col-span-2"
+                        class="text-white px-4 py-2 rounded"
                         style="background-color: <?= htmlspecialchars($colorHex, ENT_QUOTES, 'UTF-8') ?>;"
                         aria-label="Save Settings"
-                    ><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button>
+                    ><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button></div>
                 </form>
                 </div>
             </section>
