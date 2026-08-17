@@ -409,7 +409,7 @@
             render(data);
         } catch (caught) {
             console.error('Instant dashboard load failed', caught);
-            error.textContent = 'Instant could not load your financial snapshot. Refresh the page or try again in a moment.';
+            error.textContent = 'Financial Overview could not load your snapshot. Refresh the page or try again in a moment.';
             error.hidden = false;
         } finally {
             refresh.disabled = false;
