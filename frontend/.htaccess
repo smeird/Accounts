@@ -1,7 +1,28 @@
 <IfModule mod_headers.c>
-  <FilesMatch "\.js$">
-    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
-    Header set Pragma "no-cache"
-    Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+  # Page shells and PHP fragments must never be reused. They determine which
+  # assets load and may contain authentication-sensitive navigation state.
+  <FilesMatch "\.(?:html?|php)$">
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header always set Pragma "no-cache"
+    Header always set Expires "Thu, 01 Jan 1970 00:00:00 GMT"
+  </FilesMatch>
+
+  # Revalidate code and styles on every navigation. Conditional requests may
+  # still return 304, but a browser or intermediary cannot serve them without
+  # first checking the deployed file's current ETag/Last-Modified value.
+  <FilesMatch "\.(?:css|js|json|map|webmanifest)$">
+    Header always set Cache-Control "no-cache, must-revalidate, max-age=0"
+    Header always set Pragma "no-cache"
+    Header always set Expires "Thu, 01 Jan 1970 00:00:00 GMT"
   </FilesMatch>
 </IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
+  ExpiresByType application/json "access plus 0 seconds"
+</IfModule>
+
+FileETag MTime Size

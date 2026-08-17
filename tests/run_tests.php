@@ -888,6 +888,20 @@ assertEqual(0, count($recordChangingSql), 'Database Health generates no record-c
 $secondSchemaRepair = $schemaHealthService->repair($selectedSchemaRepairs);
 assertEqual(0, (int)$secondSchemaRepair['summary']['attempted'], 'Database Health repairs are idempotent');
 
+// Static page shells and their local code/style assets must be revalidated so
+// a deployment cannot leave users with a mixture of old and new UI files.
+$frontendCachePolicy = file_get_contents(__DIR__ . '/../frontend/.htaccess');
+assertEqual(true, strpos($frontendCachePolicy, '\\.(?:html?|php)$') !== false, 'Cache policy covers HTML and PHP page shells');
+assertEqual(true, strpos($frontendCachePolicy, '\\.(?:css|js|json|map|webmanifest)$') !== false, 'Cache policy covers local code and style assets');
+assertEqual(true, strpos($frontendCachePolicy, 'Header always set Cache-Control') !== false, 'Cache policy applies headers to every response status');
+$staticPagesMissingCacheMeta = [];
+foreach (glob(__DIR__ . '/../frontend/*.html') as $staticPage) {
+    if (strpos((string)file_get_contents($staticPage), 'http-equiv="Cache-Control"') === false) {
+        $staticPagesMissingCacheMeta[] = basename($staticPage);
+    }
+}
+assertEqual([], $staticPagesMissingCacheMeta, 'Every static page includes a cache-control fallback');
+
 // Output results and set exit code
 $failed = false;
 foreach ($results as $line) {
