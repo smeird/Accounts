@@ -44,7 +44,7 @@ const init = () => {
     'yearly_dashboard.html': `Analyse totals for a chosen year using charts and tables. Look through the months to see how spending and income evolved as the year progressed. This broader view helps you understand whether you are meeting your long‑term goals and where you might need to cut back.`,
     'forecast.html': `Project your financial position across the next 12 months using your latest complete transaction history. Compare the expected path with conservative and optimistic planning scenarios, review likely spending drivers, and open the methodology panel to see the assumptions and data coverage behind the forecast.`,
     'recurring_spend.html': `See the repeated outgoings and income shaping your monthly baseline. The analysis loads automatically from the latest twelve months, excludes internal transfers, and treats a pattern as active when it has at least two matching transactions with recent activity. Use the summary for next month’s expected position, sort or search either table, and open History to review the underlying transactions.`,
-    'pivot.html': `Explore transactions with a pivot table. Choose a year or view all records to break down amounts by category, month or other fields. Use the export options to save the results for further analysis.`
+    'pivot.html': `Compare income and spending across segments, categories and tags. Choose one year for a monthly view or all years for an annual view, expand rows for detail, and select any amount to inspect its underlying transactions. Internal transfers are excluded.`
 
   };
 

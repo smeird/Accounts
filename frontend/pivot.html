@@ -1,73 +1,50 @@
 <!DOCTYPE html>
-<!-- Interactive pivot table analysis -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Pivot Analysis</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
-
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
-
+    <link rel="stylesheet" href="pivot.css?v=20260817-pivot-refresh">
 </head>
-<body class="ops-body">
-    <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<p class="mb-4">Explore transactions using a flexible pivot table. Choose a year or analyse all recorded data.</p>
-            <section class="cards cards-tight space-y-4">
-                <div class="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-4 md:space-y-0">
-                    <div class="flex flex-col">
-                        <label for="year-select" class="font-semibold">Year</label>
-                        <select id="year-select" class="border p-2 rounded" data-help="Select the year to analyse or view all years">
-                            <option value="all">All Years</option>
-                        </select>
-                    </div>
-
-                    <div class="flex space-x-2">
-                        <button id="refresh" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-rotate inline w-4 h-4 mr-2"></i>Refresh</button>
-                        <button id="export" class="bg-green-600 text-white px-4 py-2 rounded"><i class="fas fa-file-export inline w-4 h-4 mr-2"></i>Export CSV</button>
-                    </div>
-
-                </div>
-                <div id="pivot-table" class="h-[80vh]"></div>
-
-            </section>
-
-            <section id="detail-card" class="hidden cards space-y-4">
-
-                <div class="flex justify-between items-center">
-                    <h2 id="detail-title" class="text-xl font-semibold text-indigo-700"></h2>
-                    <button id="detail-close" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></button>
-                </div>
-                <div id="detail-table" class="h-96"></div>
-            </section>
-        </main>
-    </div>
-    <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Pivot Analysis',
-    breadcrumb: 'Reports & Analysis',
-    subtitle: 'Explore transaction data with pivoted summaries across key dimensions.'
-});
-</script>
-    <script src="js/menu.js"></script>
-    <script src="js/input_help.js"></script>
-    <script src="js/overlay.js"></script>
-
-    <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
-
-    <script src="js/pivot.js?v=20260815-pill-key"></script>
+<body class="ops-body pivot-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main pivot-main flex-1 min-w-0 overflow-x-auto">
+        <section class="pivot-hero" data-no-card aria-labelledby="pivot-hero-title">
+            <div><span class="pivot-eyebrow"><i class="fas fa-table-cells-large" aria-hidden="true"></i> Flexible analysis</span><h2 id="pivot-hero-title">Find where your money is moving</h2><p>Compare segments, categories and tags across months or years. Expand a row for more detail, then select any value to see the transactions behind it.</p></div>
+            <div class="pivot-guide"><span class="pivot-guide__icon" aria-hidden="true"><i class="fas fa-arrow-pointer"></i></span><div><strong>From overview to evidence</strong><p>Rows expand from segment to category to tag. Every amount opens its underlying transactions.</p></div></div>
+        </section>
+        <section class="pivot-controls" data-no-card aria-labelledby="pivot-controls-title">
+            <div class="pivot-controls__intro"><span class="pivot-eyebrow">Analysis scope</span><h2 id="pivot-controls-title">Choose a period</h2><p id="scope-description">Showing all available years, arranged by year.</p></div>
+            <div class="pivot-control"><label for="year-select">Period</label><select id="year-select" data-help="Choose one year for a monthly comparison, or all years for an annual comparison"><option value="all">All recorded years</option></select></div>
+            <button id="refresh" class="pivot-button pivot-button--primary" type="button" aria-label="Refresh pivot analysis"><i class="fas fa-rotate" aria-hidden="true"></i><span>Refresh analysis</span></button>
+            <button id="export" class="pivot-button pivot-button--secondary" type="button" aria-label="Export pivot analysis as CSV" disabled><i class="fas fa-download" aria-hidden="true"></i><span>Export CSV</span></button>
+        </section>
+        <section id="pivot-summary" class="pivot-summary" data-no-card aria-label="Analysis summary" aria-busy="true">
+            <article class="pivot-metric pivot-metric--out"><span class="pivot-metric__icon"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span><div><span>Money out</span><strong id="summary-out">—</strong><small>outgoing activity</small></div></article>
+            <article class="pivot-metric pivot-metric--in"><span class="pivot-metric__icon"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i></span><div><span>Money in</span><strong id="summary-in">—</strong><small>incoming activity</small></div></article>
+            <article id="summary-net-card" class="pivot-metric pivot-metric--net"><span class="pivot-metric__icon"><i class="fas fa-scale-balanced" aria-hidden="true"></i></span><div><span>Net movement</span><strong id="summary-net">—</strong><small>income less outgoings</small></div></article>
+            <article class="pivot-metric"><span class="pivot-metric__icon"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><span>Transactions</span><strong id="summary-count">—</strong><small id="summary-coverage">in selected period</small></div></article>
+        </section>
+        <section id="pivot-state" class="pivot-state is-loading" data-no-card role="status" aria-live="polite"><span class="pivot-state__icon"><i class="fas fa-rotate" aria-hidden="true"></i></span><div><strong id="pivot-state-title">Building your analysis…</strong><p id="pivot-state-message">Organising transactions into a useful financial matrix.</p></div><button id="pivot-retry" type="button" hidden>Try again</button></section>
+        <section id="matrix-card" class="pivot-panel" data-no-card aria-labelledby="matrix-title" hidden>
+            <header class="pivot-panel__header"><div><span class="pivot-eyebrow">Financial matrix</span><h2 id="matrix-title">Segment breakdown</h2><p>Positive values are money in; negative values are money out. Use the chevrons to expand rows.</p></div><span class="pivot-scroll-hint"><i class="fas fa-arrows-left-right" aria-hidden="true"></i> Swipe to see every period</span></header>
+            <div id="pivot-table" class="pivot-table" aria-label="Transaction pivot matrix"></div>
+        </section>
+        <section id="detail-card" class="pivot-panel pivot-detail" data-no-card aria-labelledby="detail-title" hidden>
+            <header class="pivot-panel__header"><div><span class="pivot-eyebrow">Transactions behind the number</span><h2 id="detail-title">Detail</h2><p id="detail-summary"></p></div><button id="detail-close" class="pivot-close" type="button" aria-label="Close transaction detail"><i class="fas fa-times" aria-hidden="true"></i></button></header>
+            <div id="detail-table" class="pivot-table"></div>
+        </section>
+    </main>
+</div>
+<script src="js/page_header.js"></script>
+<script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Pivot Analysis', breadcrumb: 'Reports & Analysis', subtitle: 'Explore the structure behind your income and spending.' });</script>
+<script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
+<script src="vendor/tabulator/6.5.0/tabulator.min.js"></script><script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script><script src="js/pivot.js?v=20260817-pivot-refresh"></script>
 </body>
 </html>
