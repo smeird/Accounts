@@ -495,7 +495,7 @@
         const year = Number(yearSelect.value);
         if (!month || !year) return;
         const selectedDate = new Date(year, month - 1, 1);
-        const title = `Monthly Statement — ${longMonth.format(selectedDate)} ${year}`;
+        const title = `Monthly Activity — ${longMonth.format(selectedDate)} ${year}`;
         window.updatePageHeader(pageMain, { title });
         document.title = title;
         showLoading();

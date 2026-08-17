@@ -1,112 +1,80 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<!-- Navigation menu shared across pages -->
+<!-- Shared navigation: labels describe user goals; URLs remain stable for bookmarks. -->
 <div class="flex items-center space-x-2 mb-4">
-  <img src="/favicon.png" alt="Finance Manager logo" class="h-8 w-8 rounded shadow" />
-  <div class="flex flex-col">
-<span id="site-title" class="text-xl font-semibold text-indigo-700">Personal Finance Manager</span>
-<span id="release-number" class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded mt-1">v0.0.0</span>
-  </div>
+  <img src="/favicon.png" alt="Finance Manager logo" class="h-8 w-8 rounded shadow">
+  <div class="flex flex-col"><span id="site-title" class="text-xl font-semibold text-indigo-700">Personal Finance Manager</span><span id="release-number" class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded mt-1">v0.0.0</span></div>
 </div>
 <form id="sidebar-search-form" class="mb-4" aria-label="Search transactions">
   <label for="sidebar-search" class="sr-only">Search transactions</label>
-  <div class="relative">
-    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-    <input id="sidebar-search" type="search" placeholder="Search" aria-label="Search transactions" class="unstyled w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
-  </div>
+  <div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="sidebar-search" type="search" placeholder="Find a transaction" aria-label="Search transactions" class="unstyled w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"></div>
 </form>
 <div class="space-y-4">
   <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Start Here</h3>
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Overview</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-      <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="index.html"><i class="fas fa-home w-4 text-center text-slate-400"></i> Home</a></li>
-      <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="upload.html"><i class="fas fa-upload w-4 text-center text-slate-400"></i> Upload OFX Files</a></li>
+      <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+      <li><a href="instant.html"><i class="fas fa-bolt"></i> Financial Overview</a></li>
+      <li><a href="account_dashboard.html"><i class="fas fa-wallet"></i> Accounts &amp; Balances</a></li>
+      <li><a href="monthly_statement.html"><i class="fas fa-file-invoice"></i> Monthly Activity</a></li>
     </ul>
   </div>
-
   <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Statements &amp; Transactions</h3>
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Transactions</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="monthly_statement.html"><i class="fas fa-file-invoice w-4 text-center text-slate-400"></i> Monthly Statement</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="report.html"><i class="fas fa-file-lines w-4 text-center text-slate-400"></i> Transaction Reports</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="search.html"><i class="fas fa-search w-4 text-center text-slate-400"></i> Search Transactions</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="transfers.html"><i class="fas fa-right-left w-4 text-center text-slate-400"></i> Transfers</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="ignored.html"><i class="fas fa-eye-slash w-4 text-center text-slate-400"></i> Ignored Transactions</a></li>
+      <li><a href="upload.html"><i class="fas fa-upload"></i> Import Transactions</a></li>
+      <li><a href="search.html"><i class="fas fa-search"></i> Find Transactions</a></li>
+      <li><a href="report.html"><i class="fas fa-file-lines"></i> Transaction Reports</a></li>
+      <li><a href="transfers.html"><i class="fas fa-right-left"></i> Account Transfers</a></li>
+      <li><a href="ignored.html"><i class="fas fa-eye-slash"></i> Excluded Transactions</a></li>
     </ul>
   </div>
-
   <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Dashboards &amp; Graphs</h3>
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Insights</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="instant.html"><i class="fas fa-bolt w-4 text-center text-slate-400"></i> Instant</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="forecast.html"><i class="fas fa-chart-line w-4 text-center text-slate-400"></i> Forecast</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="yearly_dashboard.html"><i class="fas fa-calendar w-4 text-center text-slate-400"></i> Yearly Dashboard</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="financial_trends.html"><i class="fas fa-chart-column w-4 text-center text-slate-400"></i> Financial Trends</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="account_dashboard.html"><i class="fas fa-wallet w-4 text-center text-slate-400"></i> Account Dashboard</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="recurring_spend.html"><i class="fas fa-rotate w-4 text-center text-slate-400"></i> Recurring Spend</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="pivot.html"><i class="fas fa-table w-4 text-center text-slate-400"></i> Pivot Analysis</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="graphs.html"><i class="fas fa-chart-bar w-4 text-center text-slate-400"></i> Graphs</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="ai_feedback.html"><i class="fas fa-comments-dollar w-4 text-center text-slate-400"></i> AI Feedback</a></li>
+      <li><a href="financial_trends.html"><i class="fas fa-chart-column"></i> Trends &amp; Comparisons</a></li>
+      <li><a href="forecast.html"><i class="fas fa-chart-line"></i> 12-Month Forecast</a></li>
+      <li><a href="yearly_dashboard.html"><i class="fas fa-calendar"></i> Year in Review</a></li>
+      <li><a href="recurring_spend.html"><i class="fas fa-rotate"></i> Regular Income &amp; Bills</a></li>
+      <li><a href="graphs.html"><i class="fas fa-chart-pie"></i> Financial Picture</a></li>
+      <li><a href="pivot.html"><i class="fas fa-table-cells-large"></i> Analysis Matrix</a></li>
+      <li><a href="ai_feedback.html"><i class="fas fa-comments-dollar"></i> AI Financial Review</a></li>
     </ul>
   </div>
-
   <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Budgeting</h3>
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Planning</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="budgets.html"><i class="fas fa-piggy-bank w-4 text-center text-slate-400"></i> Budgets</a></li>
+      <li><a href="budgets.html"><i class="fas fa-piggy-bank"></i> Budgets</a></li>
+      <li><a href="projects.html"><i class="fas fa-compass-drafting"></i> Project Portfolio</a></li>
+      <li><a href="projects_board.html"><i class="fas fa-table-columns"></i> Project Board</a></li>
+      <li><a href="project_add.html"><i class="fas fa-plus"></i> New Project</a></li>
+      <li><a href="projects_archived.html"><i class="fas fa-box-archive"></i> Project Archive</a></li>
     </ul>
   </div>
-
   <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Projects</h3>
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Organise</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="project_add.html"><i class="fas fa-plus w-4 text-center text-slate-400"></i> Add Project</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="projects.html"><i class="fas fa-screwdriver-wrench w-4 text-center text-slate-400"></i> View Projects</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="projects_board.html"><i class="fas fa-table-columns w-4 text-center text-slate-400"></i> Project Board</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="projects_archived.html"><i class="fas fa-box-archive w-4 text-center text-slate-400"></i> Archived Projects</a></li>
+      <li><a href="missing_tags.html"><span class="flex items-center gap-2"><i class="fas fa-circle-exclamation"></i> Needs Tagging</span><span id="missing-tags-count" class="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-2 hidden"></span></a></li>
+      <li><a href="tags.html"><i class="fas fa-tags"></i> Tags</a></li>
+      <li><a href="categories.html"><i class="fas fa-folder-open"></i> Categories</a></li>
+      <li><a href="segments.html"><i class="fas fa-chart-pie"></i> Segments</a></li>
+      <li><a href="groups.html"><i class="fas fa-layer-group"></i> Groups</a></li>
+      <li><a href="tag_aliases.html"><i class="fas fa-link"></i> Tag Rules</a></li>
+      <li><a href="ai_tags.html"><i class="fas fa-wand-magic-sparkles"></i> Smart Tagging</a></li>
     </ul>
   </div>
-
   <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Organise Data</h3>
+    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">System</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="tags.html"><i class="fas fa-tags w-4 text-center text-slate-400"></i> Manage Tags</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="tag_aliases.html"><i class="fas fa-link w-4 text-center text-slate-400"></i> Tag Aliases</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="ai_tags.html"><i class="fas fa-robot w-4 text-center text-slate-400"></i> AI Tags</a></li>
-        <li>
-          <a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="missing_tags.html">
-            <span class="flex items-center gap-2"><i class="fas fa-question-circle w-4 text-center text-slate-400"></i> Missing Tags</span>
-            <span id="missing-tags-count" class="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-2 hidden"></span>
-          </a>
-        </li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="categories.html"><i class="fas fa-folder-open w-4 text-center text-slate-400"></i> Manage Categories</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="groups.html"><i class="fas fa-layer-group w-4 text-center text-slate-400"></i> Manage Groups</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="segments.html"><i class="fas fa-chart-pie w-4 text-center text-slate-400"></i> Manage Segments</a></li>
-      </ul>
-  </div>
-
-  <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Export</h3>
-    <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-      <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="export.html"><i class="fas fa-file-export w-4 text-center text-slate-400"></i> Export Data</a></li>
-    </ul>
-  </div>
-
-  <div class="group">
-    <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Admin Tools</h3>
-    <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="processes.html"><i class="fas fa-gears w-4 text-center text-slate-400"></i> Run Processes</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="logs.html"><i class="fas fa-scroll w-4 text-center text-slate-400"></i> View Logs</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="dedupe.html"><i class="fas fa-clone w-4 text-center text-slate-400"></i> Remove Duplicates</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="backup.html"><i class="fas fa-database w-4 text-center text-slate-400"></i> Backup &amp; Restore</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="database_health.html"><i class="fas fa-heart-pulse w-4 text-center text-slate-400"></i> Database Health</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="../settings.php"><i class="fas fa-cog w-4 text-center text-slate-400"></i> System Settings</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="../users.php"><i class="fas fa-users w-4 text-center text-slate-400"></i> Manage Users</a></li>
-        <li><a class="flex items-center gap-2 border-l-2 border-transparent px-3 py-2 rounded-md text-sm font-normal text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors duration-150" href="../logout.php"><i class="fas fa-right-from-bracket w-4 text-center text-slate-400"></i> Logout</a></li>
+      <li><a href="processes.html"><i class="fas fa-gears"></i> Automation Centre</a></li>
+      <li><a href="export.html"><i class="fas fa-file-export"></i> Export Data</a></li>
+      <li><a href="dedupe.html"><i class="fas fa-clone"></i> Duplicate Check</a></li>
+      <li><a href="backup.html"><i class="fas fa-database"></i> Backup &amp; Restore</a></li>
+      <li><a href="database_health.html"><i class="fas fa-heart-pulse"></i> Database Health</a></li>
+      <li><a href="logs.html"><i class="fas fa-scroll"></i> System Log</a></li>
+      <li><a href="../settings.php"><i class="fas fa-sliders"></i> Settings</a></li>
+      <li><a href="../users.php"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Sign Out</a></li>
     </ul>
   </div>
 </div>
-
-<div id="user-info" class="flex items-center mt-auto pt-4 border-t border-slate-200 text-sm text-slate-600">
-  <i id="user-icon" class="fas fa-user w-4 text-center text-slate-400 mr-2"></i>
-  <span id="current-user">&nbsp;</span>
-</div>
+<div id="user-info" class="flex items-center mt-auto pt-4 border-t border-slate-200 text-sm text-slate-600"><i id="user-icon" class="fas fa-user w-4 text-center text-slate-400 mr-2"></i><span id="current-user">&nbsp;</span></div>

@@ -91,3 +91,4 @@
 - Use `frontend/js/overlay.js` and `window.showMessage()` for transient site notifications; do not introduce page-specific toast implementations. The shared notification supports success, error, warning, info, and loading tones.
 - Recurring Spend loads its read-only analysis automatically, describes its detection rules, separates trailing twelve-month totals from next-month estimates, and links each detected pattern to its transaction history.
 - Pivot Analysis loads automatically, excludes internal transfers, presents income, outgoings and net movement before its expandable segment/category/tag matrix, and opens transaction evidence from every amount cell.
+- Sidebar information architecture is task-led and uses six stable groups: Overview, Transactions, Insights, Planning, Organise, and System. Navigation labels describe user goals while existing page URLs remain unchanged for bookmarks.

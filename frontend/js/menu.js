@@ -370,7 +370,15 @@ const attachSidebarSearchHandler = (root = document) => {
             list.id = listId;
             list.classList.add('site-menu-list');
             list.style.maxHeight = '0px';
-            button.addEventListener('click', () => setSectionExpanded(section, button.getAttribute('aria-expanded') !== 'true'));
+            button.addEventListener('click', () => {
+              const shouldExpand = button.getAttribute('aria-expanded') !== 'true';
+              if (shouldExpand) {
+                menu.querySelectorAll('.site-menu-group').forEach(otherSection => {
+                  if (otherSection !== section) setSectionExpanded(otherSection, false);
+                });
+              }
+              setSectionExpanded(section, shouldExpand);
+            });
           }
         });
 
