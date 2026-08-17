@@ -1,107 +1,132 @@
 <!DOCTYPE html>
-<!-- Page to run recurring spend detection over the past year -->
+<!-- Recurring income and outgoing analysis over the latest twelve months. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Recurring Spend Detection</title>
+    <title>Recurring Spend</title>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
-
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
-
+    <link rel="stylesheet" href="recurring_spend.css?v=20260817-recurring-refresh">
 </head>
-<body class="ops-body">
+<body class="ops-body recurring-spend-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Run an analysis of the last 12 months to find subscriptions and other repeat expenses. The results highlight ongoing commitments so you know where money leaves your account regularly.</p>
-            <button id="run-analysis" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4"><i class="fas fa-chart-line inline w-4 h-4 mr-2"></i>Run Analysis</button>
-            <h2 class="text-xl font-semibold mt-6 mb-2">Recurring Outgoings</h2>
-            <div id="outgoing-grid"></div>
-            <p id="outgoing-total" class="mt-2 text-right"></p>
-            <p id="outgoing-next" class="text-right"></p>
+        <main class="ops-main recurring-main flex-1 min-w-0 overflow-x-auto">
+            <section class="recurring-hero" data-no-card aria-labelledby="recurring-hero-title">
+                <div class="recurring-hero__copy">
+                    <span class="recurring-eyebrow"><i class="fas fa-arrows-rotate" aria-hidden="true"></i> 12-month pattern</span>
+                    <h2 id="recurring-hero-title">See the money already spoken for</h2>
+                    <p>Turn repeat transactions into a practical monthly baseline, so regular commitments and dependable income are visible before you plan.</p>
+                    <div class="recurring-hero__actions">
+                        <button id="run-analysis" type="button" aria-label="Refresh recurring transaction analysis">
+                            <i class="fas fa-rotate" aria-hidden="true"></i><span>Refresh analysis</span>
+                        </button>
+                        <span id="analysis-updated" class="recurring-updated" aria-live="polite">Preparing analysis…</span>
+                    </div>
+                </div>
+                <div class="recurring-method" aria-label="Detection method">
+                    <span class="recurring-method__icon" aria-hidden="true"><i class="fas fa-wave-square"></i></span>
+                    <div><strong>Active repeat patterns</strong><p>Two or more matching transactions in the last year, with activity in the latest 40 days.</p></div>
+                    <span class="recurring-method__badge">Transfers excluded</span>
+                </div>
+            </section>
 
-            <h2 class="text-xl font-semibold mt-6 mb-2">Recurring Income</h2>
-            <div id="income-grid"></div>
-            <p id="income-total" class="mt-2 text-right"></p>
-            <p id="income-next" class="text-right"></p>
+            <section id="recurring-summary" class="recurring-summary" data-no-card aria-label="Recurring financial summary" aria-busy="true">
+                <article class="recurring-metric recurring-metric--outgoing">
+                    <span class="recurring-metric__icon" aria-hidden="true"><i class="fas fa-arrow-trend-down"></i></span>
+                    <div><span>Expected outgoings</span><strong id="summary-outgoings">—</strong><small>next month</small></div>
+                </article>
+                <article class="recurring-metric recurring-metric--income">
+                    <span class="recurring-metric__icon" aria-hidden="true"><i class="fas fa-arrow-trend-up"></i></span>
+                    <div><span>Expected income</span><strong id="summary-income">—</strong><small>next month</small></div>
+                </article>
+                <article id="summary-net-card" class="recurring-metric recurring-metric--net">
+                    <span class="recurring-metric__icon" aria-hidden="true"><i class="fas fa-scale-balanced"></i></span>
+                    <div><span>Recurring cash flow</span><strong id="summary-net">—</strong><small>income less commitments</small></div>
+                </article>
+                <article class="recurring-metric recurring-metric--patterns">
+                    <span class="recurring-metric__icon" aria-hidden="true"><i class="fas fa-repeat"></i></span>
+                    <div><span>Active patterns</span><strong id="summary-patterns">—</strong><small id="summary-patterns-detail">across income and outgoings</small></div>
+                </article>
+            </section>
+
+            <section id="recurring-state" class="recurring-state is-loading" data-no-card role="status" aria-live="polite">
+                <span class="recurring-state__icon" aria-hidden="true"><i class="fas fa-arrows-rotate"></i></span>
+                <div><strong id="recurring-state-title">Analysing repeat transactions…</strong><p id="recurring-state-message">Reviewing the latest twelve months and excluding account transfers.</p></div>
+                <button id="recurring-retry" type="button" aria-label="Retry recurring transaction analysis" hidden>Try again</button>
+            </section>
+
+            <div id="recurring-results" class="recurring-results" hidden>
+                <section class="recurring-panel recurring-panel--outgoing" data-no-card aria-labelledby="outgoing-title">
+                    <header class="recurring-panel__header">
+                        <span class="recurring-panel__icon" aria-hidden="true"><i class="fas fa-receipt"></i></span>
+                        <div>
+                            <span class="recurring-eyebrow">Regular commitments</span>
+                            <h2 id="outgoing-title">Recurring outgoings <span id="outgoing-count">0</span></h2>
+                            <p>Likely subscriptions, bills and other repeated payments. Open any item to review its transaction history.</p>
+                        </div>
+                        <div class="recurring-panel__totals">
+                            <span><small>Last 12 months</small><strong id="outgoing-total">£0.00</strong></span>
+                            <span><small>Next month estimate</small><strong id="outgoing-next">£0.00</strong></span>
+                        </div>
+                    </header>
+                    <div id="outgoing-grid" class="recurring-table"></div>
+                    <div id="outgoing-empty" class="recurring-empty" hidden>
+                        <i class="fas fa-circle-check" aria-hidden="true"></i><strong>No active recurring outgoings found</strong><p>No repeated expense pattern currently meets the detection rules.</p>
+                    </div>
+                </section>
+
+                <section class="recurring-panel recurring-panel--income" data-no-card aria-labelledby="income-title">
+                    <header class="recurring-panel__header">
+                        <span class="recurring-panel__icon" aria-hidden="true"><i class="fas fa-coins"></i></span>
+                        <div>
+                            <span class="recurring-eyebrow">Reliable inflows</span>
+                            <h2 id="income-title">Recurring income <span id="income-count">0</span></h2>
+                            <p>Repeated incoming payments that can help establish a realistic monthly baseline.</p>
+                        </div>
+                        <div class="recurring-panel__totals">
+                            <span><small>Last 12 months</small><strong id="income-total">£0.00</strong></span>
+                            <span><small>Next month estimate</small><strong id="income-next">£0.00</strong></span>
+                        </div>
+                    </header>
+                    <div id="income-grid" class="recurring-table"></div>
+                    <div id="income-empty" class="recurring-empty" hidden>
+                        <i class="fas fa-magnifying-glass-chart" aria-hidden="true"></i><strong>No active recurring income found</strong><p>No repeated income pattern currently meets the detection rules.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="recurring-notes" data-no-card aria-labelledby="recurring-notes-title">
+                <div><span class="recurring-eyebrow">Reading the analysis</span><h2 id="recurring-notes-title">Useful context</h2></div>
+                <ul>
+                    <li><i class="fas fa-calendar-day" aria-hidden="true"></i><span><strong>Timing is approximate</strong>Transactions are matched by description and day of month.</span></li>
+                    <li><i class="fas fa-calculator" aria-hidden="true"></i><span><strong>Next month uses the latest amount</strong>This reacts faster when a bill has recently changed.</span></li>
+                    <li><i class="fas fa-ban" aria-hidden="true"></i><span><strong>Internal transfers are excluded</strong>Moving money between your accounts is not treated as spend or income.</span></li>
+                </ul>
+            </section>
         </main>
     </div>
+
     <script src="js/page_header.js"></script>
     <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Recurring Spend Detection',
-    breadcrumb: 'Reports & Analysis',
-    subtitle: 'Identify recurring expenses and understand repeated spending commitments.'
-});
-</script>
+        const pageMain = document.querySelector('main.ops-main');
+        window.renderPageHeader(pageMain, {
+            title: 'Recurring Spend',
+            breadcrumb: 'Reports & Analysis',
+            subtitle: 'Understand the repeated payments and income shaping your monthly financial baseline.'
+        });
+    </script>
     <script src="js/menu.js"></script>
     <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
-    <script>
-    function formatCurrency(value){
-        return '£' + parseFloat(value).toFixed(2);
-    }
-    document.getElementById('run-analysis').addEventListener('click', () => {
-        fetch('../php_backend/public/recurring_spend.php')
-            .then(resp => resp.json())
-            .then(data => {
-                const outEl = document.getElementById('outgoing-grid');
-                const inEl = document.getElementById('income-grid');
-                outEl.innerHTML = '';
-                inEl.innerHTML = '';
-
-                if(data.outgoings && data.outgoings.results.length){
-                    tailwindTabulator(outEl, {
-                        data: data.outgoings.results,
-                        layout: 'fitDataStretch',
-                        columns: [
-                            { title: 'Description', field: 'description' },
-                            { title: 'Day', field: 'day', hozAlign: 'right' },
-                            { title: 'Occurrences', field: 'occurrences', hozAlign: 'right' },
-                            { title: 'Avg Amount', field: 'average', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } },
-                            { title: 'Yearly Total', field: 'total', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } }
-                        ]
-                    });
-                    document.getElementById('outgoing-total').textContent = 'Yearly total: ' + formatCurrency(data.outgoings.total);
-                    document.getElementById('outgoing-next').textContent = 'Next month estimate: ' + formatCurrency(data.outgoings.next_month);
-                } else {
-                    outEl.innerHTML = 'No recurring outgoings found.';
-                    document.getElementById('outgoing-total').textContent = '';
-                    document.getElementById('outgoing-next').textContent = '';
-                }
-
-                if(data.income && data.income.results.length){
-                    tailwindTabulator(inEl, {
-                        data: data.income.results,
-                        layout: 'fitDataStretch',
-                        columns: [
-                            { title: 'Description', field: 'description' },
-                            { title: 'Day', field: 'day', hozAlign: 'right' },
-                            { title: 'Occurrences', field: 'occurrences', hozAlign: 'right' },
-                            { title: 'Avg Amount', field: 'average', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } },
-                            { title: 'Yearly Total', field: 'total', hozAlign: 'right', formatter: 'money', formatterParams: { symbol: '£', precision: 2 } }
-                        ]
-                    });
-                    document.getElementById('income-total').textContent = 'Yearly total: ' + formatCurrency(data.income.total);
-                    document.getElementById('income-next').textContent = 'Next month estimate: ' + formatCurrency(data.income.next_month);
-                } else {
-                    inEl.innerHTML = 'No recurring income found.';
-                    document.getElementById('income-total').textContent = '';
-                    document.getElementById('income-next').textContent = '';
-                }
-            });
-    });
-    </script>
     <script src="js/overlay.js"></script>
+    <script src="js/recurring_spend.js?v=20260817-recurring-refresh"></script>
 </body>
 </html>
