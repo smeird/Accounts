@@ -29,11 +29,22 @@
     const style = document.createElement('style');
     style.id = 'font-overrides';
     style.textContent = `
-      body { font-family: var(--body-font, inherit); }
-      button, input, select, textarea { font-family: inherit; }
-      h1, h2, h3, h4, h5, h6 { font-family: var(--heading-font, inherit); }
-      table, table *, .tabulator, .tabulator * { font-family: var(--table-font, inherit); }
-      .accent { font-family: var(--accent-font, inherit); }
+      :root[data-body-font] body { font-family: var(--body-font); }
+      :root[data-body-font] button,
+      :root[data-body-font] input,
+      :root[data-body-font] select,
+      :root[data-body-font] textarea { font-family: inherit; }
+      :root[data-heading-font] h1,
+      :root[data-heading-font] h2,
+      :root[data-heading-font] h3,
+      :root[data-heading-font] h4,
+      :root[data-heading-font] h5,
+      :root[data-heading-font] h6 { font-family: var(--heading-font); }
+      :root[data-table-font] table,
+      :root[data-table-font] table *,
+      :root[data-table-font] .tabulator,
+      :root[data-table-font] .tabulator * { font-family: var(--table-font); }
+      :root[data-table-font] .accent { font-family: var(--accent-font); }
       :root[data-accent-font-weight] .accent,
       :root[data-accent-font-weight] .page-title,
       :root[data-accent-font-weight] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
@@ -49,6 +60,11 @@
   function setOrRemove(root, property, value) {
     if (value) root.style.setProperty(property, value);
     else root.style.removeProperty(property);
+  }
+
+  function setDataFlag(root, name, value) {
+    if (value) root.dataset[name] = value;
+    else delete root.dataset[name];
   }
 
   window.applyFonts = function(opts){
@@ -69,6 +85,9 @@
     setOrRemove(root, '--tabulator-font-family', table);
     setOrRemove(root, '--tabulator-header-font-family', table);
     setOrRemove(root, '--chart-font', chart);
+    setDataFlag(root, 'headingFont', heading);
+    setDataFlag(root, 'bodyFont', body);
+    setDataFlag(root, 'tableFont', table);
     if (accentW) {
       root.style.setProperty('--accent-font-weight', accentW);
       root.dataset.accentFontWeight = accentW;
