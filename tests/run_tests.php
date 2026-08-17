@@ -902,6 +902,18 @@ foreach (glob(__DIR__ . '/../frontend/*.html') as $staticPage) {
 }
 assertEqual([], $staticPagesMissingCacheMeta, 'Every static page includes a cache-control fallback');
 
+$navigationMarkup = (string)file_get_contents(__DIR__ . '/../frontend/menu.php');
+preg_match_all('/href="([a-z0-9_\-]+\.html)"/i', $navigationMarkup, $navigationMatches);
+$navigationPagesMissingModernHeader = [];
+foreach (array_unique($navigationMatches[1] ?? []) as $navigationPage) {
+    if ($navigationPage === 'index.html') continue; // The landing page has its own hero system.
+    $pageMarkup = (string)file_get_contents(__DIR__ . '/../frontend/' . $navigationPage);
+    if (strpos($pageMarkup, 'renderPageHeader') === false) {
+        $navigationPagesMissingModernHeader[] = $navigationPage;
+    }
+}
+assertEqual([], $navigationPagesMissingModernHeader, 'Every active navigation page uses the modern page header');
+
 // Output results and set exit code
 $failed = false;
 foreach ($results as $line) {

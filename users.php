@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css">
+    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260817-completeness-audit">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
       <!-- Font Awesome icons loaded via frontend/js/menu.js -->
@@ -91,38 +92,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
       </style>
 </head>
-<body class="ops-body" data-api-base="php_backend/public">
+<body class="ops-body admin-refresh-page" data-api-base="php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <section class="max-w-2xl mx-auto">
+            <section class="max-w-2xl mx-auto admin-shell">
         <header class="page-header">
             <div>
                 <h1 class="text-2xl font-semibold text-indigo-700 page-title">User Management</h1>
+                <span class="page-breadcrumb">System / Users</span>
                 <p class="page-subtitle">Add new users, update your password, or manage two-factor authentication from this page.</p>
             </div>
         </header>
-        <div class="cards cards-solid border border-gray-400">
+        <div class="cards cards-solid border border-gray-400 admin-card user-admin-card">
         <?php if ($message): ?>
             <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
 
-        <h2 class="text-xl font-semibold mt-6 mb-2">Add User</h2>
+        <section class="admin-form-section"><h2 class="text-xl font-semibold mb-2">Add a user</h2>
+        <p class="mb-4 text-slate-600">Create a separate sign-in for another person.</p>
         <form method="post" class="space-y-4 mb-6">
             <input type="hidden" name="action" value="add">
             <label class="block">Username: <input type="text" name="username" class="border p-2 rounded w-full" data-help="Choose a username"></label>
             <label class="block">Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Set a password"></label>
             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Add User</button>
-        </form>
+        </form></section>
 
-        <h2 class="text-xl font-semibold mt-6 mb-2">Update Password</h2>
+        <section class="admin-form-section"><h2 class="text-xl font-semibold mb-2">Change your password</h2>
+        <p class="mb-4 text-slate-600">This updates the password for the account currently signed in.</p>
         <form method="post" class="space-y-4 mb-6">
             <input type="hidden" name="action" value="update">
             <label class="block">New Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Enter your new password"></label>
             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Update Password</button>
-        </form>
+        </form></section>
 
-        <h2 class="text-xl font-semibold mt-6 mb-2">Two-Factor Authentication</h2>
+        <section class="admin-form-section"><h2 class="text-xl font-semibold mb-2">Two-factor authentication</h2>
         <p class="mb-4"><?= $has2fa ? '2FA is enabled for your account.' : '2FA is not enabled. Generate a secret to enable it.' ?></p>
         <div class="cards cards-solid cards-tight border border-gray-400 space-y-4 mb-6">
             <form id="generate-form" class="space-y-4">
@@ -141,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </form>
         </div>
+        </section>
         </div>
             </section>
         </main>

@@ -13,17 +13,31 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="utility_refresh.css?v=20260817-completeness-audit">
     <!-- Font Awesome icons loaded via menu.js -->
 </head>
-<body class="ops-body">
+<body class="ops-body utility-refresh-page ai-review-page">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-    <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<section>
-            <button id="run" class="bg-indigo-600 text-white px-4 py-2 rounded">
-                <i class="fas fa-comments-dollar inline w-4 h-4 mr-1"></i>Generate Feedback
-            </button>
-            <div id="result" class="mt-4"></div>
+    <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+        <section class="utility-panel utility-review-intro" data-no-card aria-labelledby="review-intro-title">
+            <div>
+                <span class="utility-panel__step">On-demand review</span>
+                <h2 id="review-intro-title">A second opinion on your financial year</h2>
+                <p>The review summarises the latest twelve months, identifies meaningful patterns and turns them into a short set of practical next actions.</p>
+                <button id="run" type="button" class="bg-indigo-600 text-white px-4 py-2 rounded mt-4">
+                    <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>Generate my review</span>
+                </button>
+            </div>
+            <div class="utility-review-points" aria-label="Review contents">
+                <span><i class="fas fa-chart-line" aria-hidden="true"></i> Income, spending and cash-flow patterns</span>
+                <span><i class="fas fa-lightbulb" aria-hidden="true"></i> Notable strengths and pressure points</span>
+                <span><i class="fas fa-list-check" aria-hidden="true"></i> Prioritised actions you can take next</span>
+            </div>
+        </section>
+        <section id="result-panel" class="utility-panel" data-no-card aria-labelledby="review-result-title">
+            <div class="utility-panel__header"><span class="utility-panel__icon" aria-hidden="true"><i class="fas fa-comments-dollar"></i></span><div><span class="utility-panel__step">Your analysis</span><h2 id="review-result-title">Financial review</h2><p>Generated only when you request it. Results are not used to change transactions or settings.</p></div></div>
+            <div id="result" class="utility-status" role="status" aria-live="polite"><i class="fas fa-circle-info" aria-hidden="true"></i><div><strong>Ready when you are</strong><p>Generate a review to see a concise assessment here.</p></div></div>
             <div id="debug" class="mt-4 hidden">
                 <div class="cards cards-tight space-y-3">
                     <h3 class="font-semibold text-gray-700 mb-2">AI Debug</h3>
@@ -48,78 +62,6 @@ window.renderPageHeader(pageMain, {
     <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script src="js/overlay.js"></script>
-<script>
-function escapeHtml(str){
-    const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'};
-    map["'"]='&#39;';
-    return str.replace(/[&<>"']/g,c=>map[c]);
-}
-
-function renderFeedback(data){
-    const highlights = data.highlights.map(h=>`<li>${escapeHtml(h)}</li>`).join('');
-    const actions = data.actions.map(a=>`<li>${escapeHtml(a)}</li>`).join('');
-    return `
-        <div class="cards cards-tight space-y-4">
-            <p>${escapeHtml(data.summary)}</p>
-            <div>
-                <h3 class="font-semibold">Highlights</h3>
-                <ul class="list-disc ml-5">${highlights}</ul>
-            </div>
-            <div>
-                <h3 class="font-semibold">Recommended Actions</h3>
-                <ul class="list-disc ml-5">${actions}</ul>
-            </div>
-        </div>`;
-}
-
-document.getElementById('run').addEventListener('click', async () => {
-    const result = document.getElementById('result');
-    const debugContainer = document.getElementById('debug');
-    const debugReq = document.getElementById('debug-request');
-    const debugRes = document.getElementById('debug-response');
-    const btn = document.getElementById('run');
-    btn.disabled = true;
-    btn.classList.add('opacity-50', 'cursor-not-allowed');
-    result.innerHTML = '<i class="fas fa-spinner fa-spin inline w-4 h-4 mr-2"></i>Requesting analysis...';
-    try {
-        const res = await fetch('../php_backend/public/ai_feedback.php', {method: 'POST'});
-        const data = await res.json();
-        if (data.error) {
-            result.textContent = data.error;
-            showMessage('AI feedback failed', 'error');
-        } else {
-            result.innerHTML = renderFeedback(data);
-            showMessage('AI feedback ready');
-        }
-        if (data.debug) {
-            debugReq.textContent = data.debug.prompt;
-            const resp = typeof data.debug.response === 'string' ? data.debug.response : JSON.stringify(data.debug.response, null, 2);
-            debugRes.textContent = resp;
-            debugContainer.classList.remove('hidden');
-        } else {
-            debugContainer.classList.add('hidden');
-        }
-    } catch (e) {
-        result.textContent = 'Request failed';
-        showMessage('AI feedback failed', 'error');
-        debugContainer.classList.add('hidden');
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
-});
-
-async function initDebug(){
-    try{
-        const res=await fetch('../php_backend/public/ai_debug.php');
-        const data=await res.json();
-        if(data.debug){
-            document.getElementById('debug').classList.remove('hidden');
-        }
-    }catch(e){}
-}
-
-initDebug();
-</script>
+<script src="js/ai_feedback.js?v=20260817-completeness-audit"></script>
 </body>
 </html>

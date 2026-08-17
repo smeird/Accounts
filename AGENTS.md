@@ -93,3 +93,4 @@
 - Pivot Analysis loads automatically, excludes internal transfers, presents income, outgoings and net movement before its expandable segment/category/tag matrix, and opens transaction evidence from every amount cell.
 - Sidebar information architecture is task-led and uses six stable groups: Overview, Transactions, Insights, Planning, Organise, and System. Navigation labels describe user goals while existing page URLs remain unchanged for bookmarks.
 - Apache serves frontend HTML/PHP with `no-store` and revalidates local CSS/JavaScript/JSON on every request; keep `frontend/.htaccess` and the static-page cache-policy regression checks intact when adding assets or pages.
+- Active sidebar destinations must use the modern page header or an explicitly specialist page system. Security, account-detail, AI-review, and root administration refinements share `frontend/utility_refresh.css` rather than adding isolated legacy styling.
