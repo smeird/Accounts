@@ -36,6 +36,7 @@
                     <label class="block"><input type="checkbox" name="parts" value="projects" class="mr-2">Projects</label>
                     <label class="block"><input type="checkbox" name="parts" value="budgets" class="mr-2">Budgets</label>
                     <label class="block"><input type="checkbox" name="parts" value="settings" class="mr-2">Settings</label>
+                    <label class="block"><input type="checkbox" name="parts" value="reports" class="mr-2">Saved reports</label>
 
                 </div>
                 <button id="download-backup" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-download inline w-4 h-4 mr-2"></i>Download Backup</button>
@@ -44,7 +45,7 @@
             </section>
             <section class="cards space-y-4">
                 <h2 class="text-xl font-semibold">Restore Backup</h2>
-                <p>Select a gzipped JSON backup file to restore any included transactions, categories, tags (including tag aliases), groups, segments, projects, budgets, or settings.</p>
+                <p>Select a gzipped JSON backup file to restore its included data. The archive is validated first and the restore is committed only when every row and relationship succeeds.</p>
                 <form id="restore-form" action="../php_backend/public/restore.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="file" id="backup-file" name="backup_file" accept="application/gzip,application/json" required data-help="Choose a previously downloaded compressed backup file">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-upload inline w-4 h-4 mr-2"></i>Restore</button>

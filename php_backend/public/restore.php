@@ -9,6 +9,9 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Tag.php';
 
+$db = null;
+$foreignKeysDisabled = false;
+
 try {
     if (!isset($_FILES['backup_file'])) {
         http_response_code(400);
@@ -77,26 +80,62 @@ try {
         exit;
     }
 
+    foreach ($data as $section => $rows) {
+        if ($section !== '_meta' && !is_array($rows)) {
+            throw new InvalidArgumentException('Invalid backup section: ' . $section);
+        }
+    }
+    if (isset($data['_meta'])) {
+        if (($data['_meta']['format'] ?? '') !== 'newaccounts-backup'
+            || (int)($data['_meta']['version'] ?? 0) > 2) {
+            throw new InvalidArgumentException('Unsupported backup format or version.');
+        }
+        foreach (($data['_meta']['counts'] ?? []) as $section => $expected) {
+            if (!isset($data[$section]) || count($data[$section]) !== (int)$expected) {
+                throw new InvalidArgumentException('Backup row-count validation failed for ' . $section . '.');
+            }
+        }
+    }
+
     $db = Database::getConnection();
-    $db->exec('SET FOREIGN_KEY_CHECKS=0');
-    if (isset($data['category_tags'])) $db->exec('TRUNCATE TABLE category_tags');
-    if (isset($data['transactions'])) $db->exec('TRUNCATE TABLE transactions');
-    if (isset($data['tag_aliases'])) $db->exec('TRUNCATE TABLE tag_aliases');
-    if (isset($data['tags'])) $db->exec('TRUNCATE TABLE tags');
-    if (isset($data['categories'])) $db->exec('TRUNCATE TABLE categories');
-    if (isset($data['segments'])) $db->exec('TRUNCATE TABLE segments');
-    if (isset($data['groups'])) $db->exec('TRUNCATE TABLE transaction_groups');
-    if (isset($data['projects'])) $db->exec('TRUNCATE TABLE projects');
-    if (isset($data['budgets'])) $db->exec('TRUNCATE TABLE budgets');
-    if (isset($data['settings'])) $db->exec('TRUNCATE TABLE settings');
-    if (isset($data['accounts'])) $db->exec('TRUNCATE TABLE accounts');
-    if (isset($data['users'])) $db->exec('TRUNCATE TABLE users');
-    $db->exec('SET FOREIGN_KEY_CHECKS=1');
+    $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    if ($driver === 'mysql') {
+        $db->exec('SET FOREIGN_KEY_CHECKS=0');
+        $foreignKeysDisabled = true;
+    }
+    $db->beginTransaction();
+    if ($driver === 'sqlite') $db->exec('PRAGMA defer_foreign_keys = ON');
+    if (isset($data['category_tags'])) $db->exec('DELETE FROM category_tags');
+    if (isset($data['segment_categories'])) $db->exec('DELETE FROM segment_categories');
+    if (isset($data['transactions'])) $db->exec('DELETE FROM transactions');
+    if (isset($data['tag_aliases'])) $db->exec('DELETE FROM tag_aliases');
+    if (isset($data['projects'])) $db->exec('DELETE FROM projects');
+    if (isset($data['budgets'])) $db->exec('DELETE FROM budgets');
+    if (isset($data['saved_reports'])) $db->exec('DELETE FROM saved_reports');
+    if (isset($data['tags'])) $db->exec('DELETE FROM tags');
+    if (isset($data['categories'])) $db->exec('DELETE FROM categories');
+    if (isset($data['segments'])) $db->exec('DELETE FROM segments');
+    if (isset($data['groups'])) $db->exec('DELETE FROM transaction_groups');
+    if (isset($data['settings'])) $db->exec('DELETE FROM settings');
+    if (isset($data['totp_secrets'])) $db->exec('DELETE FROM totp_secrets');
+    if (isset($data['accounts'])) $db->exec('DELETE FROM accounts');
+    if (isset($data['users'])) $db->exec('DELETE FROM users');
 
     if (isset($data['users'])) {
         $stmtUser = $db->prepare('INSERT INTO users (id, username, password) VALUES (:id, :username, :password)');
         foreach ($data['users'] as $row) {
             $stmtUser->execute(['id' => $row['id'], 'username' => $row['username'], 'password' => $row['password']]);
+        }
+    }
+
+    if (isset($data['totp_secrets'])) {
+        $stmtTotp = $db->prepare('INSERT INTO totp_secrets (username, secret, created_at) VALUES (:username, :secret, :created_at)');
+        foreach ($data['totp_secrets'] as $row) {
+            $stmtTotp->execute([
+                'username' => $row['username'],
+                'secret' => $row['secret'],
+                'created_at' => $row['created_at'] ?? null,
+            ]);
         }
     }
 
@@ -124,28 +163,28 @@ try {
     }
 
     // Import segments first so categories can reference them
-    $segmentMap = [];
     if (isset($data['segments'])) {
-        $stmtSeg = $db->prepare('INSERT INTO segments (name, description) VALUES (:name, :description)');
+        $stmtSeg = $db->prepare('INSERT INTO segments (id, name, description, created_at, updated_at) VALUES (:id, :name, :description, :created_at, :updated_at)');
         foreach ($data['segments'] as $row) {
-            $stmtSeg->execute(['name' => $row['name'], 'description' => $row['description'] ?? null]);
-            $segmentMap[$row['id']] = (int)$db->lastInsertId();
+            $stmtSeg->execute([
+                'id' => $row['id'], 'name' => $row['name'],
+                'description' => $row['description'] ?? null,
+                'created_at' => $row['created_at'] ?? null,
+                'updated_at' => $row['updated_at'] ?? null,
+            ]);
         }
     }
 
     if (isset($data['categories'])) {
-        $stmtCat = $db->prepare('INSERT INTO categories (id, segment_id, name, description) VALUES (:id, :segment_id, :name, :description)');
+        $stmtCat = $db->prepare('INSERT INTO categories (id, segment_id, name, description, created_at, updated_at) VALUES (:id, :segment_id, :name, :description, :created_at, :updated_at)');
         foreach ($data['categories'] as $row) {
-            $segmentId = null;
-            if (isset($row['segment_id'])) {
-                $oldSeg = $row['segment_id'];
-                $segmentId = $segmentMap[$oldSeg] ?? null;
-            }
             $stmtCat->execute([
                 'id' => $row['id'],
-                'segment_id' => $segmentId,
+                'segment_id' => $row['segment_id'] ?? null,
                 'name' => $row['name'],
-                'description' => $row['description'] ?? null
+                'description' => $row['description'] ?? null,
+                'created_at' => $row['created_at'] ?? null,
+                'updated_at' => $row['updated_at'] ?? null,
             ]);
         }
     }
@@ -174,7 +213,7 @@ try {
     }
 
     if (isset($data['tag_aliases'])) {
-        $stmtAlias = $db->prepare('INSERT IGNORE INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :created_at, :updated_at)');
+        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :created_at, :updated_at)');
         foreach ($data['tag_aliases'] as $row) {
             $alias = trim((string)($row['alias'] ?? ''));
             if ($alias === '') {
@@ -239,9 +278,10 @@ try {
     }
 
     if (isset($data['budgets'])) {
-        $stmtBud = $db->prepare('INSERT INTO budgets (category_id, month, year, amount) VALUES (:category_id, :month, :year, :amount)');
+        $stmtBud = $db->prepare('INSERT INTO budgets (id, category_id, month, year, amount) VALUES (:id, :category_id, :month, :year, :amount)');
         foreach ($data['budgets'] as $row) {
             $stmtBud->execute([
+                'id' => $row['id'] ?? null,
                 'category_id' => $row['category_id'],
                 'month' => $row['month'],
                 'year' => $row['year'],
@@ -251,7 +291,7 @@ try {
     }
 
     if (isset($data['transactions'])) {
-        $stmtTx = $db->prepare('INSERT IGNORE INTO transactions (id, account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id, ofx_id, ofx_type, bank_ofx_id) VALUES (:id, :account_id, :date, :amount, :description, :memo, :category_id, :segment_id, :tag_id, :group_id, :transfer_id, :ofx_id, :ofx_type, :bank_ofx_id)');
+        $stmtTx = $db->prepare('INSERT INTO transactions (id, account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id, ofx_id, ofx_type, bank_ofx_id) VALUES (:id, :account_id, :date, :amount, :description, :memo, :category_id, :segment_id, :tag_id, :group_id, :transfer_id, :ofx_id, :ofx_type, :bank_ofx_id)');
         foreach ($data['transactions'] as $row) {
             $stmtTx->execute([
                 'id' => $row['id'],
@@ -273,7 +313,7 @@ try {
     }
 
     if (isset($data['category_tags'])) {
-        $stmtCT = $db->prepare('INSERT IGNORE INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
+        $stmtCT = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
         foreach ($data['category_tags'] as $row) {
             $stmtCT->execute([
                 'category_id' => $row['category_id'],
@@ -281,11 +321,51 @@ try {
             ]);
         }
     }
+    if (isset($data['segment_categories'])) {
+        $stmtSC = $db->prepare('INSERT INTO segment_categories (segment_id, category_id) VALUES (:segment_id, :category_id)');
+        foreach ($data['segment_categories'] as $row) {
+            $stmtSC->execute(['segment_id' => $row['segment_id'], 'category_id' => $row['category_id']]);
+        }
+    }
+    if (isset($data['saved_reports'])) {
+        $stmtReport = $db->prepare('INSERT INTO saved_reports (id, name, description, filters, created_at) VALUES (:id, :name, :description, :filters, :created_at)');
+        foreach ($data['saved_reports'] as $row) {
+            $stmtReport->execute([
+                'id' => $row['id'], 'name' => $row['name'],
+                'description' => $row['description'] ?? null,
+                'filters' => $row['filters'], 'created_at' => $row['created_at'] ?? null,
+            ]);
+        }
+    }
+
+    $orphanChecks = [
+        'transaction accounts' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN accounts a ON a.id=t.account_id WHERE a.id IS NULL',
+        'transaction categories' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN categories c ON c.id=t.category_id WHERE t.category_id IS NOT NULL AND c.id IS NULL',
+        'transaction tags' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN tags x ON x.id=t.tag_id WHERE t.tag_id IS NOT NULL AND x.id IS NULL',
+        'transaction groups' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN transaction_groups g ON g.id=t.group_id WHERE t.group_id IS NOT NULL AND g.id IS NULL',
+        'transaction segments' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN segments s ON s.id=t.segment_id WHERE t.segment_id IS NOT NULL AND s.id IS NULL',
+    ];
+    foreach ($orphanChecks as $label => $sql) {
+        if ((int)$db->query($sql)->fetchColumn() > 0) {
+            throw new RuntimeException('Restore integrity check failed for ' . $label . '.');
+        }
+    }
+    $db->commit();
+    if ($foreignKeysDisabled) {
+        $db->exec('SET FOREIGN_KEY_CHECKS=1');
+        $foreignKeysDisabled = false;
+    }
     Log::write('Restore completed for parts: ' . implode(',', array_keys($data)));
     echo 'Restore complete.';
 } catch (Exception $e) {
+    if ($db instanceof PDO && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    if ($foreignKeysDisabled && $db instanceof PDO) {
+        $db->exec('SET FOREIGN_KEY_CHECKS=1');
+    }
     Log::write('Restore error: ' . $e->getMessage(), 'ERROR');
-    http_response_code(500);
+    if (!headers_sent()) http_response_code(500);
     $msg = 'Error: ' . $e->getMessage();
     Log::write($msg, 'ERROR');
     echo $msg;
