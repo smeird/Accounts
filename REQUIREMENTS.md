@@ -1,118 +1,106 @@
-# Section Requirements
+# Product requirements
 
-This document outlines expected functionality for each section of the finance manager. It is for development reference only.
+This document describes the current functional baseline. New work should preserve the financial rules and shared UI behaviour unless a change explicitly replaces them.
 
-## Authentication / Login
-- Accept username and password for authentication
-- Display an error when credentials are invalid
-- Start a session and redirect to the main application after successful login
+## Cross-cutting requirements
 
-## OFX Upload
-- Upload a single OFX statement file
-- Upload multiple OFX files in one request
-- Show progress and completion status for each upload
+- Require an authenticated session for application pages and JSON APIs.
+- Use GBP formatting throughout the interface.
+- Exclude confirmed transfers and `IGNORE`-tagged transactions from analytical totals.
+- Preserve transaction history when accounts are closed; closed accounts have a zero live balance.
+- Return structured errors and show useful loading, empty, success and failure states.
+- Prevent stale page shells and local assets after deployment.
+- Support keyboard use, descriptive labels and responsive layouts without horizontal document overflow.
+- Give every active navigation page a modern page header and contextual help.
 
-## Home Page
-- Display welcome message and application version
-- Present quick feature highlights
+## Authentication and administration
 
-## Monthly Statement
-- Select year and month to view transactions
-- Optionally filter to only untagged transactions
-- Show totals and detailed statement table
+- Authenticate with username/password and optional TOTP.
+- Manage users and passwords without exposing stored credentials.
+- Configure session timeout, branding, colour scheme, typography and AI settings.
+- Keep OpenAI tokens server-side and expose only configured/not-configured state.
+- Provide structured logs and configurable retention.
 
-## Transaction Reports
-- Filter transactions by category, tag, group, text, or date range
-- Save and load report configurations
-- Display tabular results and a chart
+## Accounts and balances
 
-## Search Transactions
-- Search across transactions by keyword or exact amount
-- Show results grid, totals, and a chart of matches
+- List active accounts, current balances, statement dates and recent movement.
+- Edit account names and mark accounts closed or reopened.
+- Accept a newer reliable OFX ledger balance; reject older snapshots and unreliable zero placeholders.
+- Reconstruct balance history around dated ledger snapshots.
 
-## Transfers
-- List detected transfer candidates
-- Assist in linking or marking transfers so they are excluded from totals
-- Allow undoing or manually linking transfer transactions
+## Import and transaction integrity
 
-## Yearly Dashboard
-- Present yearly totals for tags, categories, and groups
-- Visualise data with charts and tables, including breakdown donuts
+- Import one or many OFX/QFX files with per-file progress and completion summaries.
+- Commit each file atomically and roll back on downstream failure.
+- Preserve complete transaction descriptions and memos within schema limits.
+- Treat per-account bank FITIDs as authoritative and use a stable fallback identity when absent.
+- Preserve legitimate same-day transactions with matching amounts/descriptions.
+- Resolve uniquely matching masked accounts without creating duplicates.
 
-## All Years Dashboard
-- Compare cumulative totals across all recorded years
-- Provide tables and charts for tags, categories, and groups
+## Transactions and reporting
 
-## Monthly Dashboard
-- Select a year and month to view income, outgoings, and delta
-- Summarise transactions with tables and charts
+- Search by text, memo, amount, classification and date range.
+- Edit transaction detail and classifications.
+- Save and reuse report definitions.
+- Generate tables, charts, PDF/print output and OFX/CSV/XLSX exports.
+- Support natural-language filters with deterministic fallback when AI is unavailable.
+- Detect, link, unlink and assist with equal/opposite inter-account transfers.
 
-## Group Dashboard
-- Analyse spending for category groups by month and year
-- Include tables and charts for monthly and yearly totals
+## Classification
 
-## Account Dashboard
-- List accounts with balances and last transaction
-- Edit account names inline
-- Visualise account balances and link to account details
+- Maintain reusable tags, merchant aliases, categories, segments and groups.
+- Learn aliases from confirmed tagging and reuse canonical tags on similar transactions.
+- Never create a new tag merely for every transaction.
+- Assign tags to categories and categories to segments from searchable one-screen workspaces.
+- Propagate mapping changes to matching existing transactions.
+- Allow AI to map only unassigned tags to allowlisted existing categories at sufficient confidence.
+- Preserve established mappings during automated classification.
 
-## Account Detail
-- Chart balance over time for a single account
-- Display latest statement transactions for the account
+## Analytical dashboards
 
-## Recurring Spend Detection
-- Run analysis over the past year to find repeating expenses
-- Present results in a grid with total recurring cost
+- **Financial Overview:** balances, current cash flow, spending trend, budgets, accounts, recent activity and attention items.
+- **Monthly Activity:** statement rows and summary metrics, rendering rows before secondary analytics.
+- **Trends & Comparisons:** month, YTD, year, trailing 12 months, all-time and custom periods; like-for-like comparisons; category/segment/group/tag breakdowns and drill-downs.
+- **Daily Burn:** expenditure divided by each month’s calendar days, history by segment, actual daily spending, rolling average and evidence links.
+- **Year in Review:** annual income, expenditure, cash flow, positive months, quarterly movement and leading drivers.
+- **Financial Picture:** reconciled portfolio position, cash-flow history and category/segment/tag/account context.
+- **Regular Income & Bills:** recurring patterns, trailing totals, next-month estimates and evidence links.
+- **Analysis Matrix:** expandable segment/category/tag analysis with income, expenditure and net movement.
+- **12-Month Forecast:** expected, conservative and optimistic paths with visible assumptions and coverage.
 
-## Graphs
-- Provide multiple charts (monthly, cumulative, pie, tag, scatter)
-- Allow selection of year to scope the displayed data
+## Daily Burn definition
 
-## Budgets
-- Set monthly budgets for categories
-- List current budgets in a table
-- Show progress toward each budget in a chart
-- Offer AI-generated suggestions for upcoming budget allocations
+- Count negative transaction amounts as positive expenditure values.
+- Exclude income, confirmed transfers and `IGNORE`-tagged rows.
+- Resolve segment from the transaction first, then its category; retain an `Unsegmented` bucket.
+- Calculate `observed monthly expenditure ÷ calendar days in that month` for every month and segment.
+- Keep actual transaction-day expenditure separate from the normalised burn rate.
+- Define the historical average as the mean of selected monthly daily rates.
+- Support 3, 6, 12 and 24-month windows plus available history.
 
-## Manage Tags
-- Create tags with keyword and description for auto-tagging
-- List and edit existing tags
+## Planning and organisation
 
-## Missing Tags
-- List transactions that do not have tags assigned
+- Create monthly category budgets and visualise expenditure, runway and pressure.
+- Suggest budgets with AI using observed history and a savings goal.
+- Create, compare, score, archive and restore projects.
+- Associate project spending with transaction groups and exclude transfers.
 
-## Manage Categories
-- Create categories with descriptions
-- Assign and rearrange tags via drag and drop
+## Operations, health and recovery
 
-## Manage Groups
-- Create groups to collect categories
-- List and edit existing groups
+- Run tagging, category and segment refreshes in the recommended order or individually.
+- Keep assignment clearing separate and explicitly confirmed without deleting rules.
+- Detect potential duplicates and support reviewed cleanup.
+- Back up and restore selected business-data sections.
+- Audit schema tables, columns, indexes, keys and relationships against `SchemaCatalog.php`.
+- Permit only catalogue-generated schema repairs; never generate record-changing repair SQL.
 
-## Run Processes
-- Manually trigger auto-tagging and category assignment
-- Show progress indicator while background tasks run
+## UI and visual system
 
-## View Logs
-- Display recent application logs
-- Refresh log view and prune entries older than a given number of days
-
-## Remove Duplicates
-- Identify potential duplicate transactions
-- Refresh list and run bulk deduplication with progress display
-
-## Backup & Restore
-- Download backups selecting which data parts to include
-- Restore data from an uploaded backup file
-
-## Exports
-- Download transactions for a chosen date range
-- Select output format such as OFX, CSV or XLSX
-
-## Manage Users
-- Add new users with credentials
-- Update password for the current user
-- Enable or disable two-factor authentication
-
-## Logout
-- Destroy the user session and redirect to the login page
+- Use task-led sidebar groups: Overview, Transactions, Insights, Planning, Organise and System.
+- Render shared page headers with title, breadcrumb, subtitle and optional actions.
+- Use shared glass cards by default and solid cards for dense controls.
+- Honour configurable heading, body, table and chart fonts and accent weight.
+- Use consistent semantic colours, gradients and classification pills.
+- Prefer chart-led summaries followed by exact values or evidence.
+- Use native responsive tables for straightforward read-only views and the shared Tabulator adapter for large interactive grids.
+- Validate every new surface on desktop and mobile. See [wiki/StyleGuide.md](wiki/StyleGuide.md).

@@ -1,15 +1,27 @@
-# Accounts Wiki
+# Accounts wiki
 
-Welcome to the Accounts project wiki. Use these pages to learn about the system and how to develop it.
+Accounts is a self-hosted financial workspace for importing bank statements, maintaining a trustworthy transaction ledger and understanding balances, spending, plans and financial direction.
 
-## Pages
-- [Setup](Setup.md) - configure the environment and database.
-- [Architecture](Architecture.md) - explore how the frontend and backend interact.
+## Documentation
 
-## Features
-- Import OFX files to record bank transactions.
-- Explore dashboards to analyse spending by month or year.
-- Tag transactions automatically and suggest budgets with AI.
-- Configure tag aliases so different merchant descriptors (for example Tesco and Sainsbury's) map to one canonical tag such as Supermarkets.
-- Generate reports and export data in OFX, CSV, or XLSX formats.
+- [Setup](Setup.md) — local and Apache configuration, upgrades and testing.
+- [Architecture](Architecture.md) — application layers, financial rules and request flows.
+- [Style Guide](StyleGuide.md) — the shared visual language and implementation conventions.
+- [Product requirements](../REQUIREMENTS.md) — the current functional baseline.
 
+## Current product areas
+
+- **Overview:** Financial Overview, Accounts & Balances and Monthly Activity.
+- **Transactions:** import, search, reports, transfers and exclusions.
+- **Insights:** Trends & Comparisons, Daily Burn, forecast, annual review, recurring activity, financial picture and matrix analysis.
+- **Planning:** budgets and project portfolio.
+- **Organise:** tags, aliases, categories, segments and groups.
+- **System:** automation, exports, backups, health checks, settings, users and logs.
+
+## Important analytical behaviour
+
+- Transfers and `IGNORE`-tagged transactions do not inflate income or expenditure.
+- Closed accounts keep their transaction history but contribute no live balance.
+- Daily Burn spreads each month’s observed expenditure across its actual calendar days and reports that rate by segment.
+- Forecasts use observed ledger history and expose their coverage and assumptions.
+- Classifications are reusable relationships, not labels created independently for every transaction.
