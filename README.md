@@ -34,6 +34,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Reusable tags and aliases so one learned merchant rule can classify similar future transactions without creating a tag per transaction.
 - One-screen category and segment assignment workspaces with search and immediate one-click updates.
 - AI-assisted mapping of unassigned tags to existing categories while preserving established mappings.
+- **AI Data Fix** turns a plain-English tagging problem into a reviewable correction plan, updates only confirmed transaction tags, moves relevant alias rules and removes a source tag only when it is genuinely unused.
 
 ### Administration
 
