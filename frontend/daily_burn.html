@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Daily Burn</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="daily_burn.css">
+</head>
+<body class="ops-body dashboard-page burn-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main burn-main flex-1 min-w-0 overflow-x-hidden">
+            <div id="burn-error" class="burn-alert burn-alert--error" role="alert" hidden></div>
+
+            <section class="burn-controls" data-no-card="true" aria-label="Daily Burn filters">
+                <label for="burn-period"><span>History</span><select id="burn-period">
+                    <option value="3">Last 3 months</option>
+                    <option value="6">Last 6 months</option>
+                    <option value="12" selected>Last 12 months</option>
+                    <option value="24">Last 24 months</option>
+                    <option value="all">All recorded history</option>
+                </select></label>
+                <p id="burn-range">Preparing your burn-rate history…</p>
+                <button id="burn-refresh" type="button"><i class="fas fa-rotate" aria-hidden="true"></i> Refresh</button>
+            </section>
+
+            <section class="burn-summary" data-no-card="true" aria-label="Daily burn summary">
+                <article class="burn-hero">
+                    <span class="burn-hero__flare" aria-hidden="true"></span>
+                    <p class="burn-eyebrow">Latest monthly pace</p>
+                    <strong id="burn-latest">£—</strong><span class="burn-unit">per day</span>
+                    <p id="burn-story">Calculating the daily cost of your current month…</p>
+                    <span id="burn-method-chip" class="burn-chip">Calendar-normalised</span>
+                </article>
+                <div class="burn-metrics">
+                    <article><span class="burn-metric-icon burn-metric-icon--average"><i class="fas fa-gauge-high" aria-hidden="true"></i></span><div><p>Historical average</p><strong id="burn-average">£—/day</strong><small>Average of the monthly daily rates</small></div></article>
+                    <article><span class="burn-metric-icon burn-metric-icon--month"><i class="fas fa-calendar-days" aria-hidden="true"></i></span><div><p>Monthly equivalent</p><strong id="burn-monthly">£—</strong><small>Average daily burn × 30.44 days</small></div></article>
+                    <article><span class="burn-metric-icon burn-metric-icon--total"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><p>Observed expenditure</p><strong id="burn-total">£—</strong><small id="burn-transactions">— outgoing transactions</small></div></article>
+                </div>
+            </section>
+
+            <section class="burn-card burn-card--wide" data-no-card="true">
+                <header class="burn-card__header"><div><p class="burn-section-label">Underlying pace</p><h2>Daily burn by segment</h2><p>Each band is the segment’s monthly expenditure spread evenly across that month’s calendar days.</p></div><span class="burn-chip">£ per day</span></header>
+                <div id="burn-segment-chart" class="burn-chart burn-chart--wide" data-chart-desc="Stacked area chart showing calendar-normalised daily expenditure by segment for each month."></div>
+            </section>
+
+            <div class="burn-grid">
+                <section class="burn-card" data-no-card="true">
+                    <header class="burn-card__header"><div><p class="burn-section-label">Real activity</p><h2>What actually left each day</h2><p>Transaction-day spending with a 14-day rolling average. Zoom to inspect a shorter period.</p></div></header>
+                    <div id="burn-actual-chart" class="burn-chart" data-chart-desc="Daily expenditure columns with a fourteen-day rolling average."></div>
+                </section>
+                <section class="burn-card burn-explainer" data-no-card="true">
+                    <header class="burn-card__header"><div><p class="burn-section-label">How to read it</p><h2>Spikes versus your baseline</h2></div></header>
+                    <div class="burn-explainer__formula"><span>Monthly segment spend</span><i class="fas fa-divide" aria-hidden="true"></i><span>Days in that month</span><i class="fas fa-equals" aria-hidden="true"></i><strong>Daily burn</strong></div>
+                    <p id="burn-method">Transfers, income and excluded transactions are not counted.</p>
+                    <div class="burn-peak"><span><i class="fas fa-arrow-up-right-dots" aria-hidden="true"></i></span><div><p>Largest actual spend day</p><strong id="burn-peak">£—</strong><small id="burn-peak-date">No expenditure in this period</small></div></div>
+                </section>
+            </div>
+
+            <section class="burn-card" data-no-card="true">
+                <header class="burn-card__header"><div><p class="burn-section-label">Cost structure</p><h2>Daily pressure by segment</h2><p>Ranked by average daily cost across the selected history.</p></div><span id="burn-segment-count" class="burn-chip">— segments</span></header>
+                <div id="burn-segments" class="burn-segment-list"></div>
+            </section>
+
+            <div id="burn-loading" class="burn-loading" role="status" aria-live="polite"><span></span><p>Calculating daily burn…</p></div>
+        </main>
+    </div>
+    <script src="js/page_header.js"></script>
+    <script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Daily Burn', breadcrumb: 'Insights', subtitle: 'Understand the daily cost of your lifestyle and which segments create the pressure.' });</script>
+    <script src="js/menu.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="js/color_map.js"></script>
+    <script src="js/daily_burn.js"></script>
+    <script src="js/overlay.js"></script>
+</body>
+</html>

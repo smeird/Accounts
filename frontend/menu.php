@@ -32,6 +32,7 @@
     <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Insights</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
       <li><a href="financial_trends.html"><i class="fas fa-chart-column"></i> Trends &amp; Comparisons</a></li>
+      <li><a href="daily_burn.html"><i class="fas fa-fire-flame-curved"></i> Daily Burn</a></li>
       <li><a href="forecast.html"><i class="fas fa-chart-line"></i> 12-Month Forecast</a></li>
       <li><a href="yearly_dashboard.html"><i class="fas fa-calendar"></i> Year in Review</a></li>
       <li><a href="recurring_spend.html"><i class="fas fa-rotate"></i> Regular Income &amp; Bills</a></li>
