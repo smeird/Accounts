@@ -153,6 +153,7 @@ class SchemaCatalog {
                 'ofx_id' => self::index(['ofx_id'], true),
                 'unique_bank_fitid' => self::index(['account_id', 'bank_ofx_id'], true),
                 'idx_transaction_fallback' => self::index(['account_id', 'date', 'amount']),
+                'idx_transactions_account_date_id' => self::index(['account_id', 'date', 'id']),
                 'idx_transactions_date' => self::index(['date']),
             ], [
                 'fk_transactions_account' => self::foreignKey(['account_id'], 'accounts', ['id']),
