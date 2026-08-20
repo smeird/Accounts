@@ -15,6 +15,7 @@ require_once __DIR__ . '/../php_backend/models/YearlyDashboard.php';
 require_once __DIR__ . '/../php_backend/models/GraphsDashboard.php';
 require_once __DIR__ . '/../php_backend/models/ForecastDashboard.php';
 require_once __DIR__ . '/../php_backend/models/FinancialTrends.php';
+require_once __DIR__ . '/../php_backend/models/DailyBurn.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/models/Account.php';
@@ -681,6 +682,17 @@ $trendDrilldown = Transaction::search('Home', null, null, '2026-08-01', '2026-08
 assertEqual(1, count($trendDrilldown), 'Financial Trends drill-down links constrain transaction search to the selected period');
 $exactTrendDrilldown = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', 'segment', 10, false, true);
 assertEqual(2, count($exactTrendDrilldown), 'Financial Trends drill-down links use the exact classification and expense-only scope');
+
+// --- Calendar-normalised Daily Burn dashboard ---
+$dailyBurn = DailyBurn::getSnapshot('2026-07-01', '2026-08-10');
+assertEqual(2050.0, (float)$dailyBurn['metrics']['total_spending'], 'Daily Burn totals expense-only spending and excludes transfers');
+assertEqual(27.42, (float)$dailyBurn['metrics']['latest_daily_burn'], 'Daily Burn divides the latest month by its calendar days');
+assertEqual(33.07, (float)$dailyBurn['metrics']['average_daily_burn'], 'Daily Burn averages the calendar-normalised monthly rates');
+assertEqual(41, count($dailyBurn['daily']), 'Daily Burn fills every actual day in the requested history');
+assertEqual(2, count($dailyBurn['months']), 'Daily Burn returns one rate point per calendar month');
+assertEqual('Household', $dailyBurn['segments'][0]['name'] ?? null, 'Daily Burn derives the segment from the canonical category relationship');
+assertEqual(33.07, (float)($dailyBurn['segments'][0]['average_daily_burn'] ?? 0), 'Daily Burn calculates the average daily rate by segment');
+assertEqual(1200.0, (float)($dailyBurn['metrics']['peak_day']['amount'] ?? 0), 'Daily Burn keeps actual transaction-day spikes separate');
 
 // --- Transaction-backed 12-month forecast ---
 $forecastHistoryRows = [];

@@ -1,300 +1,164 @@
 # Accounts
 
-This repository now provides a simple PHP implementation for managing accounts and transactions.
+Accounts is a self-hosted personal finance workspace built with PHP, MySQL and a responsive HTML/JavaScript frontend. It imports bank activity from OFX/QFX statements, organises transactions through reusable tags and classifications, and turns the ledger into practical dashboards for balances, spending, budgets, forecasts and longer-term decisions.
 
-See the [project wiki](wiki/Home.md) for detailed documentation.
+The interface is organised around six tasks: **Overview**, **Transactions**, **Insights**, **Planning**, **Organise** and **System**. See the [project wiki](wiki/Home.md) for development documentation and the [visual style guide](wiki/StyleGuide.md) for UI conventions.
 
-## How It Works
+## Product map
 
-### Architecture
+### Overview
+
+- **Financial Overview** — the quickest cross-feature view of balances, cash flow, budgets, recent activity and items needing attention.
+- **Accounts & Balances** — active account balances, balance dates, recent movement and closed-account management.
+- **Monthly Activity** — a statement-style transaction view with clear segment, category, tag and group classifications.
+
+### Transactions
+
+- Atomic multi-file OFX/QFX import with per-file progress and useful completion summaries.
+- Duplicate protection based on bank FITIDs and a storage-safe fallback transaction identity.
+- OFX ledger-balance handling with statement-date ordering and protection against unreliable zero placeholders.
+- Transaction search, saved reports, exports and printable/PDF reporting.
+- Assisted transfer matching. Confirmed transfers remain in the ledger but are excluded from income, expenditure, budgets, projects and forecasts.
+
+### Insights
+
+- **Trends & Comparisons** — one period explorer for monthly, yearly, all-time and custom comparisons across categories, segments, groups and tags.
+- **Daily Burn** — observed expenditure converted into a daily rate and broken down by segment. Each month is divided by its actual calendar days, while a separate chart preserves real transaction-day spikes.
+- **12-Month Forecast** — expected, conservative and optimistic balance paths based on observed transaction history.
+- **Year in Review**, **Financial Picture**, **Regular Income & Bills**, **Analysis Matrix** and **AI Financial Review**.
+
+### Planning and organisation
+
+- Monthly category budgets with visual runway/progress bars and optional AI suggestions.
+- Project portfolio, comparison board and archive, with project spending linked to transaction groups.
+- Reusable tags and aliases so one learned merchant rule can classify similar future transactions without creating a tag per transaction.
+- One-screen category and segment assignment workspaces with search and immediate one-click updates.
+- AI-assisted mapping of unassigned tags to existing categories while preserving established mappings.
+
+### Administration
+
+- Users, passwords and TOTP two-factor authentication.
+- Backup and restore for accounts, transactions, classifications, projects, budgets and settings.
+- Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
+- Automation Centre, logs, duplicate checks and configurable branding/typography.
+- Explicit no-store/revalidation rules prevent stale HTML, CSS and JavaScript after deployments.
+
+## Financial rules
+
+- Positive amounts are income; negative amounts are expenditure.
+- Confirmed account transfers are excluded from financial totals.
+- Transactions using the `IGNORE` tag are excluded from analytical totals.
+- Closed accounts retain history but contribute a zero live balance and ignore imported balance updates until reopened.
+- Segment reporting prefers the transaction’s segment and falls back to the segment linked through its category.
+- Daily Burn divides each calendar month’s observed expenditure by that month’s number of days. It expresses a monthly mortgage as a comparable daily cost without pretending it was transacted every day.
+
+## Architecture
+
 ```mermaid
-graph LR
-    U[User] -->|Interacts| F[Frontend]
-    F -->|Sends requests| P[PHP Backend]
-    P -->|Reads/Writes| D[(Database)]
-    P -->|Returns JSON| F
-    F -->|Updates UI| U
+flowchart LR
+    Browser[Responsive frontend] -->|Authenticated JSON requests| API[PHP public endpoints]
+    API --> Models[Domain and dashboard models]
+    Models --> DB[(MySQL)]
+    Import[OFX/QFX importer] --> Models
+    AI[OpenAI Responses API] --> Models
+    Models --> API
+    API --> Browser
 ```
 
-### Request Flow
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant P as PHP Backend
-    participant D as Database
+Frontend pages live in `frontend/`. Authenticated JSON endpoints live in `php_backend/public/`, reusable domain logic in `php_backend/models/`, and import/health workflows in `php_backend/services/`. `php_backend/SchemaCatalog.php` is the canonical schema description used by Database Health. See [Architecture](wiki/Architecture.md) for more detail.
 
-    U->>F: Uploads OFX / Requests Data
-    F->>P: Sends request
-    P->>D: Query / Update
-    D-->>P: Results
-    P-->>F: Response
-    F-->>U: Rendered interface
-```
+## Technology
 
-## Capabilities
+- PHP 7.0+, PDO and MySQL
+- SQLite in-memory for automated tests
+- HTML, CSS and vanilla JavaScript
+- Highcharts for interactive charts
+- Self-hosted Tabulator 6.5.0 for large or interactive grids
+- Native semantic responsive tables for statement and account views
+- Tailwind utilities, shared application CSS and Font Awesome
+- OpenAI Responses API for optional AI workflows
 
-- Upload OFX files to import bank statements.
-- Explore yearly and monthly dashboards to analyse spending.
-- Visualise trends with interactive graphs.
-- Automatically tag transactions and propose budgets using AI.
-- Map multiple transaction descriptors to a canonical tag using tag aliases (for example `Tesco` and `Sainsbury's` can both map to `Supermarkets`).
-- Analyse recurring expenses and break down spending by segments and categories.
-- Secure access with two-factor authentication.
-- Charts assign stable colours automatically to segments, categories and tags.
-- Search and report on transactions in detail.
-- Generate reports using natural-language queries.
-- Back up and restore your data and export it to OFX, CSV, or XLSX.
-- Manage user accounts, processes, and logs.
+## Installation
 
-- Share links to the site with rich previews via Open Graph metadata.
- 
-## Natural-language Reports
-
-
-The reporting page now accepts plain English queries. Enter phrases such as "costs for cars in the last 12 months" in the Ask in plain English field on `frontend/report.html`. When an OpenAI API token is configured the backend sends the query to the AI service which returns category, tag, segment and date filters that populate the normal selectors before running the report. Without a token a simple rule-based parser is used. Leaving the field empty falls back to manual selection.
-
-## Quick Deployment
+### Quick deployment
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | bash
 ```
 
-The script clones the repository, sets up the database, and creates an initial user.
+### Manual setup
 
-## Authentication
+1. Install PHP, PDO MySQL and MySQL.
+2. Provide `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASS` to PHP. Apache deployments can use `SetEnv` in the virtual host.
+3. Create or update the schema:
 
-A basic login page is available at the project root (`index.php`). Users are stored in a `users` table. After logging in, visit `users.php` to add new users or change your password.
-
-### Two-Factor Authentication (TOTP)
-
-
-Two PHP endpoints under `php_backend/public` handle TOTP setup and verification and a third removes secrets. `totp_generate.php` issues a per-user secret and returns an otpauth URI, `totp_verify.php` validates submitted codes, and `totp_disable.php` deletes an existing secret. The QR code is rendered client-side using the `qrcodejs` library. The login page prompts for a code when a secret exists, and you can manage or disable 2FA from `users.php` or open `frontend/2fa.html` to scan the QR code with your authenticator and confirm the one-time codes it generates.
-
-
-## Specifications
-
-- Highcharts is used for graphs, while Tabulator renders interactive tables.
-- Display all monetary values using the pound symbol (£) instead of the dollar sign ($).
-- Tailwind CSS provides the styling and Font Awesome supplies icons. Sections are wrapped in card components.
-- The interface relies on browser-default fonts without specifying families.
-
-- Tabulator tables apply Tailwind utility classes for a consistent look and use the Simple theme.
-
-- Form inputs may include a `data-help` attribute to show popover guidance.
-- Transactions identified as transfers are flagged and ignored in totals.
-
-- The budgets page offers AI budgeting that sends a year of category totals and your savings goal to the OpenAI API to propose next month's limits and returns a short explanation of the allocations.
-
-- The interface is responsive. Each page includes a viewport meta tag and uses Tailwind's responsive utilities so the site works
-  on mobile devices. The navigation menu collapses to a toggle button on small screens.
-
-## PHP Development Setup
-
-1. Ensure PHP and MySQL are installed.
-2. Configure database credentials using the environment variables `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASS`.
-3. Create the database tables:
    ```bash
    php php_backend/create_tables.php
    ```
-   Re-running this script after upgrading will also add any new columns.
-4. Run the example script which inserts a sample account:
+
+4. Installations predating the transaction-identity update must run once:
+
    ```bash
-   php php_backend/public/index.php
+   php php_backend/migrations/20260814_transaction_identity.php
    ```
 
-Any errors during upload or other operations are stored in a `logs` table.
+5. Serve the repository and sign in through `index.php`:
 
-You can view these entries by opening `frontend/logs.html` which calls the
-`php_backend/public/logs.php` endpoint.
+   ```bash
+   php -S localhost:8000
+   ```
 
+   Open `http://localhost:8000/`.
 
-To import transactions from one or more OFX files, use the upload script:
-```bash
-curl -F "ofx_files[]=@first.ofx" -F "ofx_files[]=@second.ofx" https://localhost/path/to/php_backend/public/upload_ofx.php
-```
-You can try this using the included sample file `sample_data/test.ofx` which
-contains two transactions for a checking account.
+After upgrades, open **System → Database Health**. It identifies missing tables, columns, indexes and relationships without modifying transaction records. See [Setup](wiki/Setup.md) for Apache and environment details.
 
-Account names you've customised in the UI are preserved. Uploading new OFX files will not overwrite renamed accounts.
+## OFX/QFX import
 
-
-The importer normalises line endings, strips control characters and converts
-character encoding to UTF-8, falling back to iconv when the mbstring extension
-is unavailable.
-
-To guard against duplicate imports, each transaction receives a synthetic
-identifier derived from the account ID, date, amount and a normalised
-description. When present, reference numbers (`<REFNUM>`), cheque numbers
-(`<CHECKNUM>`) and a hash of the raw `<STMTTRN>` block are appended to the
-hash input. This composite value greatly reduces the chance of collisions when
-banks reuse identifiers or vary memo text.
-
-Institution-specific JSON profiles in `php_backend/profiles/` supply default
-behaviour and field caps. Profiles are selected using the `<FI>` `ORG` or
-`FID` value and can normalise `CHECKNUM`, `REFNUM` and `MEMO` fields or enforce
-length limits. A `default.json` profile is used when no matching file exists.
-
-
-## Running a Local Server
-
-To use the upload page the frontend must be served over HTTPS so the PHP parser
-can receive the request. From the repository root run:
+Use **Transactions → Import Transactions**, or call the endpoint directly:
 
 ```bash
-php -S localhost:8000
+curl -F "ofx_files[]=@first.ofx" -F "ofx_files[]=@second.ofx" \
+  https://example.test/php_backend/public/upload_ofx.php
 ```
 
-Then open `https://localhost:8000/frontend/index.html` in your browser.
+The importer normalises encoding, preserves full memos, resolves masked account identifiers where possible, processes every file atomically and reports inserted, duplicate, tagged, categorised and balance-refresh outcomes separately. Institution profiles in `php_backend/profiles/` control bank-specific field normalisation.
 
+## AI configuration
 
-## Apache Setup
+Configure the API token, model, temperature and debug mode under **System → Settings**. Tokens remain server-side and are never returned to the browser. AI features use the OpenAI Responses API with structured JSON output and degrade to manual or deterministic workflows when no token is configured.
 
-For a persistent deployment use Apache and provide the database credentials as
-environment variables. A simple virtual host might look like:
+## Frontend conventions
 
-```apache
-<VirtualHost *:80>
-    DocumentRoot /var/www/Accounts
-    <Directory /var/www/Accounts>
-        Require all granted
-        AllowOverride All
-    </Directory>
+New pages must follow the shared system rather than introducing a standalone visual language:
 
-    SetEnv DB_HOST localhost
-    SetEnv DB_NAME accounts
-    SetEnv DB_USER accounts_user
-    SetEnv DB_PASS change_me
-</VirtualHost>
-```
+- Render the modern page header with `frontend/js/page_header.js`.
+- Use shared glass/solid card surfaces and the readable type scale.
+- Honour configured heading, body, table and chart fonts.
+- Use native tables for straightforward read-only views and the shared Tabulator adapter for large interactive datasets.
+- Use consistent classification colours and a visible key rather than repeating type names inside every pill.
+- Provide useful loading, empty and error states, contextual help and accessible labels.
+- Verify desktop and mobile layouts and avoid document-level horizontal overflow.
 
-Reload Apache after editing the configuration (`sudo systemctl reload apache2`).
-The `SetEnv` directives expose the credentials to PHP through `getenv()` and
-`$_ENV`, keeping secrets out of the codebase. You can also place the variables
-in an external file and load it with the `EnvFile` directive so the values
-remain outside the project directory.
+The complete rules and examples are in the [Style Guide](wiki/StyleGuide.md).
 
+## Testing
 
-## Backup and Recovery
-
-Back up and restore your data through the web interface. From the navigation
-
-menu open **Backup & Restore** under *Administration*. User accounts and
-account information are always included in backups. You can additionally choose
-which other parts of the database to download—transactions, categories, tags,
-groups, segments, projects, budgets, or settings. The downloaded file contains gzipped JSON and is named after
-your site's hostname, the current date, and the selected sections (for example,
-`example.com-2024-05-15-transactions-categories.json.gz`). To restore a backup,
-choose the compressed file on the same page and click **Restore**; any included
-sections are imported.
-
-To download transactions for use in other tools, open the **Exports** page.
-Choose a date range and an output format such as OFX, CSV or XLSX to
-generate a file.
-
-
-## Frontend
-
-
-A Tailwind-styled frontend can be opened directly from `frontend/index.html`. It provides a navigation menu with Font Awesome icons to upload OFX files, view statements, run reports, or explore graphs.
-
-The yearly dashboard page (`frontend/yearly_dashboard.html`) lets you select a year and view total spending by tag, category, and group with tables and bar charts.
-
-The monthly dashboard page (`frontend/monthly_dashboard.html`) shows totals by tag, category, and group for a selected month along with overall income, outgoings, and delta.
-
-The graphs page (`frontend/graphs.html`) displays additional Highcharts visualisations and includes a year selector.
-
-The monthly statement page (`frontend/monthly_statement.html`) allows selecting a month and year to list transactions for that period.
-
-Many form inputs include popover help that appears when fields with a `data-help` attribute are focused or hovered.
-
-## Reports
-
-The frontend also includes a simple reporting page available at `frontend/report.html`.
-It allows running a report to list all transactions filtered by category, tag or group.
-Reports can be saved to the server with optional descriptions for reuse and removed when no longer needed.
-The page sends requests to `php_backend/public/report.php` which returns matching
-transactions as JSON.
-
-
-## Tag Aliases
-
-Tag aliases let you map many bank descriptors to one canonical tag without renaming the tag itself. For example, you can create aliases `Tesco`, `Sainsbury's`, and `Aldi` that all resolve to `Supermarkets`.
-
-Use `frontend/tag_aliases.html` to manage mappings and the backend endpoint `php_backend/public/tag_aliases.php` for CRUD operations. The management table uses remote search, sorting, and pagination so the browser never has to build the complete alias catalogue. Omitting the `page` query parameter preserves the original array response for API clients.
-
-## Table performance
-
-Interactive data grids use the self-hosted Tabulator 6.5.0 distribution in `frontend/vendor/tabulator/6.5.0`; production pages do not depend on Unpkg to become usable. `frontend/js/tabulator-tailwind.js` decorates rows only through Tabulator's row formatter, keeps frozen columns opt-in, and supports bounded-height virtual rendering plus remote search and pagination. Simple read-only views such as Account Dashboard and Monthly Statement remain native semantic tables.
-
-Monthly Statement prioritises the selected month's transaction request and paints its first 50 rows before loading recurring analysis, account balances, the previous-month comparison, or Highcharts. Its database lookup uses an indexed half-open date range rather than applying `MONTH()` and `YEAR()` to every transaction date.
-
-## Transaction Imports
-
-`frontend/upload.html` imports OFX and QFX statements through a structured, per-file workflow. Each file is committed atomically, bank-provided FITIDs are authoritative within their account, and files without FITIDs use a fallback signature containing the account, date, amount, description, memo, and transaction type.
-
-Existing installations must run the non-destructive identity migration once before deploying this importer:
-
-```bash
-php php_backend/migrations/20260814_transaction_identity.php
-```
-
-The migration removes the legacy `unique_txn` index, which could reject genuine same-day matching purchases, and replaces it with a non-unique lookup index. The per-account `unique_bank_fitid` constraint remains in place.
-
-## Database Health
-
-Authenticated users can open **Admin Tools → Database Health** to compare an installation with the canonical schema in `php_backend/SchemaCatalog.php`. The audit covers managed tables, columns, primary keys, indexes, foreign keys, storage engines, and explicitly obsolete indexes.
-
-Repairs are review-first and schema-only. The browser can select only catalogue-generated `CREATE TABLE`, `ALTER TABLE`, and `DROP INDEX` operations; it cannot submit SQL. The utility never generates `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, or record-backfill statements. Definition changes that could transform existing values are reported for manual review instead of being applied.
-
-Every application schema change should update `SchemaCatalog.php` as part of the same change so fresh installs and the Database Health audit share the same target structure. Data migrations remain separate, explicit scripts in `php_backend/migrations/`.
-
-The table-performance catalogue adds `transactions.idx_transactions_date` and `logs.idx_logs_created_at`. Existing installations can apply both through **Admin Tools → Database Health** without changing business records.
-
-## Running Tests
-
-The repository includes a small test script that exercises the user model using
-an in-memory SQLite database. It does not require a MySQL server, making it
-suitable for environments where a database is unavailable.
-
-Run the tests with:
+The primary suite uses an in-memory SQLite database and requires no production-data access:
 
 ```bash
 php tests/run_tests.php
 ```
 
+Run frontend regressions with:
 
-
-## Automated Deployment
-
-
-This project uses GitHub Actions to trigger deployments. On pushes to the `master` branch, the workflow sends a request to your deployment server:
-
-
-```
-curl https://your.web.server.com/automated_deployment.php
+```bash
+for test_file in frontend/js/*.test.js; do node "$test_file"; done
 ```
 
+Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff --check`, and browser verification at desktop and mobile widths.
 
-Create `.github/workflows/deploy.yml` with:
+## Backups and deployment safety
 
-```yaml
-name: Deploy
-on:
-  push:
-    branches: [ master ]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger automated deployment
-        run: curl https://your.web.server.com/automated_deployment.php
-```
+Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and XLSX extracts. Treat these files as sensitive financial data.
 
-
-On the server, `automated_deployment.php` should pull the latest code:
-
-```
-<?php
-shell_exec('cd /var/www/myproject && git pull');
-```
+Keep credentials and API tokens outside the repository, serve production over HTTPS, allow the included `.htaccess` cache policy, and deploy from `main`. Do not use `--allow-unrelated-histories` on a production checkout; preserve configuration/uploads and use a clean clone if the server directory does not share this repository’s history.
