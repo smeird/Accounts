@@ -32,16 +32,18 @@ $db = Database::getConnection();
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT, closed INTEGER NOT NULL DEFAULT 0, closed_at TEXT);');
 $db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT);');
-$db->exec('CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT, match_type TEXT, active TINYINT DEFAULT 1);');
-$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT);');
-$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER);');
+$db->exec('CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT UNIQUE, match_type TEXT, active TINYINT DEFAULT 1, created_at DATETIME, updated_at DATETIME);');
+$db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, created_at DATETIME, updated_at DATETIME);');
+$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER, created_at DATETIME, updated_at DATETIME);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
+$db->exec('CREATE TABLE segment_categories (segment_id INTEGER, category_id INTEGER);');
 $db->exec('CREATE TABLE settings (name TEXT PRIMARY KEY, value TEXT);');
 $db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, segment_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER, ofx_id TEXT, ofx_type TEXT, bank_ofx_id TEXT);');
 $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, active TINYINT DEFAULT 1);');
-$db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, amount REAL);');
+$db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER, month INTEGER, year INTEGER, amount REAL);');
 $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
+$db->exec('CREATE TABLE totp_secrets (username TEXT PRIMARY KEY, secret TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, archived TINYINT DEFAULT 0, group_id INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1);');
 
 $results = [];
@@ -588,8 +590,6 @@ $afterDel = SavedReport::all();
 assertEqual(0, count($afterDel), 'SavedReport::delete removes report');
 
 // --- Instant dashboard snapshot ---
-$db->exec('ALTER TABLE budgets ADD COLUMN month INTEGER');
-$db->exec('ALTER TABLE budgets ADD COLUMN year INTEGER');
 $db->exec('DELETE FROM transactions');
 $db->exec('DELETE FROM budgets');
 $db->exec('DELETE FROM categories');
@@ -812,6 +812,7 @@ $atomicOfx = str_replace(['20260814', 'LONG-BANK-IDENTIFIER-12345678901234567890
 $atomicFailure = $importService->importContent('atomic.ofx', $atomicOfx);
 assertEqual('error', $atomicFailure['status'] ?? null, 'Downstream import failure is reported');
 assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Failed file rolls back transactions inserted earlier in that file');
+$db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER)');
 
 // --- Schema-only Database Health catalogue and repair workflow ---
 $healthySchemaSnapshot = SchemaHealthService::expectedSnapshot();
@@ -925,6 +926,57 @@ foreach (array_unique($navigationMatches[1] ?? []) as $navigationPage) {
     }
 }
 assertEqual([], $navigationPagesMissingModernHeader, 'Every active navigation page uses the modern page header');
+
+// Backup/restore must round-trip current security and reporting data and must
+// leave the original database untouched when post-restore integrity fails.
+$db->exec("INSERT OR REPLACE INTO totp_secrets (username, secret) VALUES ('alice', 'TEST-TOTP-SECRET')");
+$db->exec("INSERT INTO saved_reports (name, description, filters) VALUES ('Backup report', 'Round trip', '{\"start\":\"2024-01-01\"}')");
+$_GET['parts'] = 'transactions,categories,tags,groups,budgets,segments,settings,reports';
+$_SERVER['HTTP_HOST'] = 'test.local';
+ob_start();
+include __DIR__ . '/../php_backend/public/backup.php';
+$backupArchive = ob_get_clean();
+$backupSignature = strpos($backupArchive, "\x1f\x8b");
+$backupJson = $backupSignature === false ? false : gzdecode(substr($backupArchive, $backupSignature));
+$backupPayload = json_decode($backupJson, true);
+assertEqual(null, $backupPayload['error'] ?? null, 'Backup generation completes without a database error');
+assertEqual('newaccounts-backup', $backupPayload['_meta']['format'] ?? null, 'Backup includes a format manifest');
+assertEqual(2, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(1, count($backupPayload['totp_secrets'] ?? []), 'Backup includes two-factor authentication state');
+assertEqual(true, count($backupPayload['saved_reports'] ?? []) >= 1, 'Backup includes saved reports');
+
+$db->exec('DELETE FROM totp_secrets');
+$db->exec('DELETE FROM saved_reports');
+$backupFile = tempnam(sys_get_temp_dir(), 'accounts-backup-');
+file_put_contents($backupFile, $backupArchive);
+$_FILES['backup_file'] = ['error' => UPLOAD_ERR_OK, 'tmp_name' => $backupFile];
+ob_start();
+include __DIR__ . '/../php_backend/public/restore.php';
+$restoreMessage = ob_get_clean();
+$db = Database::getConnection();
+assertEqual('Restore complete.', $restoreMessage, 'A complete backup restores successfully');
+assertEqual('TEST-TOTP-SECRET', $db->query("SELECT secret FROM totp_secrets WHERE username='alice'")->fetchColumn(), 'Restore preserves two-factor authentication state');
+assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Restore preserves saved reports');
+
+$transactionCountBeforeFailure = (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn();
+$failedPayload = $backupPayload;
+$failedPayload['transactions'][] = [
+    'id' => 999999, 'account_id' => 999999, 'date' => '2024-01-01', 'amount' => '-1.00',
+    'description' => 'Broken account reference', 'memo' => null, 'category_id' => null,
+    'segment_id' => null, 'tag_id' => null, 'group_id' => null, 'transfer_id' => null,
+    'ofx_id' => 'broken-restore-test', 'ofx_type' => null, 'bank_ofx_id' => 'broken-restore-test',
+];
+$failedPayload['_meta']['counts']['transactions']++;
+$failedArchive = gzencode(json_encode($failedPayload));
+file_put_contents($backupFile, $failedArchive);
+ob_start();
+include __DIR__ . '/../php_backend/public/restore.php';
+$failedRestoreMessage = ob_get_clean();
+$db = Database::getConnection();
+assertEqual(true, strpos($failedRestoreMessage, 'Restore integrity check failed') !== false, 'Invalid restore reports its integrity failure');
+assertEqual($transactionCountBeforeFailure, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Failed restore rolls back the original transactions');
+assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Failed restore rolls back the original saved reports');
+unlink($backupFile);
 
 // Output results and set exit code
 $failed = false;
