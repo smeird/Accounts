@@ -61,6 +61,7 @@
       <li><a href="groups.html"><i class="fas fa-layer-group"></i> Groups</a></li>
       <li><a href="tag_aliases.html"><i class="fas fa-link"></i> Tag Rules</a></li>
       <li><a href="ai_tags.html"><i class="fas fa-wand-magic-sparkles"></i> Smart Tagging</a></li>
+      <li><a href="ai_data_fix.html"><i class="fas fa-screwdriver-wrench"></i> AI Data Fix</a></li>
     </ul>
   </div>
   <div class="group">

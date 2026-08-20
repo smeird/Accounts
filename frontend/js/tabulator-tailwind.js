@@ -113,6 +113,33 @@ function modernCellKind(definition) {
     return 'text';
 }
 
+function isTransactionColumnSet(columns) {
+    const fields = [];
+    const visit = function (items) {
+        (items || []).forEach(column => {
+            if (Array.isArray(column.columns)) visit(column.columns);
+            fields.push(String(column.field || column.title || '').toLowerCase().replace(/[_-]/g, ' '));
+        });
+    };
+    visit(columns);
+    const has = pattern => fields.some(field => pattern.test(field));
+    return has(/\b(date|transaction date)\b/) && has(/\b(amount|value)\b/) && has(/\b(description|memo|payee|transaction)\b/);
+}
+
+function createTagCorrectionLink() {
+    const link = document.createElement('a');
+    const icon = document.createElement('i');
+    const label = document.createElement('span');
+    link.className = 'modern-table-fix-link';
+    link.href = 'ai_data_fix.html';
+    link.setAttribute('aria-label', 'Correct a tagging mistake with AI');
+    icon.className = 'fas fa-wand-magic-sparkles';
+    icon.setAttribute('aria-hidden', 'true');
+    label.textContent = 'Fix a tagging mistake';
+    link.append(icon, label);
+    return link;
+}
+
 function decorateModernRow(row) {
     const rowElement = row.getElement();
     rowElement.classList.remove('bg-white', 'hover:bg-white', 'tabulator-row-even', 'tabulator-row-odd');
@@ -186,6 +213,7 @@ function tailwindTabulator(element, options) {
     const classificationKinds = classificationKeyOrder.filter(kind =>
         Array.isArray(options.columns) && options.columns.some(column => modernCellKind(column) === kind)
     );
+    const containsTransactions = isTransactionColumnSet(options.columns);
     const isMatrix = modernResponsiveOption === false || /(^|-)pivot-table$/.test(tableElement.id || '') || (Array.isArray(options.columns) && options.columns.length > 10);
     const modernResponsive = !isMatrix;
     let remoteSearchQuery = '';
@@ -284,6 +312,7 @@ function tailwindTabulator(element, options) {
         searchLabel.append(searchIcon, searchInput);
         toolbar.appendChild(searchLabel);
         if (classificationKinds.length) toolbar.appendChild(createClassificationKey(classificationKinds));
+        if (containsTransactions) toolbar.appendChild(createTagCorrectionLink());
         toolbar.appendChild(count);
         tableElement.parentNode.insertBefore(toolbar, tableElement);
         let searchInProgress = false;

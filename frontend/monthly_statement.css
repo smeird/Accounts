@@ -184,3 +184,4 @@ a.statement-pill:hover { transform:translateY(-1px); box-shadow:0 7px 12px -11px
     .statement-spinner { animation:none; }
     .statement-table tbody tr,.statement-pill,.statement-open-link { transition:none; }
 }
+.statement-fix-link{display:inline-flex;align-items:center;gap:.45rem;border:1px solid #c7d2fe;border-radius:999px;background:#eef2ff;color:#4338ca;padding:.55rem .8rem;font-size:.78rem;font-weight:750;text-decoration:none;white-space:nowrap}.statement-fix-link:hover{background:#e0e7ff;color:#3730a3}.statement-fix-link:focus-visible{outline:3px solid rgba(99,102,241,.22);outline-offset:2px}@media(max-width:720px){.statement-fix-link span{display:none}.statement-fix-link{width:2.45rem;height:2.45rem;justify-content:center;padding:0}}

@@ -347,3 +347,4 @@
     .modern-table.tabulator button,
     .modern-table-search { transition:none; }
 }
+.modern-table-fix-link{display:inline-flex;align-items:center;gap:.4rem;border:1px solid #c7d2fe;border-radius:999px;background:#eef2ff;color:#4338ca;padding:.42rem .7rem;font-size:.76rem;font-weight:750;white-space:nowrap;text-decoration:none}.modern-table-fix-link:hover{background:#e0e7ff;color:#3730a3}.modern-table-fix-link:focus-visible{outline:3px solid rgba(99,102,241,.25);outline-offset:2px}@media(max-width:720px){.modern-table-fix-link span{display:none}.modern-table-fix-link{width:2.25rem;height:2.25rem;justify-content:center;padding:0}}

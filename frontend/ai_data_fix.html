@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>AI Data Fix</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="utility_refresh.css?v=20260817-completeness-audit">
+    <link rel="stylesheet" href="ai_data_fix.css?v=20260820-ai-tag-correction">
+</head>
+<body class="ops-body utility-refresh-page ai-data-fix-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main flex-1 min-w-0 overflow-x-hidden">
+        <section class="fix-intro" data-no-card aria-labelledby="fix-title">
+            <div>
+                <span class="fix-eyebrow"><i class="fas fa-shield-halved" aria-hidden="true"></i> Preview before applying</span>
+                <h2 id="fix-title">Describe the tagging mistake</h2>
+                <p>Write what is wrong and what the tag should be. AI interprets your description, but the application calculates and previews the exact transactions before anything changes.</p>
+            </div>
+            <ul aria-label="Safety limits">
+                <li><i class="fas fa-tag" aria-hidden="true"></i><span><strong>Tags only</strong>Amounts, dates, accounts and other classifications stay untouched.</span></li>
+                <li><i class="fas fa-eye" aria-hidden="true"></i><span><strong>Evidence first</strong>You see the source, destination and sample records before confirming.</span></li>
+                <li><i class="fas fa-broom" aria-hidden="true"></i><span><strong>Clean finish</strong>An emptied incorrect tag and its matching rules can be moved out safely.</span></li>
+            </ul>
+        </section>
+
+        <section class="fix-card" data-no-card aria-labelledby="problem-title">
+            <div class="fix-card__header"><span class="fix-step">1</span><div><h2 id="problem-title">Explain the problem in everyday English</h2><p>Include the incorrect tag, the correct tag, and merchant wording if only some transactions are affected.</p></div></div>
+            <form id="fix-form">
+                <label for="problem" class="sr-only">Tagging problem</label>
+                <textarea id="problem" maxlength="2000" rows="5" placeholder="The transactions from Bank of Ireland are incorrectly tagged as Loan Repayments, when they should be tagged as Mortgage." required></textarea>
+                <div class="fix-form__footer"><span id="character-count">0 / 2,000</span><button id="analyse" type="submit"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Analyse and preview</button></div>
+            </form>
+        </section>
+
+        <section id="status" class="fix-status" data-no-card role="status" aria-live="polite">
+            <i class="fas fa-circle-info" aria-hidden="true"></i><div><strong>Ready to analyse</strong><p>No data will change until you review and confirm a correction.</p></div>
+        </section>
+
+        <section id="preview" class="fix-card" data-no-card aria-labelledby="preview-title" hidden>
+            <div class="fix-card__header"><span class="fix-step">2</span><div><h2 id="preview-title">Review the proposed correction</h2><p id="preview-summary"></p></div></div>
+            <div class="fix-route"><div><span>Incorrect tag</span><div id="source-tags" class="fix-pills"></div></div><i class="fas fa-arrow-right" aria-hidden="true"></i><div><span>Correct tag</span><div id="target-tag" class="fix-pills"></div></div></div>
+            <div class="fix-metrics"><article><span>Affected transactions</span><strong id="affected-count">0</strong></article><article><span>Confidence</span><strong id="confidence">0%</strong></article><article><span>Merchant filter</span><strong id="match-terms">All with tag</strong></article></div>
+            <div id="warnings" class="fix-warnings" hidden></div>
+            <div class="fix-samples"><div><h3>Sample of affected records</h3><p>The confirmed change applies to the complete matched set, not only this sample.</p></div><div class="fix-table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Memo</th><th>Amount</th></tr></thead><tbody id="sample-rows"></tbody></table></div></div>
+            <label class="fix-cleanup"><input id="remove-sources" type="checkbox" checked><span><strong>Remove incorrect tags if they become unused</strong><small>Existing alias rules for an emptied source tag will move to the correct tag. Category, segment and group assignments are not changed.</small></span></label>
+            <div class="fix-apply"><button id="cancel" type="button">Discard preview</button><button id="apply" type="button"><i class="fas fa-check" aria-hidden="true"></i> Apply tag correction</button></div>
+        </section>
+
+        <section id="debug" class="fix-card" data-no-card hidden><h2>AI Debug</h2><h3>Prompt</h3><pre id="debug-request"></pre><h3>Response</h3><pre id="debug-response"></pre></section>
+    </main>
+</div>
+<script src="js/page_header.js"></script>
+<script>
+window.renderPageHeader(document.querySelector('main.ops-main'), {title:'AI Data Fix', breadcrumb:'Organise', subtitle:'Correct a reusable tagging mistake safely from a plain-English description.'});
+</script>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+<script src="js/ai_data_fix.js?v=20260820-ai-tag-correction"></script>
+</body>
+</html>

@@ -13,9 +13,16 @@ assert.doesNotMatch(adapter, /redraw\(true\)/, 'viewport changes must not force 
 assert.match(adapter, /options\.paginationMode = options\.paginationMode \|\| 'local'/, 'pagination should use the Tabulator 6 option shape');
 assert.doesNotMatch(adapter, /modern-table-pill-label/, 'classification pills should not repeat their type');
 assert.match(adapter, /createClassificationKey\(classificationKinds\)/, 'classification tables should include a compact colour key');
+assert.match(adapter, /isTransactionColumnSet\(options\.columns\)/, 'transaction tables should be detected from their column definitions');
+assert.match(adapter, /createTagCorrectionLink\(\)/, 'transaction tables should offer the AI tag correction entry point');
 
 const monthlyStatement = fs.readFileSync(path.join(frontendDirectory, 'monthly_statement.html'), 'utf8');
 assert.match(monthlyStatement, /statement-classification-key/, 'monthly statement should include the classification colour key');
+assert.match(monthlyStatement, /href="ai_data_fix\.html"/, 'monthly statement should link to AI Data Fix');
+
+const aiDataFix = fs.readFileSync(path.join(frontendDirectory, 'ai_data_fix.html'), 'utf8');
+assert.match(aiDataFix, /Preview before applying/, 'AI Data Fix should explain that corrections require a preview');
+assert.match(aiDataFix, /Tags only/, 'AI Data Fix should state its tag-only boundary');
 
 const tablePages = fs.readdirSync(frontendDirectory)
     .filter(file => file.endsWith('.html'))

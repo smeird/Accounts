@@ -23,6 +23,7 @@ require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 require_once __DIR__ . '/../php_backend/AiCategoryTagger.php';
 require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
 require_once __DIR__ . '/../php_backend/services/SchemaHealthService.php';
+require_once __DIR__ . '/../php_backend/services/AiTagCorrectionService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -900,6 +901,71 @@ $recordChangingSql = array_filter($schemaExecutorCalls, function($issue) {
 assertEqual(0, count($recordChangingSql), 'Database Health generates no record-changing SQL');
 $secondSchemaRepair = $schemaHealthService->repair($selectedSchemaRepairs);
 assertEqual(0, (int)$secondSchemaRepair['summary']['attempted'], 'Database Health repairs are idempotent');
+
+// AI Data Fix must constrain the model to allowlisted tags and must update no
+// transaction field other than tag_id.
+$db->exec("INSERT INTO tags (name, name_normalized) VALUES ('Incorrect loan tag', 'incorrect loan tag'), ('Mortgage', 'mortgage')");
+$incorrectTagId = (int)$db->query("SELECT id FROM tags WHERE name_normalized='incorrect loan tag'")->fetchColumn();
+$mortgageTagId = (int)$db->query("SELECT id FROM tags WHERE name_normalized='mortgage'")->fetchColumn();
+$db->exec("INSERT INTO tag_aliases (tag_id, alias, alias_normalized, match_type, active) VALUES ($incorrectTagId, 'BANK OF IRELAND', 'bank of ireland', 'contains', 1)");
+$db->exec("INSERT INTO category_tags (category_id, tag_id) VALUES (1, $incorrectTagId)");
+$correctionAccountId = (int)$db->query('SELECT id FROM accounts ORDER BY id LIMIT 1')->fetchColumn();
+if (!$correctionAccountId) {
+    $db->exec("INSERT INTO accounts (name) VALUES ('Correction test account')");
+    $correctionAccountId = (int)$db->lastInsertId();
+}
+$insertCorrectionTransaction = $db->prepare('INSERT INTO transactions (account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id) VALUES (?,?,?,?,?,?,?,?,?,?)');
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-08-01', -1200.50, 'BANK OF IRELAND HOME LOAN', 'Monthly payment', null, null, $incorrectTagId, null, null]);
+$correctionTransactionId = (int)$db->lastInsertId();
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-08-02', -450.00, 'OTHER BANK PERSONAL LOAN', 'Valid loan payment', null, null, $incorrectTagId, null, null]);
+$beforeCorrection = $db->query("SELECT * FROM transactions WHERE id=$correctionTransactionId")->fetch(PDO::FETCH_ASSOC);
+$correctionService = new AiTagCorrectionService($db);
+$correctionTags = $correctionService->tagContext();
+$correctionPlan = $correctionService->createPlan(
+    'Bank of Ireland transactions tagged Incorrect loan tag should be Mortgage',
+    [
+        'summary' => 'Move Bank of Ireland mortgage payments to Mortgage.',
+        'source_tag_ids' => [$incorrectTagId],
+        'target_tag_id' => $mortgageTagId,
+        'target_tag_name' => 'Mortgage',
+        'match_terms' => ['Bank of Ireland'],
+        'confidence' => 0.98,
+        'warnings' => [],
+    ],
+    $correctionTags
+);
+assertEqual(1, $correctionPlan['affected_count'], 'AI tag correction previews the exact matching transaction set');
+$correctionResult = $correctionService->applyPlan($correctionPlan, true);
+$afterCorrection = $db->query("SELECT * FROM transactions WHERE id=$correctionTransactionId")->fetch(PDO::FETCH_ASSOC);
+assertEqual(1, $correctionResult['updated'], 'AI tag correction updates the confirmed transaction');
+assertEqual($mortgageTagId, (int)$afterCorrection['tag_id'], 'AI tag correction changes the transaction tag');
+$beforeNonTag = $beforeCorrection; $afterNonTag = $afterCorrection;
+unset($beforeNonTag['tag_id'], $afterNonTag['tag_id']);
+assertEqual($beforeNonTag, $afterNonTag, 'AI tag correction leaves every non-tag transaction field unchanged');
+assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM tags WHERE id=$incorrectTagId")->fetchColumn(), 'AI tag correction retains a source tag that still has valid transactions');
+assertEqual($mortgageTagId, (int)$db->query("SELECT tag_id FROM tag_aliases WHERE alias_normalized='bank of ireland'")->fetchColumn(), 'AI tag correction moves reusable alias rules to the destination tag');
+$db->exec("INSERT INTO tags (name, name_normalized) VALUES ('Obsolete mortgage tag', 'obsolete mortgage tag')");
+$obsoleteTagId = (int)$db->lastInsertId();
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-08-03', -900.00, 'OLD MORTGAGE PAYMENT', null, null, null, $obsoleteTagId, null, null]);
+$cleanupTags = $correctionService->tagContext();
+$cleanupPlan = $correctionService->createPlan(
+    'Every Obsolete mortgage tag transaction should be Mortgage',
+    ['summary' => 'Merge the obsolete tag.', 'source_tag_ids' => [$obsoleteTagId], 'target_tag_id' => $mortgageTagId, 'target_tag_name' => 'Mortgage', 'match_terms' => [], 'confidence' => 0.99],
+    $cleanupTags
+);
+$correctionService->applyPlan($cleanupPlan, true);
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tags WHERE id=$obsoleteTagId")->fetchColumn(), 'AI tag correction removes an emptied source tag when confirmed');
+try {
+    $correctionService->createPlan(
+        'Fix Bank of Ireland',
+        ['source_tag_ids' => [999999], 'target_tag_id' => $mortgageTagId, 'match_terms' => ['Bank of Ireland'], 'confidence' => 1],
+        $correctionTags
+    );
+    $unknownTagRejected = false;
+} catch (InvalidArgumentException $e) {
+    $unknownTagRejected = true;
+}
+assertEqual(true, $unknownTagRejected, 'AI tag correction rejects source tags outside the server allowlist');
 
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.
