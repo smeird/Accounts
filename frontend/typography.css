@@ -12,6 +12,9 @@
     --type-control: .875rem;
     --type-table: .8125rem;
     --type-table-heading: .75rem;
+    --type-table-secondary: .6875rem;
+    --type-table-secondary-weight: 400;
+    --type-table-secondary-color: #94a3b8;
 }
 
 .page-subtitle {
@@ -312,13 +315,29 @@
 .statement-ledger-header > div > p:last-child,
 .statement-chart-panel header > p,
 .statement-date span,
-.statement-date small,
-.statement-memo,
-.statement-amount-kind,
 .statement-table-footer,
 .statement-empty p,
 .statement-chart-empty {
     font-size: var(--type-caption);
+}
+
+/*
+ * Keep the information hierarchy inside table rows deliberate. Primary
+ * values carry the weight; dates, memos and other qualifiers read as quiet
+ * supporting metadata regardless of the user's selected table font.
+ */
+.table-secondary-text,
+.modern-table.tabulator .tabulator-cell small,
+.statement-date small,
+.statement-memo,
+.statement-amount-kind,
+.account-type,
+.account-identifier-sort,
+.account-activity-state {
+    color: var(--type-table-secondary-color);
+    font-size: var(--type-table-secondary);
+    font-weight: var(--type-table-secondary-weight);
+    line-height: 1.35;
 }
 
 .site-system-page.monthly-statement-page #statement-search,
@@ -381,9 +400,6 @@
     font-size: var(--type-body);
 }
 
-.account-type,
-.account-identifier-sort,
-.account-activity-state,
 .account-rename-error,
 .account-empty p {
     font-size: var(--type-caption);
