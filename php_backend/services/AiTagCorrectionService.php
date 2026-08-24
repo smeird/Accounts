@@ -137,7 +137,7 @@ class AiTagCorrectionService {
 
             $movedAliases = $this->moveMatchingAliases($sourceIds, $targetId, (array)($plan['match_terms'] ?? []));
 
-            $removed = [];
+            $merged = [];
             if ($removeUnusedSources) {
                 foreach ($sourceIds as $sourceId) {
                     $count = $this->db->prepare('SELECT COUNT(*) FROM transactions WHERE tag_id = ?');
@@ -146,8 +146,9 @@ class AiTagCorrectionService {
                     $moveAliases = $this->db->prepare('UPDATE tag_aliases SET tag_id = ? WHERE tag_id = ?');
                     $moveAliases->execute([$targetId, $sourceId]);
                     $this->db->prepare('DELETE FROM category_tags WHERE tag_id = ?')->execute([$sourceId]);
-                    $this->db->prepare('DELETE FROM tags WHERE id = ?')->execute([$sourceId]);
-                    $removed[] = $sourceId;
+                    $retire = $this->db->prepare("UPDATE tags SET status = 'merged', merged_into_tag_id = ?, keyword = NULL WHERE id = ?");
+                    $retire->execute([$targetId, $sourceId]);
+                    $merged[] = $sourceId;
                 }
             }
             $this->db->commit();
@@ -158,7 +159,8 @@ class AiTagCorrectionService {
                 'target_tag_id' => $targetId,
                 'target_tag_name' => (string)$plan['target_tag_name'],
                 'moved_aliases' => $movedAliases,
-                'removed_source_tag_ids' => $removed,
+                'removed_source_tag_ids' => [],
+                'merged_source_tag_ids' => $merged,
             ];
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();

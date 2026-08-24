@@ -52,6 +52,7 @@ $active = isset($data['active'])
 if ($active === null) {
     $active = true;
 }
+$confirmOverlap = !empty($data['confirm_overlap']);
 
 try {
     if ($method === 'POST') {
@@ -63,6 +64,17 @@ try {
         if ($tagId <= 0 || !TagAlias::tagExists($tagId)) {
             http_response_code(400);
             echo json_encode(['error' => 'Please select a valid canonical tag']);
+            return;
+        }
+
+        $overlaps = TagAlias::overlapWarnings($alias, $tagId, $direction);
+        if (!$confirmOverlap && !empty($overlaps)) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'This rule overlaps wording already assigned to another tag.',
+                'requires_confirmation' => true,
+                'overlaps' => $overlaps,
+            ]);
             return;
         }
 
@@ -80,6 +92,17 @@ try {
         if ($tagId <= 0 || !TagAlias::tagExists($tagId)) {
             http_response_code(400);
             echo json_encode(['error' => 'Please select a valid canonical tag']);
+            return;
+        }
+
+        $overlaps = TagAlias::overlapWarnings($alias, $tagId, $direction, $id);
+        if (!$confirmOverlap && !empty($overlaps)) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'This rule overlaps wording already assigned to another tag.',
+                'requires_confirmation' => true,
+                'overlaps' => $overlaps,
+            ]);
             return;
         }
 

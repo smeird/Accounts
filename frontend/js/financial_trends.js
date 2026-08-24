@@ -8,7 +8,7 @@
     const validDimensions = ['category', 'segment', 'group', 'tag'];
     const validComparisons = ['previous_year', 'previous', 'none'];
     const dimensionLabels = { category: 'Category', segment: 'Segment', group: 'Group', tag: 'Tag' };
-    const coverageLinks = { category: 'categories.html', segment: 'segments.html', group: 'groups.html', tag: 'tags.html' };
+    const coverageLinks = { category: 'categories.html', segment: 'segments.html', group: 'groups.html', tag: 'tagging.html#catalogue' };
     let availableMonths = [];
     let currentData = null;
     let showAllRows = false;

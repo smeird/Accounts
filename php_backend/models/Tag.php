@@ -95,6 +95,130 @@ class Tag {
     }
 
     /**
+     * Retire a canonical tag from future use without rewriting history.
+     * Existing transaction classifications remain available to reports and
+     * every matching rule is disabled atomically.
+     *
+     * @return array{tag_id:int,transactions_retained:int,rules_disabled:int}
+     */
+    public static function retire(int $id): array {
+        $db = Database::getConnection();
+        $db->beginTransaction();
+        try {
+            $tag = self::lockActiveTag($db, $id);
+            self::assertMutableTag($tag);
+
+            $transactions = $db->prepare('SELECT COUNT(*) FROM transactions WHERE tag_id = :id');
+            $transactions->execute(['id' => $id]);
+            $transactionsRetained = (int)$transactions->fetchColumn();
+
+            $rules = $db->prepare('UPDATE tag_aliases SET active = 0 WHERE tag_id = :id AND active = 1');
+            $rules->execute(['id' => $id]);
+            $rulesDisabled = $rules->rowCount();
+
+            $update = $db->prepare("UPDATE tags SET status = 'deprecated', merged_into_tag_id = NULL WHERE id = :id");
+            $update->execute(['id' => $id]);
+            $db->commit();
+            self::clearMatchCaches();
+
+            return [
+                'tag_id' => $id,
+                'transactions_retained' => $transactionsRetained,
+                'rules_disabled' => $rulesDisabled,
+            ];
+        } catch (Exception $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Merge one active tag into another canonical tag. The destination's
+     * category wins; when it is unassigned, the source category is inherited.
+     * Transactions, rules and reporting classifications move together.
+     *
+     * @return array{source_tag_id:int,target_tag_id:int,transactions_moved:int,rules_moved:int,category_id:?int}
+     */
+    public static function merge(int $sourceId, int $targetId): array {
+        if ($sourceId <= 0 || $targetId <= 0 || $sourceId === $targetId) {
+            throw new InvalidArgumentException('Choose two different active tags to merge.');
+        }
+
+        $db = Database::getConnection();
+        $db->beginTransaction();
+        try {
+            $source = self::lockActiveTag($db, $sourceId);
+            self::lockActiveTag($db, $targetId);
+            self::assertMutableTag($source);
+
+            $mapping = $db->prepare(
+                'SELECT ct.category_id, c.segment_id FROM category_tags ct '
+                . 'LEFT JOIN categories c ON c.id = ct.category_id WHERE ct.tag_id = :id ORDER BY ct.category_id LIMIT 1'
+            );
+            $mapping->execute(['id' => $targetId]);
+            $targetMapping = $mapping->fetch(PDO::FETCH_ASSOC) ?: null;
+            $mapping->execute(['id' => $sourceId]);
+            $sourceMapping = $mapping->fetch(PDO::FETCH_ASSOC) ?: null;
+            $chosenMapping = $targetMapping ?: $sourceMapping;
+
+            if (!$targetMapping && $sourceMapping) {
+                $insertMapping = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:category, :tag)');
+                $insertMapping->execute(['category' => (int)$sourceMapping['category_id'], 'tag' => $targetId]);
+            }
+
+            $moveTransactions = $db->prepare(
+                'UPDATE transactions SET tag_id = :target, category_id = :category, segment_id = :segment WHERE tag_id = :source'
+            );
+            $moveTransactions->bindValue(':target', $targetId, PDO::PARAM_INT);
+            $moveTransactions->bindValue(':source', $sourceId, PDO::PARAM_INT);
+            $moveTransactions->bindValue(':category', $chosenMapping ? (int)$chosenMapping['category_id'] : null, $chosenMapping ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $moveTransactions->bindValue(':segment', $chosenMapping && $chosenMapping['segment_id'] !== null ? (int)$chosenMapping['segment_id'] : null, $chosenMapping && $chosenMapping['segment_id'] !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $moveTransactions->execute();
+            $transactionsMoved = $moveTransactions->rowCount();
+
+            $moveRules = $db->prepare('UPDATE tag_aliases SET tag_id = :target WHERE tag_id = :source');
+            $moveRules->execute(['target' => $targetId, 'source' => $sourceId]);
+            $rulesMoved = $moveRules->rowCount();
+
+            $removeMapping = $db->prepare('DELETE FROM category_tags WHERE tag_id = :source');
+            $removeMapping->execute(['source' => $sourceId]);
+            $mergeTag = $db->prepare(
+                "UPDATE tags SET status = 'merged', merged_into_tag_id = :target, keyword = NULL WHERE id = :source"
+            );
+            $mergeTag->execute(['target' => $targetId, 'source' => $sourceId]);
+
+            $db->commit();
+            self::clearMatchCaches();
+            return [
+                'source_tag_id' => $sourceId,
+                'target_tag_id' => $targetId,
+                'transactions_moved' => $transactionsMoved,
+                'rules_moved' => $rulesMoved,
+                'category_id' => $chosenMapping ? (int)$chosenMapping['category_id'] : null,
+            ];
+        } catch (Exception $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
+    }
+
+    private static function lockActiveTag(PDO $db, int $id): array {
+        $suffix = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+        $stmt = $db->prepare("SELECT id, name, name_normalized, origin, status FROM tags WHERE id = :id AND status = 'active'" . $suffix);
+        $stmt->execute(['id' => $id]);
+        $tag = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$tag) throw new InvalidArgumentException('The selected active tag could not be found.');
+        return $tag;
+    }
+
+    private static function assertMutableTag(array $tag): void {
+        $normalized = self::normalizeName((string)($tag['name'] ?? ''));
+        if ($normalized === 'ignore' || ($tag['origin'] ?? '') === 'system') {
+            throw new InvalidArgumentException('Protected system tags cannot be retired or merged.');
+        }
+    }
+
+    /**
      * Return compact tag choices for autocomplete controls.
      *
      * Results beginning with the query are ranked ahead of other contains
@@ -185,7 +309,8 @@ class Tag {
     /**
      * Find a tag whose keyword appears in the provided text.
      */
-    public static function findMatch(string $text, ?float $amount = null): ?int {
+    public static function findMatch(string $text, ?float $amount = null, ?array &$match = null): ?int {
+        $match = null;
         if (self::$aliasCache === null) {
             self::$aliasCache = TagAlias::activeMappings();
         }
@@ -202,9 +327,11 @@ class Tag {
                 continue;
             }
             if ($row['match_type'] === 'exact' && $normalizedText === $normalizedAlias) {
+                $match = ['source' => 'alias', 'alias_id' => (int)$row['id']];
                 return (int)$row['tag_id'];
             }
             if ($row['match_type'] !== 'exact' && strpos(' ' . $normalizedText . ' ', ' ' . $normalizedAlias . ' ') !== false) {
+                $match = ['source' => 'alias', 'alias_id' => (int)$row['id']];
                 return (int)$row['tag_id'];
             }
         }
@@ -216,6 +343,7 @@ class Tag {
         }
         foreach (self::$keywordCache as $row) {
             if (stripos($text, $row['keyword']) !== false) {
+                $match = ['source' => 'keyword', 'alias_id' => null];
                 return (int)$row['id'];
             }
         }
@@ -227,7 +355,7 @@ class Tag {
      * has assigned to a canonical tag. Existing aliases are never reassigned to a
      * different tag: a conflict is returned for review instead.
      *
-     * @return array{status:string,alias:?string,tag_id:int,existing_tag_id:?int}
+     * @return array{status:string,alias:?string,tag_id:int,existing_tag_id:?int,overlaps?:array}
      */
     public static function learnTransactionAlias(int $tagId, string $description, ?string $memo = null, string $origin = 'manual', ?float $amount = null): array {
         $alias = self::buildReusableAlias($description, $memo);
@@ -263,6 +391,12 @@ class Tag {
         }
 
         try {
+            $overlaps = TagAlias::overlapWarnings($alias, $tagId, $direction);
+            if (!empty($overlaps)) {
+                $result['status'] = 'overlap';
+                $result['overlaps'] = $overlaps;
+                return $result;
+            }
             TagAlias::create($tagId, $alias, 'contains', true, self::normalizeOrigin($origin), null, 1, $direction);
             self::clearMatchCaches();
             $result['status'] = 'created';
@@ -462,16 +596,23 @@ class Tag {
         $stmt->execute(['acc' => $accountId]);
         $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
         $updated = 0;
+        $aliasMatches = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $tx) {
-            $tagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']), (float)$tx['amount']);
+            $match = null;
+            $tagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']), (float)$tx['amount'], $match);
             if ($tagId === null && $tx['ofx_type'] === 'INT') {
                 $tagId = self::getInterestChargeId();
             }
             if ($tagId !== null) {
                 $upd->execute(['tag' => $tagId, 'id' => $tx['id']]);
                 $updated++;
+                if (($match['source'] ?? null) === 'alias' && !empty($match['alias_id'])) {
+                    $aliasId = (int)$match['alias_id'];
+                    $aliasMatches[$aliasId] = ($aliasMatches[$aliasId] ?? 0) + 1;
+                }
             }
         }
+        TagAlias::recordMatches($aliasMatches);
         return $updated;
     }
 

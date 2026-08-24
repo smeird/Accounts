@@ -131,13 +131,14 @@ $tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2
 $txnMap = [];
 $aliasResolutions = [];
 $learnedAliases = [];
+$reviewRequired = [];
 
-$prompt = "You are a financial assistant. For each transaction provide a short, broad, reusable canonical tag and an optional brief description for that tag. Never invent a merchant-specific or transaction-specific tag. ";
+$prompt = "You are a financial assistant. For each transaction choose one short, broad, reusable canonical tag from the supplied allowlist and optionally describe it. Never invent a merchant-specific or transaction-specific tag. ";
 $prompt .= "Aliases are examples that map to canonical tags. Always return the canonical tag name in the tag field, never an alias literal. ";
-$prompt .= "Reuse an existing canonical tag whenever it reasonably fits. Create a new canonical tag only when none of the supplied tags represents the durable spending or income type. ";
+$prompt .= "Do not create a new tag. When none of the supplied tags fits, return REVIEW_REQUIRED in the tag field and put the broad proposed name in suggested_tag. ";
 $prompt .= "Prioritise canonical tag selection accuracy over other metadata. Category is optional metadata and may be omitted. ";
 $prompt .= "If you provide category, use canonical category names as reference guidance only; tagging should still proceed even when category is uncertain. ";
-$prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"tag name\",\"description\":\"tag description\",\"category\":\"optional category name\"} ";
+$prompt .= "Return JSON only as a top-level array of objects {\"id\":<id>,\"tag\":\"existing tag name or REVIEW_REQUIRED\",\"suggested_tag\":\"optional proposed broad name\",\"description\":\"tag description\",\"category\":\"optional category name\"} ";
 $prompt .= "or as an object {\"transactions\":[...]} containing that array. Do not return a single object.\n\n";
 
 if ($tagContext['text'] !== '') {
@@ -277,15 +278,23 @@ foreach ($suggestions as $s) {
             Tag::setDescriptionIfMissing($tagId, $tagDesc);
         }
     } else {
-        $tagId = Tag::getActiveIdByName($tagName);
-        if ($tagId === null) {
-            $tagId = Tag::create($tagName, null, $tagDesc, 'ai');
-        } else {
-            // getIdByName performs normalized lookup to prevent duplicate tags.
-            if ($tagDesc) {
-                Tag::setDescriptionIfMissing($tagId, $tagDesc);
-            }
+        $proposedName = trim((string)($s['suggested_tag'] ?? ''));
+        if ($proposedName === '') {
+            $proposedName = strcasecmp((string)$tagName, 'REVIEW_REQUIRED') === 0
+                ? 'Unresolved pattern'
+                : (string)$tagName;
         }
+        $proposalKey = Tag::normalizeName($proposedName);
+        if (!isset($reviewRequired[$proposalKey])) {
+            $reviewRequired[$proposalKey] = [
+                'suggested_tag' => $proposedName,
+                'transactions' => 0,
+                'category' => $catName ? (string)$catName : null,
+            ];
+        }
+        $reviewRequired[$proposalKey]['transactions'] += (int)($txn['cnt'] ?? 1);
+        Log::write('AI tag suggestion held for canonical review: ' . json_encode($reviewRequired[$proposalKey]), 'INFO');
+        continue;
     }
 
     // Every accepted AI decision teaches the deterministic application matcher.
@@ -299,6 +308,8 @@ foreach ($suggestions as $s) {
         $tagId = (int)$learned['existing_tag_id'];
         $learned['resolved_to_existing_tag'] = $tagId;
         Log::write('AI tag alias conflict resolved to existing canonical mapping: ' . json_encode($learned), 'WARNING');
+    } elseif ($learned['status'] === 'overlap') {
+        Log::write('AI tag alias overlap held for review: ' . json_encode($learned), 'WARNING');
     } elseif ($learned['status'] === 'created') {
         Log::write("AI learned reusable alias '{$learned['alias']}' for tag_id={$tagId}");
     }
@@ -353,7 +364,14 @@ Log::write("AI tagged $processed transactions using $usage tokens");
 if (!empty($learnedAliases)) {
     Log::write('AI alias learning summary: ' . json_encode($learnedAliases));
 }
- $out = ['processed' => $processed, 'tokens' => $usage, 'category_mapped' => $categoryMapped, 'category_unresolved' => $categoryUnresolved];
+ $out = [
+     'processed' => $processed,
+     'tokens' => $usage,
+     'category_mapped' => $categoryMapped,
+     'category_unresolved' => $categoryUnresolved,
+     'review_required' => array_values($reviewRequired),
+     'review_required_count' => count($reviewRequired),
+ ];
  if ($debugMode) {
      $out['debug'] = [
          'prompt' => $prompt,

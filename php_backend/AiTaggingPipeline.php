@@ -46,32 +46,39 @@ class AiTaggingPipeline {
             $aliasesByTag[$tagId]['aliases'][$aliasKey] = $direction === 'any' ? $alias : ($alias . ' [' . $direction . ']');
         }
 
-        $lines = [];
+        $canonicalLines = [];
+        $aliasLines = [];
         foreach ($aliasesByTag as $entry) {
             $name = $entry['name'];
+            $canonicalLines[] = '- ' . $name;
             $aliases = array_values($entry['aliases']);
-            if (empty($aliases)) {
-                $lines[] = $name;
-                continue;
-            }
+            if (empty($aliases)) continue;
             $aliases = array_slice($aliases, 0, $maxAliasesPerTag);
-            $lines[] = $name . ': ' . implode(', ', $aliases);
+            $aliasLines[] = $name . ': ' . implode(', ', $aliases);
         }
 
-        $text = '';
+        // Canonical names are the allowlist and must never be lost when the
+        // much larger alias catalogue is trimmed for prompt size.
+        $text = empty($canonicalLines)
+            ? ''
+            : "Allowed canonical tags:\n" . implode("\n", $canonicalLines);
         $truncated = false;
-        if (!empty($lines)) {
-            $joined = implode("\n", $lines);
-            if (strlen($joined) > $maxChars) {
-                $text = substr($joined, 0, $maxChars);
-                $lastBreak = strrpos($text, "\n");
-                if ($lastBreak !== false) {
-                    $text = substr($text, 0, $lastBreak);
+        if (!empty($aliasLines)) {
+            $prefix = $text === '' ? '' : "\n\nAlias examples:\n";
+            $available = max(0, $maxChars - strlen($text) - strlen($prefix));
+            $included = [];
+            foreach ($aliasLines as $line) {
+                $candidate = implode("\n", array_merge($included, [$line]));
+                if (strlen($candidate) > $available) {
+                    $truncated = true;
+                    break;
                 }
-                $text .= "\n... (alias context truncated)";
+                $included[] = $line;
+            }
+            if (!empty($included)) $text .= $prefix . implode("\n", $included);
+            if (count($included) < count($aliasLines)) {
+                $text .= "\n... (alias examples truncated; canonical allowlist above is complete)";
                 $truncated = true;
-            } else {
-                $text = $joined;
             }
         }
 

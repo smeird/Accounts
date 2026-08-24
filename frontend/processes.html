@@ -96,27 +96,29 @@
                     <h2 id="process-tools-title">Better matches start here</h2>
                     <p>Teach the system how your data should be organised, then return here to apply those rules.</p>
                 </div>
-                <a id="ai-categories-btn" class="process-tool-card process-tool-card--ai" href="ai_tags.html#categorise-tags">
+                <a id="ai-categories-btn" class="process-tool-card process-tool-card--ai" href="tagging.html#automation">
                     <span class="process-tool-card__icon" aria-hidden="true"><i class="fas fa-wand-magic-sparkles"></i></span>
                     <span><strong>AI categorise tags</strong><small>Suggest links from unassigned tags to your existing categories.</small></span>
                     <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
                 </a>
-                <a id="tag-aliases-btn" class="process-tool-card process-tool-card--aliases" href="tag_aliases.html">
+                <a id="tag-aliases-btn" class="process-tool-card process-tool-card--aliases" href="tagging.html#rules">
                     <span class="process-tool-card__icon" aria-hidden="true"><i class="fas fa-code-branch"></i></span>
                     <span><strong>Manage tag aliases</strong><small>Connect different merchant descriptions to one reusable tag.</small></span>
                     <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
                 </a>
             </section>
 
-            <section class="process-reset" aria-labelledby="process-reset-title">
-                <div class="process-reset__icon" aria-hidden="true"><i class="fas fa-eraser"></i></div>
+            <details class="process-reset" aria-labelledby="process-reset-title">
+                <summary>
+                    <span class="process-reset__icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>
+                    <span><span class="process-eyebrow">Advanced recovery</span><strong id="process-reset-title">Assignment reset</strong><small>Only use this when rebuilding classifications from saved rules.</small></span>
+                </summary>
                 <div>
-                    <span class="process-eyebrow">Start over</span>
-                    <h2 id="process-reset-title">Clear transaction assignments</h2>
-                    <p>Removes tags, categories and segments from transactions. Your saved rules and aliases are kept, so assignments can be rebuilt afterwards.</p>
+                    <h2>Clear transaction assignments</h2>
+                    <p>Removes tags, categories and segments from transactions. Historical classifications can change when rules are reapplied, so this is not routine maintenance.</p>
                 </div>
                 <button id="clear-btn" type="button" class="process-reset__action" aria-label="Review clearing transaction assignments"><i class="fas fa-broom" aria-hidden="true"></i><span>Review reset</span></button>
-            </section>
+            </details>
         </main>
     </div>
 

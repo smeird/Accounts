@@ -1,5 +1,7 @@
 # Tag Taxonomy Rebuild
 
+> Status: completed. The phase pages are retained as advanced recovery tools and are no longer listed in the normal sidebar. The permanent audit summary appears under **Organise → Tagging → Rebuild history**.
+
 The rebuild treats bank wording, canonical tags, categories and segments as separate layers:
 
 - An **alias** is stable wording received from a bank and points to one canonical tag.
