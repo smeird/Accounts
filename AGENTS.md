@@ -12,8 +12,9 @@
 - Static pages must prevent caching via `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">` tags or equivalent PHP headers.
 
 - Projects support archiving via an `archived` flag and can be restored from the Archived Projects page.
+- Project priority uses one portfolio-wide 0–100 model: consequence of delay 35%, urgency 25%, asset preservation 20%, financial impact 10%, and daily-life impact 10%. Keep cost separate from importance, retain the action tiers (Critical, Important, Preventive, Improvement, Nice to have), and do not reintroduce per-project weights.
 
-- Projects view visualises benefits using a bubble chart plotting cost vs quality with bubble size representing score, displaying each project as its own series for distinct colours.
+- Projects view compares cost with a selectable priority signal; bubble size represents the fixed priority score and colour represents its action tier.
 - The bubble chart now includes selectors to choose the horizontal and vertical axes.
 - Projects board page presents each active project as an individual card with key details and actions.
 - Projects board cards display post-description details in a compact table with a smaller font to minimise card size.

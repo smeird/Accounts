@@ -4,6 +4,63 @@ require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/TransactionGroup.php';
 
 class Project {
+    /** Fixed decision weights. Per-project weighting made unlike projects
+     * incomparable, so these are deliberately shared by the whole portfolio. */
+    private const PRIORITY_WEIGHTS = [
+        'benefit_risk' => 35,           // consequence of delay
+        'weight_risk' => 25,            // urgency (legacy column, new meaning)
+        'benefit_sustainability' => 20, // asset preservation
+        'benefit_financial' => 10,      // financial impact
+        'benefit_quality' => 10,        // daily-life impact
+    ];
+
+    private static function rating(array $data, string $key, int $default = 0): int {
+        $value = isset($data[$key]) && is_numeric($data[$key]) ? (int)$data[$key] : $default;
+        return max(0, min(5, $value));
+    }
+
+    /** Return a transparent 0-100 importance score. */
+    public static function calculatePriorityScore(array $project): int {
+        $weighted = 0;
+        foreach (self::PRIORITY_WEIGHTS as $field => $weight) {
+            $weighted += self::rating($project, $field) * $weight;
+        }
+        return (int)round($weighted / 5);
+    }
+
+    /**
+     * Group the score into an action-oriented tier. A severe consequence that
+     * is already urgent is critical regardless of softer benefits.
+     */
+    public static function priorityTier(array $project): array {
+        $consequence = self::rating($project, 'benefit_risk');
+        $urgency = self::rating($project, 'weight_risk');
+        $preservation = self::rating($project, 'benefit_sustainability');
+        $score = self::calculatePriorityScore($project);
+        if ($consequence >= 5 && $urgency >= 4) return ['key' => 'critical', 'label' => 'Critical — act now', 'rank' => 1];
+        if ($score >= 70 || ($consequence >= 4 && $urgency >= 4)) return ['key' => 'important', 'label' => 'Important — plan next', 'rank' => 2];
+        if ($score >= 50 || $consequence >= 4 || $preservation >= 4) return ['key' => 'preventive', 'label' => 'Preventive — schedule soon', 'rank' => 3];
+        if ($score >= 30) return ['key' => 'improvement', 'label' => 'Improvement — worthwhile', 'rank' => 4];
+        return ['key' => 'nice', 'label' => 'Nice to have', 'rank' => 5];
+    }
+
+    private static function addPriorityFields(array $rows): array {
+        foreach ($rows as &$row) {
+            $tier = self::priorityTier($row);
+            $row['score'] = self::calculatePriorityScore($row);
+            $row['priority_key'] = $tier['key'];
+            $row['priority_label'] = $tier['label'];
+            $row['priority_rank'] = $tier['rank'];
+        }
+        unset($row);
+        usort($rows, static function (array $a, array $b): int {
+            $rank = ((int)$a['priority_rank']) <=> ((int)$b['priority_rank']);
+            if ($rank !== 0) return $rank;
+            $score = ((int)$b['score']) <=> ((int)$a['score']);
+            return $score !== 0 ? $score : ((int)$a['id']) <=> ((int)$b['id']);
+        });
+        return $rows;
+    }
     /**
      * Insert a new project and return its id.
      */
@@ -22,14 +79,14 @@ class Project {
             'recurring_cost' => $data['recurring_cost'] ?? null,
             'estimated_time' => $data['estimated_time'] ?? null,
             'expected_lifespan' => $data['expected_lifespan'] ?? null,
-            'benefit_financial' => $data['benefit_financial'] ?? 0,
-            'benefit_quality' => $data['benefit_quality'] ?? 0,
-            'benefit_risk' => $data['benefit_risk'] ?? 0,
-            'benefit_sustainability' => $data['benefit_sustainability'] ?? 0,
-            'weight_financial' => $data['weight_financial'] ?? 1,
-            'weight_quality' => $data['weight_quality'] ?? 1,
-            'weight_risk' => $data['weight_risk'] ?? 1,
-            'weight_sustainability' => $data['weight_sustainability'] ?? 1,
+            'benefit_financial' => self::rating($data, 'benefit_financial'),
+            'benefit_quality' => self::rating($data, 'benefit_quality'),
+            'benefit_risk' => self::rating($data, 'benefit_risk'),
+            'benefit_sustainability' => self::rating($data, 'benefit_sustainability'),
+            'weight_financial' => 1,
+            'weight_quality' => 1,
+            'weight_risk' => self::rating($data, 'weight_risk'),
+            'weight_sustainability' => 1,
             'dependencies' => $data['dependencies'] ?? null,
             'risks' => $data['risks'] ?? null,
             'archived' => $data['archived'] ?? 0,
@@ -39,42 +96,32 @@ class Project {
     }
 
     /**
-     * Retrieve all projects with computed weighted score.
+     * Retrieve all projects with a consistent portfolio priority score.
      */
     public static function all(bool $archived = false): array {
         $db = Database::getConnection();
         $params = ['archived' => $archived ? 1 : 0];
         try {
-            $sql = 'SELECT p.*, (
-                benefit_financial*weight_financial +
-                benefit_quality*weight_quality +
-                benefit_risk*weight_risk +
-                benefit_sustainability*weight_sustainability
-            ) AS score,
+            $sql = 'SELECT p.*,
             COALESCE(SUM(CASE WHEN t.amount < 0 THEN -t.amount ELSE 0 END),0) AS spent
             FROM projects p
             LEFT JOIN transactions t ON t.group_id = p.group_id AND t.transfer_id IS NULL
             WHERE p.archived = :archived
             GROUP BY p.id
-            ORDER BY score DESC, p.id ASC';
+            ORDER BY p.id ASC';
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return self::addPriorityFields($stmt->fetchAll(PDO::FETCH_ASSOC));
         } catch (PDOException $e) {
             // If the transactions table does not exist yet, fallback to a query
             // without the join so projects can still be listed.
-            $sql = 'SELECT p.*, (
-                benefit_financial*weight_financial +
-                benefit_quality*weight_quality +
-                benefit_risk*weight_risk +
-                benefit_sustainability*weight_sustainability
-            ) AS score, 0 AS spent
+            $sql = 'SELECT p.*, 0 AS spent
             FROM projects p
             WHERE p.archived = :archived
-            ORDER BY score DESC, p.id ASC';
+            ORDER BY p.id ASC';
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return self::addPriorityFields($stmt->fetchAll(PDO::FETCH_ASSOC));
         }
     }
 
@@ -108,14 +155,14 @@ class Project {
             'recurring_cost' => $data['recurring_cost'] ?? null,
             'estimated_time' => $data['estimated_time'] ?? null,
             'expected_lifespan' => $data['expected_lifespan'] ?? null,
-            'benefit_financial' => $data['benefit_financial'] ?? 0,
-            'benefit_quality' => $data['benefit_quality'] ?? 0,
-            'benefit_risk' => $data['benefit_risk'] ?? 0,
-            'benefit_sustainability' => $data['benefit_sustainability'] ?? 0,
-            'weight_financial' => $data['weight_financial'] ?? 1,
-            'weight_quality' => $data['weight_quality'] ?? 1,
-            'weight_risk' => $data['weight_risk'] ?? 1,
-            'weight_sustainability' => $data['weight_sustainability'] ?? 1,
+            'benefit_financial' => self::rating($data, 'benefit_financial'),
+            'benefit_quality' => self::rating($data, 'benefit_quality'),
+            'benefit_risk' => self::rating($data, 'benefit_risk'),
+            'benefit_sustainability' => self::rating($data, 'benefit_sustainability'),
+            'weight_financial' => 1,
+            'weight_quality' => 1,
+            'weight_risk' => self::rating($data, 'weight_risk'),
+            'weight_sustainability' => 1,
             'dependencies' => $data['dependencies'] ?? null,
             'risks' => $data['risks'] ?? null,
             'archived' => $archivedFlag,
