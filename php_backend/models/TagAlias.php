@@ -70,16 +70,21 @@ class TagAlias {
     /**
      * Create a new alias mapping.
      */
-    public static function create(int $tagId, string $alias, string $matchType = 'contains', bool $active = true): int {
+    public static function create(int $tagId, string $alias, string $matchType = 'contains', bool $active = true, string $origin = 'manual', ?float $confidence = null, int $supportCount = 1): int {
         $db = Database::getConnection();
         $normalized = self::normalizeAlias($alias);
-        $stmt = $db->prepare('INSERT INTO tag_aliases (tag_id, alias, alias_normalized, match_type, active) VALUES (:tag_id, :alias, :alias_normalized, :match_type, :active)');
+        $origin = self::normalizeOrigin($origin);
+        $confidence = $confidence === null ? null : max(0, min(1, $confidence));
+        $stmt = $db->prepare('INSERT INTO tag_aliases (tag_id, alias, alias_normalized, match_type, active, origin, confidence, support_count) VALUES (:tag_id, :alias, :alias_normalized, :match_type, :active, :origin, :confidence, :support_count)');
         $stmt->execute([
             'tag_id' => $tagId,
             'alias' => trim($alias),
             'alias_normalized' => $normalized,
             'match_type' => self::normalizeMatchType($matchType),
             'active' => $active ? 1 : 0,
+            'origin' => $origin,
+            'confidence' => $confidence,
+            'support_count' => max(0, $supportCount),
         ]);
         return (int)$db->lastInsertId();
     }
@@ -142,6 +147,10 @@ class TagAlias {
 
     private static function normalizeMatchType(string $matchType): string {
         return $matchType === 'exact' ? 'exact' : 'contains';
+    }
+
+    private static function normalizeOrigin(string $origin): string {
+        return in_array($origin, ['system', 'manual', 'ai', 'legacy'], true) ? $origin : 'manual';
     }
 }
 ?>

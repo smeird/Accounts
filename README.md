@@ -41,6 +41,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Users, passwords and TOTP two-factor authentication.
 - Backup and restore for accounts, transactions, classifications, projects, budgets and settings.
 - Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
+- Tag Rebuild Safety creates immutable, hashed snapshots of tag/category/segment assignments before taxonomy work begins and provides a previewed classification-only restore.
 - Automation Centre, logs, duplicate checks and configurable branding/typography.
 - Explicit no-store/revalidation rules prevent stale HTML, CSS and JavaScript after deployments.
 
@@ -113,6 +114,8 @@ curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | ba
 
 After upgrades, open **System → Database Health**. It identifies missing tables, columns, indexes and relationships without modifying transaction records. See [Setup](wiki/Setup.md) for Apache and environment details.
 
+Before starting an AI-assisted taxonomy rebuild, apply the current Database Health repairs and open **System → Tag Rebuild Safety**. Create a baseline snapshot there before any staging or cutover work. Confirmed transfers and `IGNORE`-tagged transactions are recorded as protected, and restoring a snapshot never changes amounts, dates, descriptions, accounts or transactions imported after that snapshot. See [Tag Taxonomy Rebuild](wiki/TagTaxonomyRebuild.md).
+
 ## OFX/QFX import
 
 Use **Transactions → Import Transactions**, or call the endpoint directly:
@@ -160,6 +163,6 @@ Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff -
 
 ## Backups and deployment safety
 
-Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and XLSX extracts. Treat these files as sensitive financial data.
+Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and XLSX extracts. Full backups include tag-rebuild runs and their immutable classification snapshots. Treat these files as sensitive financial data.
 
 Keep credentials and API tokens outside the repository, serve production over HTTPS, allow the included `.htaccess` cache policy, and deploy from `main`. Do not use `--allow-unrelated-histories` on a production checkout; preserve configuration/uploads and use a clean clone if the server directory does not share this repository’s history.

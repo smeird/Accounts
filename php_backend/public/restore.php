@@ -87,7 +87,7 @@ try {
     }
     if (isset($data['_meta'])) {
         if (($data['_meta']['format'] ?? '') !== 'newaccounts-backup'
-            || (int)($data['_meta']['version'] ?? 0) > 2) {
+            || (int)($data['_meta']['version'] ?? 0) > 3) {
             throw new InvalidArgumentException('Unsupported backup format or version.');
         }
         foreach (($data['_meta']['counts'] ?? []) as $section => $expected) {
@@ -105,6 +105,8 @@ try {
     }
     $db->beginTransaction();
     if ($driver === 'sqlite') $db->exec('PRAGMA defer_foreign_keys = ON');
+    if (isset($data['transaction_classification_snapshots'])) $db->exec('DELETE FROM transaction_classification_snapshots');
+    if (isset($data['tag_migration_runs'])) $db->exec('DELETE FROM tag_migration_runs');
     if (isset($data['category_tags'])) $db->exec('DELETE FROM category_tags');
     if (isset($data['segment_categories'])) $db->exec('DELETE FROM segment_categories');
     if (isset($data['transactions'])) $db->exec('DELETE FROM transactions');
@@ -191,8 +193,9 @@ try {
 
     $tagIdMap = [];
     if (isset($data['tags'])) {
-        $stmtTag = $db->prepare('INSERT INTO tags (id, name, name_normalized, keyword, description) VALUES (:id, :name, :name_normalized, :keyword, :description)');
+        $stmtTag = $db->prepare('INSERT INTO tags (id, name, name_normalized, keyword, description, origin, status, merged_into_tag_id, created_at, updated_at) VALUES (:id, :name, :name_normalized, :keyword, :description, :origin, :status, NULL, :created_at, :updated_at)');
         $canonicalTagIds = [];
+        $pendingMergedTags = [];
         foreach ($data['tags'] as $row) {
             $oldTagId = (int)$row['id'];
             $normalizedName = Tag::normalizeName((string)$row['name']);
@@ -205,15 +208,31 @@ try {
                 'name' => $row['name'],
                 'name_normalized' => $normalizedName,
                 'keyword' => $row['keyword'] ?? null,
-                'description' => $row['description'] ?? null
+                'description' => $row['description'] ?? null,
+                'origin' => in_array(($row['origin'] ?? 'legacy'), ['system', 'manual', 'ai', 'legacy'], true) ? ($row['origin'] ?? 'legacy') : 'legacy',
+                'status' => in_array(($row['status'] ?? 'active'), ['proposed', 'active', 'deprecated', 'merged'], true) ? ($row['status'] ?? 'active') : 'active',
+                'created_at' => $row['created_at'] ?? null,
+                'updated_at' => $row['updated_at'] ?? null,
             ]);
             $canonicalTagIds[$normalizedName] = $oldTagId;
             $tagIdMap[$oldTagId] = $oldTagId;
+            if (!empty($row['merged_into_tag_id'])) {
+                $pendingMergedTags[$oldTagId] = (int)$row['merged_into_tag_id'];
+            }
+        }
+        if ($pendingMergedTags) {
+            $updateMergedTag = $db->prepare('UPDATE tags SET merged_into_tag_id = :merged_into WHERE id = :id');
+            foreach ($pendingMergedTags as $tagId => $mergedIntoTagId) {
+                $destination = $tagIdMap[$mergedIntoTagId] ?? null;
+                if ($destination !== null && $destination !== $tagId) {
+                    $updateMergedTag->execute(['merged_into' => $destination, 'id' => $tagId]);
+                }
+            }
         }
     }
 
     if (isset($data['tag_aliases'])) {
-        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :created_at, :updated_at)');
+        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, origin, confidence, support_count, last_matched_at, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :origin, :confidence, :support_count, :last_matched_at, :created_at, :updated_at)');
         foreach ($data['tag_aliases'] as $row) {
             $alias = trim((string)($row['alias'] ?? ''));
             if ($alias === '') {
@@ -227,6 +246,10 @@ try {
                 'alias_normalized' => TagAlias::normalizeAlias($alias),
                 'match_type' => ($row['match_type'] ?? 'contains') === 'exact' ? 'exact' : 'contains',
                 'active' => isset($row['active']) ? (int)$row['active'] : 1,
+                'origin' => in_array(($row['origin'] ?? 'legacy'), ['system', 'manual', 'ai', 'legacy'], true) ? ($row['origin'] ?? 'legacy') : 'legacy',
+                'confidence' => isset($row['confidence']) && is_numeric($row['confidence']) ? max(0, min(1, (float)$row['confidence'])) : null,
+                'support_count' => max(0, (int)($row['support_count'] ?? 0)),
+                'last_matched_at' => $row['last_matched_at'] ?? null,
                 'created_at' => $row['created_at'] ?? null,
                 'updated_at' => $row['updated_at'] ?? null,
             ]);
@@ -334,6 +357,44 @@ try {
                 'id' => $row['id'], 'name' => $row['name'],
                 'description' => $row['description'] ?? null,
                 'filters' => $row['filters'], 'created_at' => $row['created_at'] ?? null,
+            ]);
+        }
+    }
+
+    if (isset($data['tag_migration_runs'])) {
+        $stmtMigrationRun = $db->prepare('INSERT INTO tag_migration_runs (id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, applied_at, rolled_back_at) VALUES (:id, :name, :status, :contract_version, :created_by, :transaction_count, :eligible_count, :protected_transfer_count, :protected_ignore_count, :snapshot_hash, :created_at, :applied_at, :rolled_back_at)');
+        $validRunStatuses = ['snapshot', 'staging', 'ready', 'applied', 'rolled_back', 'cancelled'];
+        foreach ($data['tag_migration_runs'] as $row) {
+            $stmtMigrationRun->execute([
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'status' => in_array(($row['status'] ?? 'snapshot'), $validRunStatuses, true) ? ($row['status'] ?? 'snapshot') : 'snapshot',
+                'contract_version' => $row['contract_version'] ?? 'v1',
+                'created_by' => $row['created_by'] ?? null,
+                'transaction_count' => (int)($row['transaction_count'] ?? 0),
+                'eligible_count' => (int)($row['eligible_count'] ?? 0),
+                'protected_transfer_count' => (int)($row['protected_transfer_count'] ?? 0),
+                'protected_ignore_count' => (int)($row['protected_ignore_count'] ?? 0),
+                'snapshot_hash' => $row['snapshot_hash'] ?? '',
+                'created_at' => $row['created_at'] ?? null,
+                'applied_at' => $row['applied_at'] ?? null,
+                'rolled_back_at' => $row['rolled_back_at'] ?? null,
+            ]);
+        }
+    }
+    if (isset($data['transaction_classification_snapshots'])) {
+        $stmtClassificationSnapshot = $db->prepare('INSERT INTO transaction_classification_snapshots (run_id, transaction_id, tag_id, category_id, segment_id, eligible, protection_reason, created_at) VALUES (:run_id, :transaction_id, :tag_id, :category_id, :segment_id, :eligible, :protection_reason, :created_at)');
+        foreach ($data['transaction_classification_snapshots'] as $row) {
+            $reason = $row['protection_reason'] ?? null;
+            $stmtClassificationSnapshot->execute([
+                'run_id' => $row['run_id'],
+                'transaction_id' => $row['transaction_id'],
+                'tag_id' => $row['tag_id'] === null ? null : ($tagIdMap[(int)$row['tag_id']] ?? $row['tag_id']),
+                'category_id' => $row['category_id'] ?? null,
+                'segment_id' => $row['segment_id'] ?? null,
+                'eligible' => !empty($row['eligible']) ? 1 : 0,
+                'protection_reason' => in_array($reason, ['transfer', 'ignored'], true) ? $reason : null,
+                'created_at' => $row['created_at'] ?? null,
             ]);
         }
     }

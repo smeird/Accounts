@@ -96,3 +96,9 @@ Use native semantic tables for compact read-only content. Use the pinned Tabulat
 ## Schema evolution
 
 Update `SchemaCatalog.php` whenever the managed application schema changes. Database Health may apply only catalogue-generated structural repairs. Data transformations remain explicit migrations and must not be hidden inside schema-health actions.
+
+### Tag-taxonomy rebuild safety boundary
+
+`TagMigrationSafetyService` separates recovery evidence from future AI classification work. A migration run owns an immutable row for every transaction containing only its tag, category and segment assignments plus its eligibility/protection state. The run stores a SHA-256 hash over those ordered rows. Snapshot creation never updates transactions.
+
+Before a restore, the service recomputes the hash, verifies every referenced tag/category/segment still exists, reports missing transactions, and counts transactions imported after the snapshot. A confirmed restore updates only the three classification fields for transactions contained in that run; identity, financial data and later imports remain untouched. Confirmed transfers and `IGNORE`-tagged transactions are protected from later retagging stages.

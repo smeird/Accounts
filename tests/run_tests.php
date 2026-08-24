@@ -24,6 +24,7 @@ require_once __DIR__ . '/../php_backend/AiCategoryTagger.php';
 require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
 require_once __DIR__ . '/../php_backend/services/SchemaHealthService.php';
 require_once __DIR__ . '/../php_backend/services/AiTagCorrectionService.php';
+require_once __DIR__ . '/../php_backend/services/TagMigrationSafetyService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -32,8 +33,8 @@ $db = Database::getConnection();
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT, closed INTEGER NOT NULL DEFAULT 0, closed_at TEXT);');
-$db->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT);');
-$db->exec('CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT UNIQUE, match_type TEXT, active TINYINT DEFAULT 1, created_at DATETIME, updated_at DATETIME);');
+$db->exec("CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT, origin TEXT NOT NULL DEFAULT 'legacy', status TEXT NOT NULL DEFAULT 'active', merged_into_tag_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);");
+$db->exec("CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT UNIQUE, match_type TEXT, active TINYINT DEFAULT 1, origin TEXT NOT NULL DEFAULT 'legacy', confidence REAL, support_count INTEGER NOT NULL DEFAULT 0, last_matched_at DATETIME, created_at DATETIME, updated_at DATETIME);");
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, created_at DATETIME, updated_at DATETIME);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER, created_at DATETIME, updated_at DATETIME);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
@@ -46,6 +47,8 @@ $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, 
 $db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE totp_secrets (username TEXT PRIMARY KEY, secret TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, rationale TEXT, cost_low REAL, cost_medium REAL, cost_high REAL, funding_source TEXT, recurring_cost REAL, estimated_time INTEGER, expected_lifespan INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1, dependencies TEXT, risks TEXT, archived TINYINT DEFAULT 0, group_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
+$db->exec("CREATE TABLE tag_migration_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'snapshot', contract_version TEXT NOT NULL DEFAULT 'v1', created_by TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, eligible_count INTEGER NOT NULL DEFAULT 0, protected_transfer_count INTEGER NOT NULL DEFAULT 0, protected_ignore_count INTEGER NOT NULL DEFAULT 0, snapshot_hash TEXT NOT NULL DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, applied_at DATETIME, rolled_back_at DATETIME);");
+$db->exec("CREATE TABLE transaction_classification_snapshots (run_id INTEGER NOT NULL, transaction_id INTEGER NOT NULL, tag_id INTEGER, category_id INTEGER, segment_id INTEGER, eligible INTEGER NOT NULL DEFAULT 1, protection_reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (run_id, transaction_id));");
 
 $results = [];
 
@@ -1013,6 +1016,48 @@ try {
 }
 assertEqual(true, $unknownTagRejected, 'AI tag correction rejects source tags outside the server allowlist');
 
+// Tag taxonomy rebuilds must begin with a complete, immutable classification
+// snapshot and must be reversible without touching later transactions.
+$migrationSafety = new TagMigrationSafetyService($db);
+assertEqual(true, $migrationSafety->schemaReady(), 'Tag rebuild safety detects its complete schema');
+$migrationContract = TagMigrationSafetyService::contract();
+assertEqual(0, $migrationContract['success_thresholds']['unreviewed_new_tags'] ?? null, 'Tag rebuild contract permits no unreviewed canonical tags');
+$ignoreTagId = Tag::getIgnoreId();
+$safetyAccountId = (int)$db->query('SELECT id FROM accounts ORDER BY id LIMIT 1')->fetchColumn();
+$insertSafetyTransaction = $db->prepare('INSERT INTO transactions (account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id) VALUES (?,?,?,?,?,?,?,?,?,?)');
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-21', -12.34, 'SNAPSHOT ELIGIBLE', null, null, null, $mortgageTagId, null, null]);
+$snapshotEligibleId = (int)$db->lastInsertId();
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-22', -1.00, 'SNAPSHOT EXCLUDED', null, null, null, $ignoreTagId, null, null]);
+$snapshotIgnoredId = (int)$db->lastInsertId();
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-23', -20.00, 'SNAPSHOT TRANSFER', null, null, null, null, null, 987654]);
+$snapshotTransferId = (int)$db->lastInsertId();
+$migrationPreview = $migrationSafety->currentClassificationPreview();
+assertEqual($migrationPreview['transaction_count'], $migrationPreview['eligible_count'] + $migrationPreview['protected_transfer_count'] + $migrationPreview['protected_ignore_count'], 'Tag rebuild preview assigns every transaction to one safety scope');
+$migrationRun = $migrationSafety->createSnapshot('Automated safety baseline', 'test-suite');
+assertEqual($migrationPreview['transaction_count'], $migrationRun['snapshot_rows'], 'Classification snapshot records every current transaction');
+assertEqual('ignored', $db->query("SELECT protection_reason FROM transaction_classification_snapshots WHERE run_id={$migrationRun['id']} AND transaction_id=$snapshotIgnoredId")->fetchColumn(), 'IGNORE-tagged transactions are protected in the snapshot');
+assertEqual('transfer', $db->query("SELECT protection_reason FROM transaction_classification_snapshots WHERE run_id={$migrationRun['id']} AND transaction_id=$snapshotTransferId")->fetchColumn(), 'Confirmed transfers are protected in the snapshot');
+assertEqual($mortgageTagId, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$snapshotEligibleId")->fetchColumn(), 'Creating a snapshot does not change live tags');
+
+$db->exec("UPDATE transactions SET tag_id=NULL, category_id=NULL, segment_id=NULL WHERE id IN ($snapshotEligibleId, $snapshotIgnoredId)");
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -3.21, 'IMPORTED AFTER SNAPSHOT', null, null, null, null, null, null]);
+$afterSnapshotTransactionId = (int)$db->lastInsertId();
+$rollbackPreview = $migrationSafety->rollbackPreview((int)$migrationRun['id']);
+assertEqual(2, $rollbackPreview['changed_transactions'], 'Snapshot restore previews the changed classification rows');
+assertEqual(1, $rollbackPreview['protected_changes'], 'Snapshot restore identifies changes to protected classifications');
+assertEqual(true, $rollbackPreview['new_transactions_untouched'] >= 1, 'Snapshot restore reports later transactions that remain untouched');
+assertEqual(true, $rollbackPreview['restorable'], 'An intact classification snapshot is restorable');
+$restoreResult = $migrationSafety->restoreSnapshot((int)$migrationRun['id']);
+assertEqual(2, $restoreResult['restored_transactions'], 'Snapshot restore reports the classifications it changed');
+assertEqual($mortgageTagId, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$snapshotEligibleId")->fetchColumn(), 'Snapshot restore returns the original canonical tag');
+assertEqual($ignoreTagId, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$snapshotIgnoredId")->fetchColumn(), 'Snapshot restore reinstates the protected IGNORE tag');
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM transaction_classification_snapshots WHERE run_id={$migrationRun['id']} AND transaction_id=$afterSnapshotTransactionId")->fetchColumn(), 'Transactions imported later are not added to an immutable snapshot');
+$snapshotEligibleState = (int)$db->query("SELECT eligible FROM transaction_classification_snapshots WHERE run_id={$migrationRun['id']} AND transaction_id=$snapshotEligibleId")->fetchColumn();
+$db->exec("UPDATE transaction_classification_snapshots SET eligible=" . ($snapshotEligibleState ? 0 : 1) . " WHERE run_id={$migrationRun['id']} AND transaction_id=$snapshotEligibleId");
+assertEqual(false, $migrationSafety->rollbackPreview((int)$migrationRun['id'])['hash_valid'], 'Snapshot integrity check detects altered recovery evidence');
+$db->exec("UPDATE transaction_classification_snapshots SET eligible=$snapshotEligibleState WHERE run_id={$migrationRun['id']} AND transaction_id=$snapshotEligibleId");
+assertEqual(true, $migrationSafety->rollbackPreview((int)$migrationRun['id'])['hash_valid'], 'Restoring snapshot evidence returns its integrity check to valid');
+
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.
 $frontendCachePolicy = file_get_contents(__DIR__ . '/../frontend/.htaccess');
@@ -1043,7 +1088,7 @@ assertEqual([], $navigationPagesMissingModernHeader, 'Every active navigation pa
 // leave the original database untouched when post-restore integrity fails.
 $db->exec("INSERT OR REPLACE INTO totp_secrets (username, secret) VALUES ('alice', 'TEST-TOTP-SECRET')");
 $db->exec("INSERT INTO saved_reports (name, description, filters) VALUES ('Backup report', 'Round trip', '{\"start\":\"2024-01-01\"}')");
-$_GET['parts'] = 'transactions,categories,tags,groups,budgets,segments,settings,reports';
+$_GET['parts'] = 'transactions,categories,tags,groups,budgets,segments,settings,reports,tag_migrations';
 $_SERVER['HTTP_HOST'] = 'test.local';
 ob_start();
 include __DIR__ . '/../php_backend/public/backup.php';
@@ -1053,9 +1098,11 @@ $backupJson = $backupSignature === false ? false : gzdecode(substr($backupArchiv
 $backupPayload = json_decode($backupJson, true);
 assertEqual(null, $backupPayload['error'] ?? null, 'Backup generation completes without a database error');
 assertEqual('newaccounts-backup', $backupPayload['_meta']['format'] ?? null, 'Backup includes a format manifest');
-assertEqual(2, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(3, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
 assertEqual(1, count($backupPayload['totp_secrets'] ?? []), 'Backup includes two-factor authentication state');
 assertEqual(true, count($backupPayload['saved_reports'] ?? []) >= 1, 'Backup includes saved reports');
+assertEqual(true, count($backupPayload['tag_migration_runs'] ?? []) >= 1, 'Backup includes tag rebuild safety runs');
+assertEqual(true, count($backupPayload['transaction_classification_snapshots'] ?? []) >= 1, 'Backup includes immutable classification snapshots');
 
 $db->exec('DELETE FROM totp_secrets');
 $db->exec('DELETE FROM saved_reports');
@@ -1069,6 +1116,7 @@ $db = Database::getConnection();
 assertEqual('Restore complete.', $restoreMessage, 'A complete backup restores successfully');
 assertEqual('TEST-TOTP-SECRET', $db->query("SELECT secret FROM totp_secrets WHERE username='alice'")->fetchColumn(), 'Restore preserves two-factor authentication state');
 assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Restore preserves saved reports');
+assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM tag_migration_runs')->fetchColumn() >= 1, 'Restore preserves tag rebuild safety history');
 
 $transactionCountBeforeFailure = (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn();
 $failedPayload = $backupPayload;

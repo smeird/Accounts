@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Tag Rebuild Safety</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="site_system.css">
+    <link rel="stylesheet" href="utility_refresh.css">
+    <link rel="stylesheet" href="tag_migration.css?v=20260824-phase1">
+</head>
+<body class="ops-body utility-refresh-page tag-migration-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+            <section id="migration-status" class="migration-hero is-loading" aria-live="polite" aria-busy="true">
+                <div class="migration-hero__icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></div>
+                <div>
+                    <span class="migration-eyebrow">Phase 1 · Safety foundation</span>
+                    <h2 id="migration-status-title">Checking classification safeguards…</h2>
+                    <p id="migration-status-copy">Confirming the database can preserve and restore the current tag structure before rebuilding begins.</p>
+                </div>
+                <a id="migration-health-link" href="database_health.html" class="migration-health-link" hidden>Open Database Health</a>
+            </section>
+
+            <section class="migration-metrics" aria-label="Current classification scope">
+                <article><span>All transactions</span><strong id="migration-total">—</strong><small>Captured in a snapshot</small></article>
+                <article><span>Eligible to retag</span><strong id="migration-eligible">—</strong><small id="migration-coverage">Current coverage —</small></article>
+                <article><span>Protected transfers</span><strong id="migration-transfers">—</strong><small>Never sent for retagging</small></article>
+                <article><span>Protected exclusions</span><strong id="migration-ignored">—</strong><small>IGNORE remains intact</small></article>
+            </section>
+
+            <section class="migration-safety-strip" aria-label="Snapshot guarantees">
+                <div><i class="fas fa-lock" aria-hidden="true"></i><span><strong>Immutable evidence</strong>The saved snapshot receives an integrity hash.</span></div>
+                <div><i class="fas fa-coins" aria-hidden="true"></i><span><strong>Classification only</strong>Amounts, dates and account data cannot be restored by this tool.</span></div>
+                <div><i class="fas fa-clock-rotate-left" aria-hidden="true"></i><span><strong>Reversible</strong>Every restore is previewed and later imports remain untouched.</span></div>
+            </section>
+
+            <div class="migration-layout">
+                <section class="cards migration-contract-card">
+                    <span class="migration-eyebrow">Classification contract</span>
+                    <h2>One clear role for each layer</h2>
+                    <div id="migration-definitions" class="migration-definitions"></div>
+                    <details>
+                        <summary>Show migration acceptance thresholds</summary>
+                        <div id="migration-thresholds" class="migration-thresholds"></div>
+                    </details>
+                </section>
+
+                <section class="cards migration-create-card">
+                    <span class="migration-eyebrow">Baseline snapshot</span>
+                    <h2>Preserve today’s assignments</h2>
+                    <p>This records every transaction’s current tag, category and segment. It does not retag anything.</p>
+                    <label for="migration-snapshot-name">Snapshot name</label>
+                    <input id="migration-snapshot-name" type="text" maxlength="150" placeholder="Tag rebuild baseline" data-help="Use a short name that identifies this point before the taxonomy rebuild">
+                    <button id="migration-create-snapshot" type="button" disabled>
+                        <i class="fas fa-camera" aria-hidden="true"></i>
+                        <span>Create protected snapshot</span>
+                    </button>
+                    <small id="migration-create-note">Checking database readiness…</small>
+                </section>
+            </div>
+
+            <section class="cards migration-history-card">
+                <div class="migration-section-heading">
+                    <div>
+                        <span class="migration-eyebrow">Recovery history</span>
+                        <h2>Classification snapshots</h2>
+                        <p>Review the protected scope and preview any restore before it can affect live assignments.</p>
+                    </div>
+                    <button id="migration-refresh" type="button" class="migration-secondary-button">
+                        <i class="fas fa-rotate" aria-hidden="true"></i><span>Refresh</span>
+                    </button>
+                </div>
+                <div id="migration-runs" class="migration-runs" aria-live="polite"></div>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="migration-restore-dialog" class="migration-dialog" aria-labelledby="migration-dialog-title">
+        <form method="dialog">
+            <div class="migration-dialog__icon" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></div>
+            <span class="migration-eyebrow">Restore preview</span>
+            <h2 id="migration-dialog-title">Restore saved classifications?</h2>
+            <div id="migration-dialog-summary" class="migration-dialog-summary"></div>
+            <label for="migration-restore-confirmation">Type <strong>RESTORE</strong> to confirm</label>
+            <input id="migration-restore-confirmation" type="text" autocomplete="off" spellcheck="false">
+            <div class="migration-dialog__actions">
+                <button id="migration-restore-cancel" type="button">Cancel</button>
+                <button id="migration-restore-confirm" type="button" disabled><i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Restore classifications</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Tag Rebuild Safety',
+            breadcrumb: 'System',
+            subtitle: 'Preserve the current classification state before creating a cleaner, AI-assisted tag taxonomy.'
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="js/tag_migration.js?v=20260824-phase1"></script>
+</body>
+</html>

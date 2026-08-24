@@ -279,7 +279,7 @@ foreach ($suggestions as $s) {
     } else {
         $tagId = Tag::getIdByName($tagName);
         if ($tagId === null) {
-            $tagId = Tag::create($tagName, null, $tagDesc);
+            $tagId = Tag::create($tagName, null, $tagDesc, 'ai');
         } else {
             // getIdByName performs normalized lookup to prevent duplicate tags.
             if ($tagDesc) {
@@ -291,7 +291,7 @@ foreach ($suggestions as $s) {
     // Every accepted AI decision teaches the deterministic application matcher.
     // This is deliberately separate from the tag name so one canonical tag can
     // accumulate many merchants without creating a tag per transaction.
-    $learned = Tag::learnTransactionAlias((int)$tagId, (string)$txn['description'], $txn['memo']);
+    $learned = Tag::learnTransactionAlias((int)$tagId, (string)$txn['description'], $txn['memo'], 'ai');
     $learned['tx_id'] = (int)$txId;
     $learned['canonical'] = (string)$tagName;
     $learned['trigger'] = $resolved !== null ? $resolved['source'] : 'new_or_normalized_canonical';

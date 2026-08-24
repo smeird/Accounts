@@ -6,7 +6,7 @@ function initBackup() {
     if (dlBtn) {
         dlBtn.addEventListener('click', () => {
             const parts = Array.from(document.querySelectorAll('input[name="parts"]:checked')).map(cb => cb.value);
-            const allParts = ['categories','tags','groups','transactions','budgets','segments','projects','settings','reports'];
+            const allParts = ['categories','tags','groups','transactions','budgets','segments','projects','settings','reports','tag_migrations'];
             const selected = parts.length ? parts : allParts;
             const qs = parts.length ? `?parts=${parts.join(',')}` : '';
             fetch(`../php_backend/public/backup.php${qs}`)

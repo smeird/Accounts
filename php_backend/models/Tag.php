@@ -28,11 +28,12 @@ class Tag {
     /**
      * Create a new tag optionally with a keyword for auto tagging.
      */
-    public static function create(string $name, ?string $keyword = null, ?string $description = null): int {
+    public static function create(string $name, ?string $keyword = null, ?string $description = null, string $origin = 'manual'): int {
         $normalizedName = self::normalizeName($name);
         if ($normalizedName === '') {
             throw new InvalidArgumentException('Tag name must not be empty');
         }
+        $origin = self::normalizeOrigin($origin);
 
         $existingId = self::getIdByNormalizedName($normalizedName);
         if ($existingId !== null) {
@@ -40,9 +41,9 @@ class Tag {
         }
 
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `name_normalized`, `keyword`, `description`) VALUES (:name, :name_normalized, :keyword, :description)');
+        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `name_normalized`, `keyword`, `description`, `origin`, `status`) VALUES (:name, :name_normalized, :keyword, :description, :origin, :status)');
         try {
-            $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description]);
+            $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description, 'origin' => $origin, 'status' => 'active']);
         } catch (PDOException $e) {
             $existingId = self::getIdByNormalizedName($normalizedName);
             if ($existingId !== null) {
@@ -64,6 +65,10 @@ class Tag {
             return '';
         }
         return strtolower(preg_replace('/\s+/', ' ', $trimmed));
+    }
+
+    private static function normalizeOrigin(string $origin): string {
+        return in_array($origin, ['system', 'manual', 'ai', 'legacy'], true) ? $origin : 'manual';
     }
 
     /**
@@ -205,7 +210,7 @@ class Tag {
      *
      * @return array{status:string,alias:?string,tag_id:int,existing_tag_id:?int}
      */
-    public static function learnTransactionAlias(int $tagId, string $description, ?string $memo = null): array {
+    public static function learnTransactionAlias(int $tagId, string $description, ?string $memo = null, string $origin = 'manual'): array {
         $alias = self::buildReusableAlias($description, $memo);
         $result = [
             'status' => 'filtered',
@@ -238,7 +243,7 @@ class Tag {
         }
 
         try {
-            TagAlias::create($tagId, $alias, 'contains', true);
+            TagAlias::create($tagId, $alias, 'contains', true, self::normalizeOrigin($origin));
             self::clearMatchCaches();
             $result['status'] = 'created';
             return $result;
@@ -345,7 +350,7 @@ class Tag {
     public static function getIgnoreId(): int {
         $id = self::getIdByName('IGNORE');
         if ($id === null) {
-            $id = self::create('IGNORE', 'IGNORE', 'Ignored transactions');
+            $id = self::create('IGNORE', 'IGNORE', 'Ignored transactions', 'system');
         }
         return $id;
     }
@@ -356,7 +361,7 @@ class Tag {
     public static function getInterestChargeId(): int {
         $id = self::getIdByName('interest charge');
         if ($id === null) {
-            $id = self::create('interest charge', null, 'Interest charges');
+            $id = self::create('interest charge', null, 'Interest charges', 'system');
         }
         return $id;
     }
