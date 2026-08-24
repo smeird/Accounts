@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Page for creating and listing transaction groups -->
+<!-- One-screen workspace for creating and managing transaction groups -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,26 +14,120 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="operational_ui.css">
-
-    <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
-
+    <link rel="stylesheet" href="group_manager.css?v=20260824-workspace">
 </head>
-<body class="ops-body">
+<body class="ops-body transaction-page group-manager-page">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-<p class="mb-4">Create groups to collect related categories for reporting and analysis. Grouping similar categories helps you see broader spending patterns.</p>
-            <section class="cards cards-tight">
-            <form id="group-form" class="space-y-4">
-                <label class="block">Group Name<br><input type="text" id="group-name" class="border p-2 rounded w-full" data-help="Name for the group"></label>
-                <label class="block">Description<br><textarea id="group-description" class="border p-2 rounded w-full" data-help="Description for the group"></textarea></label>
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Create Group</button>
-            </form>
+        <main class="ops-main flex-1 min-w-0" id="groups-main">
+            <section class="group-workspace" aria-label="Transaction group workspace" data-no-card="true">
+                <aside class="group-rail" aria-label="Transaction groups">
+                    <div class="group-rail-header">
+                        <div>
+                            <p class="group-eyebrow">Step 1</p>
+                            <h2>Choose a group</h2>
+                        </div>
+                        <span class="group-count" id="group-count">0</span>
+                    </div>
+
+                    <label class="group-search" for="group-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <span class="sr-only">Search groups</span>
+                        <input id="group-search" type="search" placeholder="Find a group…" autocomplete="off" data-help="Filter groups by name, description, or status">
+                    </label>
+
+                    <div id="group-list" class="group-list" aria-label="Available groups"></div>
+
+                    <form id="group-form" class="group-quick-add">
+                        <label for="group-name">New group</label>
+                        <div class="group-quick-add-row">
+                            <input id="group-name" type="text" maxlength="100" placeholder="e.g. Holiday 2026" required data-help="Enter a name and add the group in one step">
+                            <button type="submit" aria-label="Add group">
+                                <i class="fas fa-plus" aria-hidden="true"></i>
+                                <span>Add</span>
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+
+                <section class="group-detail-panel" aria-label="Group details">
+                    <div id="group-loading" class="group-state" role="status">
+                        <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                        <p>Loading groups…</p>
+                    </div>
+
+                    <div id="group-empty" class="group-state" hidden>
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <h2>Create your first group</h2>
+                        <p>Add a group on the left, then keep its description and availability up to date here.</p>
+                    </div>
+
+                    <div id="group-manager" hidden>
+                        <header class="group-selection-header">
+                            <div class="group-selection-copy">
+                                <p class="group-eyebrow">Step 2 · manage details</p>
+                                <div class="group-selection-title">
+                                    <h2 id="selected-group-name">Group</h2>
+                                    <span id="selected-group-status" class="group-status-badge">Active</span>
+                                </div>
+                                <p id="selected-group-description" class="group-description"></p>
+                            </div>
+                            <div class="group-actions">
+                                <button id="edit-group-button" type="button" class="group-icon-button" aria-label="Edit selected group">
+                                    <i class="fas fa-pen" aria-hidden="true"></i>
+                                </button>
+                                <button id="toggle-group-button" type="button" class="group-status-button" aria-label="Deactivate selected group">Deactivate</button>
+                                <button id="delete-group-button" type="button" class="group-icon-button is-danger" aria-label="Delete selected group">
+                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </header>
+
+                        <form id="group-edit-form" class="group-edit-form" hidden>
+                            <label for="group-edit-name">Group name</label>
+                            <input id="group-edit-name" type="text" maxlength="100" required data-help="Use a short name that will be easy to recognise in reports and transaction editors">
+                            <label for="group-edit-description">Description</label>
+                            <textarea id="group-edit-description" rows="3" maxlength="500" data-help="Explain what belongs in this group or why it exists"></textarea>
+                            <label class="group-active-toggle" for="group-edit-active">
+                                <input id="group-edit-active" type="checkbox">
+                                <span><strong>Keep group available</strong><small>Active groups can be selected for new transaction assignments. Deactivating preserves history.</small></span>
+                            </label>
+                            <div class="group-edit-actions">
+                                <button type="submit" class="group-primary-button">Save changes</button>
+                                <button id="cancel-group-edit" type="button" class="group-secondary-button">Cancel</button>
+                            </div>
+                        </form>
+
+                        <div class="group-summary" aria-label="Group summary">
+                            <div>
+                                <span id="summary-transactions">0</span>
+                                <small>Linked transactions</small>
+                            </div>
+                            <div>
+                                <span id="summary-status">Active</span>
+                                <small>Availability</small>
+                            </div>
+                            <p>Active groups stay available when assigning transactions. Deactivate a group to keep it for history without offering it for new classifications.</p>
+                        </div>
+
+                        <div class="group-next-actions" aria-label="Group analysis links">
+                            <a class="group-secondary-button" href="financial_trends.html?period=year&amp;dimension=group&amp;compare=previous_year" aria-label="Open group trends">
+                                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                                <span>Compare groups</span>
+                            </a>
+                            <a class="group-secondary-button" href="report.html" aria-label="Open transaction reports">
+                                <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+                                <span>Run a report</span>
+                            </a>
+                        </div>
+
+                        <div class="group-guidance">
+                            <i class="fas fa-lightbulb" aria-hidden="true"></i>
+                            <p>Groups are optional reporting collections. Use them for a project, event, goal, or another useful lens across your transactions.</p>
+                        </div>
+                    </div>
+                </section>
             </section>
-            <div class="mt-6 cards cards-tight">
-                <h2 class="text-xl font-semibold mb-2">Existing Groups</h2>
-                <div id="group-table"></div>
-            </div>
         </main>
     </div>
     <script src="js/page_header.js"></script>
@@ -42,100 +136,12 @@ const pageMain = document.querySelector('main.ops-main');
 window.renderPageHeader(pageMain, {
     title: 'Groups',
     breadcrumb: 'Organise',
-    subtitle: 'Create and edit transaction groups used for organisation and reporting.'
+    subtitle: 'Build reusable transaction collections, keep them available for new assignments, and review usage at a glance.'
 });
 </script>
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
-    <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
-    <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
-    <script>
-let groupTable;
-// Fetch groups from the server and render them in the table
-async function loadGroups() {
-    const res = await fetch('../php_backend/public/groups.php');
-    const groups = await res.json();
-    if (groupTable) {
-        groupTable.setData(groups);
-        return;
-    }
-        groupTable = tailwindTabulator('#group-table', {
-            data: groups,
-            layout: 'fitDataStretch',
-            columns: [
-                { title: 'Name', field: 'name', formatter: badgeFormatter('bg-purple-200 text-purple-800') },
-                { title: 'Description', field: 'description', editor: 'input' },
-                { title: 'Active', field: 'active', formatter: 'tickCross', editor: true },
-                { title: 'Actions', formatter: function(cell){
-                const g = cell.getRow().getData();
-                const container = document.createElement('div');
-                const edit = document.createElement('button');
-                edit.innerHTML = '<i class="fas fa-edit w-4 h-4"></i>';
-                edit.setAttribute('aria-label','Edit');
-                edit.className = 'bg-indigo-600 text-white px-2 py-1 rounded mr-2';
-                edit.addEventListener('click', async () => {
-                    const name = prompt('Group Name', g.name);
-                    if (name === null) return;
-                    const description = prompt('Description', g.description || '');
-                    if (description === null) return;
-                    await fetch('../php_backend/public/groups.php', {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({id: g.id, name, description, active: g.active})
-                    });
-                    loadGroups();
-                    showMessage('Group updated');
-                });
-                const del = document.createElement('button');
-                del.innerHTML = '<i class="fas fa-trash w-4 h-4"></i>';
-                del.setAttribute('aria-label','Delete');
-                del.className = 'bg-red-600 text-white px-2 py-1 rounded';
-                del.addEventListener('click', async () => {
-                    if (!confirm('Delete this group?')) return;
-                    await fetch('../php_backend/public/groups.php', {
-                        method: 'DELETE',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({id: g.id})
-                    });
-                    loadGroups();
-                    showMessage('Group deleted');
-                });
-                container.appendChild(edit);
-                container.appendChild(del);
-                return container;
-            }}
-        ]
-    });
-    groupTable.on('cellEdited', async function(cell){
-        const field = cell.getField();
-        if (field !== 'description' && field !== 'active') return;
-        const g = cell.getRow().getData();
-        await fetch('../php_backend/public/groups.php', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id: g.id, name: g.name, description: g.description, active: g.active})
-        });
-        showMessage('Group updated');
-    });
-}
-
-document.getElementById('group-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const name = document.getElementById('group-name').value;
-    const description = document.getElementById('group-description').value;
-    await fetch('../php_backend/public/groups.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name, description, active: 1})
-    });
-    document.getElementById('group-name').value = '';
-    document.getElementById('group-description').value = '';
-    loadGroups();
-    showMessage('Group created');
-});
-
-loadGroups();
-    </script>
     <script src="js/overlay.js"></script>
+    <script src="js/group_manager.js?v=20260824-workspace"></script>
 </body>
 </html>

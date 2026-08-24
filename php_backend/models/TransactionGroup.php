@@ -69,15 +69,21 @@ class TransactionGroup {
     }
 
     /**
-     * Return all transaction groups.
+     * Return all transaction groups with the number of transactions currently linked to each.
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT id, name, description, active FROM transaction_groups ORDER BY id');
+        $stmt = $db->query(
+            'SELECT g.id, g.name, g.description, g.active, '
+            . '(SELECT COUNT(*) FROM transactions t WHERE t.group_id = g.id) AS transaction_count '
+            . 'FROM transaction_groups g ORDER BY g.id'
+        );
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
             $row['active'] = (int)$row['active'];
+            $row['transaction_count'] = (int)$row['transaction_count'];
         }
+        unset($row);
         return $rows;
     }
 }
