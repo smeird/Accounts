@@ -80,9 +80,10 @@ The shared readable scale in `frontend/typography.css` targets:
 - Operational body/control text: approximately 14px
 - Table rows: approximately 13px
 - Labels, captions and table headings: approximately 12px
+- Secondary table metadata: approximately 11px, regular weight and muted colour
 - Primary summary values: approximately 29px or larger when they are the hero outcome
 
-Use uppercase, tracked captions sparingly for section labels. Do not solve hierarchy by shrinking supporting text below comfortable reading sizes.
+Use uppercase, tracked captions sparingly for section labels. Within a table row, keep the primary value prominent and render only genuinely supporting information—such as a year, memo, account type or status qualifier—with the shared secondary treatment. Do not use the secondary treatment for amounts, names or classification pills, and do not shrink supporting text below 11px.
 
 ## 6. Controls and interaction
 
@@ -103,6 +104,7 @@ Choose the table mechanism based on the task:
 - Use remote search/pagination for collections without a practical upper bound.
 - On mobile, conventional tables become labelled cards; matrix/pivot views keep deliberate horizontal navigation.
 - Prioritise identity and primary value columns. Hide secondary detail before compressing every column into unreadable text.
+- Use `.table-secondary-text` for new supporting lines inside table cells; existing statement and account metadata hooks inherit the same shared size, weight and colour.
 
 ## 8. Charts and metrics
 

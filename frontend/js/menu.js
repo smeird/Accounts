@@ -77,7 +77,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const typographyLink = document.createElement('link');
     typographyLink.id = 'site-typography-css';
     typographyLink.rel = 'stylesheet';
-    typographyLink.href = resolveFrontendAsset('typography.css?v=20260811-readable-scale');
+    typographyLink.href = resolveFrontendAsset('typography.css?v=20260824-table-hierarchy');
     document.head.appendChild(typographyLink);
   }
 
