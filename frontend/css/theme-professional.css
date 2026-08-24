@@ -64,6 +64,110 @@ body.theme-professional.ops-body {
   stroke: transparent !important;
 }
 
+/*
+ * Professional mode treats the page as a clean sheet of paper. Structural
+ * spacing and dividers continue to separate content, without drawing a box
+ * and shadow around every section.
+ */
+.theme-professional :is(
+  .cards,
+  .glass-surface,
+  .site-card,
+  .site-metric-card,
+  .ops-section,
+  .ops-table-block,
+  .ops-chart-block,
+  .monthly-statement,
+  .statement-chart-panel,
+  .account-ledger,
+  .account-chart-panel,
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-panel"],
+  [class*="-panel "]
+) {
+  border: 0 !important;
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-professional :is(
+  .cards,
+  .glass-surface,
+  .site-card,
+  .site-metric-card,
+  .ops-section,
+  .ops-table-block,
+  .ops-chart-block,
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-panel"],
+  [class*="-panel "]
+):hover {
+  box-shadow: none !important;
+}
+
+/*
+ * Dense rows are a desktop Professional-mode preference. Responsive card
+ * rows retain their larger touch targets below the site's mobile breakpoint.
+ */
+@media (min-width: 768px) {
+  .theme-professional .tabulator .tabulator-header .tabulator-col {
+    min-height: 2.2rem !important;
+  }
+
+  .theme-professional .tabulator .tabulator-header .tabulator-col-content {
+    padding-top: .42rem !important;
+    padding-bottom: .42rem !important;
+  }
+
+  .theme-professional .tabulator .tabulator-row,
+  .theme-professional .tabulator .tabulator-cell {
+    min-height: 2.35rem !important;
+  }
+
+  .theme-professional .tabulator .tabulator-cell {
+    padding-top: .34rem !important;
+    padding-bottom: .34rem !important;
+  }
+
+  .theme-professional .modern-table-pill {
+    min-height: 1.45rem !important;
+    padding-top: .2rem !important;
+    padding-bottom: .2rem !important;
+  }
+
+  .theme-professional .tabulator button {
+    min-height: 1.7rem;
+    padding-top: .25rem !important;
+    padding-bottom: .25rem !important;
+  }
+
+  .theme-professional .tabulator .tabulator-footer {
+    min-height: 2.5rem;
+    padding-top: .32rem !important;
+    padding-bottom: .32rem !important;
+  }
+
+  .theme-professional table th {
+    padding-top: .42rem !important;
+    padding-bottom: .42rem !important;
+  }
+
+  .theme-professional table td {
+    padding-top: .4rem !important;
+    padding-bottom: .4rem !important;
+  }
+
+  .theme-professional .account-avatar,
+  .theme-professional .statement-transaction-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
 
 .theme-professional .menu-surface {
   background: #ffffff !important;
