@@ -85,7 +85,8 @@
                     <div><dt>History retained</dt><dd id="cutover-cleanup-history">—</dd><small id="cutover-cleanup-history-detail">Transaction assignments unchanged</small></div>
                     <div><dt>Canonical tags protected</dt><dd id="cutover-cleanup-canonical">—</dd><small>Remain active</small></div>
                 </dl>
-                <p class="cutover-cleanup-note"><i class="fas fa-shield-halved" aria-hidden="true"></i> IGNORE and genuine system tags are protected. The cleanup is recorded inside the cutover audit and the existing rollback restores every retired tag and rule.</p>
+                <div id="cutover-cleanup-blockers" class="cutover-blockers" hidden></div>
+                <p id="cutover-cleanup-note" class="cutover-cleanup-note"><i class="fas fa-shield-halved" aria-hidden="true"></i><span>IGNORE and genuine system tags are protected. Cleanup records the exact catalogue changes without editing transaction classifications.</span></p>
             </section>
 
             <section class="cards cutover-plan-card">
@@ -136,6 +137,6 @@
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-    <script src="js/tag_taxonomy_cutover.js?v=20260824-legacy-cleanup"></script>
+    <script src="js/tag_taxonomy_cutover.js?v=20260824-legacy-unblock"></script>
 </body>
 </html>

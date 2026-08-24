@@ -129,6 +129,8 @@ class TagTaxonomyCutoverService {
                 'can_cleanup' => false,
                 'metrics' => $metrics,
                 'blockers' => array_values(array_unique($blockers)),
+                'cutover_rollback_available' => is_array($rollbackState) ? ($rollbackState['can_rollback'] === true) : null,
+                'cutover_rollback_blockers' => is_array($rollbackState) ? ($rollbackState['blockers'] ?? []) : [],
                 'cleaned_at' => $completedAudit['cleaned_at'] ?? null,
                 'cleaned_by' => $completedAudit['cleaned_by'] ?? null,
             ];
@@ -136,19 +138,14 @@ class TagTaxonomyCutoverService {
 
         $candidates = $audit ? $this->legacyCleanupCandidates($audit) : [];
         $metrics = $this->legacyCleanupMetrics($candidates, $audit ?: []);
-        if ($audit && $run['status'] === 'applied') {
-            $rollback = $rollbackState ?: $this->rollbackPreview($runId);
-            if (!$rollback['can_rollback']) {
-                $blockers[] = 'The existing cutover must remain safely reversible before legacy cleanup can run.';
-                $blockers = array_merge($blockers, $rollback['blockers']);
-            }
-        }
         if (!$candidates && empty($blockers)) $blockers[] = 'There are no active noncanonical legacy tags left to clean.';
         return [
             'completed' => false,
             'can_cleanup' => $run['status'] === 'applied' && $audit && !empty($candidates) && empty($blockers),
             'metrics' => $metrics,
             'blockers' => array_values(array_unique($blockers)),
+            'cutover_rollback_available' => is_array($rollbackState) ? ($rollbackState['can_rollback'] === true) : null,
+            'cutover_rollback_blockers' => is_array($rollbackState) ? ($rollbackState['blockers'] ?? []) : [],
             'cleaned_at' => null,
             'cleaned_by' => null,
         ];
