@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="site_system.css">
     <link rel="stylesheet" href="utility_refresh.css">
-    <link rel="stylesheet" href="tag_taxonomy_discovery.css?v=20260824-phase2">
+    <link rel="stylesheet" href="tag_taxonomy_discovery.css?v=20260824-early-finish">
 </head>
 <body class="ops-body utility-refresh-page taxonomy-studio-page">
     <div class="flex min-h-screen">
@@ -50,7 +50,7 @@
 
             <section class="taxonomy-metrics" aria-label="Discovery progress">
                 <article><span>Reusable patterns</span><strong id="taxonomy-patterns">—</strong><small>Stable bank wording groups</small></article>
-                <article><span>Awaiting AI</span><strong id="taxonomy-pending-patterns">—</strong><small>Processed in bounded batches</small></article>
+                <article><span id="taxonomy-pending-label">Awaiting AI</span><strong id="taxonomy-pending-patterns">—</strong><small id="taxonomy-pending-copy">Processed in bounded batches</small></article>
                 <article><span>Canonical proposals</span><strong id="taxonomy-proposals-count">—</strong><small id="taxonomy-approved-copy">0 approved</small></article>
                 <article><span>Transaction coverage</span><strong id="taxonomy-coverage">—</strong><small id="taxonomy-coverage-copy">No live writes</small></article>
             </section>
@@ -99,6 +99,6 @@
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-    <script src="js/tag_taxonomy_discovery.js?v=20260824-phase2"></script>
+    <script src="js/tag_taxonomy_discovery.js?v=20260824-early-finish"></script>
 </body>
 </html>

@@ -13,10 +13,21 @@ function normalizeDiscoveryPayload(payload) {
     };
 }
 
+const TAXONOMY_EARLY_FINISH_COVERAGE = 95;
+
 function taxonomyCanMarkReady(view) {
     if (!view || !view.selectedRun || view.selectedRun.status !== 'staging') return false;
     const metrics = view.metrics || {};
     return Number(metrics.pending_patterns || 0) === 0
+        && Number(metrics.pending_proposals || 0) === 0
+        && Number(metrics.approved_proposals || 0) > 0;
+}
+
+function taxonomyCanFinishEarly(view) {
+    if (!view || !view.selectedRun || view.selectedRun.status !== 'staging') return false;
+    const metrics = view.metrics || {};
+    return Number(metrics.coverage_percent || 0) >= TAXONOMY_EARLY_FINISH_COVERAGE
+        && Number(metrics.pending_patterns || 0) > 0
         && Number(metrics.pending_proposals || 0) === 0
         && Number(metrics.approved_proposals || 0) > 0;
 }
@@ -38,6 +49,7 @@ function initTagTaxonomyDiscovery() {
     const batchSize = document.getElementById('taxonomy-batch-size');
     const refreshButton = document.getElementById('taxonomy-refresh');
     const readyButton = document.getElementById('taxonomy-ready');
+    const readyButtonLabel = readyButton.querySelector('span');
     const proposalsNode = document.getElementById('taxonomy-proposals');
     let view = null;
     let busy = false;
@@ -62,11 +74,13 @@ function initTagTaxonomyDiscovery() {
         const run = view && view.selectedRun;
         const isStaging = run && run.status === 'staging';
         const prepared = run && Boolean(run.discovery_started_at);
+        const canFinishEarly = taxonomyCanFinishEarly(view);
         prepareButton.disabled = busy || !view || !view.schemaReady || !run || prepared || run.status !== 'snapshot';
         analyseButton.disabled = busy || !isStaging || Number((view.metrics || {}).pending_patterns || 0) === 0;
         batchSize.disabled = busy || !isStaging;
         refreshButton.disabled = busy;
-        readyButton.disabled = busy || !taxonomyCanMarkReady(view);
+        readyButton.disabled = busy || (!taxonomyCanMarkReady(view) && !canFinishEarly);
+        readyButtonLabel.textContent = canFinishEarly ? 'Finish and defer remainder' : 'Mark taxonomy ready';
         prepareButton.querySelector('i').classList.toggle('fa-spin', busy && !prepared);
         analyseButton.querySelector('i').classList.toggle('fa-spin', busy && isStaging);
         refreshButton.querySelector('i').classList.toggle('fa-spin', busy);
@@ -129,8 +143,13 @@ function initTagTaxonomyDiscovery() {
 
     function renderMetrics() {
         const metrics = view.metrics || {};
+        const readyWithDeferred = view.selectedRun && view.selectedRun.status === 'ready' && Number(metrics.deferred_patterns || 0) > 0;
         document.getElementById('taxonomy-patterns').textContent = number(metrics.patterns);
-        document.getElementById('taxonomy-pending-patterns').textContent = number(metrics.pending_patterns);
+        document.getElementById('taxonomy-pending-label').textContent = readyWithDeferred ? 'Deferred' : 'Awaiting AI';
+        document.getElementById('taxonomy-pending-patterns').textContent = number(readyWithDeferred ? metrics.deferred_patterns : metrics.pending_patterns);
+        document.getElementById('taxonomy-pending-copy').textContent = readyWithDeferred
+            ? `${number(metrics.deferred_transactions)} uncommon transactions left unchanged`
+            : 'Processed in bounded batches';
         document.getElementById('taxonomy-proposals-count').textContent = number(metrics.proposals);
         document.getElementById('taxonomy-approved-copy').textContent = `${number(metrics.approved_proposals)} approved · ${number(metrics.pending_proposals)} awaiting review`;
         document.getElementById('taxonomy-coverage').textContent = percent(metrics.coverage_percent);
@@ -264,11 +283,19 @@ function initTagTaxonomyDiscovery() {
             statusTitle.textContent = 'Create a protected baseline first';
             statusCopy.textContent = 'Phase 2 always starts from an immutable Phase 1 classification snapshot.';
         } else if (run.status === 'ready') {
-            statusTitle.textContent = 'The reviewed taxonomy is ready';
-            statusCopy.textContent = 'Staging is frozen. No live assignments have changed; cutover belongs to the next phase.';
+            const deferredPatterns = Number((view.metrics || {}).deferred_patterns || 0);
+            statusTitle.textContent = deferredPatterns > 0
+                ? `The reviewed taxonomy is ready at ${percent((view.metrics || {}).coverage_percent)}`
+                : 'The reviewed taxonomy is ready';
+            statusCopy.textContent = deferredPatterns > 0
+                ? `${number(deferredPatterns)} uncommon patterns were deferred. They retain their existing assignments and the live ledger is still unchanged.`
+                : 'Staging is frozen. No live assignments have changed; cutover belongs to the next phase.';
         } else if (run.discovery_started_at) {
-            statusTitle.textContent = 'Discovery is isolated from the live ledger';
-            statusCopy.textContent = 'Continue AI batches and approve each canonical proposal. Rejecting a tag returns its aliases to the queue.';
+            const canFinishEarly = taxonomyCanFinishEarly(view);
+            statusTitle.textContent = canFinishEarly ? 'You can finish at the current coverage' : 'Discovery is isolated from the live ledger';
+            statusCopy.textContent = canFinishEarly
+                ? 'The reviewed majority can be frozen now and the unresolved remainder safely deferred.'
+                : 'Continue AI batches and approve each canonical proposal. Rejecting a tag returns its aliases to the queue.';
         } else {
             statusTitle.textContent = 'Build from the protected snapshot';
             statusCopy.textContent = 'Preparing patterns removes changing references and groups repeat wording without making an AI call.';
@@ -304,16 +331,24 @@ function initTagTaxonomyDiscovery() {
 
     async function perform(body, loadingMessage) {
         setBusy(true);
-        if (typeof showMessage === 'function') showMessage(loadingMessage, 'loading', 0);
+        let loadingToast = null;
+        const dismissLoading = () => {
+            if (loadingToast && typeof dismissNotification === 'function') dismissNotification(loadingToast);
+            loadingToast = null;
+        };
+        if (typeof showMessage === 'function') loadingToast = showMessage(loadingMessage, 'loading');
         try {
             const payload = await post(body);
             const nextView = normalizeDiscoveryPayload(payload);
             if (!nextView) throw new Error('The server did not return the updated taxonomy.');
             render(nextView);
+            dismissLoading();
             if (typeof showMessage === 'function') showMessage(payload.message || 'Taxonomy staging updated.', 'success');
         } catch (error) {
+            dismissLoading();
             if (typeof showMessage === 'function') showMessage(error.message, 'error');
         } finally {
+            dismissLoading();
             setBusy(false);
         }
     }
@@ -340,14 +375,24 @@ function initTagTaxonomyDiscovery() {
     prepareButton.addEventListener('click', () => perform({ action: 'prepare', run_id: selectedRunId(), confirm: 'PREPARE_TAXONOMY_DISCOVERY' }, 'Extracting reusable transaction patterns…'));
     analyseButton.addEventListener('click', () => perform({ action: 'analyse_batch', run_id: selectedRunId(), limit: Number(batchSize.value) }, 'AI is designing the next staged taxonomy batch…'));
     readyButton.addEventListener('click', () => {
-        if (window.confirm('Freeze this reviewed taxonomy as ready for the later cutover phase?')) {
-            perform({ action: 'mark_ready', run_id: selectedRunId(), confirm: 'MARK_TAXONOMY_READY' }, 'Checking taxonomy readiness…');
+        const deferRemaining = taxonomyCanFinishEarly(view);
+        const metrics = view.metrics || {};
+        const confirmation = deferRemaining
+            ? `Finish at ${percent(metrics.coverage_percent)} coverage and defer ${number(metrics.pending_patterns)} unresolved patterns? Deferred transactions will remain unchanged.`
+            : 'Freeze this reviewed taxonomy as ready for the later cutover phase?';
+        if (window.confirm(confirmation)) {
+            perform({
+                action: 'mark_ready',
+                run_id: selectedRunId(),
+                defer_remaining: deferRemaining,
+                confirm: deferRemaining ? 'MARK_TAXONOMY_READY_WITH_DEFERRED' : 'MARK_TAXONOMY_READY'
+            }, deferRemaining ? 'Deferring the unresolved remainder and freezing staging…' : 'Checking taxonomy readiness…');
         }
     });
     load();
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { normalizeDiscoveryPayload, taxonomyCanMarkReady, taxonomyProposalValid };
+    module.exports = { normalizeDiscoveryPayload, taxonomyCanMarkReady, taxonomyCanFinishEarly, taxonomyProposalValid };
 }
 if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', initTagTaxonomyDiscovery);

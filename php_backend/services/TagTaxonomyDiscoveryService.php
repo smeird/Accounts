@@ -7,6 +7,8 @@ require_once __DIR__ . '/../models/Tag.php';
 require_once __DIR__ . '/TagMigrationSafetyService.php';
 
 class TagTaxonomyDiscoveryService {
+    const EARLY_FINISH_MIN_COVERAGE = 95.0;
+
     private $db;
 
     public function __construct($db = null) {
@@ -225,11 +227,13 @@ class TagTaxonomyDiscoveryService {
         if (empty($assignments)) return $this->overview($runId);
         $this->db->beginTransaction();
         try {
+            $this->requireLockedStagingRun($runId);
             foreach ($assignments as $assignment) {
                 $pattern = $this->requirePendingPattern($runId, (int)$assignment['pattern_id']);
                 $proposalId = $this->findOrCreateProposal($runId, $assignment);
                 $updatePattern = $this->db->prepare(
-                    "UPDATE tag_taxonomy_patterns SET proposal_id = :proposal_id, confidence = :confidence, rationale = :rationale, status = 'proposed' WHERE id = :id AND run_id = :run_id"
+                    "UPDATE tag_taxonomy_patterns SET proposal_id = :proposal_id, confidence = :confidence, rationale = :rationale, status = 'proposed' "
+                    . "WHERE id = :id AND run_id = :run_id AND status = 'pending'"
                 );
                 $updatePattern->execute([
                     'proposal_id' => $proposalId,
@@ -238,6 +242,9 @@ class TagTaxonomyDiscoveryService {
                     'id' => $pattern['id'],
                     'run_id' => $runId,
                 ]);
+                if ($updatePattern->rowCount() !== 1) {
+                    throw new RuntimeException('A taxonomy pattern changed while the AI batch was running. Refresh before continuing.');
+                }
                 $updateTransactions = $this->db->prepare(
                     'UPDATE transaction_tag_proposals SET proposal_id = :proposal_id, confidence = :confidence WHERE run_id = :run_id AND pattern_id = :pattern_id'
                 );
@@ -285,6 +292,7 @@ class TagTaxonomyDiscoveryService {
 
         $this->db->beginTransaction();
         try {
+            $this->requireLockedStagingRun($runId);
             $update = $this->db->prepare(
                 'UPDATE tag_taxonomy_proposals SET canonical_name = :name, canonical_name_normalized = :normalized, '
                 . 'description = :description, category_id = :category_id, status = :status, origin = :origin, '
@@ -321,22 +329,43 @@ class TagTaxonomyDiscoveryService {
     }
 
     /** @return array<string,mixed> */
-    public function markReady(int $runId): array {
-        $this->requireStagingRun($runId);
-        $metrics = $this->metrics($runId);
-        if ($metrics['pending_patterns'] > 0 || $metrics['pending_proposals'] > 0 || $metrics['approved_proposals'] === 0) {
-            throw new RuntimeException('Analyse every pattern and approve every active canonical proposal before marking the taxonomy ready.');
+    public function markReady(int $runId, bool $deferRemaining = false): array {
+        $this->db->beginTransaction();
+        try {
+            $this->requireLockedStagingRun($runId);
+            $metrics = $this->metrics($runId);
+            if ($metrics['pending_proposals'] > 0 || $metrics['approved_proposals'] === 0) {
+                throw new RuntimeException('Approve every active canonical proposal before marking the taxonomy ready.');
+            }
+            if ($metrics['pending_patterns'] > 0 && !$deferRemaining) {
+                throw new RuntimeException('Analyse every pattern, or explicitly defer the remainder after reaching 95% transaction coverage.');
+            }
+            if ($metrics['pending_patterns'] > 0 && $metrics['coverage_percent'] < self::EARLY_FINISH_MIN_COVERAGE) {
+                throw new RuntimeException('At least 95% transaction coverage is required before unresolved patterns can be deferred.');
+            }
+            $stmt = $this->db->prepare(
+                "SELECT COUNT(*) FROM tag_taxonomy_patterns p LEFT JOIN tag_taxonomy_proposals d ON d.id = p.proposal_id "
+                . "WHERE p.run_id = :run_id AND p.status = 'proposed' AND (p.proposal_id IS NULL OR d.status <> 'approved')"
+            );
+            $stmt->execute(['run_id' => $runId]);
+            if ((int)$stmt->fetchColumn() > 0) {
+                throw new RuntimeException('Every analysed pattern must resolve to an approved canonical tag.');
+            }
+            if ($deferRemaining && $metrics['pending_patterns'] > 0) {
+                $defer = $this->db->prepare(
+                    "UPDATE tag_taxonomy_patterns SET status = 'excluded', "
+                    . "rationale = 'Deferred when taxonomy was finalised at or above 95% transaction coverage' "
+                    . "WHERE run_id = :run_id AND status = 'pending'"
+                );
+                $defer->execute(['run_id' => $runId]);
+            }
+            $update = $this->db->prepare("UPDATE tag_migration_runs SET status = 'ready', ready_at = CURRENT_TIMESTAMP WHERE id = :id");
+            $update->execute(['id' => $runId]);
+            $this->db->commit();
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
         }
-        $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM tag_taxonomy_patterns p LEFT JOIN tag_taxonomy_proposals d ON d.id = p.proposal_id "
-            . "WHERE p.run_id = :run_id AND (p.proposal_id IS NULL OR d.status <> 'approved')"
-        );
-        $stmt->execute(['run_id' => $runId]);
-        if ((int)$stmt->fetchColumn() > 0) {
-            throw new RuntimeException('Every pattern must resolve to an approved canonical tag.');
-        }
-        $update = $this->db->prepare("UPDATE tag_migration_runs SET status = 'ready', ready_at = CURRENT_TIMESTAMP WHERE id = :id");
-        $update->execute(['id' => $runId]);
         return $this->overview($runId);
     }
 
@@ -346,8 +375,10 @@ class TagTaxonomyDiscoveryService {
             "SELECT COUNT(*) AS patterns, "
             . "SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_patterns, "
             . "SUM(CASE WHEN status = 'proposed' THEN 1 ELSE 0 END) AS proposed_patterns, "
+            . "SUM(CASE WHEN status = 'excluded' THEN 1 ELSE 0 END) AS deferred_patterns, "
             . "COALESCE(SUM(transaction_count),0) AS transactions, "
-            . "COALESCE(SUM(CASE WHEN status = 'proposed' THEN transaction_count ELSE 0 END),0) AS proposed_transactions "
+            . "COALESCE(SUM(CASE WHEN status = 'proposed' THEN transaction_count ELSE 0 END),0) AS proposed_transactions, "
+            . "COALESCE(SUM(CASE WHEN status = 'excluded' THEN transaction_count ELSE 0 END),0) AS deferred_transactions "
             . 'FROM tag_taxonomy_patterns WHERE run_id = :run_id'
         );
         $stmt->execute(['run_id' => $runId]);
@@ -367,8 +398,10 @@ class TagTaxonomyDiscoveryService {
             'patterns' => (int)($patterns['patterns'] ?? 0),
             'pending_patterns' => (int)($patterns['pending_patterns'] ?? 0),
             'proposed_patterns' => (int)($patterns['proposed_patterns'] ?? 0),
+            'deferred_patterns' => (int)($patterns['deferred_patterns'] ?? 0),
             'transactions' => $transactions,
             'proposed_transactions' => $proposedTransactions,
+            'deferred_transactions' => (int)($patterns['deferred_transactions'] ?? 0),
             'coverage_percent' => $transactions > 0 ? round(($proposedTransactions / $transactions) * 100, 1) : 0.0,
             'proposals' => (int)($proposals['proposals'] ?? 0),
             'pending_proposals' => (int)($proposals['pending_proposals'] ?? 0),
@@ -420,7 +453,7 @@ class TagTaxonomyDiscoveryService {
 
     /** @return array<string,int|float> */
     private function emptyMetrics(): array {
-        return ['patterns' => 0, 'pending_patterns' => 0, 'proposed_patterns' => 0, 'transactions' => 0, 'proposed_transactions' => 0, 'coverage_percent' => 0.0, 'proposals' => 0, 'pending_proposals' => 0, 'approved_proposals' => 0, 'rejected_proposals' => 0];
+        return ['patterns' => 0, 'pending_patterns' => 0, 'proposed_patterns' => 0, 'deferred_patterns' => 0, 'transactions' => 0, 'proposed_transactions' => 0, 'deferred_transactions' => 0, 'coverage_percent' => 0.0, 'proposals' => 0, 'pending_proposals' => 0, 'approved_proposals' => 0, 'rejected_proposals' => 0];
     }
 
     private function findOrCreateProposal(int $runId, array $assignment): int {
@@ -483,6 +516,20 @@ class TagTaxonomyDiscoveryService {
     private function requireStagingRun(int $runId): array {
         $run = $this->requireRun($runId);
         if ($run['status'] !== 'staging') throw new RuntimeException('This discovery run is not open for staging changes.');
+        return $run;
+    }
+
+    /** @return array<string,mixed> */
+    private function requireLockedStagingRun(int $runId): array {
+        if (!$this->db->inTransaction()) throw new RuntimeException('A staging lock requires an active database transaction.');
+        if ($runId <= 0) throw new InvalidArgumentException('Choose a valid baseline snapshot.');
+        $lockSuffix = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+        $stmt = $this->db->prepare('SELECT * FROM tag_migration_runs WHERE id = :id LIMIT 1' . $lockSuffix);
+        $stmt->execute(['id' => $runId]);
+        $run = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$run || empty($run['snapshot_hash'])) throw new InvalidArgumentException('The baseline snapshot was not found.');
+        if ($run['status'] !== 'staging') throw new RuntimeException('This discovery run is not open for staging changes.');
+        foreach (['id', 'transaction_count', 'eligible_count'] as $field) $run[$field] = (int)$run[$field];
         return $run;
     }
 

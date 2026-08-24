@@ -31,13 +31,13 @@ AI analysis runs in bounded batches and returns proposed canonical tags, definit
 
 Every canonical proposal must be reviewed. A reviewer can edit the name, definition and existing category, approve it, or reject it. Rejecting a proposal returns its aliases to the pending AI queue and prevents that rejected name being suggested again. Adding a new alias to an already approved canonical tag returns that proposal to review.
 
-The taxonomy can be marked ready only when every eligible pattern resolves to an approved canonical proposal. Ready means the staging vocabulary is frozen for the later cutover phase; it still does not create live tags, aliases or transaction assignments.
+The taxonomy can be marked ready when every eligible pattern resolves to an approved canonical proposal. Once transaction coverage reaches 95%, the reviewer may instead choose **Finish and defer remainder**. This requires every active canonical proposal to be approved and records the unresolved patterns as deferred, leaving those transactions unchanged. Ready means the staging vocabulary is frozen for the later cutover phase; it still does not create live tags, aliases or transaction assignments.
 
 Full backups use format version 4 and preserve the baseline, candidate patterns, canonical proposals, reviews and transaction-level staging coverage.
 
 ## Acceptance thresholds
 
-- At least 98% of eligible transactions classified or explicitly reviewed.
+- At least 95% of eligible transactions assigned to reviewed canonical proposals; any remainder must be explicitly deferred.
 - 100% of confirmed transfers protected.
 - 100% reconciliation of financial totals before and after cutover.
 - No unreviewed canonical tags created by automated processing.

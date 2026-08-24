@@ -137,12 +137,18 @@ try {
     }
 
     if ($action === 'mark_ready') {
-        if (($payload['confirm'] ?? '') !== 'MARK_TAXONOMY_READY') {
+        $deferRemaining = ($payload['defer_remaining'] ?? false) === true;
+        $expectedConfirmation = $deferRemaining ? 'MARK_TAXONOMY_READY_WITH_DEFERRED' : 'MARK_TAXONOMY_READY';
+        if (($payload['confirm'] ?? '') !== $expectedConfirmation) {
             throw new InvalidArgumentException('Explicit readiness confirmation is required.');
         }
-        $view = $service->markReady($runId);
-        Log::write('Marked staged taxonomy ready for snapshot #' . $runId . '; no live classifications changed');
-        echo json_encode(['status' => 'ready', 'message' => 'The reviewed taxonomy is ready for a later cutover phase.', 'discovery' => $view], JSON_UNESCAPED_SLASHES);
+        $view = $service->markReady($runId, $deferRemaining);
+        $deferredPatterns = (int)($view['metrics']['deferred_patterns'] ?? 0);
+        Log::write('Marked staged taxonomy ready for snapshot #' . $runId . ' with ' . $deferredPatterns . ' patterns deferred; no live classifications changed');
+        $message = $deferredPatterns > 0
+            ? 'The reviewed taxonomy is ready and the unresolved remainder was safely deferred.'
+            : 'The reviewed taxonomy is ready for a later cutover phase.';
+        echo json_encode(['status' => 'ready', 'message' => $message, 'discovery' => $view], JSON_UNESCAPED_SLASHES);
         exit;
     }
 

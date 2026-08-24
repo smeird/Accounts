@@ -1124,6 +1124,29 @@ try {
     $incompleteTaxonomyBlocked = true;
 }
 assertEqual(true, $incompleteTaxonomyBlocked, 'An incomplete staged taxonomy cannot be marked ready');
+try {
+    $taxonomyService->markReady((int)$taxonomyRun['id'], true);
+    $lowCoverageTaxonomyBlocked = false;
+} catch (RuntimeException $e) {
+    $lowCoverageTaxonomyBlocked = true;
+}
+assertEqual(true, $lowCoverageTaxonomyBlocked, 'Early finish remains blocked below 95% transaction coverage');
+
+$db->exec("INSERT INTO tag_migration_runs (name, status, transaction_count, eligible_count, snapshot_hash, discovery_started_at) VALUES ('Early finish test', 'staging', 100, 100, 'early-finish-test-hash', CURRENT_TIMESTAMP)");
+$earlyFinishRunId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO tag_taxonomy_proposals (run_id, canonical_name, canonical_name_normalized, description, status, origin, pattern_count, transaction_count, absolute_amount, reviewed_by, reviewed_at) VALUES ($earlyFinishRunId, 'Approved majority', 'approved majority', 'Reviewed majority proposal', 'approved', 'ai', 1, 95, 950, 'test-suite', CURRENT_TIMESTAMP)");
+$earlyFinishProposalId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO tag_taxonomy_patterns (run_id, proposal_id, signature, alias, alias_normalized, direction, transaction_count, absolute_amount, confidence, status) VALUES ($earlyFinishRunId, $earlyFinishProposalId, 'early-finish-approved-pattern', 'APPROVED MAJORITY', 'approved majority', 'outgoing', 95, 950, 0.95, 'proposed')");
+$db->exec("INSERT INTO tag_taxonomy_patterns (run_id, signature, alias, alias_normalized, direction, transaction_count, absolute_amount, status) VALUES ($earlyFinishRunId, 'early-finish-deferred-pattern', 'UNCOMMON REMAINDER', 'uncommon remainder', 'outgoing', 5, 50, 'pending')");
+$earlyFinishLiveState = $db->query("SELECT COUNT(*) AS tags, (SELECT COUNT(*) FROM tag_aliases) AS aliases, (SELECT COUNT(*) FROM transactions WHERE tag_id IS NOT NULL) AS tagged_transactions FROM tags")->fetch(PDO::FETCH_ASSOC);
+$earlyFinishView = $taxonomyService->markReady($earlyFinishRunId, true);
+assertEqual('ready', $earlyFinishView['selected_run']['status'] ?? null, 'A reviewed taxonomy can finish at exactly 95% coverage');
+assertEqual(95.0, $earlyFinishView['metrics']['coverage_percent'] ?? null, 'Early finish preserves the achieved coverage metric');
+assertEqual(1, $earlyFinishView['metrics']['deferred_patterns'] ?? null, 'Early finish records unresolved patterns as deferred');
+assertEqual(5, $earlyFinishView['metrics']['deferred_transactions'] ?? null, 'Early finish reports transactions left unchanged');
+assertEqual(0, $earlyFinishView['metrics']['pending_patterns'] ?? null, 'A frozen early-finish run has no active AI queue');
+assertEqual('excluded', $db->query("SELECT status FROM tag_taxonomy_patterns WHERE run_id=$earlyFinishRunId AND proposal_id IS NULL")->fetchColumn(), 'Deferred patterns are excluded from later cutover');
+assertEqual($earlyFinishLiveState, $db->query("SELECT COUNT(*) AS tags, (SELECT COUNT(*) FROM tag_aliases) AS aliases, (SELECT COUNT(*) FROM transactions WHERE tag_id IS NOT NULL) AS tagged_transactions FROM tags")->fetch(PDO::FETCH_ASSOC), 'Early finish does not modify the live taxonomy or transaction assignments');
 
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.
