@@ -47,11 +47,11 @@ A rollback is available only while the audited cutover state still matches live 
 
 ## Post-cutover: retire the legacy catalogue
 
-Once the cutover is applied and its rollback checks still pass, **Clean legacy catalogue** offers a deliberately aggressive second action. Its preview counts the noncanonical legacy tags that will be deprecated, the active legacy aliases that will be disabled, and the historical transactions whose existing tag IDs will be retained. Reviewed canonical tags, `IGNORE`, and genuine system tags are protected.
+Once the cutover is applied, **Clean legacy catalogue** offers a deliberately aggressive second action. Its preview counts the noncanonical legacy tags that will be deprecated, the active legacy aliases that will be disabled, and the historical transactions whose existing tag IDs will be retained. Reviewed canonical tags, `IGNORE`, and genuine system tags are protected. Later transaction classification edits do not block cleanup because cleanup neither reads nor rewrites their expected cutover assignments; a complete before/after classification hash proves that the operation itself leaves them unchanged.
 
 Cleanup does not delete tags, aliases, category links, or transactions. It does not change any transaction tag, category, segment, amount, date, account, transfer, group, description, memo, or bank identifier. A legacy tag can therefore remain visible as the historical label on a deferred transaction while disappearing from all active pickers, category-management lists, AI destination choices, and future automatic matching.
 
-The action hashes every transaction classification and fingerprints the complete ledger before and after the write. It records the exact prior and resulting state of every retired tag and disabled alias inside the existing cutover audit. The ordinary **Rollback cutover** action then restores the cleanup catalogue state first and reverses the original cutover, so one guarded rollback remains sufficient.
+The action hashes every transaction classification and fingerprints the complete ledger before and after the write. It records the exact prior and resulting state of every retired tag and disabled alias inside the existing cutover audit. The ordinary **Rollback cutover** action restores the cleanup catalogue state first and reverses the original cutover while that broader rollback remains valid. If routine classification work has already made the full rollback unavailable, the page reports that separately without disabling the independent catalogue cleanup.
 
 Full backups use format version 5 and preserve the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
 

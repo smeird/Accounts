@@ -1225,8 +1225,10 @@ $protectedSystemTag = Tag::create('Protected cleanup system test', null, null, '
 $insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -3.00, 'LEGACY DEFERRED HISTORY 999999', null, null, null, $legacyHistoryTag, null, null]);
 $legacyHistoryTransactionId = (int)$db->lastInsertId();
 $cleanupFinancialBefore = $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC);
+$db->exec("UPDATE transactions SET segment_id=777002 WHERE id=$cutoverIncomingId");
+assertEqual(false, $cutoverService->rollbackPreview($cutoverRunId)['can_rollback'], 'Later classification work can correctly make the full cutover rollback unavailable');
 $cleanupPreview = $cutoverService->legacyCleanupPreview($cutoverRunId);
-assertEqual(true, $cleanupPreview['can_cleanup'], 'Applied taxonomy offers an audited aggressive legacy cleanup');
+assertEqual(true, $cleanupPreview['can_cleanup'], 'Later classification work does not block the independent legacy catalogue cleanup');
 assertEqual(true, (int)$cleanupPreview['metrics']['tags_to_deprecate'] >= 1, 'Legacy cleanup previews every noncanonical legacy tag');
 assertEqual(true, (int)$cleanupPreview['metrics']['transactions_retaining_history'] >= 1, 'Legacy cleanup reports historical transaction assignments it will retain');
 $cleanupResult = $cutoverService->cleanupLegacy($cutoverRunId, 'test-suite');
@@ -1234,6 +1236,7 @@ assertEqual('legacy_cleaned', $cleanupResult['status'], 'Aggressive legacy catal
 assertEqual('deprecated', $db->query("SELECT status FROM tags WHERE id=$legacyHistoryTag")->fetchColumn(), 'Referenced noncanonical legacy tag is deprecated');
 assertEqual(0, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$legacyHistoryAlias")->fetchColumn(), 'Legacy matching alias is disabled');
 assertEqual($legacyHistoryTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$legacyHistoryTransactionId")->fetchColumn(), 'Historical transaction keeps its original legacy tag id');
+assertEqual(777002, (int)$db->query("SELECT segment_id FROM transactions WHERE id=$cutoverIncomingId")->fetchColumn(), 'Legacy cleanup preserves a classification changed after cutover');
 assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$cutoverCanonicalId")->fetchColumn(), 'Reviewed canonical tag remains active');
 assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$protectedSystemTag")->fetchColumn(), 'Genuine system tag remains active');
 assertEqual('active', $db->query('SELECT status FROM tags WHERE id=' . Tag::getIgnoreId())->fetchColumn(), 'IGNORE remains active');
@@ -1253,6 +1256,7 @@ try {
 assertEqual(true, $retiredTargetRejected, 'AI correction can recognise retired history but refuses a retired destination tag');
 assertEqual($cleanupFinancialBefore, $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC), 'Legacy cleanup preserves the financial ledger');
 assertEqual(true, $cutoverService->legacyCleanupPreview($cutoverRunId)['completed'], 'Legacy cleanup is recorded in the cutover audit');
+$db->exec("UPDATE transactions SET segment_id=NULL WHERE id=$cutoverIncomingId");
 assertEqual(true, $cutoverService->rollbackPreview($cutoverRunId)['can_rollback'], 'An unchanged audited cutover is safely reversible');
 $cutoverRollback = $cutoverService->rollback($cutoverRunId, 'test-suite');
 assertEqual('rolled_back', $cutoverRollback['status'], 'Phase 3 rollback restores the audited taxonomy state');

@@ -193,6 +193,18 @@ function initTagTaxonomyCutover() {
         document.getElementById('cutover-cleanup-history').textContent = number(metrics.transactions_retaining_history);
         document.getElementById('cutover-cleanup-history-detail').textContent = `${number(metrics.referenced_legacy_tags)} referenced legacy tags remain as historical labels`;
         document.getElementById('cutover-cleanup-canonical').textContent = number(metrics.protected_canonical_tags);
+        const blockerNode = document.getElementById('cutover-cleanup-blockers');
+        const cleanupBlockers = Array.isArray(cleanupView.blockers) ? cleanupView.blockers : [];
+        blockerNode.hidden = cleanupBlockers.length === 0;
+        blockerNode.replaceChildren(...cleanupBlockers.map(message => {
+            const row = document.createElement('div');
+            row.textContent = message;
+            return row;
+        }));
+        const cleanupNote = document.querySelector('#cutover-cleanup-note span');
+        cleanupNote.textContent = cleanupView.cutover_rollback_available === false
+            ? 'The full cutover rollback is already unavailable because later classifications changed. Cleanup remains safe: it records exact catalogue changes and does not edit those classifications.'
+            : 'IGNORE and genuine system tags are protected. Cleanup records exact catalogue changes without editing transaction classifications.';
         const state = document.getElementById('cutover-cleanup-state');
         state.className = 'cutover-gate';
         if (cleanupView.completed) {
@@ -270,7 +282,7 @@ function initTagTaxonomyCutover() {
             const canClean = taxonomyCutoverCanCleanLegacy(selected);
             title.textContent = cleaned ? 'Canonical catalogue active' : (canClean ? 'Legacy cleanup is ready' : 'Legacy cleanup is blocked');
             copy.textContent = cleaned
-                ? (selected.can_rollback ? 'Cleanup and cutover are fully audited and safely reversible.' : 'Rollback is blocked because live state has changed since cleanup.')
+                ? (selected.can_rollback ? 'Cleanup and cutover are fully audited and safely reversible.' : 'Cleanup is audited; the older full-cutover rollback remains unavailable because later classifications changed.')
                 : (canClean
                     ? 'Retire old tags from future use while retaining every historical assignment and the rollback path.'
                     : String((selected.legacy_cleanup && selected.legacy_cleanup.blockers && selected.legacy_cleanup.blockers[0]) || 'Refresh the safety checks before cleanup.'));
@@ -314,7 +326,9 @@ function initTagTaxonomyCutover() {
         document.getElementById('cutover-confirm-copy').textContent = isApply
             ? 'This writes only reviewed classifications and taxonomy relationships. All work is cancelled if reconciliation fails.'
             : (isCleanup
-                ? 'This deprecates every noncanonical legacy tag and disables its matching rules. Transactions are not deleted or retagged, and rollback restores the complete prior catalogue.'
+                ? ((view.selectedRun && view.selectedRun.legacy_cleanup && view.selectedRun.legacy_cleanup.cutover_rollback_available === false)
+                    ? 'This deprecates every noncanonical legacy tag and disables its matching rules. Transactions are not deleted or retagged. The older full-cutover rollback is already unavailable because later classifications changed.'
+                    : 'This deprecates every noncanonical legacy tag and disables its matching rules. Transactions are not deleted or retagged, and the guarded cutover rollback remains available while its audit still matches.')
                 : 'This restores snapshot classifications and the audited tag, category, and alias state. Newer transactions remain untouched.');
         document.getElementById('cutover-confirm-phrase').textContent = phrase;
         confirmInput.value = '';
