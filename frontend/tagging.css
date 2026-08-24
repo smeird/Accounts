@@ -67,6 +67,7 @@
 .tagging-history-grid span,.tagging-history-grid small { display:block; color:var(--tag-muted); font-size:.65rem; }
 .tagging-history-grid strong { display:block; margin:.15rem 0; color:var(--tag-ink); font-size:1rem; }
 .tagging-dialog { width:min(540px,calc(100% - 2rem)); padding:0; border:0; border-radius:20px; color:var(--tag-ink); background:#fff; box-shadow:0 30px 80px rgba(15,23,42,.3); }
+#inbox-dialog { width:min(680px,calc(100% - 2rem)); }
 .tagging-dialog::backdrop { background:rgba(15,23,42,.58); backdrop-filter:blur(4px); }
 .tagging-dialog form { display:grid; gap:.7rem; padding:1.3rem; }
 .tagging-dialog h2 { font-size:1.2rem; font-weight:700; }
