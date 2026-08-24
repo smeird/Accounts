@@ -277,7 +277,7 @@ foreach ($suggestions as $s) {
             Tag::setDescriptionIfMissing($tagId, $tagDesc);
         }
     } else {
-        $tagId = Tag::getIdByName($tagName);
+        $tagId = Tag::getActiveIdByName($tagName);
         if ($tagId === null) {
             $tagId = Tag::create($tagName, null, $tagDesc, 'ai');
         } else {

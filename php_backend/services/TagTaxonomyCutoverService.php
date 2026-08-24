@@ -85,19 +85,173 @@ class TagTaxonomyCutoverService {
         }
 
         $canRollback = false;
+        $rollbackState = null;
         if ($run['status'] === 'applied' && !empty($run['cutover_summary']) && $snapshot['restorable']) {
-            $canRollback = $this->rollbackPreview($runId)['can_rollback'];
+            $rollbackState = $this->rollbackPreview($runId);
+            $canRollback = $rollbackState['can_rollback'];
         }
         return [
             'run' => $run,
             'snapshot' => $snapshot,
             'metrics' => $metrics,
+            'legacy_cleanup' => $this->legacyCleanupPreview($runId, $rollbackState),
             'financial_fingerprint' => $this->financialFingerprint(),
             'proposals' => $proposals,
             'blockers' => array_values(array_unique($blockers)),
             'can_apply' => $run['status'] === 'ready' && empty($blockers),
             'can_rollback' => $canRollback,
         ];
+    }
+
+    /**
+     * Preview the deliberately aggressive post-cutover catalogue cleanup.
+     *
+     * Transaction classifications are intentionally outside this operation:
+     * old tag ids remain on deferred/history rows, but no legacy tag or alias
+     * remains available for future matching or selection.
+     *
+     * @return array<string,mixed>
+     */
+    public function legacyCleanupPreview(int $runId, ?array $rollbackState = null): array {
+        $this->requireSchema();
+        $run = $this->getRun($runId);
+        $audit = $this->decodeAudit($run);
+        $blockers = [];
+        if ($run['status'] !== 'applied') $blockers[] = 'Apply the reviewed taxonomy before cleaning the legacy catalogue.';
+        if (!$audit) $blockers[] = 'The cutover audit record is missing or invalid.';
+
+        $completedAudit = $audit['legacy_cleanup'] ?? null;
+        if (is_array($completedAudit)) {
+            $metrics = is_array($completedAudit['metrics'] ?? null) ? $completedAudit['metrics'] : [];
+            $metrics['remaining_active_legacy_tags'] = count($this->legacyCleanupCandidates($audit));
+            return [
+                'completed' => true,
+                'can_cleanup' => false,
+                'metrics' => $metrics,
+                'blockers' => array_values(array_unique($blockers)),
+                'cleaned_at' => $completedAudit['cleaned_at'] ?? null,
+                'cleaned_by' => $completedAudit['cleaned_by'] ?? null,
+            ];
+        }
+
+        $candidates = $audit ? $this->legacyCleanupCandidates($audit) : [];
+        $metrics = $this->legacyCleanupMetrics($candidates, $audit ?: []);
+        if ($audit && $run['status'] === 'applied') {
+            $rollback = $rollbackState ?: $this->rollbackPreview($runId);
+            if (!$rollback['can_rollback']) {
+                $blockers[] = 'The existing cutover must remain safely reversible before legacy cleanup can run.';
+                $blockers = array_merge($blockers, $rollback['blockers']);
+            }
+        }
+        if (!$candidates && empty($blockers)) $blockers[] = 'There are no active noncanonical legacy tags left to clean.';
+        return [
+            'completed' => false,
+            'can_cleanup' => $run['status'] === 'applied' && $audit && !empty($candidates) && empty($blockers),
+            'metrics' => $metrics,
+            'blockers' => array_values(array_unique($blockers)),
+            'cleaned_at' => null,
+            'cleaned_by' => null,
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    public function cleanupLegacy(int $runId, string $actor): array {
+        $this->requireSchema();
+        $this->db->beginTransaction();
+        try {
+            $run = $this->lockRun($runId);
+            if ($run['status'] !== 'applied') {
+                throw new RuntimeException('Only an applied taxonomy can clean its legacy catalogue.');
+            }
+            $audit = $this->decodeAudit($run);
+            if (!$audit) throw new RuntimeException('The cutover audit record is unavailable.');
+            if (isset($audit['legacy_cleanup'])) throw new RuntimeException('The legacy catalogue has already been cleaned for this cutover.');
+
+            $preview = $this->legacyCleanupPreview($runId);
+            if (!$preview['can_cleanup']) {
+                throw new RuntimeException('Legacy cleanup is blocked: ' . implode(' ', $preview['blockers']));
+            }
+            $candidates = $this->legacyCleanupCandidates($audit);
+            $candidateIds = array_map(function($tag) { return (int)$tag['id']; }, $candidates);
+            $aliasesByTag = $this->activeAliasesForTags($candidateIds);
+            $beforeFinancial = $this->financialFingerprint();
+            $beforeClassification = $this->allClassificationHash();
+            $cleanupAudit = [
+                'version' => 1,
+                'cleaned_by' => substr(trim($actor), 0, 100),
+                'cleaned_at' => gmdate('c'),
+                'financial_before' => $beforeFinancial,
+                'classification_hash_before' => $beforeClassification,
+                'metrics' => $preview['metrics'],
+                'tags' => [],
+            ];
+
+            $disableAliases = $this->db->prepare('UPDATE tag_aliases SET active = 0 WHERE tag_id = :tag_id AND active = 1');
+            $deprecateTag = $this->db->prepare("UPDATE tags SET status = 'deprecated' WHERE id = :id AND status = 'active' AND origin = 'legacy'");
+            foreach ($candidates as $candidate) {
+                $tagId = (int)$candidate['id'];
+                $tagBefore = $this->tagRow($tagId);
+                if (!$tagBefore || $tagBefore['status'] !== 'active' || $tagBefore['origin'] !== 'legacy'
+                    || strtoupper(trim((string)$tagBefore['name'])) === 'IGNORE') {
+                    throw new RuntimeException('A legacy cleanup candidate changed while the operation was being prepared.');
+                }
+                $aliasesBefore = $aliasesByTag[$tagId] ?? [];
+                $disableAliases->execute(['tag_id' => $tagId]);
+                $deprecateTag->execute(['id' => $tagId]);
+                if ($deprecateTag->rowCount() !== 1) throw new RuntimeException('A legacy tag could not be deprecated safely.');
+                $tagAfter = $tagBefore;
+                $tagAfter['status'] = 'deprecated';
+                $aliasesAfter = array_map(function($alias) {
+                    $alias['active'] = 0;
+                    return $alias;
+                }, $aliasesBefore);
+                $cleanupAudit['tags'][] = [
+                    'tag_id' => $tagId,
+                    'transaction_count' => (int)$candidate['transaction_count'],
+                    'tag_before' => $tagBefore,
+                    'tag_after' => $tagAfter,
+                    'aliases_before' => $aliasesBefore,
+                    'aliases_after' => $aliasesAfter,
+                ];
+            }
+
+            $afterFinancial = $this->financialFingerprint();
+            $afterClassification = $this->allClassificationHash();
+            if ($afterFinancial !== $beforeFinancial || $afterClassification !== $beforeClassification) {
+                throw new RuntimeException('Ledger reconciliation failed; legacy cleanup was cancelled.');
+            }
+            if ($this->legacyCleanupCandidates($audit)) {
+                throw new RuntimeException('One or more noncanonical legacy tags remained active; cleanup was cancelled.');
+            }
+            foreach ($cleanupAudit['tags'] as $entry) {
+                if (($entry['tag_after']['status'] ?? null) !== 'deprecated') {
+                    throw new RuntimeException('Legacy tag state reconciliation failed; cleanup was cancelled.');
+                }
+                foreach ($entry['aliases_after'] as $alias) {
+                    if (!is_array($alias) || (int)($alias['active'] ?? 1) !== 0) {
+                        throw new RuntimeException('Legacy alias state reconciliation failed; cleanup was cancelled.');
+                    }
+                }
+            }
+            $cleanupAudit['financial_after'] = $afterFinancial;
+            $cleanupAudit['classification_hash_after'] = $afterClassification;
+            $cleanupAudit['metrics']['remaining_active_legacy_tags'] = 0;
+            $audit['legacy_cleanup'] = $cleanupAudit;
+            $encoded = json_encode($audit, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($encoded === false) throw new RuntimeException('The legacy cleanup audit could not be encoded.');
+            $this->db->prepare('UPDATE tag_migration_runs SET cutover_summary = :summary WHERE id = :id')
+                ->execute(['summary' => $encoded, 'id' => $runId]);
+            $this->db->commit();
+            Tag::clearMatchCaches();
+            return [
+                'status' => 'legacy_cleaned',
+                'message' => 'The noncanonical legacy catalogue was retired without changing any transaction classifications or money values.',
+                'cutover' => $this->preview($runId),
+            ];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
     }
 
     /** @return array<string,mixed> */
@@ -315,6 +469,14 @@ class TagTaxonomyCutoverService {
             }
             $financialBefore = $this->financialFingerprint();
             $this->restoreAuditedClassifications($runId, $audit);
+
+            // Legacy cleanup is a post-cutover extension of the same audit.
+            // Restore its exact prior states before reversing the original
+            // canonical cutover so one rollback remains sufficient.
+            foreach (array_reverse($audit['legacy_cleanup']['tags'] ?? []) as $entry) {
+                if (!empty($entry['tag_before'])) $this->restoreTagState($entry['tag_before']);
+                foreach ($entry['aliases_before'] ?? [] as $alias) $this->restoreAliasState($alias);
+            }
 
             foreach (array_reverse($audit['deprecated_tags'] ?? []) as $entry) {
                 $this->restoreTagState($entry['tag_before']);
@@ -542,6 +704,92 @@ class TagTaxonomyCutoverService {
         return hash_final($context);
     }
 
+    private function allClassificationHash(): string {
+        $stmt = $this->db->query('SELECT id, tag_id, category_id, segment_id FROM transactions ORDER BY id');
+        $context = hash_init('sha256');
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            hash_update($context, implode('|', [
+                (string)$row['id'],
+                $row['tag_id'] === null ? '~' : (string)$row['tag_id'],
+                $row['category_id'] === null ? '~' : (string)$row['category_id'],
+                $row['segment_id'] === null ? '~' : (string)$row['segment_id'],
+            ]) . "\n");
+        }
+        return hash_final($context);
+    }
+
+    /** @return array<int,int> */
+    private function canonicalTagIds(array $audit): array {
+        $ids = [];
+        foreach ($audit['proposals'] ?? [] as $proposal) {
+            if (isset($proposal['tag_id'])) $ids[(int)$proposal['tag_id']] = true;
+        }
+        return array_keys($ids);
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    private function legacyCleanupCandidates(array $audit): array {
+        $canonical = array_fill_keys($this->canonicalTagIds($audit), true);
+        $stmt = $this->db->query(
+            "SELECT t.id, t.name, t.name_normalized, t.keyword, t.description, t.origin, t.status, t.merged_into_tag_id, "
+            . "(SELECT COUNT(*) FROM transactions x WHERE x.tag_id = t.id) AS transaction_count, "
+            . "(SELECT COUNT(*) FROM tag_aliases a WHERE a.tag_id = t.id AND a.active = 1) AS active_alias_count "
+            . "FROM tags t WHERE t.status = 'active' AND t.origin = 'legacy' "
+            . "AND UPPER(TRIM(t.name)) <> 'IGNORE' ORDER BY t.id"
+        );
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (isset($canonical[(int)$row['id']])) continue;
+            $row['id'] = (int)$row['id'];
+            $row['transaction_count'] = (int)$row['transaction_count'];
+            $row['active_alias_count'] = (int)$row['active_alias_count'];
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /** @return array<string,int> */
+    private function legacyCleanupMetrics(array $candidates, array $audit): array {
+        $referencedTags = 0;
+        $transactions = 0;
+        $aliases = 0;
+        foreach ($candidates as $candidate) {
+            $count = (int)($candidate['transaction_count'] ?? 0);
+            if ($count > 0) $referencedTags++;
+            $transactions += $count;
+            $aliases += (int)($candidate['active_alias_count'] ?? 0);
+        }
+        $canonicalIds = $this->canonicalTagIds($audit);
+        $activeCanonical = 0;
+        foreach ($this->tagRowsByIds($canonicalIds) as $tag) {
+            if ($tag && $tag['status'] === 'active') $activeCanonical++;
+        }
+        return [
+            'tags_to_deprecate' => count($candidates),
+            'aliases_to_disable' => $aliases,
+            'referenced_legacy_tags' => $referencedTags,
+            'transactions_retaining_history' => $transactions,
+            'unused_legacy_tags' => count($candidates) - $referencedTags,
+            'protected_canonical_tags' => $activeCanonical,
+            'remaining_active_legacy_tags' => count($candidates),
+        ];
+    }
+
+    /** @return array<int,array<int,array<string,mixed>>> */
+    private function activeAliasesForTags(array $tagIds): array {
+        $result = [];
+        foreach (array_chunk(array_values(array_unique(array_map('intval', $tagIds))), 500) as $chunk) {
+            if (!$chunk) continue;
+            $marks = implode(',', array_fill(0, count($chunk), '?'));
+            $stmt = $this->db->prepare("SELECT * FROM tag_aliases WHERE active = 1 AND tag_id IN ($marks) ORDER BY id");
+            $stmt->execute($chunk);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $result[(int)$row['tag_id']][] = $row;
+            }
+        }
+        return $result;
+    }
+
     /** @return array<int,int> */
     private function candidateOldTagIds(int $runId): array {
         $stmt = $this->db->prepare(
@@ -614,9 +862,43 @@ class TagTaxonomyCutoverService {
     /** @return array<int,string> */
     private function rollbackStateBlockers(int $runId, array $audit): array {
         $blockers = [];
+        $tagIds = [];
+        $aliasIds = [];
+        foreach ($audit['legacy_cleanup']['tags'] ?? [] as $entry) {
+            $tagIds[] = (int)$entry['tag_id'];
+            foreach ($entry['aliases_after'] ?? [] as $alias) {
+                if (is_array($alias) && isset($alias['id'])) $aliasIds[] = (int)$alias['id'];
+            }
+        }
+        foreach ($audit['proposals'] ?? [] as $proposal) {
+            $tagIds[] = (int)$proposal['tag_id'];
+            foreach ($proposal['aliases'] ?? [] as $alias) $aliasIds[] = (int)$alias['id'];
+        }
+        foreach ($audit['deprecated_tags'] ?? [] as $entry) {
+            $tagIds[] = (int)$entry['tag_id'];
+            foreach ($entry['aliases_after'] ?? [] as $alias) $aliasIds[] = (int)$alias['id'];
+        }
+        $currentTags = $this->tagRowsByIds($tagIds);
+        $currentAliases = $this->aliasRowsByIds($aliasIds);
+        foreach ($audit['legacy_cleanup']['tags'] ?? [] as $entry) {
+            $currentTag = $currentTags[(int)$entry['tag_id']] ?? null;
+            if (!$currentTag || !$this->sameTagState($currentTag, $entry['tag_after'] ?? [])) {
+                $blockers[] = 'A legacy tag changed after catalogue cleanup.';
+            }
+            foreach ($entry['aliases_after'] ?? [] as $expectedAlias) {
+                if (!is_array($expectedAlias)) {
+                    $blockers[] = 'A legacy alias cleanup audit entry is incomplete.';
+                    continue;
+                }
+                $currentAlias = $currentAliases[(int)$expectedAlias['id']] ?? null;
+                if (!$currentAlias || !$this->sameAliasState($currentAlias, $expectedAlias)) {
+                    $blockers[] = 'A legacy alias changed after catalogue cleanup.';
+                }
+            }
+        }
         foreach ($audit['proposals'] ?? [] as $proposal) {
             $tagId = (int)$proposal['tag_id'];
-            $currentTag = $this->tagRow($tagId);
+            $currentTag = $currentTags[$tagId] ?? null;
             if (!$currentTag || !$this->sameTagState($currentTag, $proposal['tag_after'] ?? [])) {
                 $blockers[] = 'A canonical tag changed after cutover.';
             }
@@ -641,20 +923,20 @@ class TagTaxonomyCutoverService {
             $expected = $proposal['category_id_after'] === null ? [] : [(int)$proposal['category_id_after']];
             if ($currentCategories !== $expected) $blockers[] = 'A reviewed tag-to-category mapping changed after cutover.';
             foreach ($proposal['aliases'] ?? [] as $aliasAudit) {
-                $current = $this->aliasRow((int)$aliasAudit['id']);
+                $current = $currentAliases[(int)$aliasAudit['id']] ?? null;
                 if (!$current || !$this->sameAliasState($current, $aliasAudit['after'] ?? [])) {
                     $blockers[] = 'A direction-aware alias changed after cutover.';
                 }
             }
         }
         foreach ($audit['deprecated_tags'] ?? [] as $entry) {
-            $currentTag = $this->tagRow((int)$entry['tag_id']);
+            $currentTag = $currentTags[(int)$entry['tag_id']] ?? null;
             if (!$currentTag || !$this->sameTagState($currentTag, $entry['tag_after'] ?? [])) {
                 $blockers[] = 'A deprecated legacy tag changed after cutover.';
             }
             $expectedAliases = $entry['aliases_after'] ?? [];
             foreach ($expectedAliases as $expectedAlias) {
-                $currentAlias = $this->aliasRow((int)$expectedAlias['id']);
+                $currentAlias = $currentAliases[(int)$expectedAlias['id']] ?? null;
                 if (!$currentAlias || !$this->sameAliasState($currentAlias, $expectedAlias)) {
                     $blockers[] = 'A deprecated legacy alias changed after cutover.';
                 }
@@ -753,6 +1035,21 @@ class TagTaxonomyCutoverService {
         return $row ?: null;
     }
 
+    /** @return array<int,array<string,mixed>> */
+    private function tagRowsByIds(array $tagIds): array {
+        $result = [];
+        foreach (array_chunk(array_values(array_unique(array_filter(array_map('intval', $tagIds)))), 500) as $chunk) {
+            if (!$chunk) continue;
+            $marks = implode(',', array_fill(0, count($chunk), '?'));
+            $stmt = $this->db->prepare(
+                "SELECT id, name, name_normalized, keyword, description, origin, status, merged_into_tag_id FROM tags WHERE id IN ($marks)"
+            );
+            $stmt->execute($chunk);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $result[(int)$row['id']] = $row;
+        }
+        return $result;
+    }
+
     /** @return array<string,mixed>|null */
     private function aliasByKey(string $normalized, string $direction): ?array {
         $stmt = $this->db->prepare('SELECT * FROM tag_aliases WHERE alias_normalized = :normalized AND direction = :direction LIMIT 1');
@@ -767,6 +1064,19 @@ class TagTaxonomyCutoverService {
         $stmt->execute(['id' => $aliasId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    private function aliasRowsByIds(array $aliasIds): array {
+        $result = [];
+        foreach (array_chunk(array_values(array_unique(array_filter(array_map('intval', $aliasIds)))), 500) as $chunk) {
+            if (!$chunk) continue;
+            $marks = implode(',', array_fill(0, count($chunk), '?'));
+            $stmt = $this->db->prepare("SELECT * FROM tag_aliases WHERE id IN ($marks)");
+            $stmt->execute($chunk);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $result[(int)$row['id']] = $row;
+        }
+        return $result;
     }
 
     /** @return array<int,array<string,mixed>> */

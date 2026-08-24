@@ -39,11 +39,19 @@ After Phase 3 is deployed, run **System → Database Health** once more. This ad
 
 Open **System → Taxonomy Cutover** to review the exact plan. Apply stays disabled unless the immutable snapshot hash is valid, approved coverage is at least 95%, every analysed pattern points to one approved tag, and no direction-specific alias points to competing destinations. The preview identifies new and reused tags, category and segment mappings, direction-aware aliases, deferred transactions, newly protected transactions and imports made after the snapshot.
 
-The confirmed cutover runs inside one database transaction. It creates or reuses the reviewed canonical tags, installs their direction-aware aliases, applies reviewed category and segment relationships, and retags only covered, eligible snapshot transactions. Transfers, `IGNORE` rows, deferred patterns and post-snapshot imports remain unchanged. Old tags are deprecated only when the cutover leaves them unused.
+The confirmed cutover runs inside one database transaction. It creates or reuses the reviewed canonical tags, installs their direction-aware aliases, applies reviewed category and segment relationships, and retags only covered, eligible snapshot transactions. Transfers, `IGNORE` rows, deferred patterns and post-snapshot imports remain unchanged. During the initial cutover, old tags are deprecated only when the cutover leaves them unused.
 
 Before commit, the service verifies every expected classification, hashes the untouched classification set, and compares the complete ledger transaction count, signed amount total and absolute amount total with the pre-cutover fingerprint. Any difference cancels the entire operation. The audit record retains the previous tag, alias and category state plus the immutable snapshot reference.
 
 A rollback is available only while the audited cutover state still matches live state. It restores snapshot classifications and the previous taxonomy relationships atomically, leaves post-snapshot transactions untouched, and reconciles the financial fingerprint again. If later manual changes would make rollback unsafe, it is blocked instead of overwriting them.
+
+## Post-cutover: retire the legacy catalogue
+
+Once the cutover is applied and its rollback checks still pass, **Clean legacy catalogue** offers a deliberately aggressive second action. Its preview counts the noncanonical legacy tags that will be deprecated, the active legacy aliases that will be disabled, and the historical transactions whose existing tag IDs will be retained. Reviewed canonical tags, `IGNORE`, and genuine system tags are protected.
+
+Cleanup does not delete tags, aliases, category links, or transactions. It does not change any transaction tag, category, segment, amount, date, account, transfer, group, description, memo, or bank identifier. A legacy tag can therefore remain visible as the historical label on a deferred transaction while disappearing from all active pickers, category-management lists, AI destination choices, and future automatic matching.
+
+The action hashes every transaction classification and fingerprints the complete ledger before and after the write. It records the exact prior and resulting state of every retired tag and disabled alias inside the existing cutover audit. The ordinary **Rollback cutover** action then restores the cleanup catalogue state first and reverses the original cutover, so one guarded rollback remains sufficient.
 
 Full backups use format version 5 and preserve the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
 

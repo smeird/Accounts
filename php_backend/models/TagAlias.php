@@ -136,7 +136,7 @@ class TagAlias {
      */
     public static function tagExists(int $tagId): bool {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT id FROM tags WHERE id = :id LIMIT 1');
+        $stmt = $db->prepare("SELECT id FROM tags WHERE id = :id AND status = 'active' LIMIT 1");
         $stmt->execute(['id' => $tagId]);
         return $stmt->fetchColumn() !== false;
     }

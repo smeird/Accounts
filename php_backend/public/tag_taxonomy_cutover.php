@@ -58,6 +58,15 @@ try {
         echo json_encode($result, JSON_UNESCAPED_SLASHES);
         exit;
     }
+    if ($action === 'cleanup_legacy') {
+        if (($payload['confirm'] ?? '') !== 'CLEAN_LEGACY_TAXONOMY') {
+            throw new InvalidArgumentException('Type CLEAN_LEGACY_TAXONOMY to confirm catalogue cleanup.');
+        }
+        $result = $service->cleanupLegacy($runId, $actor);
+        Log::write('Retired the noncanonical legacy tag catalogue for taxonomy snapshot #' . $runId);
+        echo json_encode($result, JSON_UNESCAPED_SLASHES);
+        exit;
+    }
     throw new InvalidArgumentException('Unsupported taxonomy cutover action.');
 } catch (InvalidArgumentException $e) {
     http_response_code(422);

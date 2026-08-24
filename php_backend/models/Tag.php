@@ -37,6 +37,20 @@ class Tag {
 
         $existingId = self::getIdByNormalizedName($normalizedName);
         if ($existingId !== null) {
+            $db = Database::getConnection();
+            $reactivate = $db->prepare(
+                "UPDATE tags SET status = 'active', merged_into_tag_id = NULL, origin = :origin, "
+                . "keyword = CASE WHEN (keyword IS NULL OR keyword = '') THEN :keyword ELSE keyword END, "
+                . "description = CASE WHEN (description IS NULL OR description = '') THEN :description ELSE description END "
+                . "WHERE id = :id AND status <> 'active'"
+            );
+            $reactivate->execute([
+                'id' => $existingId,
+                'origin' => $origin,
+                'keyword' => $keyword,
+                'description' => $description,
+            ]);
+            if ($reactivate->rowCount() > 0) self::clearMatchCaches();
             return $existingId;
         }
 
@@ -72,11 +86,11 @@ class Tag {
     }
 
     /**
-     * Retrieve all tags with their IDs, names, keywords and descriptions.
+     * Retrieve the active tag catalogue used by management controls.
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `name`, `keyword`, `description` FROM `tags` ORDER BY `name` ASC, `id` ASC');
+        $stmt = $db->query("SELECT `id`, `name`, `keyword`, `description` FROM `tags` WHERE `status` = 'active' ORDER BY `name` ASC, `id` ASC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -116,7 +130,7 @@ class Tag {
         $sql = 'SELECT t.id, t.name, t.keyword, t.description '
              . 'FROM tags t '
              . 'LEFT JOIN category_tags ct ON t.id = ct.tag_id '
-             . 'WHERE ct.tag_id IS NULL';
+             . "WHERE ct.tag_id IS NULL AND t.status = 'active'";
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -340,6 +354,19 @@ class Tag {
     }
 
     /**
+     * Look up only a currently selectable canonical tag by exact name.
+     */
+    public static function getActiveIdByName(string $name): ?int {
+        $normalizedName = self::normalizeName($name);
+        if ($normalizedName === '') return null;
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT id FROM tags WHERE name_normalized = :name AND status = 'active' LIMIT 1");
+        $stmt->execute(['name' => $normalizedName]);
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int)$id : null;
+    }
+
+    /**
      * Look up a tag's id by normalized name.
      */
     public static function getIdByNormalizedName(string $normalizedName): ?int {
@@ -354,7 +381,7 @@ class Tag {
      * Return the id for the IGNORE tag, creating it if missing.
      */
     public static function getIgnoreId(): int {
-        $id = self::getIdByName('IGNORE');
+        $id = self::getActiveIdByName('IGNORE');
         if ($id === null) {
             $id = self::create('IGNORE', 'IGNORE', 'Ignored transactions', 'system');
         }
@@ -365,9 +392,24 @@ class Tag {
      * Return the id for the interest charge tag, creating it if missing.
      */
     public static function getInterestChargeId(): int {
-        $id = self::getIdByName('interest charge');
+        $db = Database::getConnection();
+        $stmt = $db->query(
+            "SELECT id FROM tags WHERE status = 'active' AND name_normalized IN ('interest charges','interest charge') "
+            . "ORDER BY CASE WHEN name_normalized = 'interest charges' THEN 0 ELSE 1 END, id LIMIT 1"
+        );
+        $id = $stmt->fetchColumn();
+        if ($id !== false) return (int)$id;
+
+        // Prefer the reviewed canonical plural. If it already exists but was
+        // previously deprecated, reactivate that exact record rather than
+        // falling back to a retired singular legacy tag.
+        $id = self::getIdByName('Interest Charges');
         if ($id === null) {
-            $id = self::create('interest charge', null, 'Interest charges', 'system');
+            $id = self::create('Interest Charges', null, 'Interest charges', 'system');
+        } else {
+            $activate = $db->prepare("UPDATE tags SET status = 'active', merged_into_tag_id = NULL WHERE id = :id");
+            $activate->execute(['id' => $id]);
+            self::clearMatchCaches();
         }
         return $id;
     }
