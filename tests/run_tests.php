@@ -195,6 +195,10 @@ assertEqual(3, count($validatedCategoryAssignments['rejected']), 'AI category as
 assertEqual('{"assignments":[]}', AiCategoryTagger::extractOutputText(['output_text' => "```json\n{\"assignments\":[]}\n```"]), 'AI category assignment strips response code fences');
 
 $tag2 = Tag::create('Fuel', null, null);
+$lateAlphabeticalTag = Tag::create('Bills', null, null);
+$alphabeticalTags = Tag::all();
+assertEqual(['Bills', 'Food', 'Fuel'], array_column($alphabeticalTags, 'name'), 'Full tag listings are alphabetical regardless of creation order');
+$db->exec('DELETE FROM tags WHERE id = ' . (int)$lateAlphabeticalTag);
 $fuelOptions = Tag::searchOptions('fuel', 10);
 assertEqual($tag2, (int)($fuelOptions[0]['id'] ?? 0), 'Compact tag search returns the matching canonical tag');
 assertEqual(['id', 'name'], array_keys($fuelOptions[0] ?? []), 'Compact tag search returns only picker fields');

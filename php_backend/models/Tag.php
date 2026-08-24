@@ -71,7 +71,7 @@ class Tag {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `name`, `keyword`, `description` FROM `tags`');
+        $stmt = $db->query('SELECT `id`, `name`, `keyword`, `description` FROM `tags` ORDER BY `name` ASC, `id` ASC');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
