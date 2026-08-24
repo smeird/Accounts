@@ -30,6 +30,7 @@ require_once __DIR__ . '/../php_backend/TagTaxonomyDiscoveryAi.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyDiscoveryService.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyCutoverService.php';
 require_once __DIR__ . '/../php_backend/services/TaggingWorkspaceService.php';
+require_once __DIR__ . '/../php_backend/services/FinancialWorkbookExportService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -1323,6 +1324,64 @@ assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tags WHERE id=$cutoverCanon
 assertEqual($cutoverPostSnapshotTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverPostSnapshotId")->fetchColumn(), 'Rollback still leaves post-snapshot transactions untouched');
 assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$legacyHistoryTag")->fetchColumn(), 'Rollback restores a cleanup-retired legacy tag');
 assertEqual(1, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$legacyHistoryAlias")->fetchColumn(), 'Rollback restores a cleanup-disabled legacy alias');
+
+// Excel is a curated workbook rather than another raw transaction dump. Keep
+// excluded ledger evidence visible while reconciling every analytical total.
+$db->exec("INSERT INTO accounts (name, sort_code, account_number) VALUES ('Workbook account', '00-00-00', '99990000')");
+$workbookAccountId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO segments (name, description) VALUES ('Workbook fixed costs', 'Export test')");
+$workbookSegmentId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO categories (name, description, segment_id) VALUES ('Workbook housing', 'Export test', $workbookSegmentId)");
+$workbookCategoryId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO tags (name, name_normalized, description, origin, status) VALUES ('Workbook mortgage', 'workbook mortgage', 'Export test', 'reviewed', 'active')");
+$workbookTagId = (int)$db->lastInsertId();
+$db->exec("INSERT INTO transaction_groups (name, description, active) VALUES ('Workbook household', 'Export test', 1)");
+$workbookGroupId = (int)$db->lastInsertId();
+$workbookInsert = $db->prepare('INSERT INTO transactions (account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$workbookInsert->execute([$workbookAccountId, '2031-01-02', 3000.00, 'Salary', null, null, null, null, null, null]);
+$workbookInsert->execute([$workbookAccountId, '2031-01-05', -120.00, 'Mortgage payment', 'Monthly home cost', $workbookCategoryId, $workbookSegmentId, $workbookTagId, $workbookGroupId, null]);
+$workbookInsert->execute([$workbookAccountId, '2031-01-07', -500.00, 'Move to savings', null, null, null, null, null, null]);
+$workbookTransferId = (int)$db->lastInsertId();
+$db->exec("UPDATE transactions SET transfer_id=$workbookTransferId WHERE id=$workbookTransferId");
+$workbookInsert->execute([$workbookAccountId, '2031-01-09', -50.00, 'Ignored correction', null, null, null, Tag::getIgnoreId(), null, null]);
+
+$workbookService = new FinancialWorkbookExportService($db);
+$workbookData = $workbookService->build('2031-01-01', '2031-01-31');
+assertEqual(4, count($workbookData['transactions']), 'Excel ledger retains every transaction in the selected period');
+assertEqual(3000.0, $workbookData['metrics']['income'], 'Excel summary includes ordinary income');
+assertEqual(120.0, $workbookData['metrics']['spending'], 'Excel summary excludes transfers and ignored rows from spending');
+assertEqual(2880.0, $workbookData['metrics']['net'], 'Excel summary reconciles period net movement');
+assertEqual(500.0, $workbookData['metrics']['transfer_moved'], 'Excel summary reports internal money moved separately');
+assertEqual(1, $workbookData['metrics']['ignored_count'], 'Excel ledger identifies ignored rows');
+assertEqual('Workbook fixed costs', key($workbookData['segments']), 'Excel analysis ranks spending by segment');
+try {
+    FinancialWorkbookExportService::validateRange('2031-02-01', '2031-01-01');
+    $reversedWorkbookPeriodRejected = false;
+} catch (InvalidArgumentException $e) {
+    $reversedWorkbookPeriodRejected = true;
+}
+assertEqual(true, $reversedWorkbookPeriodRejected, 'Excel export rejects a reversed date range');
+
+$workbookFile = tempnam(sys_get_temp_dir(), 'accounts-workbook-test-');
+$workbookService->createWorkbook('2031-01-01', '2031-01-31', $workbookFile);
+assertEqual("PK", substr((string)file_get_contents($workbookFile), 0, 2), 'Excel export creates a valid OOXML zip container');
+$workbookZip = new ZipArchive();
+$workbookZip->open($workbookFile);
+$workbookXml = (string)$workbookZip->getFromName('xl/workbook.xml');
+$summaryXml = (string)$workbookZip->getFromName('xl/worksheets/sheet1.xml');
+$transactionsXml = (string)$workbookZip->getFromName('xl/worksheets/sheet3.xml');
+assertEqual(3, substr_count($workbookXml, '<sheet '), 'Excel workbook contains Summary, Pivot Analysis and Transactions sheets');
+assertEqual(true, strpos(html_entity_decode($summaryXml, ENT_QUOTES | ENT_XML1, 'UTF-8'), "SUM('Transactions'!\$K\$6") !== false, 'Excel summary formulas remain linked to the transaction ledger');
+assertEqual(true, $workbookZip->locateName('xl/tables/table1.xml') !== false, 'Excel transaction ledger is a filterable structured table');
+assertEqual(true, strpos($transactionsXml, 'Transfer') !== false && strpos($transactionsXml, 'Ignored') !== false, 'Excel ledger explains excluded transfer and ignored rows');
+$workbookZip->close();
+unlink($workbookFile);
+$db->exec("DELETE FROM transactions WHERE account_id=$workbookAccountId");
+$db->exec("DELETE FROM transaction_groups WHERE id=$workbookGroupId");
+$db->exec("DELETE FROM tags WHERE id=$workbookTagId");
+$db->exec("DELETE FROM categories WHERE id=$workbookCategoryId");
+$db->exec("DELETE FROM segments WHERE id=$workbookSegmentId");
+$db->exec("DELETE FROM accounts WHERE id=$workbookAccountId");
 
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.
