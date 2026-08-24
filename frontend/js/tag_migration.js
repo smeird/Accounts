@@ -19,6 +19,7 @@ function initTagMigration() {
     const statusTitle = document.getElementById('migration-status-title');
     const statusCopy = document.getElementById('migration-status-copy');
     const healthLink = document.getElementById('migration-health-link');
+    const discoveryLink = document.getElementById('migration-discovery-link');
     const createButton = document.getElementById('migration-create-snapshot');
     const createNote = document.getElementById('migration-create-note');
     const nameInput = document.getElementById('migration-snapshot-name');
@@ -134,6 +135,7 @@ function initTagMigration() {
         statusTitle.textContent = view.schemaReady ? 'Classification safeguards are ready' : 'Database preparation is required';
         statusCopy.textContent = view.schemaMessage;
         healthLink.hidden = view.schemaReady;
+        discoveryLink.hidden = !view.schemaReady;
         createButton.dataset.ready = view.schemaReady ? 'true' : 'false';
         createButton.disabled = busy || !view.schemaReady;
         createNote.textContent = view.schemaReady

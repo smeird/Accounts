@@ -25,6 +25,9 @@ require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
 require_once __DIR__ . '/../php_backend/services/SchemaHealthService.php';
 require_once __DIR__ . '/../php_backend/services/AiTagCorrectionService.php';
 require_once __DIR__ . '/../php_backend/services/TagMigrationSafetyService.php';
+require_once __DIR__ . '/../php_backend/TagTaxonomyPattern.php';
+require_once __DIR__ . '/../php_backend/TagTaxonomyDiscoveryAi.php';
+require_once __DIR__ . '/../php_backend/services/TagTaxonomyDiscoveryService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -47,8 +50,11 @@ $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, 
 $db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE totp_secrets (username TEXT PRIMARY KEY, secret TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, rationale TEXT, cost_low REAL, cost_medium REAL, cost_high REAL, funding_source TEXT, recurring_cost REAL, estimated_time INTEGER, expected_lifespan INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1, dependencies TEXT, risks TEXT, archived TINYINT DEFAULT 0, group_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
-$db->exec("CREATE TABLE tag_migration_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'snapshot', contract_version TEXT NOT NULL DEFAULT 'v1', created_by TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, eligible_count INTEGER NOT NULL DEFAULT 0, protected_transfer_count INTEGER NOT NULL DEFAULT 0, protected_ignore_count INTEGER NOT NULL DEFAULT 0, snapshot_hash TEXT NOT NULL DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, applied_at DATETIME, rolled_back_at DATETIME);");
+$db->exec("CREATE TABLE tag_migration_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'snapshot', contract_version TEXT NOT NULL DEFAULT 'v1', created_by TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, eligible_count INTEGER NOT NULL DEFAULT 0, protected_transfer_count INTEGER NOT NULL DEFAULT 0, protected_ignore_count INTEGER NOT NULL DEFAULT 0, snapshot_hash TEXT NOT NULL DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, discovery_started_at DATETIME, ready_at DATETIME, applied_at DATETIME, rolled_back_at DATETIME);");
 $db->exec("CREATE TABLE transaction_classification_snapshots (run_id INTEGER NOT NULL, transaction_id INTEGER NOT NULL, tag_id INTEGER, category_id INTEGER, segment_id INTEGER, eligible INTEGER NOT NULL DEFAULT 1, protection_reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (run_id, transaction_id));");
+$db->exec("CREATE TABLE tag_taxonomy_proposals (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER NOT NULL, canonical_name TEXT NOT NULL, canonical_name_normalized TEXT NOT NULL, description TEXT, category_id INTEGER, confidence REAL, rationale TEXT, status TEXT NOT NULL DEFAULT 'pending', origin TEXT NOT NULL DEFAULT 'ai', pattern_count INTEGER NOT NULL DEFAULT 0, transaction_count INTEGER NOT NULL DEFAULT 0, absolute_amount REAL NOT NULL DEFAULT 0, reviewed_by TEXT, reviewed_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(run_id, canonical_name_normalized));");
+$db->exec("CREATE TABLE tag_taxonomy_patterns (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER NOT NULL, proposal_id INTEGER, signature TEXT NOT NULL, alias TEXT NOT NULL, alias_normalized TEXT NOT NULL, direction TEXT NOT NULL, sample_description TEXT, sample_memo TEXT, current_tags TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, absolute_amount REAL NOT NULL DEFAULT 0, first_seen TEXT, last_seen TEXT, confidence REAL, rationale TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(run_id, signature));");
+$db->exec("CREATE TABLE transaction_tag_proposals (run_id INTEGER NOT NULL, transaction_id INTEGER NOT NULL, pattern_id INTEGER NOT NULL, proposal_id INTEGER, current_tag_id INTEGER, confidence REAL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (run_id, transaction_id));");
 
 $results = [];
 
@@ -1058,6 +1064,67 @@ assertEqual(false, $migrationSafety->rollbackPreview((int)$migrationRun['id'])['
 $db->exec("UPDATE transaction_classification_snapshots SET eligible=$snapshotEligibleState WHERE run_id={$migrationRun['id']} AND transaction_id=$snapshotEligibleId");
 assertEqual(true, $migrationSafety->rollbackPreview((int)$migrationRun['id'])['hash_valid'], 'Restoring snapshot evidence returns its integrity check to valid');
 
+// Phase 2 must reduce changing bank wording to reusable patterns and stage AI
+// proposals without touching the active taxonomy or any live classification.
+$patternOne = TagTaxonomyPattern::fromTransaction('PHASE TWO SHOP 123456', null, -10);
+$patternTwo = TagTaxonomyPattern::fromTransaction('PHASE TWO SHOP 987654', null, -20);
+$incomingPattern = TagTaxonomyPattern::fromTransaction('PHASE TWO SHOP 123456', null, 10);
+assertEqual($patternOne['signature'], $patternTwo['signature'], 'Taxonomy discovery removes changing bank references from pattern identity');
+assertEqual(false, $patternOne['signature'] === $incomingPattern['signature'], 'Taxonomy discovery keeps income and outgoing patterns separate');
+$db->exec("INSERT INTO categories (name, description) VALUES ('Taxonomy Test Category', 'Used by Phase 2 tests')");
+$taxonomyCategoryId = (int)$db->lastInsertId();
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -14.00, 'PHASE TWO SHOP 123456', null, null, null, $mortgageTagId, null, null]);
+$taxonomyTransactionOne = (int)$db->lastInsertId();
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -16.00, 'PHASE TWO SHOP 987654', null, null, null, $mortgageTagId, null, null]);
+$taxonomyTransactionTwo = (int)$db->lastInsertId();
+$taxonomyRun = $migrationSafety->createSnapshot('Phase 2 discovery baseline', 'test-suite');
+$taxonomyService = new TagTaxonomyDiscoveryService($db);
+assertEqual(true, $taxonomyService->schemaReady(), 'Taxonomy discovery detects its complete staging schema');
+$liveClassificationsBeforeDiscovery = $db->query("SELECT id, tag_id, category_id, segment_id FROM transactions WHERE id IN ($taxonomyTransactionOne,$taxonomyTransactionTwo) ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+$liveTagCountBeforeDiscovery = (int)$db->query('SELECT COUNT(*) FROM tags')->fetchColumn();
+$liveAliasCountBeforeDiscovery = (int)$db->query('SELECT COUNT(*) FROM tag_aliases')->fetchColumn();
+$taxonomyPrepared = $taxonomyService->prepare((int)$taxonomyRun['id']);
+assertEqual('staging', $taxonomyPrepared['selected_run']['status'] ?? null, 'Preparing discovery opens a review-only staging run');
+assertEqual((int)$taxonomyRun['eligible_count'], (int)$db->query("SELECT COUNT(*) FROM transaction_tag_proposals WHERE run_id={$taxonomyRun['id']}")->fetchColumn(), 'Discovery stages every eligible snapshotted transaction');
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM transaction_tag_proposals WHERE run_id={$taxonomyRun['id']} AND transaction_id IN ($snapshotIgnoredId,$snapshotTransferId)")->fetchColumn(), 'Discovery excludes protected transfers and IGNORE transactions');
+$taxonomyPatternOne = (int)$db->query("SELECT pattern_id FROM transaction_tag_proposals WHERE run_id={$taxonomyRun['id']} AND transaction_id=$taxonomyTransactionOne")->fetchColumn();
+$taxonomyPatternTwo = (int)$db->query("SELECT pattern_id FROM transaction_tag_proposals WHERE run_id={$taxonomyRun['id']} AND transaction_id=$taxonomyTransactionTwo")->fetchColumn();
+assertEqual($taxonomyPatternOne, $taxonomyPatternTwo, 'Repeat bank references collapse into one reusable staged alias');
+$validatedTaxonomy = TagTaxonomyDiscoveryAi::validate([
+    'assignments' => [
+        ['pattern_id' => $taxonomyPatternOne, 'canonical_tag' => 'Retail essentials', 'description' => 'Everyday essential retail purchases', 'category_id' => $taxonomyCategoryId, 'confidence' => 0.94, 'reason' => 'Repeat outgoing retailer pattern'],
+        ['pattern_id' => 999999, 'canonical_tag' => 'Unknown', 'category_id' => $taxonomyCategoryId, 'confidence' => 0.99],
+        ['pattern_id' => $taxonomyPatternOne, 'canonical_tag' => 'IGNORE', 'category_id' => $taxonomyCategoryId, 'confidence' => 0.99],
+    ],
+], [$taxonomyPatternOne], [$taxonomyCategoryId]);
+assertEqual(1, count($validatedTaxonomy['accepted']), 'Taxonomy AI validation accepts one allowlisted reusable proposal');
+assertEqual(2, count($validatedTaxonomy['rejected']), 'Taxonomy AI validation rejects unknown and duplicate pattern suggestions');
+$protectedTaxonomyName = TagTaxonomyDiscoveryAi::validate(['assignments' => [
+    ['pattern_id' => $taxonomyPatternOne, 'canonical_tag' => 'IGNORE', 'category_id' => $taxonomyCategoryId, 'confidence' => 0.99],
+]], [$taxonomyPatternOne], [$taxonomyCategoryId]);
+assertEqual('protected_or_rejected_name', $protectedTaxonomyName['rejected'][0]['reason'] ?? null, 'Taxonomy AI validation rejects the protected IGNORE name');
+$taxonomyStaged = $taxonomyService->applyAiAssignments((int)$taxonomyRun['id'], $validatedTaxonomy['accepted']);
+$taxonomyProposalId = (int)$db->query("SELECT proposal_id FROM tag_taxonomy_patterns WHERE id=$taxonomyPatternOne")->fetchColumn();
+assertEqual(true, $taxonomyProposalId > 0, 'AI taxonomy output creates a staged canonical proposal');
+assertEqual(true, (float)$taxonomyStaged['metrics']['coverage_percent'] > 0, 'Taxonomy staging reports transaction coverage');
+$taxonomyReviewed = $taxonomyService->reviewProposal((int)$taxonomyRun['id'], $taxonomyProposalId, [
+    'canonical_name' => 'Retail essentials',
+    'description' => 'Reviewed durable definition',
+    'category_id' => $taxonomyCategoryId,
+    'status' => 'approved',
+], 'test-suite');
+assertEqual('approved', $db->query("SELECT status FROM tag_taxonomy_proposals WHERE id=$taxonomyProposalId")->fetchColumn(), 'A person can approve a staged canonical tag');
+assertEqual($liveClassificationsBeforeDiscovery, $db->query("SELECT id, tag_id, category_id, segment_id FROM transactions WHERE id IN ($taxonomyTransactionOne,$taxonomyTransactionTwo) ORDER BY id")->fetchAll(PDO::FETCH_ASSOC), 'Phase 2 leaves live transaction classifications unchanged');
+assertEqual($liveTagCountBeforeDiscovery, (int)$db->query('SELECT COUNT(*) FROM tags')->fetchColumn(), 'Phase 2 creates no live canonical tags');
+assertEqual($liveAliasCountBeforeDiscovery, (int)$db->query('SELECT COUNT(*) FROM tag_aliases')->fetchColumn(), 'Phase 2 creates no live aliases');
+try {
+    $taxonomyService->markReady((int)$taxonomyRun['id']);
+    $incompleteTaxonomyBlocked = false;
+} catch (RuntimeException $e) {
+    $incompleteTaxonomyBlocked = true;
+}
+assertEqual(true, $incompleteTaxonomyBlocked, 'An incomplete staged taxonomy cannot be marked ready');
+
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.
 $frontendCachePolicy = file_get_contents(__DIR__ . '/../frontend/.htaccess');
@@ -1098,11 +1165,14 @@ $backupJson = $backupSignature === false ? false : gzdecode(substr($backupArchiv
 $backupPayload = json_decode($backupJson, true);
 assertEqual(null, $backupPayload['error'] ?? null, 'Backup generation completes without a database error');
 assertEqual('newaccounts-backup', $backupPayload['_meta']['format'] ?? null, 'Backup includes a format manifest');
-assertEqual(3, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(4, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
 assertEqual(1, count($backupPayload['totp_secrets'] ?? []), 'Backup includes two-factor authentication state');
 assertEqual(true, count($backupPayload['saved_reports'] ?? []) >= 1, 'Backup includes saved reports');
 assertEqual(true, count($backupPayload['tag_migration_runs'] ?? []) >= 1, 'Backup includes tag rebuild safety runs');
 assertEqual(true, count($backupPayload['transaction_classification_snapshots'] ?? []) >= 1, 'Backup includes immutable classification snapshots');
+assertEqual(true, count($backupPayload['tag_taxonomy_proposals'] ?? []) >= 1, 'Backup includes reviewed taxonomy proposals');
+assertEqual(true, count($backupPayload['tag_taxonomy_patterns'] ?? []) >= 1, 'Backup includes staged transaction patterns');
+assertEqual(true, count($backupPayload['transaction_tag_proposals'] ?? []) >= 1, 'Backup includes staged transaction assignments');
 
 $db->exec('DELETE FROM totp_secrets');
 $db->exec('DELETE FROM saved_reports');
@@ -1117,6 +1187,8 @@ assertEqual('Restore complete.', $restoreMessage, 'A complete backup restores su
 assertEqual('TEST-TOTP-SECRET', $db->query("SELECT secret FROM totp_secrets WHERE username='alice'")->fetchColumn(), 'Restore preserves two-factor authentication state');
 assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Restore preserves saved reports');
 assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM tag_migration_runs')->fetchColumn() >= 1, 'Restore preserves tag rebuild safety history');
+assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM tag_taxonomy_proposals')->fetchColumn() >= 1, 'Restore preserves reviewed taxonomy proposals');
+assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM transaction_tag_proposals')->fetchColumn() >= 1, 'Restore preserves transaction-level staging coverage');
 
 $transactionCountBeforeFailure = (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn();
 $failedPayload = $backupPayload;

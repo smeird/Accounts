@@ -87,7 +87,7 @@ try {
     }
     if (isset($data['_meta'])) {
         if (($data['_meta']['format'] ?? '') !== 'newaccounts-backup'
-            || (int)($data['_meta']['version'] ?? 0) > 3) {
+            || (int)($data['_meta']['version'] ?? 0) > 4) {
             throw new InvalidArgumentException('Unsupported backup format or version.');
         }
         foreach (($data['_meta']['counts'] ?? []) as $section => $expected) {
@@ -105,6 +105,9 @@ try {
     }
     $db->beginTransaction();
     if ($driver === 'sqlite') $db->exec('PRAGMA defer_foreign_keys = ON');
+    if (isset($data['transaction_tag_proposals']) || isset($data['tag_migration_runs'])) $db->exec('DELETE FROM transaction_tag_proposals');
+    if (isset($data['tag_taxonomy_patterns']) || isset($data['tag_migration_runs'])) $db->exec('DELETE FROM tag_taxonomy_patterns');
+    if (isset($data['tag_taxonomy_proposals']) || isset($data['tag_migration_runs'])) $db->exec('DELETE FROM tag_taxonomy_proposals');
     if (isset($data['transaction_classification_snapshots'])) $db->exec('DELETE FROM transaction_classification_snapshots');
     if (isset($data['tag_migration_runs'])) $db->exec('DELETE FROM tag_migration_runs');
     if (isset($data['category_tags'])) $db->exec('DELETE FROM category_tags');
@@ -362,7 +365,7 @@ try {
     }
 
     if (isset($data['tag_migration_runs'])) {
-        $stmtMigrationRun = $db->prepare('INSERT INTO tag_migration_runs (id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, applied_at, rolled_back_at) VALUES (:id, :name, :status, :contract_version, :created_by, :transaction_count, :eligible_count, :protected_transfer_count, :protected_ignore_count, :snapshot_hash, :created_at, :applied_at, :rolled_back_at)');
+        $stmtMigrationRun = $db->prepare('INSERT INTO tag_migration_runs (id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, discovery_started_at, ready_at, applied_at, rolled_back_at) VALUES (:id, :name, :status, :contract_version, :created_by, :transaction_count, :eligible_count, :protected_transfer_count, :protected_ignore_count, :snapshot_hash, :created_at, :discovery_started_at, :ready_at, :applied_at, :rolled_back_at)');
         $validRunStatuses = ['snapshot', 'staging', 'ready', 'applied', 'rolled_back', 'cancelled'];
         foreach ($data['tag_migration_runs'] as $row) {
             $stmtMigrationRun->execute([
@@ -377,6 +380,8 @@ try {
                 'protected_ignore_count' => (int)($row['protected_ignore_count'] ?? 0),
                 'snapshot_hash' => $row['snapshot_hash'] ?? '',
                 'created_at' => $row['created_at'] ?? null,
+                'discovery_started_at' => $row['discovery_started_at'] ?? null,
+                'ready_at' => $row['ready_at'] ?? null,
                 'applied_at' => $row['applied_at'] ?? null,
                 'rolled_back_at' => $row['rolled_back_at'] ?? null,
             ]);
@@ -398,6 +403,72 @@ try {
             ]);
         }
     }
+    if (isset($data['tag_taxonomy_proposals'])) {
+        $stmtTaxonomyProposal = $db->prepare('INSERT INTO tag_taxonomy_proposals (id, run_id, canonical_name, canonical_name_normalized, description, category_id, confidence, rationale, status, origin, pattern_count, transaction_count, absolute_amount, reviewed_by, reviewed_at, created_at, updated_at) VALUES (:id, :run_id, :canonical_name, :canonical_name_normalized, :description, :category_id, :confidence, :rationale, :status, :origin, :pattern_count, :transaction_count, :absolute_amount, :reviewed_by, :reviewed_at, :created_at, :updated_at)');
+        foreach ($data['tag_taxonomy_proposals'] as $row) {
+            $status = $row['status'] ?? 'pending';
+            $stmtTaxonomyProposal->execute([
+                'id' => $row['id'],
+                'run_id' => $row['run_id'],
+                'canonical_name' => $row['canonical_name'],
+                'canonical_name_normalized' => $row['canonical_name_normalized'] ?? Tag::normalizeName((string)$row['canonical_name']),
+                'description' => $row['description'] ?? null,
+                'category_id' => $row['category_id'] ?? null,
+                'confidence' => $row['confidence'] ?? null,
+                'rationale' => $row['rationale'] ?? null,
+                'status' => in_array($status, ['pending', 'approved', 'rejected'], true) ? $status : 'pending',
+                'origin' => ($row['origin'] ?? 'ai') === 'manual' ? 'manual' : 'ai',
+                'pattern_count' => (int)($row['pattern_count'] ?? 0),
+                'transaction_count' => (int)($row['transaction_count'] ?? 0),
+                'absolute_amount' => $row['absolute_amount'] ?? 0,
+                'reviewed_by' => $row['reviewed_by'] ?? null,
+                'reviewed_at' => $row['reviewed_at'] ?? null,
+                'created_at' => $row['created_at'] ?? null,
+                'updated_at' => $row['updated_at'] ?? null,
+            ]);
+        }
+    }
+    if (isset($data['tag_taxonomy_patterns'])) {
+        $stmtTaxonomyPattern = $db->prepare('INSERT INTO tag_taxonomy_patterns (id, run_id, proposal_id, signature, alias, alias_normalized, direction, sample_description, sample_memo, current_tags, transaction_count, absolute_amount, first_seen, last_seen, confidence, rationale, status, created_at, updated_at) VALUES (:id, :run_id, :proposal_id, :signature, :alias, :alias_normalized, :direction, :sample_description, :sample_memo, :current_tags, :transaction_count, :absolute_amount, :first_seen, :last_seen, :confidence, :rationale, :status, :created_at, :updated_at)');
+        foreach ($data['tag_taxonomy_patterns'] as $row) {
+            $status = $row['status'] ?? 'pending';
+            $stmtTaxonomyPattern->execute([
+                'id' => $row['id'],
+                'run_id' => $row['run_id'],
+                'proposal_id' => $row['proposal_id'] ?? null,
+                'signature' => $row['signature'],
+                'alias' => $row['alias'],
+                'alias_normalized' => $row['alias_normalized'],
+                'direction' => ($row['direction'] ?? 'outgoing') === 'incoming' ? 'incoming' : 'outgoing',
+                'sample_description' => $row['sample_description'] ?? null,
+                'sample_memo' => $row['sample_memo'] ?? null,
+                'current_tags' => $row['current_tags'] ?? null,
+                'transaction_count' => (int)($row['transaction_count'] ?? 0),
+                'absolute_amount' => $row['absolute_amount'] ?? 0,
+                'first_seen' => $row['first_seen'] ?? null,
+                'last_seen' => $row['last_seen'] ?? null,
+                'confidence' => $row['confidence'] ?? null,
+                'rationale' => $row['rationale'] ?? null,
+                'status' => in_array($status, ['pending', 'proposed', 'excluded'], true) ? $status : 'pending',
+                'created_at' => $row['created_at'] ?? null,
+                'updated_at' => $row['updated_at'] ?? null,
+            ]);
+        }
+    }
+    if (isset($data['transaction_tag_proposals'])) {
+        $stmtTransactionTagProposal = $db->prepare('INSERT INTO transaction_tag_proposals (run_id, transaction_id, pattern_id, proposal_id, current_tag_id, confidence, created_at) VALUES (:run_id, :transaction_id, :pattern_id, :proposal_id, :current_tag_id, :confidence, :created_at)');
+        foreach ($data['transaction_tag_proposals'] as $row) {
+            $stmtTransactionTagProposal->execute([
+                'run_id' => $row['run_id'],
+                'transaction_id' => $row['transaction_id'],
+                'pattern_id' => $row['pattern_id'],
+                'proposal_id' => $row['proposal_id'] ?? null,
+                'current_tag_id' => $row['current_tag_id'] === null ? null : ($tagIdMap[(int)$row['current_tag_id']] ?? $row['current_tag_id']),
+                'confidence' => $row['confidence'] ?? null,
+                'created_at' => $row['created_at'] ?? null,
+            ]);
+        }
+    }
 
     $orphanChecks = [
         'transaction accounts' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN accounts a ON a.id=t.account_id WHERE a.id IS NULL',
@@ -405,6 +476,8 @@ try {
         'transaction tags' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN tags x ON x.id=t.tag_id WHERE t.tag_id IS NOT NULL AND x.id IS NULL',
         'transaction groups' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN transaction_groups g ON g.id=t.group_id WHERE t.group_id IS NOT NULL AND g.id IS NULL',
         'transaction segments' => 'SELECT COUNT(*) FROM transactions t LEFT JOIN segments s ON s.id=t.segment_id WHERE t.segment_id IS NOT NULL AND s.id IS NULL',
+        'taxonomy pattern runs' => 'SELECT COUNT(*) FROM tag_taxonomy_patterns p LEFT JOIN tag_migration_runs r ON r.id=p.run_id WHERE r.id IS NULL',
+        'taxonomy transaction patterns' => 'SELECT COUNT(*) FROM transaction_tag_proposals t LEFT JOIN tag_taxonomy_patterns p ON p.id=t.pattern_id WHERE p.id IS NULL',
     ];
     foreach ($orphanChecks as $label => $sql) {
         if ((int)$db->query($sql)->fetchColumn() > 0) {

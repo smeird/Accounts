@@ -34,12 +34,13 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Reusable tags and aliases so one learned merchant rule can classify similar future transactions without creating a tag per transaction.
 - One-screen category and segment assignment workspaces with search and immediate one-click updates.
 - AI-assisted mapping of unassigned tags to existing categories while preserving established mappings.
+- **Taxonomy Studio** groups changing bank references into stable transaction patterns and stages a compact AI-proposed canonical tag vocabulary for explicit human review. Discovery never writes to the live ledger.
 - **AI Data Fix** turns a plain-English tagging problem into a reviewable correction plan, updates only confirmed transaction tags, moves relevant alias rules and removes a source tag only when it is genuinely unused.
 
 ### Administration
 
 - Users, passwords and TOTP two-factor authentication.
-- Backup and restore for accounts, transactions, classifications, projects, budgets and settings.
+- Backup and restore for accounts, transactions, classifications, taxonomy staging, projects, budgets and settings.
 - Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
 - Tag Rebuild Safety creates immutable, hashed snapshots of tag/category/segment assignments before taxonomy work begins and provides a previewed classification-only restore.
 - Automation Centre, logs, duplicate checks and configurable branding/typography.
@@ -114,7 +115,7 @@ curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | ba
 
 After upgrades, open **System → Database Health**. It identifies missing tables, columns, indexes and relationships without modifying transaction records. See [Setup](wiki/Setup.md) for Apache and environment details.
 
-Before starting an AI-assisted taxonomy rebuild, apply the current Database Health repairs and open **System → Tag Rebuild Safety**. Create a baseline snapshot there before any staging or cutover work. Confirmed transfers and `IGNORE`-tagged transactions are recorded as protected, and restoring a snapshot never changes amounts, dates, descriptions, accounts or transactions imported after that snapshot. See [Tag Taxonomy Rebuild](wiki/TagTaxonomyRebuild.md).
+Before starting an AI-assisted taxonomy rebuild, apply the current Database Health repairs and open **System → Tag Rebuild Safety**. Create a baseline snapshot there before any staging or cutover work. Confirmed transfers and `IGNORE`-tagged transactions are recorded as protected, and restoring a snapshot never changes amounts, dates, descriptions, accounts or transactions imported after that snapshot. Then use **System → Taxonomy Studio** to extract stable patterns, run bounded AI discovery batches, and approve the staged vocabulary. Neither preparation, AI analysis nor review changes live tags or transactions. See [Tag Taxonomy Rebuild](wiki/TagTaxonomyRebuild.md).
 
 ## OFX/QFX import
 

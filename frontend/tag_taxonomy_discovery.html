@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Tag Taxonomy Studio</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="site_system.css">
+    <link rel="stylesheet" href="utility_refresh.css">
+    <link rel="stylesheet" href="tag_taxonomy_discovery.css?v=20260824-phase2">
+</head>
+<body class="ops-body utility-refresh-page taxonomy-studio-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+            <section id="taxonomy-status" class="taxonomy-hero" aria-live="polite" aria-busy="true">
+                <div class="taxonomy-hero__icon" aria-hidden="true"><i class="fas fa-wand-magic-sparkles"></i></div>
+                <div class="taxonomy-hero__copy">
+                    <span class="taxonomy-eyebrow">Phase 2 · Discovery and review</span>
+                    <h2 id="taxonomy-status-title">Preparing the taxonomy studio…</h2>
+                    <p id="taxonomy-status-copy">Patterns and proposals stay in staging until a later, separately confirmed cutover phase.</p>
+                </div>
+                <span class="taxonomy-live-lock"><i class="fas fa-lock" aria-hidden="true"></i> Live ledger locked</span>
+            </section>
+
+            <section class="taxonomy-control cards cards-solid" aria-label="Discovery controls">
+                <div class="taxonomy-control__baseline">
+                    <label for="taxonomy-run">Protected baseline</label>
+                    <select id="taxonomy-run" data-help="Choose the immutable Phase 1 snapshot that this staged taxonomy must cover"></select>
+                    <small id="taxonomy-run-detail">Choose a Phase 1 snapshot to begin.</small>
+                </div>
+                <div class="taxonomy-control__actions">
+                    <button id="taxonomy-prepare" type="button" class="taxonomy-button taxonomy-button--secondary" disabled>
+                        <i class="fas fa-layer-group" aria-hidden="true"></i><span>Prepare patterns</span>
+                    </button>
+                    <label class="taxonomy-batch-label" for="taxonomy-batch-size">AI batch</label>
+                    <select id="taxonomy-batch-size" aria-label="AI discovery batch size">
+                        <option value="15">15 patterns</option>
+                        <option value="30" selected>30 patterns</option>
+                        <option value="60">60 patterns</option>
+                    </select>
+                    <button id="taxonomy-analyse" type="button" class="taxonomy-button taxonomy-button--primary" disabled>
+                        <i class="fas fa-sparkles" aria-hidden="true"></i><span>Analyse next batch</span>
+                    </button>
+                </div>
+            </section>
+
+            <section class="taxonomy-metrics" aria-label="Discovery progress">
+                <article><span>Reusable patterns</span><strong id="taxonomy-patterns">—</strong><small>Stable bank wording groups</small></article>
+                <article><span>Awaiting AI</span><strong id="taxonomy-pending-patterns">—</strong><small>Processed in bounded batches</small></article>
+                <article><span>Canonical proposals</span><strong id="taxonomy-proposals-count">—</strong><small id="taxonomy-approved-copy">0 approved</small></article>
+                <article><span>Transaction coverage</span><strong id="taxonomy-coverage">—</strong><small id="taxonomy-coverage-copy">No live writes</small></article>
+            </section>
+
+            <section class="taxonomy-workflow" aria-label="Phase 2 workflow">
+                <div><span>1</span><strong>Extract</strong><small>Remove changing references</small></div>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <div><span>2</span><strong>Propose</strong><small>AI suggests a compact vocabulary</small></div>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <div><span>3</span><strong>Review</strong><small>Edit or reject every canonical tag</small></div>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <div><span>4</span><strong>Ready</strong><small>Freeze staging for the next phase</small></div>
+            </section>
+
+            <section class="cards taxonomy-review-card">
+                <div class="taxonomy-section-heading">
+                    <div>
+                        <span class="taxonomy-eyebrow">Canonical review</span>
+                        <h2>Approve the language, not individual transactions</h2>
+                        <p>Each card combines similar transaction patterns into one reusable tag. Aliases remain visible as evidence.</p>
+                    </div>
+                    <div class="taxonomy-review-actions">
+                        <button id="taxonomy-refresh" type="button" class="taxonomy-button taxonomy-button--secondary">
+                            <i class="fas fa-rotate" aria-hidden="true"></i><span>Refresh</span>
+                        </button>
+                        <button id="taxonomy-ready" type="button" class="taxonomy-button taxonomy-button--ready" disabled>
+                            <i class="fas fa-circle-check" aria-hidden="true"></i><span>Mark taxonomy ready</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="taxonomy-proposals" class="taxonomy-proposals" aria-live="polite">
+                    <div class="taxonomy-empty">Prepare a protected baseline to start discovery.</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Tag Taxonomy Studio',
+            breadcrumb: 'System / Tag Rebuild',
+            subtitle: 'Turn transaction wording into a compact, reviewable tag language without touching the live ledger.'
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="js/tag_taxonomy_discovery.js?v=20260824-phase2"></script>
+</body>
+</html>

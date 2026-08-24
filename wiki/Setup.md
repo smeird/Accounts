@@ -56,7 +56,7 @@ Open `http://localhost:8000/` and create/sign in with the initial user flow prov
 2. Update from `main` using a normal fast-forward pull.
 3. Run any release-specific migration documented in the README.
 4. Open **System → Database Health** and review the audit.
-5. Apply only the safe structural repairs you understand, including `tag_migration_runs`, `transaction_classification_snapshots`, and tag/alias provenance before using **System → Tag Rebuild Safety**.
+5. Apply only the safe structural repairs you understand, including the tag migration run, snapshot, taxonomy proposal, pattern and transaction-staging tables before using **System → Tag Rebuild Safety** or **System → Taxonomy Studio**.
 6. Reload Apache/PHP as required and verify the production site.
 
 Do not use `git pull --allow-unrelated-histories` to repair a deployment directory. If the directory is not descended from this repository, preserve its configuration and uploads, then deploy a clean clone.

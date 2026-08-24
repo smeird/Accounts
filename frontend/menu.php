@@ -73,6 +73,7 @@
       <li><a href="backup.html"><i class="fas fa-database"></i> Backup &amp; Restore</a></li>
       <li><a href="database_health.html"><i class="fas fa-heart-pulse"></i> Database Health</a></li>
       <li><a href="tag_migration.html"><i class="fas fa-shield-halved"></i> Tag Rebuild Safety</a></li>
+      <li><a href="tag_taxonomy_discovery.html"><i class="fas fa-wand-magic-sparkles"></i> Taxonomy Studio</a></li>
       <li><a href="logs.html"><i class="fas fa-scroll"></i> System Log</a></li>
       <li><a href="../settings.php"><i class="fas fa-sliders"></i> Settings</a></li>
       <li><a href="../users.php"><i class="fas fa-users"></i> Users</a></li>

@@ -21,6 +21,20 @@ Only the three classification fields are restored. Amounts, dates, descriptions,
 
 Full application backups include migration runs and classification snapshots. Keep the baseline snapshot and a downloaded full backup until the rebuilt taxonomy has completed its observation period.
 
+## Phase 2: discover and review the new taxonomy
+
+After Phase 2 is deployed, apply the new catalogue repairs in **System → Database Health**, then open **System → Taxonomy Studio** and select the protected Phase 1 baseline.
+
+Preparation reads only eligible snapshotted transactions. It removes changing numeric bank references, keeps incoming and outgoing patterns separate, and groups repeated wording into stable candidate aliases. Transfers and `IGNORE` transactions never enter the discovery queue.
+
+AI analysis runs in bounded batches and returns proposed canonical tags, definitions, optional existing category IDs, confidence and a short rationale. All pattern IDs and category IDs are server-allowlisted. `IGNORE`, unknown patterns, unknown categories, duplicates and previously rejected names are refused. The model can add records only to the staging tables.
+
+Every canonical proposal must be reviewed. A reviewer can edit the name, definition and existing category, approve it, or reject it. Rejecting a proposal returns its aliases to the pending AI queue and prevents that rejected name being suggested again. Adding a new alias to an already approved canonical tag returns that proposal to review.
+
+The taxonomy can be marked ready only when every eligible pattern resolves to an approved canonical proposal. Ready means the staging vocabulary is frozen for the later cutover phase; it still does not create live tags, aliases or transaction assignments.
+
+Full backups use format version 4 and preserve the baseline, candidate patterns, canonical proposals, reviews and transaction-level staging coverage.
+
 ## Acceptance thresholds
 
 - At least 98% of eligible transactions classified or explicitly reviewed.

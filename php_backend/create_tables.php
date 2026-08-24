@@ -11,6 +11,9 @@ $db = Database::getConnection();
 $db->exec("SET FOREIGN_KEY_CHECKS=0");
 $dropSql = <<<SQL
 DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS transaction_tag_proposals;
+DROP TABLE IF EXISTS tag_taxonomy_patterns;
+DROP TABLE IF EXISTS tag_taxonomy_proposals;
 DROP TABLE IF EXISTS transaction_classification_snapshots;
 DROP TABLE IF EXISTS tag_migration_runs;
 DROP TABLE IF EXISTS saved_reports;
