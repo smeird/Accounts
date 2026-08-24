@@ -41,9 +41,9 @@
       :root[data-heading-font] h5,
       :root[data-heading-font] h6 { font-family: var(--heading-font); }
       :root[data-table-font] table,
-      :root[data-table-font] table *,
-      :root[data-table-font] .tabulator,
-      :root[data-table-font] .tabulator * { font-family: var(--table-font); }
+      :root[data-table-font] .tabulator { font-family: var(--table-font); }
+      :root[data-table-font] table :is(button, input, select, textarea):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands),
+      :root[data-table-font] .tabulator :is(button, input, select, textarea):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands) { font-family: inherit; }
       :root[data-table-font] .accent { font-family: var(--accent-font); }
       :root[data-accent-font-weight] .accent,
       :root[data-accent-font-weight] .page-title,

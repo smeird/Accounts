@@ -44,6 +44,9 @@ assert.strictEqual(styleValues.get('--heading-font'), 'Caveat');
 assert.strictEqual(styleValues.get('--chart-font'), 'Pacifico');
 assert.match(elements.get('font-overrides').textContent, /:root\[data-body-font\] body/);
 assert.match(elements.get('font-overrides').textContent, /:root\[data-table-font\] \.tabulator/);
+assert.doesNotMatch(elements.get('font-overrides').textContent, /table \*/);
+assert.doesNotMatch(elements.get('font-overrides').textContent, /\.tabulator \*/);
+assert.match(elements.get('font-overrides').textContent, /:not\(\.fa-solid\)/);
 
 window.applyFonts({});
 
