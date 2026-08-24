@@ -106,6 +106,10 @@ Choose the table mechanism based on the task:
 - Prioritise identity and primary value columns. Hide secondary detail before compressing every column into unreadable text.
 - Use `.table-secondary-text` for new supporting lines inside table cells; existing statement and account metadata hooks inherit the same shared size, weight and colour.
 
+In Professional view, desktop tables use the compact density defined by `frontend/css/theme-professional.css`: reduced row, header and control height with tighter vertical padding. Do not apply that density below the mobile breakpoint, where card rows and touch targets retain their standard spacing.
+
+Professional view uses a plain-paper surface model. Most content cards and panels keep their white background but omit their outline and elevation; use spacing, typography and internal dividers to communicate structure. Inputs, buttons, warnings, deliberate hero treatments and the sidebar may retain boundaries where they support interaction or orientation.
+
 ## 8. Charts and metrics
 
 - Use the simplest chart that answers the question.
