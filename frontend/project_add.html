@@ -37,16 +37,14 @@
                 </section>
 
                 <section class="project-form-section" data-no-card="true">
-                    <div class="project-form-section__header"><span class="project-form-section__icon"><i class="fas fa-sparkles" aria-hidden="true"></i></span><div><h2>Value signals</h2><p>Score each outcome from 0–5, then weight how important it is to this decision.</p></div></div>
+                    <div class="project-form-section__header"><span class="project-form-section__icon"><i class="fas fa-ranking-star" aria-hidden="true"></i></span><div><h2>Priority signals</h2><p>Rate what happens if you wait. The same fixed weights are used for every project, so essential work cannot be overtaken by accumulated nice-to-have benefits.</p></div></div>
+                    <div class="project-priority-guide"><strong>Automatic priority rule</strong><span>A consequence of 5 combined with urgency of 4 or 5 is always marked Critical — act now.</span></div>
                     <div class="project-form-grid">
-                        <label class="project-field" for="benefit_financial">Financial benefit (0–5)<input type="number" min="0" max="5" id="benefit_financial" name="benefit_financial" value="0"></label>
-                        <label class="project-field" for="weight_financial">Financial importance (0–5)<input type="number" min="0" max="5" id="weight_financial" name="weight_financial" value="1"></label>
-                        <label class="project-field" for="benefit_quality">Quality of life (0–5)<input type="number" min="0" max="5" id="benefit_quality" name="benefit_quality" value="0"></label>
-                        <label class="project-field" for="weight_quality">Quality importance (0–5)<input type="number" min="0" max="5" id="weight_quality" name="weight_quality" value="1"></label>
-                        <label class="project-field" for="benefit_risk">Risk reduction (0–5)<input type="number" min="0" max="5" id="benefit_risk" name="benefit_risk" value="0"></label>
-                        <label class="project-field" for="weight_risk">Risk importance (0–5)<input type="number" min="0" max="5" id="weight_risk" name="weight_risk" value="1"></label>
-                        <label class="project-field" for="benefit_sustainability">Sustainability (0–5)<input type="number" min="0" max="5" id="benefit_sustainability" name="benefit_sustainability" value="0"></label>
-                        <label class="project-field" for="weight_sustainability">Sustainability importance (0–5)<input type="number" min="0" max="5" id="weight_sustainability" name="weight_sustainability" value="1"></label>
+                        <label class="project-field" for="benefit_risk">Consequence of delay <small>35% of score</small><select id="benefit_risk" name="benefit_risk"><option value="0">0 — Nothing meaningful happens</option><option value="1">1 — Minor inconvenience</option><option value="2">2 — Noticeable deterioration or disruption</option><option value="3">3 — Cost or disruption will grow</option><option value="4">4 — Major damage, loss or failure risk</option><option value="5">5 — Unsafe, unusable or serious loss</option></select></label>
+                        <label class="project-field" for="weight_risk">Urgency <small>25% of score</small><select id="weight_risk" name="weight_risk"><option value="0">0 — No timeframe</option><option value="1">1 — Can wait more than two years</option><option value="2">2 — Consider within 12–24 months</option><option value="3">3 — Should happen within a year</option><option value="4">4 — Needed within three months</option><option value="5">5 — Needed now or fixed deadline</option></select></label>
+                        <label class="project-field" for="benefit_sustainability">Asset preservation <small>20% of score</small><select id="benefit_sustainability" name="benefit_sustainability"><option value="0">0 — Cosmetic; preserves nothing</option><option value="1">1 — Small reduction in wear</option><option value="2">2 — Helps something last longer</option><option value="3">3 — Avoids a likely repair</option><option value="4">4 — Prevents early replacement</option><option value="5">5 — Prevents major failure or replacement</option></select></label>
+                        <label class="project-field" for="benefit_financial">Financial impact <small>10% of score</small><select id="benefit_financial" name="benefit_financial"><option value="0">0 — No saving or avoided cost</option><option value="1">1 — Small incidental benefit</option><option value="2">2 — Modest saving</option><option value="3">3 — Clear ongoing or avoided cost</option><option value="4">4 — Significant financial benefit</option><option value="5">5 — Avoids major cost or pays back strongly</option></select></label>
+                        <label class="project-field project-field--wide" for="benefit_quality">Daily-life impact <small>10% of score</small><select id="benefit_quality" name="benefit_quality"><option value="0">0 — Little noticeable difference</option><option value="1">1 — Occasional convenience</option><option value="2">2 — Useful improvement</option><option value="3">3 — Regular functional benefit</option><option value="4">4 — Major comfort or accessibility benefit</option><option value="5">5 — Essential function, health or accessibility</option></select></label>
                     </div>
                 </section>
 
@@ -70,12 +68,14 @@
                     <h2 id="preview-name">Untitled project</h2>
                     <p id="preview-description" class="project-preview__description">Describe the outcome to make the project easier to compare.</p>
                     <div class="project-preview__cost"><span>Likely cost</span><strong id="preview-cost">£0</strong><div class="project-preview__range"><span id="preview-low">Low £0</span><span id="preview-high">High £0</span></div></div>
-                    <div class="project-preview__score"><span>Weighted value score</span><strong id="preview-score">0</strong></div>
+                    <div id="preview-tier" class="project-priority-badge project-priority-badge--nice">Nice to have</div>
+                    <div class="project-preview__score"><span>Priority score</span><strong><span id="preview-score">0</span><small>/100</small></strong></div>
                     <div class="project-preview__benefits">
+                        <div class="project-preview__benefit"><span>Consequence</span><strong id="preview-consequence">0 / 5</strong></div>
+                        <div class="project-preview__benefit"><span>Urgency</span><strong id="preview-urgency">0 / 5</strong></div>
+                        <div class="project-preview__benefit"><span>Preservation</span><strong id="preview-preservation">0 / 5</strong></div>
                         <div class="project-preview__benefit"><span>Financial</span><strong id="preview-financial">0 / 5</strong></div>
-                        <div class="project-preview__benefit"><span>Quality</span><strong id="preview-quality">0 / 5</strong></div>
-                        <div class="project-preview__benefit"><span>Risk reduction</span><strong id="preview-risk">0 / 5</strong></div>
-                        <div class="project-preview__benefit"><span>Sustainability</span><strong id="preview-sustainability">0 / 5</strong></div>
+                        <div class="project-preview__benefit"><span>Daily life</span><strong id="preview-daily">0 / 5</strong></div>
                     </div>
                 </div>
             </aside>
@@ -84,7 +84,7 @@
 </div>
 <script src="js/page_header.js"></script>
 <script>
-    const formMain=document.querySelector('main.ops-main');const formActions=document.createElement('div');formActions.className='project-header-actions';const cancel=document.createElement('a');cancel.href='projects_board.html';cancel.className='project-header-link';cancel.innerHTML='<i class="fas fa-xmark" aria-hidden="true"></i><span>Cancel</span>';formActions.appendChild(cancel);window.renderPageHeader(formMain,{title:'New Project',breadcrumb:'Planning',subtitle:'Turn an idea into a clear, comparable plan with visible costs, benefits, and delivery assumptions.',actions:formActions});
+    const formMain=document.querySelector('main.ops-main');const formActions=document.createElement('div');formActions.className='project-header-actions';const cancel=document.createElement('a');cancel.href='projects_board.html';cancel.className='project-header-link';cancel.innerHTML='<i class="fas fa-xmark" aria-hidden="true"></i><span>Cancel</span>';formActions.appendChild(cancel);window.renderPageHeader(formMain,{title:'New Project',breadcrumb:'Planning',subtitle:'Turn an idea into a comparable plan by separating genuine priority from cost and delivery constraints.',actions:formActions});
 </script>
 <script src="js/menu.js"></script><script src="js/projects_common.js"></script><script src="js/project_form.js"></script><script src="js/overlay.js"></script>
 </body>

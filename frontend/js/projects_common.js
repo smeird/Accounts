@@ -14,14 +14,42 @@
         return planned > 0 ? spent / planned * 100 : spent > 0 ? 101 : 0;
     }
     function status(project) { const value = used(project); return value > 100 ? 'over' : value >= 75 ? 'watch' : 'safe'; }
+    function rating(value) { return Math.max(0, Math.min(5, Math.round(number(value)))); }
+    function prioritySignals(project) {
+        return {
+            consequence: rating(project.benefit_risk),
+            urgency: rating(project.weight_risk),
+            preservation: rating(project.benefit_sustainability),
+            financial: rating(project.benefit_financial),
+            daily: rating(project.benefit_quality)
+        };
+    }
+    function priorityScore(project) {
+        const signal = prioritySignals(project);
+        return Math.round((signal.consequence * 35 + signal.urgency * 25 + signal.preservation * 20 + signal.financial * 10 + signal.daily * 10) / 5);
+    }
+    function priorityTier(project) {
+        const signal = prioritySignals(project); const score = priorityScore(project);
+        if (signal.consequence >= 5 && signal.urgency >= 4) return {key:'critical',label:'Critical — act now',rank:1};
+        if (score >= 70 || (signal.consequence >= 4 && signal.urgency >= 4)) return {key:'important',label:'Important — plan next',rank:2};
+        if (score >= 50 || signal.consequence >= 4 || signal.preservation >= 4) return {key:'preventive',label:'Preventive — schedule soon',rank:3};
+        if (score >= 30) return {key:'improvement',label:'Improvement — worthwhile',rank:4};
+        return {key:'nice',label:'Nice to have',rank:5};
+    }
+    function comparePriority(a, b) {
+        const tier = priorityTier(a).rank - priorityTier(b).rank;
+        return tier || priorityScore(b) - priorityScore(a) || number(a.id) - number(b.id);
+    }
     function summary(projects) {
         return projects.reduce((result, project) => {
             result.planned += number(project.cost_medium);
             result.spent += number(project.spent);
             if (status(project) === 'over') result.over++;
-            if (number(project.benefit_risk) >= 4) result.riskBenefit++;
+            const tier = priorityTier(project);
+            if (tier.key === 'critical') result.critical++;
+            if (tier.key === 'critical' || tier.key === 'important') result.doNext++;
             return result;
-        }, { count: projects.length, planned: 0, spent: 0, over: 0, riskBenefit: 0 });
+        }, { count: projects.length, planned: 0, spent: 0, over: 0, critical: 0, doNext: 0 });
     }
     async function request(options, archived) {
         const suffix = archived ? '?archived=1' : '';
@@ -54,13 +82,15 @@
     function renderHero(projects, options) {
         const totals = summary(projects);
         const remaining = totals.planned - totals.spent;
+        const priorityOrder = [...projects].sort(comparePriority);
+        const top = priorityOrder[0];
         text(options.valueId, options.archived ? money(totals.planned) : money(remaining));
-        text(options.messageId, options.archived ? `${totals.count} archived project${totals.count === 1 ? '' : 's'} represent ${money(totals.planned)} in paused plans.` : totals.count === 0 ? 'Capture your first project to start building a prioritised pipeline.' : remaining >= 0 ? `${money(remaining)} remains between current spend and the combined mid-cost plans.` : `Current spend is ${money(Math.abs(remaining))} beyond the combined mid-cost plans.`);
-        text(options.signalId, options.archived ? String(totals.count) : String(totals.over));
-        text(options.signalLabelId, options.archived ? 'parked projects' : `over plan`);
-        text(options.countId, String(totals.count)); text(options.plannedId, money(totals.planned)); text(options.spentId, money(totals.spent)); text(options.riskId, String(options.archived ? totals.riskBenefit : totals.over + totals.riskBenefit));
+        text(options.messageId, options.archived ? `${totals.count} archived project${totals.count === 1 ? '' : 's'} represent ${money(totals.planned)} in paused plans.` : totals.count === 0 ? 'Capture your first project to start building a prioritised pipeline.' : `${remaining >= 0 ? `${money(remaining)} remains across the combined plans.` : `Spend is ${money(Math.abs(remaining))} beyond the combined plans.`} Highest priority: ${top.name || 'Untitled project'} — ${priorityTier(top).label}.`);
+        text(options.signalId, options.archived ? String(totals.count) : String(totals.critical));
+        text(options.signalLabelId, options.archived ? 'parked projects' : 'critical now');
+        text(options.countId, String(totals.count)); text(options.plannedId, money(totals.planned)); text(options.spentId, money(totals.spent)); text(options.priorityId, String(totals.doNext));
         return totals;
     }
 
-    window.ProjectUI = { number, money, preciseMoney, clear, text, announce, used, status, summary, request, actionButton, emptyState, headerActions, renderHero };
+    window.ProjectUI = { number, money, preciseMoney, clear, text, announce, used, status, rating, prioritySignals, priorityScore, priorityTier, comparePriority, summary, request, actionButton, emptyState, headerActions, renderHero };
 })();

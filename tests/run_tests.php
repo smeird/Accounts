@@ -541,6 +541,16 @@ $db->exec("INSERT INTO transactions (account_id, date, amount, description, grou
 $projectRows = Project::all(false);
 assertEqual(100.0, (float)($projectRows[0]['spent'] ?? 0), 'Project spending excludes internal account transfers');
 
+// Project priority must favour necessary work over accumulated nice-to-have benefits.
+$criticalProject = ['benefit_risk' => 5, 'weight_risk' => 5, 'benefit_sustainability' => 5, 'benefit_financial' => 2, 'benefit_quality' => 0];
+$cosmeticProject = ['benefit_risk' => 0, 'weight_risk' => 1, 'benefit_sustainability' => 0, 'benefit_financial' => 0, 'benefit_quality' => 5];
+$preservationProject = ['benefit_risk' => 1, 'weight_risk' => 1, 'benefit_sustainability' => 5, 'benefit_financial' => 0, 'benefit_quality' => 0];
+assertEqual(84, Project::calculatePriorityScore($criticalProject), 'Project priority applies the fixed 35/25/20/10/10 weights');
+assertEqual('critical', Project::priorityTier($criticalProject)['key'], 'Severe and urgent work receives the critical override');
+assertEqual('nice', Project::priorityTier($cosmeticProject)['key'], 'A strong cosmetic benefit alone remains nice to have');
+assertEqual('preventive', Project::priorityTier($preservationProject)['key'], 'Strong asset preservation is surfaced as preventive work');
+assertEqual(100, Project::calculatePriorityScore(['benefit_risk' => 99, 'weight_risk' => 99, 'benefit_sustainability' => 99, 'benefit_financial' => 99, 'benefit_quality' => 99]), 'Project priority clamps every rating to the 0-5 scale');
+
 // --- Link preview test ---
 $sample = 'file://' . realpath(__DIR__ . '/../sample_data/link_preview.html');
 $_GET['url'] = $sample;

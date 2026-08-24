@@ -29,7 +29,7 @@
                 <article><span class="project-summary-icon project-summary-icon--count"><i class="fas fa-layer-group" aria-hidden="true"></i></span><div><p>Active projects</p><strong id="project-active-count">—</strong></div></article>
                 <article><span class="project-summary-icon project-summary-icon--cost"><i class="fas fa-coins" aria-hidden="true"></i></span><div><p>Mid-cost plans</p><strong id="project-planned-total">£—</strong></div></article>
                 <article><span class="project-summary-icon project-summary-icon--spent"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><p>Spent to date</p><strong id="project-spent-total">£—</strong></div></article>
-                <article><span class="project-summary-icon project-summary-icon--risk"><i class="fas fa-gauge-high" aria-hidden="true"></i></span><div><p>Pressure signals</p><strong id="project-pressure-count">—</strong></div></article>
+                <article><span class="project-summary-icon project-summary-icon--risk"><i class="fas fa-ranking-star" aria-hidden="true"></i></span><div><p>Do next</p><strong id="project-priority-count">—</strong></div></article>
             </div>
         </section>
 
@@ -45,15 +45,15 @@
                     <div class="project-control-group">
                         <p class="project-section-label">Comparison axes</p>
                         <div class="project-field-grid">
-                            <label class="project-field" for="x-axis">Horizontal<select id="x-axis"><option value="cost_medium" selected>Mid cost</option><option value="cost_low">Low cost</option><option value="cost_high">High cost</option><option value="spent">Spent</option><option value="benefit_quality">Quality</option><option value="benefit_financial">Financial</option><option value="benefit_risk">Risk reduction</option><option value="benefit_sustainability">Sustainability</option></select></label>
-                            <label class="project-field" for="y-axis">Vertical<select id="y-axis"><option value="cost_medium">Mid cost</option><option value="cost_low">Low cost</option><option value="cost_high">High cost</option><option value="spent">Spent</option><option value="benefit_quality" selected>Quality</option><option value="benefit_financial">Financial</option><option value="benefit_risk">Risk reduction</option><option value="benefit_sustainability">Sustainability</option></select></label>
+                            <label class="project-field" for="x-axis">Horizontal<select id="x-axis"><option value="cost_medium" selected>Mid cost</option><option value="cost_low">Low cost</option><option value="cost_high">High cost</option><option value="spent">Spent</option><option value="benefit_risk">Consequence of delay</option><option value="weight_risk">Urgency</option><option value="benefit_sustainability">Asset preservation</option><option value="benefit_financial">Financial impact</option><option value="benefit_quality">Daily-life impact</option></select></label>
+                            <label class="project-field" for="y-axis">Vertical<select id="y-axis"><option value="cost_medium">Mid cost</option><option value="cost_low">Low cost</option><option value="cost_high">High cost</option><option value="spent">Spent</option><option value="benefit_risk" selected>Consequence of delay</option><option value="weight_risk">Urgency</option><option value="benefit_sustainability">Asset preservation</option><option value="benefit_financial">Financial impact</option><option value="benefit_quality">Daily-life impact</option></select></label>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section class="project-card" data-no-card="true">
-                <div class="project-card__header"><div><p class="project-section-label">Trade-off map</p><h2>Cost versus value</h2><p class="project-card__copy">Bubble size reflects weighted score; colour shows budget pressure.</p></div><span id="comparison-count" class="project-count">—</span></div>
+                <div class="project-card__header"><div><p class="project-section-label">Trade-off map</p><h2>Cost versus priority</h2><p class="project-card__copy">Bubble size reflects the fixed priority score; colour shows the action tier.</p></div><span id="comparison-count" class="project-count">—</span></div>
                 <div id="project-bubble-chart" class="project-chart" data-chart-desc="Bubble chart comparing selected project cost and benefit fields."></div>
             </section>
         </div>

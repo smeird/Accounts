@@ -30,7 +30,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 ### Planning and organisation
 
 - Monthly category budgets with visual runway/progress bars and optional AI suggestions.
-- Project portfolio, comparison board and archive, with project spending linked to transaction groups.
+- Project portfolio, comparison board and archive, with fixed-weight priority tiers based on consequence of delay, urgency, asset preservation, financial impact and daily-life impact. Project spending remains linked to transaction groups.
 - Reusable tags and aliases so one learned merchant rule can classify similar future transactions without creating a tag per transaction.
 - One-screen category and segment assignment workspaces with search and immediate one-click updates.
 - AI-assisted mapping of unassigned tags to existing categories while preserving established mappings.
