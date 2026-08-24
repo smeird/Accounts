@@ -54,14 +54,10 @@
   <div class="group">
     <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Organise</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
-      <li><a href="missing_tags.html"><span class="flex items-center gap-2"><i class="fas fa-circle-exclamation"></i> Needs Tagging</span><span id="missing-tags-count" class="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-2 hidden"></span></a></li>
-      <li><a href="tags.html"><i class="fas fa-tags"></i> Tags</a></li>
+      <li><a href="tagging.html"><span class="flex items-center gap-2"><i class="fas fa-tags"></i> Tagging</span><span id="missing-tags-count" class="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-2 hidden"></span></a></li>
       <li><a href="categories.html"><i class="fas fa-folder-open"></i> Categories</a></li>
       <li><a href="segments.html"><i class="fas fa-chart-pie"></i> Segments</a></li>
       <li><a href="groups.html"><i class="fas fa-layer-group"></i> Groups</a></li>
-      <li><a href="tag_aliases.html"><i class="fas fa-link"></i> Tag Rules</a></li>
-      <li><a href="ai_tags.html"><i class="fas fa-wand-magic-sparkles"></i> Smart Tagging</a></li>
-      <li><a href="ai_data_fix.html"><i class="fas fa-screwdriver-wrench"></i> AI Data Fix</a></li>
     </ul>
   </div>
   <div class="group">
@@ -72,9 +68,6 @@
       <li><a href="dedupe.html"><i class="fas fa-clone"></i> Duplicate Check</a></li>
       <li><a href="backup.html"><i class="fas fa-database"></i> Backup &amp; Restore</a></li>
       <li><a href="database_health.html"><i class="fas fa-heart-pulse"></i> Database Health</a></li>
-      <li><a href="tag_migration.html"><i class="fas fa-shield-halved"></i> Tag Rebuild Safety</a></li>
-      <li><a href="tag_taxonomy_discovery.html"><i class="fas fa-wand-magic-sparkles"></i> Taxonomy Studio</a></li>
-      <li><a href="tag_taxonomy_cutover.html"><i class="fas fa-shuffle"></i> Taxonomy Cutover</a></li>
       <li><a href="logs.html"><i class="fas fa-scroll"></i> System Log</a></li>
       <li><a href="../settings.php"><i class="fas fa-sliders"></i> Settings</a></li>
       <li><a href="../users.php"><i class="fas fa-users"></i> Users</a></li>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Tagging</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="site_system.css">
+    <link rel="stylesheet" href="utility_refresh.css">
+    <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
+    <link rel="stylesheet" href="tagging.css?v=20260824-unified">
+</head>
+<body class="ops-body tagging-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+        <section class="tagging-hero" aria-labelledby="tagging-hero-title" data-no-card="true">
+            <div>
+                <span class="tagging-eyebrow"><i class="fas fa-tags" aria-hidden="true"></i> One controlled vocabulary</span>
+                <h2 id="tagging-hero-title">Teach once. Reuse everywhere.</h2>
+                <p>Clear unmatched transactions, maintain a small canonical catalogue, and let saved rules handle the repetition.</p>
+            </div>
+            <div class="tagging-coverage" aria-label="Tagging coverage">
+                <strong id="tagging-coverage">—</strong>
+                <span>transaction coverage</span>
+                <div><i id="tagging-coverage-bar"></i></div>
+            </div>
+        </section>
+
+        <section class="tagging-metrics" aria-label="Tagging health" data-no-card="true">
+            <article><span>Needs attention</span><strong id="metric-untagged">—</strong><small>untagged transactions</small></article>
+            <article><span>Canonical catalogue</span><strong id="metric-tags">—</strong><small id="metric-tags-detail">active reusable tags</small></article>
+            <article><span>Saved rules</span><strong id="metric-rules">—</strong><small id="metric-rules-detail">deterministic matches</small></article>
+            <article><span>Category gaps</span><strong id="metric-gaps">—</strong><small>tags awaiting a reporting home</small></article>
+        </section>
+
+        <nav class="tagging-tabs" aria-label="Tagging workspace">
+            <button type="button" data-tagging-tab="inbox"><i class="fas fa-inbox" aria-hidden="true"></i><span>Inbox</span><b id="tab-inbox-count">0</b></button>
+            <button type="button" data-tagging-tab="catalogue"><i class="fas fa-tags" aria-hidden="true"></i><span>Canonical tags</span></button>
+            <button type="button" data-tagging-tab="rules"><i class="fas fa-code-branch" aria-hidden="true"></i><span>Rules</span></button>
+            <button type="button" data-tagging-tab="automation"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>AI &amp; automation</span></button>
+            <button type="button" data-tagging-tab="history"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i><span>Rebuild history</span></button>
+        </nav>
+
+        <section class="tagging-panel" data-tagging-panel="inbox" aria-labelledby="inbox-title" data-no-card="true">
+            <header class="tagging-section-heading">
+                <div><span class="tagging-eyebrow">Daily work</span><h2 id="inbox-title">Tagging inbox</h2><p>Resolve repeated wording to an existing canonical tag. Creating another tag is deliberately a separate decision.</p></div>
+                <label class="tagging-search"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Search tagging inbox</span><input id="inbox-search" type="search" placeholder="Search unmatched wording…"></label>
+            </header>
+            <div id="tagging-inbox" class="tagging-inbox" aria-live="polite"></div>
+        </section>
+
+        <section class="tagging-panel" data-tagging-panel="catalogue" aria-labelledby="catalogue-title" data-no-card="true" hidden>
+            <header class="tagging-section-heading">
+                <div><span class="tagging-eyebrow">Reusable language</span><h2 id="catalogue-title">Canonical tags</h2><p>Edit, merge or retire tags without losing historical classifications.</p></div>
+                <div class="tagging-heading-actions">
+                    <label class="tagging-search"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span class="sr-only">Search canonical tags</span><input id="catalogue-search" type="search" placeholder="Find a tag…"></label>
+                    <button id="new-tag" class="tagging-primary" type="button"><i class="fas fa-plus" aria-hidden="true"></i>New canonical tag</button>
+                </div>
+            </header>
+            <div class="tagging-table-wrap"><table class="tagging-table"><thead><tr><th>Canonical tag</th><th>Reporting home</th><th>Transactions</th><th>Rules</th><th>Actions</th></tr></thead><tbody id="catalogue-body"></tbody></table></div>
+        </section>
+
+        <section class="tagging-panel" data-tagging-panel="rules" aria-labelledby="rules-title" data-no-card="true" hidden>
+            <header class="tagging-section-heading">
+                <div><span class="tagging-eyebrow">Deterministic matching</span><h2 id="rules-title">Saved rules</h2><p>Rules run before AI. Usage evidence now identifies which mappings are genuinely doing work.</p></div>
+                <button id="new-rule" class="tagging-primary" type="button"><i class="fas fa-plus" aria-hidden="true"></i>New rule</button>
+            </header>
+            <div class="tagging-rule-health">
+                <span><strong id="rules-observed">—</strong> rules observed since tracking began</span>
+                <span><strong id="rules-broad">—</strong> very short rules needing care</span>
+                <span><i class="fas fa-circle-info" aria-hidden="true"></i>Overlapping wording is checked before save.</span>
+            </div>
+            <div id="rules-table"></div>
+        </section>
+
+        <section class="tagging-panel" data-tagging-panel="automation" aria-labelledby="automation-title" data-no-card="true" hidden>
+            <header class="tagging-section-heading">
+                <div><span class="tagging-eyebrow">Controlled assistance</span><h2 id="automation-title">AI &amp; automation</h2><p>AI may select existing canonical tags, but unfamiliar suggestions are held for your review instead of silently expanding the catalogue.</p></div>
+                <a class="tagging-secondary" href="../settings.php"><i class="fas fa-sliders" aria-hidden="true"></i>AI settings</a>
+            </header>
+            <div class="tagging-automation-grid">
+                <article><span class="tagging-automation-icon"><i class="fas fa-robot" aria-hidden="true"></i></span><h3>Tag unmatched transactions</h3><p>Apply saved rules first, then ask AI to choose only from your current canonical tags.</p><button id="run-ai-tagging" class="tagging-primary" type="button">Run smart tagging</button></article>
+                <article><span class="tagging-automation-icon"><i class="fas fa-folder-tree" aria-hidden="true"></i></span><h3>Connect tags to categories</h3><p>Assign only unmapped tags when AI is confident. Existing category links remain untouched.</p><button id="run-ai-categories" class="tagging-primary" type="button">Categorise unmapped tags</button></article>
+                <article><span class="tagging-automation-icon"><i class="fas fa-arrows-rotate" aria-hidden="true"></i></span><h3>Apply saved structure</h3><p>Imports already do this automatically. Use the maintenance centre only after changing many rules.</p><a class="tagging-secondary" href="processes.html">Open maintenance centre</a></article>
+            </div>
+            <div id="automation-result" class="tagging-result" aria-live="polite" hidden></div>
+        </section>
+
+        <section class="tagging-panel" data-tagging-panel="history" aria-labelledby="history-title" data-no-card="true" hidden>
+            <header class="tagging-section-heading"><div><span class="tagging-eyebrow">Audit record</span><h2 id="history-title">Completed taxonomy rebuild</h2><p>The one-off rebuild tools have been removed from everyday navigation. Their immutable evidence remains available here and in backups.</p></div></header>
+            <div id="rebuild-history" class="tagging-history" aria-live="polite"></div>
+        </section>
+    </main>
+</div>
+
+<dialog id="inbox-dialog" class="tagging-dialog">
+    <form method="dialog" id="inbox-form">
+        <span class="tagging-eyebrow">Resolve pattern</span><h2>Choose the reusable tag</h2><p id="inbox-dialog-copy"></p>
+        <div id="inbox-tag-picker" class="tagging-picker"><label for="inbox-tag-search">Canonical tag</label><input id="inbox-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="inbox-tag-results"><input id="inbox-tag-id" type="hidden"><div id="inbox-tag-status" class="tagging-picker-status" role="status"></div><div id="inbox-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="inbox-submit" value="default" class="tagging-primary">Save rule &amp; apply</button></div>
+    </form>
+</dialog>
+
+<dialog id="tag-dialog" class="tagging-dialog">
+    <form method="dialog" id="tag-form">
+        <span class="tagging-eyebrow">Canonical catalogue</span><h2 id="tag-dialog-title">New canonical tag</h2>
+        <input id="tag-edit-id" type="hidden"><label for="tag-edit-name">Name</label><input id="tag-edit-name" maxlength="100" required>
+        <label for="tag-edit-description">Description</label><textarea id="tag-edit-description" rows="3" maxlength="500"></textarea>
+        <label for="tag-edit-category">Category</label><select id="tag-edit-category"><option value="">Unassigned</option></select>
+        <p class="tagging-dialog-note">Keep names broad and reusable, such as Groceries or Mortgage—not a merchant or individual transaction.</p>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="tag-submit" value="default" class="tagging-primary">Save tag</button></div>
+    </form>
+</dialog>
+
+<dialog id="merge-dialog" class="tagging-dialog">
+    <form method="dialog" id="merge-form">
+        <span class="tagging-eyebrow">Safe consolidation</span><h2>Merge <span id="merge-source-name"></span></h2><p>Transactions and rules move to the destination tag. The source remains in history as merged.</p>
+        <input id="merge-source-id" type="hidden">
+        <div id="merge-tag-picker" class="tagging-picker"><label for="merge-tag-search">Destination canonical tag</label><input id="merge-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="merge-tag-results"><input id="merge-tag-id" type="hidden"><div id="merge-tag-status" class="tagging-picker-status" role="status"></div><div id="merge-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="merge-submit" value="default" class="tagging-primary is-warning">Merge tags</button></div>
+    </form>
+</dialog>
+
+<dialog id="rule-dialog" class="tagging-dialog">
+    <form method="dialog" id="rule-form">
+        <span class="tagging-eyebrow">Saved matching rule</span><h2 id="rule-dialog-title">New rule</h2><input id="rule-edit-id" type="hidden">
+        <label for="rule-alias">Transaction wording</label><input id="rule-alias" maxlength="150" required>
+        <div id="rule-tag-picker" class="tagging-picker"><label for="rule-tag-search">Canonical tag</label><input id="rule-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="rule-tag-results"><input id="rule-tag-id" type="hidden"><div id="rule-tag-status" class="tagging-picker-status" role="status"></div><div id="rule-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
+        <div class="tagging-form-grid"><label for="rule-match-type">Match type<select id="rule-match-type"><option value="contains">Contains whole wording</option><option value="exact">Exact transaction text</option></select></label><label for="rule-direction">Direction<select id="rule-direction"><option value="any">Either direction</option><option value="outgoing">Money leaving</option><option value="incoming">Money arriving</option></select></label></div>
+        <label class="tagging-check"><input id="rule-active" type="checkbox" checked>Active</label>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="rule-submit" value="default" class="tagging-primary">Save rule</button></div>
+    </form>
+</dialog>
+
+<script src="js/page_header.js"></script>
+<script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Tagging', breadcrumb: 'Organise', subtitle: 'One place to maintain transaction language, rules and automation.' });</script>
+<script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
+<script src="vendor/tabulator/6.5.0/tabulator.min.js"></script><script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
+<script src="js/tagging.js?v=20260824-unified"></script>
+</body>
+</html>

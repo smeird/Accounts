@@ -29,6 +29,7 @@ require_once __DIR__ . '/../php_backend/TagTaxonomyPattern.php';
 require_once __DIR__ . '/../php_backend/TagTaxonomyDiscoveryAi.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyDiscoveryService.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyCutoverService.php';
+require_once __DIR__ . '/../php_backend/services/TaggingWorkspaceService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -185,6 +186,16 @@ $contextWithAliaslessTag = AiTaggingPipeline::buildAliasAwareTagContext([
     ['tag_id' => 99, 'tag_name' => 'Household Bills', 'alias' => null],
 ]);
 assertEqual(true, strpos($contextWithAliaslessTag['text'], 'Household Bills') !== false, 'AI context includes canonical tags that do not have aliases yet');
+$largeContextRows = [];
+for ($contextTag = 1; $contextTag <= 25; $contextTag++) {
+    $largeContextRows[] = ['tag_id' => 1000 + $contextTag, 'tag_name' => sprintf('Canonical %02d', $contextTag), 'alias' => str_repeat('merchant ', 8) . $contextTag];
+}
+$boundedContext = AiTaggingPipeline::buildAliasAwareTagContext($largeContextRows, 5, 180);
+assertEqual(true, strpos($boundedContext['text'], 'Canonical 25') !== false, 'AI context retains the complete canonical allowlist when alias examples are truncated');
+assertEqual(true, $boundedContext['truncated'], 'AI context reports truncated alias examples without truncating canonical names');
+$workspaceSnapshot = (new TaggingWorkspaceService($db))->snapshot(10);
+assertEqual(true, isset($workspaceSnapshot['metrics']['active_tags'], $workspaceSnapshot['tags'], $workspaceSnapshot['inbox']), 'Unified tagging workspace returns its health, catalogue and inbox contract');
+assertEqual($tagId, (int)($workspaceSnapshot['tags'][0]['id'] ?? 0), 'Unified tagging workspace exposes the active canonical catalogue');
 
 $categoryPrompt = AiCategoryTagger::buildPrompt([
     ['id' => 11, 'name' => 'Transport', 'description' => 'Travel and vehicle costs', 'assigned_tags' => ['Rail']],
@@ -216,6 +227,53 @@ $limitedTagOptions = Tag::searchOptions('', 2);
 assertEqual(2, count($limitedTagOptions), 'Compact tag search respects its result limit');
 $literalWildcardOptions = Tag::searchOptions('%', 10);
 assertEqual(0, count($literalWildcardOptions), 'Compact tag search treats wildcard characters literally');
+
+// Safe permanent catalogue lifecycle: merge classifications, retire future use.
+$db->exec("INSERT INTO segments (name) VALUES ('Tag lifecycle segment')");
+$tagLifecycleSegment = (int)$db->lastInsertId();
+$db->exec("INSERT INTO categories (name, segment_id) VALUES ('Tag lifecycle category', $tagLifecycleSegment)");
+$tagLifecycleCategory = (int)$db->lastInsertId();
+$tagMergeSource = Tag::create('Merge source');
+$tagMergeTarget = Tag::create('Merge target');
+$db->exec("INSERT INTO category_tags (category_id, tag_id) VALUES ($tagLifecycleCategory, $tagMergeSource)");
+TagAlias::create($tagMergeSource, 'merge merchant', 'contains', true, 'manual', null, 1, 'outgoing');
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, segment_id, tag_id) VALUES (1, '2026-08-20', -10, 'Merge merchant', $tagLifecycleCategory, $tagLifecycleSegment, $tagMergeSource)");
+$tagMergeTransaction = (int)$db->lastInsertId();
+$mergeResult = Tag::merge($tagMergeSource, $tagMergeTarget);
+assertEqual($tagMergeTarget, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$tagMergeTransaction")->fetchColumn(), 'Canonical merge moves historical transaction assignments to the destination');
+assertEqual($tagMergeTarget, (int)$db->query("SELECT tag_id FROM tag_aliases WHERE alias_normalized='merge merchant'")->fetchColumn(), 'Canonical merge moves deterministic rules to the destination');
+assertEqual(['merged', $tagMergeTarget], $db->query("SELECT status, merged_into_tag_id FROM tags WHERE id=$tagMergeSource")->fetch(PDO::FETCH_NUM), 'Canonical merge retains the source as merged audit history');
+assertEqual($tagLifecycleCategory, (int)$db->query("SELECT category_id FROM category_tags WHERE tag_id=$tagMergeTarget")->fetchColumn(), 'Canonical merge inherits the source reporting category when the target has none');
+assertEqual(1, (int)$mergeResult['transactions_moved'], 'Canonical merge reports the moved transaction count');
+$retireResult = Tag::retire($tagMergeTarget);
+assertEqual('deprecated', $db->query("SELECT status FROM tags WHERE id=$tagMergeTarget")->fetchColumn(), 'Retiring a canonical tag removes it from future selection');
+assertEqual($tagMergeTarget, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$tagMergeTransaction")->fetchColumn(), 'Retiring a canonical tag retains historical transaction assignments');
+assertEqual(0, (int)$db->query("SELECT active FROM tag_aliases WHERE alias_normalized='merge merchant'")->fetchColumn(), 'Retiring a canonical tag disables its matching rules');
+assertEqual(1, (int)$retireResult['transactions_retained'], 'Tag retirement reports retained historical assignments');
+$db->exec("DELETE FROM transactions WHERE id=$tagMergeTransaction");
+$db->exec("DELETE FROM tag_aliases WHERE tag_id=$tagMergeTarget");
+$db->exec("DELETE FROM category_tags WHERE tag_id IN ($tagMergeSource,$tagMergeTarget)");
+$db->exec("DELETE FROM tags WHERE id IN ($tagMergeSource,$tagMergeTarget)");
+$db->exec("DELETE FROM categories WHERE id=$tagLifecycleCategory");
+$db->exec("DELETE FROM segments WHERE id=$tagLifecycleSegment");
+
+$evidenceTag = Tag::create('Evidence tag');
+$evidenceAlias = TagAlias::create($evidenceTag, 'evidence merchant', 'contains', true, 'manual', null, 0, 'outgoing');
+$db->exec("INSERT INTO transactions (account_id, date, amount, description) VALUES (1, '2026-08-21', -5, 'Evidence merchant purchase')");
+$evidenceTransaction = (int)$db->lastInsertId();
+Tag::clearMatchCaches();
+Tag::applyToAllTransactions();
+$evidence = $db->query("SELECT support_count, last_matched_at FROM tag_aliases WHERE id=$evidenceAlias")->fetch(PDO::FETCH_ASSOC);
+assertEqual(1, (int)$evidence['support_count'], 'Rule evidence records the number of deterministic matches');
+assertEqual(true, !empty($evidence['last_matched_at']), 'Rule evidence records when the rule last matched');
+$overlapTag = Tag::create('Overlap tag');
+TagAlias::create($overlapTag, 'evidence merchant purchase', 'contains', true, 'manual', null, 0, 'outgoing');
+$overlapWarnings = TagAlias::overlapWarnings('evidence merchant', $evidenceTag, 'outgoing');
+assertEqual($overlapTag, (int)($overlapWarnings[0]['tag_id'] ?? 0), 'Rule validation detects cross-tag whole-word containment overlap');
+$db->exec("DELETE FROM transactions WHERE id=$evidenceTransaction");
+$db->exec("DELETE FROM tag_aliases WHERE tag_id IN ($evidenceTag,$overlapTag)");
+$db->exec("DELETE FROM tags WHERE id IN ($evidenceTag,$overlapTag)");
+$db->exec("DELETE FROM sqlite_sequence WHERE name='transactions'");
 $retiredReuseTag = Tag::create('Retired reuse test', null, null, 'legacy');
 $db->exec("UPDATE tags SET status='deprecated' WHERE id=$retiredReuseTag");
 $reactivatedReuseTag = Tag::create('Retired reuse test', null, 'Promoted canonical tag', 'ai');
@@ -1020,7 +1078,7 @@ $cleanupPlan = $correctionService->createPlan(
     $cleanupTags
 );
 $correctionService->applyPlan($cleanupPlan, true);
-assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tags WHERE id=$obsoleteTagId")->fetchColumn(), 'AI tag correction removes an emptied source tag when confirmed');
+assertEqual(['merged', $mortgageTagId], $db->query("SELECT status, merged_into_tag_id FROM tags WHERE id=$obsoleteTagId")->fetch(PDO::FETCH_NUM), 'AI tag correction retains an emptied source tag as merged audit history');
 try {
     $correctionService->createPlan(
         'Fix Bank of Ireland',

@@ -80,8 +80,8 @@
         try {
             const data = await request({action:'apply', plan_id:planId, remove_unused_sources:byId('remove-sources').checked});
             planId = null; preview.hidden = true;
-            const removed = (data.removed_source_tag_ids || []).length;
-            status('success', 'Tag correction complete', `${Number(data.updated).toLocaleString('en-GB')} transactions now use ${data.target_tag_name}.${data.skipped ? ` ${data.skipped} changed records were safely skipped.` : ''}${removed ? ` ${removed} unused source tag${removed === 1 ? ' was' : 's were'} removed.` : ''}`);
+            const merged = (data.merged_source_tag_ids || []).length;
+            status('success', 'Tag correction complete', `${Number(data.updated).toLocaleString('en-GB')} transactions now use ${data.target_tag_name}.${data.skipped ? ` ${data.skipped} changed records were safely skipped.` : ''}${merged ? ` ${merged} unused source tag${merged === 1 ? ' was' : 's were'} retained as merged history.` : ''}`);
             if (window.showMessage) window.showMessage('Tag correction applied');
         } catch (error) { status('error', 'The correction was not applied', error.message); if (window.showMessage) window.showMessage(error.message, 'error'); }
         finally { apply.disabled = false; }

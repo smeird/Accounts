@@ -27,11 +27,11 @@ try {
         unset($_SESSION['ai_tag_correction_plans'][$planId]);
         $result = $service->applyPlan($plan, !isset($input['remove_unused_sources']) || (bool)$input['remove_unused_sources']);
         Log::write(sprintf(
-            'AI tag correction applied by user %s: %d transactions updated to tag %d; %d unused source tags removed',
+            'AI tag correction applied by user %s: %d transactions updated to tag %d; %d unused source tags retained as merged history',
             (string)($_SESSION['user_id'] ?? 'unknown'),
             $result['updated'],
             $result['target_tag_id'],
-            count($result['removed_source_tag_ids'])
+            count($result['merged_source_tag_ids'])
         ));
         echo json_encode($result);
         exit;

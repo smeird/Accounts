@@ -146,6 +146,14 @@
 .process-tool-card small { margin-top: .18rem; color: var(--process-muted); font-size: .59rem; line-height: 1.4; }
 
 .process-reset { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: 1rem 1.15rem; border-color: rgba(244, 63, 94, .16); background: linear-gradient(115deg, rgba(255, 255, 255, .82), rgba(255, 241, 242, .72)); }
+.process-reset[open] { display: grid; }
+.process-reset:not([open]) { display: block; }
+.process-reset summary { display: grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:.8rem; cursor:pointer; list-style:none; }
+.process-reset summary::-webkit-details-marker { display:none; }
+.process-reset summary strong,.process-reset summary small { display:block; }
+.process-reset summary strong { margin:.12rem 0; color:var(--process-ink); font-size:.82rem; }
+.process-reset summary small { color:var(--process-muted); font-size:.66rem; font-weight:500; }
+.process-reset[open] summary { grid-column:1 / -1; padding-bottom:.8rem; border-bottom:1px solid rgba(244,63,94,.12); }
 .process-reset__icon { display: grid; width: 2.55rem; height: 2.55rem; place-items: center; border-radius: .78rem; color: #be123c; background: #ffe4e6; }
 .process-reset__action { display: inline-flex; min-height: 2.45rem; align-items: center; justify-content: center; gap: .45rem; padding: .58rem .75rem; border: 1px solid rgba(244, 63, 94, .2); border-radius: .72rem; color: #be123c; background: rgba(255, 255, 255, .8); font-size: .65rem; font-weight: 820; }
 .process-reset__action:hover:not(:disabled) { background: #fff; border-color: rgba(225, 29, 72, .38); }

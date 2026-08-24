@@ -1,5 +1,5 @@
 <?php
-// API endpoint for creating, listing, updating, and deleting tags.
+// API endpoint for creating, listing, updating, and safely retiring tags.
 require_once __DIR__ . '/../auth.php';
 require_api_auth();
 require_once __DIR__ . '/../models/Tag.php';
@@ -128,9 +128,9 @@ if ($method === 'POST') {
         exit;
     }
     try {
-        Tag::delete((int)$id);
-        Log::write("Deleted tag $id");
-        echo json_encode(['status' => 'ok']);
+        $result = Tag::retire((int)$id);
+        Log::write("Retired tag $id without changing historical assignments");
+        echo json_encode(['status' => 'ok', 'result' => $result]);
     } catch (Exception $e) {
         http_response_code(500);
         Log::write('Tag error: ' . $e->getMessage(), 'ERROR');

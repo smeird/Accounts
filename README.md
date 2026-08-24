@@ -34,8 +34,9 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Reusable tags and aliases so one learned merchant rule can classify similar future transactions without creating a tag per transaction.
 - One-screen category and segment assignment workspaces with search and immediate one-click updates.
 - AI-assisted mapping of unassigned tags to existing categories while preserving established mappings.
-- **Taxonomy Studio** groups changing bank references into stable transaction patterns and stages a compact AI-proposed canonical tag vocabulary for explicit human review. Discovery never writes to the live ledger.
-- **AI Data Fix** turns a plain-English tagging problem into a reviewable correction plan, updates only confirmed transaction tags, moves relevant alias rules and removes a source tag only when it is genuinely unused.
+- **Tagging workspace** combines the unmatched-transaction inbox, canonical catalogue, deterministic rules, constrained AI assistance and completed rebuild history. Canonical tags can be merged or retired without silently clearing historical classifications, rule usage is measured, and overlapping rule wording requires explicit confirmation.
+- **Taxonomy rebuild history** preserves the immutable snapshot, reviewed pattern and cutover audit from the completed catalogue rebuild. The one-off phase tools remain available by direct administrative URL for recovery but are intentionally absent from everyday navigation.
+- **AI Data Fix** turns a plain-English tagging problem into a reviewable correction plan, updates only confirmed transaction tags, moves relevant alias rules and retains an emptied source tag as merged audit history.
 
 ### Administration
 
@@ -115,7 +116,7 @@ curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | ba
 
 After upgrades, open **System → Database Health**. It identifies missing tables, columns, indexes and relationships without modifying transaction records. See [Setup](wiki/Setup.md) for Apache and environment details.
 
-Before starting an AI-assisted taxonomy rebuild, apply the current Database Health repairs and open **System → Tag Rebuild Safety**. Create a baseline snapshot there before any staging or cutover work. Confirmed transfers and `IGNORE`-tagged transactions are recorded as protected, and restoring a snapshot never changes amounts, dates, descriptions, accounts or transactions imported after that snapshot. Then use **System → Taxonomy Studio** to extract stable patterns, run bounded AI discovery batches, and approve the staged vocabulary. Neither preparation, AI analysis nor review changes live tags or transactions. Finally, **System → Taxonomy Cutover** previews the exact live plan, distinguishes incoming from outgoing aliases, verifies the snapshot and 95% coverage threshold, and applies all classification changes atomically. After a successful cutover, its separate **Clean legacy catalogue** action deprecates every noncanonical legacy tag and disables its rules, including tags retained on deferred historical transactions. It never retags or deletes those transactions, and later classification work does not block this independent catalogue cleanup. Financial and classification fingerprints are reconciled. The stored audit supports the guarded full rollback while the original cutover state still matches. See [Tag Taxonomy Rebuild](wiki/TagTaxonomyRebuild.md).
+The original AI-assisted taxonomy rebuild used **Tag Rebuild Safety**, **Taxonomy Studio** and **Taxonomy Cutover** to create an immutable baseline, stage and review a compact vocabulary, apply classifications atomically, and retire the legacy catalogue without changing financial data. That rebuild is now complete. Its pages and stored evidence remain available for recovery and audit, while normal work happens in **Organise → Tagging → Rebuild history**. See [Tag Taxonomy Rebuild](wiki/TagTaxonomyRebuild.md).
 
 ## OFX/QFX import
 

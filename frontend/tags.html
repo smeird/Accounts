@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Tags</title>
+    <script>window.location.replace('tagging.html#catalogue');</script>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
@@ -91,10 +92,10 @@ async function loadTags(){
                 });
                 const del = document.createElement('button');
                 del.innerHTML = '<i class="fas fa-trash w-4 h-4"></i>';
-                del.setAttribute('aria-label','Delete');
+                del.setAttribute('aria-label','Retire tag');
                 del.className = 'bg-red-600 text-white px-2 py-1 rounded';
                 del.addEventListener('click', async () => {
-                    if (!confirm('Delete this tag?')) return;
+                    if (!confirm('Retire this tag? Historical transaction assignments will be retained and its matching rules disabled.')) return;
                     const t = cell.getRow().getData();
                     await fetch('../php_backend/public/tags.php', {
                         method: 'DELETE',
@@ -102,7 +103,7 @@ async function loadTags(){
                         body: JSON.stringify({id: t.id})
                     });
                     loadTags();
-                    showMessage('Tag deleted');
+                    showMessage('Tag retired');
                 });
                 container.appendChild(edit);
                 container.appendChild(del);

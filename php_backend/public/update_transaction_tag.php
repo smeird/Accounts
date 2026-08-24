@@ -49,7 +49,7 @@ try {
     Transaction::setTag((int)$transactionId, (int)$tagId);
     if ($sourceTransaction['transfer_id'] === null) {
         $learnedAlias = Tag::learnTransactionAlias((int)$tagId, (string)$sourceTransaction['description'], $sourceTransaction['memo'], 'manual', (float)$sourceTransaction['amount']);
-        if ($learnedAlias['status'] === 'conflict') {
+        if (in_array($learnedAlias['status'], ['conflict', 'overlap'], true)) {
             Log::write('Tag alias conflict while updating transaction ' . $transactionId . ': ' . json_encode($learnedAlias), 'WARNING');
         }
     }
