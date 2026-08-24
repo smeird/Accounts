@@ -216,6 +216,16 @@ $limitedTagOptions = Tag::searchOptions('', 2);
 assertEqual(2, count($limitedTagOptions), 'Compact tag search respects its result limit');
 $literalWildcardOptions = Tag::searchOptions('%', 10);
 assertEqual(0, count($literalWildcardOptions), 'Compact tag search treats wildcard characters literally');
+$retiredReuseTag = Tag::create('Retired reuse test', null, null, 'legacy');
+$db->exec("UPDATE tags SET status='deprecated' WHERE id=$retiredReuseTag");
+$reactivatedReuseTag = Tag::create('Retired reuse test', null, 'Promoted canonical tag', 'ai');
+assertEqual($retiredReuseTag, $reactivatedReuseTag, 'Explicit canonical creation reuses a matching retired record without duplicating it');
+assertEqual(['active', 'ai'], $db->query("SELECT status, origin FROM tags WHERE id=$retiredReuseTag")->fetch(PDO::FETCH_NUM), 'A deliberately reused retired tag is promoted back into the active catalogue');
+$db->exec("DELETE FROM tags WHERE id=$retiredReuseTag");
+$singularInterestTag = Tag::create('interest charge');
+$pluralInterestTag = Tag::create('Interest Charges');
+assertEqual($pluralInterestTag, Tag::getInterestChargeId(), 'Automatic interest tagging prefers the reviewed plural canonical tag');
+$db->exec("DELETE FROM tags WHERE id IN ($singularInterestTag,$pluralInterestTag)");
 Tag::setKeywordIfMissing($tag2, 'petrol');
 $kw = $db->query('SELECT keyword FROM tags WHERE id = '.$tag2)->fetchColumn();
 assertEqual('petrol', $kw, 'Keyword set when missing');
@@ -1204,12 +1214,53 @@ assertEqual($cutoverDeferredTag, (int)$db->query("SELECT tag_id FROM transaction
 assertEqual($cutoverPostSnapshotTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverPostSnapshotId")->fetchColumn(), 'Cutover leaves post-snapshot transactions unchanged');
 assertEqual(2, (int)$db->query("SELECT COUNT(DISTINCT direction) FROM tag_aliases WHERE tag_id=$cutoverCanonicalId AND direction IN ('incoming','outgoing')")->fetchColumn(), 'Cutover installs independent incoming and outgoing alias rules');
 assertEqual($cutoverFinancialBefore, $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC), 'Cutover preserves the financial ledger fingerprint');
+
+// The optional aggressive cleanup retires every noncanonical legacy choice,
+// even when deferred/newer history still references it. It must not retag or
+// delete that history, and the original cutover rollback must restore the
+// exact legacy tag and alias state as well as the reviewed classifications.
+$legacyHistoryTag = Tag::create('Legacy deferred history test', null, 'Retained only for historical display', 'legacy');
+$legacyHistoryAlias = TagAlias::create($legacyHistoryTag, 'LEGACY DEFERRED HISTORY', 'contains', true, 'legacy', null, 1, 'outgoing');
+$protectedSystemTag = Tag::create('Protected cleanup system test', null, null, 'system');
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -3.00, 'LEGACY DEFERRED HISTORY 999999', null, null, null, $legacyHistoryTag, null, null]);
+$legacyHistoryTransactionId = (int)$db->lastInsertId();
+$cleanupFinancialBefore = $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC);
+$cleanupPreview = $cutoverService->legacyCleanupPreview($cutoverRunId);
+assertEqual(true, $cleanupPreview['can_cleanup'], 'Applied taxonomy offers an audited aggressive legacy cleanup');
+assertEqual(true, (int)$cleanupPreview['metrics']['tags_to_deprecate'] >= 1, 'Legacy cleanup previews every noncanonical legacy tag');
+assertEqual(true, (int)$cleanupPreview['metrics']['transactions_retaining_history'] >= 1, 'Legacy cleanup reports historical transaction assignments it will retain');
+$cleanupResult = $cutoverService->cleanupLegacy($cutoverRunId, 'test-suite');
+assertEqual('legacy_cleaned', $cleanupResult['status'], 'Aggressive legacy catalogue cleanup completes atomically');
+assertEqual('deprecated', $db->query("SELECT status FROM tags WHERE id=$legacyHistoryTag")->fetchColumn(), 'Referenced noncanonical legacy tag is deprecated');
+assertEqual(0, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$legacyHistoryAlias")->fetchColumn(), 'Legacy matching alias is disabled');
+assertEqual($legacyHistoryTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$legacyHistoryTransactionId")->fetchColumn(), 'Historical transaction keeps its original legacy tag id');
+assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$cutoverCanonicalId")->fetchColumn(), 'Reviewed canonical tag remains active');
+assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$protectedSystemTag")->fetchColumn(), 'Genuine system tag remains active');
+assertEqual('active', $db->query('SELECT status FROM tags WHERE id=' . Tag::getIgnoreId())->fetchColumn(), 'IGNORE remains active');
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tags WHERE status='active' AND origin='legacy' AND UPPER(TRIM(name)) <> 'IGNORE' AND id <> $cutoverCanonicalId")->fetchColumn(), 'No noncanonical legacy tag remains available for future use');
+assertEqual(false, in_array($legacyHistoryTag, array_map('intval', array_column(Tag::all(), 'id')), true), 'Deprecated legacy tags disappear from management pickers');
+$postCleanupCorrectionTags = $correctionService->tagContext();
+try {
+    $correctionService->createPlan(
+        'Move Legacy deferred history test to itself',
+        ['source_tag_ids' => [$legacyHistoryTag], 'target_tag_id' => $legacyHistoryTag, 'target_tag_name' => 'Legacy deferred history test', 'match_terms' => [], 'confidence' => 0.99],
+        $postCleanupCorrectionTags
+    );
+    $retiredTargetRejected = false;
+} catch (InvalidArgumentException $e) {
+    $retiredTargetRejected = strpos($e->getMessage(), 'retired destination') !== false;
+}
+assertEqual(true, $retiredTargetRejected, 'AI correction can recognise retired history but refuses a retired destination tag');
+assertEqual($cleanupFinancialBefore, $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC), 'Legacy cleanup preserves the financial ledger');
+assertEqual(true, $cutoverService->legacyCleanupPreview($cutoverRunId)['completed'], 'Legacy cleanup is recorded in the cutover audit');
 assertEqual(true, $cutoverService->rollbackPreview($cutoverRunId)['can_rollback'], 'An unchanged audited cutover is safely reversible');
 $cutoverRollback = $cutoverService->rollback($cutoverRunId, 'test-suite');
 assertEqual('rolled_back', $cutoverRollback['status'], 'Phase 3 rollback restores the audited taxonomy state');
 assertEqual($incomingDirectionTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverIncomingId")->fetchColumn(), 'Rollback restores the original transaction classification');
 assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tags WHERE id=$cutoverCanonicalId")->fetchColumn(), 'Rollback removes a cutover-created tag when it is no longer referenced');
 assertEqual($cutoverPostSnapshotTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverPostSnapshotId")->fetchColumn(), 'Rollback still leaves post-snapshot transactions untouched');
+assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$legacyHistoryTag")->fetchColumn(), 'Rollback restores a cleanup-retired legacy tag');
+assertEqual(1, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$legacyHistoryAlias")->fetchColumn(), 'Rollback restores a cleanup-disabled legacy alias');
 
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.

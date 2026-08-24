@@ -25,7 +25,7 @@ try {
         'SELECT c.`id`, c.`name`, c.`description`, t.`name` AS tag_name '
         . 'FROM `categories` c '
         . 'LEFT JOIN `category_tags` ct ON ct.`category_id` = c.`id` '
-        . 'LEFT JOIN `tags` t ON t.`id` = ct.`tag_id` '
+        . "LEFT JOIN `tags` t ON t.`id` = ct.`tag_id` AND t.`status` = 'active' "
         . 'ORDER BY c.`name`, t.`name`'
     )->fetchAll(PDO::FETCH_ASSOC);
     $categories = [];
@@ -54,7 +54,7 @@ try {
         . 'FROM `tags` t '
         . 'LEFT JOIN `category_tags` ct ON ct.`tag_id` = t.`id` '
         . 'LEFT JOIN `transactions` tx ON tx.`tag_id` = t.`id` '
-        . 'WHERE ct.`tag_id` IS NULL AND LOWER(t.`name`) != \'ignore\' '
+        . "WHERE ct.`tag_id` IS NULL AND t.`status` = 'active' AND LOWER(t.`name`) != 'ignore' "
         . 'GROUP BY t.`id`, t.`name`, t.`keyword`, t.`description` '
         . 'ORDER BY transactions DESC, t.`name` ASC LIMIT ' . $limit
     )->fetchAll(PDO::FETCH_ASSOC);
@@ -141,7 +141,7 @@ try {
     $updatedTransactions = !empty($applied) ? CategoryTag::applyToAllTransactions() : 0;
     $remaining = (int)$db->query(
         'SELECT COUNT(*) FROM `tags` t LEFT JOIN `category_tags` ct ON ct.`tag_id` = t.`id` '
-        . 'WHERE ct.`tag_id` IS NULL AND LOWER(t.`name`) != \'ignore\''
+        . "WHERE ct.`tag_id` IS NULL AND t.`status` = 'active' AND LOWER(t.`name`) != 'ignore'"
     )->fetchColumn();
     $tokens = (int)($response['usage']['total_tokens'] ?? 0);
     Log::write('AI assigned ' . count($applied) . " tags to existing categories using $tokens tokens; updated $updatedTransactions transactions");

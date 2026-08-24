@@ -1,0 +1,76 @@
+.cutover-button--cleanup {
+    border: 0;
+    background: linear-gradient(135deg, #7c3aed, #0284c7);
+    color: #fff;
+}
+
+.cutover-cleanup-card {
+    padding: 1rem !important;
+    background: linear-gradient(120deg, rgba(245, 243, 255, .92), rgba(255, 255, 255, .96) 48%, rgba(240, 249, 255, .9)) !important;
+}
+
+.cutover-cleanup-card .cutover-section-heading p {
+    margin: .22rem 0 0;
+    color: #64748b;
+    font-size: .68rem;
+    line-height: 1.5;
+}
+
+.cutover-cleanup-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .55rem;
+    margin: .85rem 0 0;
+}
+
+.cutover-cleanup-metrics div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: .65rem .72rem;
+    border-radius: .75rem;
+    background: rgba(255, 255, 255, .78);
+}
+
+.cutover-cleanup-metrics dt {
+    color: #64748b;
+    font-size: .61rem;
+    font-weight: 760;
+}
+
+.cutover-cleanup-metrics dd {
+    margin: .12rem 0;
+    color: #172033;
+    font-size: 1.15rem;
+    font-weight: 850;
+}
+
+.cutover-cleanup-metrics small {
+    color: #94a3b8;
+    font-size: .56rem;
+    line-height: 1.35;
+}
+
+.cutover-cleanup-note {
+    display: flex;
+    align-items: flex-start;
+    gap: .45rem;
+    margin: .7rem 0 0;
+    color: #64748b;
+    font-size: .61rem;
+    line-height: 1.45;
+}
+
+.cutover-cleanup-note i {
+    margin-top: .1rem;
+    color: #7c3aed;
+}
+
+@media (max-width: 950px) {
+    .cutover-cleanup-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+    .cutover-cleanup-metrics { grid-template-columns: 1fr 1fr; }
+    .cutover-cleanup-metrics div { padding: .58rem; }
+}

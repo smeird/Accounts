@@ -33,7 +33,7 @@ class Category {
              . 'FROM categories c '
              . 'LEFT JOIN segments s ON c.segment_id = s.id '
              . 'LEFT JOIN category_tags ct ON c.id = ct.category_id '
-             . 'LEFT JOIN tags t ON t.id = ct.tag_id '
+             . "LEFT JOIN tags t ON t.id = ct.tag_id AND t.status = 'active' "
              . 'ORDER BY c.id';
         $stmt = $db->query($sql);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

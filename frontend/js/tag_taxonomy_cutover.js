@@ -14,12 +14,18 @@ function taxonomyCutoverCanApply(selectedRun) {
     return Boolean(selectedRun && selectedRun.can_apply === true && selectedRun.run && selectedRun.run.status === 'ready');
 }
 
+function taxonomyCutoverCanCleanLegacy(selectedRun) {
+    return Boolean(selectedRun && selectedRun.run && selectedRun.run.status === 'applied'
+        && selectedRun.legacy_cleanup && selectedRun.legacy_cleanup.can_cleanup === true);
+}
+
 function initTagTaxonomyCutover() {
     const status = document.getElementById('cutover-status');
     if (!status) return;
     const runSelect = document.getElementById('cutover-run');
     const refresh = document.getElementById('cutover-refresh');
     const apply = document.getElementById('cutover-apply');
+    const cleanup = document.getElementById('cutover-cleanup');
     const rollback = document.getElementById('cutover-rollback');
     const dialog = document.getElementById('cutover-confirm');
     const confirmInput = document.getElementById('cutover-confirm-input');
@@ -55,6 +61,7 @@ function initTagTaxonomyCutover() {
         refresh.querySelector('i').classList.toggle('fa-spin', value);
         const selected = view && view.selectedRun;
         apply.disabled = value || !taxonomyCutoverCanApply(selected);
+        cleanup.disabled = value || !taxonomyCutoverCanCleanLegacy(selected);
         rollback.disabled = value || !(selected && selected.can_rollback === true);
     }
 
@@ -94,9 +101,12 @@ function initTagTaxonomyCutover() {
             copy.textContent = 'Finish review in Taxonomy Studio, then return here for the separate cutover.';
             state.textContent = 'Waiting for review';
         } else if (run.status === 'applied') {
-            title.textContent = 'The reviewed taxonomy is live';
-            copy.textContent = 'The cutover passed financial and classification reconciliation. Its audit record can support a controlled rollback.';
-            state.textContent = 'Applied and reconciled';
+            const cleaned = Boolean(selected.legacy_cleanup && selected.legacy_cleanup.completed);
+            title.textContent = cleaned ? 'The canonical taxonomy is clean and live' : 'The reviewed taxonomy is live';
+            copy.textContent = cleaned
+                ? 'The noncanonical legacy catalogue is retired. Historical assignments remain intact and the complete operation is still reversible.'
+                : 'The cutover passed reconciliation. The legacy catalogue can now be retired in one audited post-cutover action.';
+            state.textContent = cleaned ? 'Canonical catalogue active' : 'Applied and reconciled';
             state.classList.add('is-ready');
         } else if (run.status === 'rolled_back') {
             title.textContent = 'This cutover was rolled back';
@@ -170,6 +180,37 @@ function initTagTaxonomyCutover() {
         document.getElementById('cutover-fingerprint-absolute').textContent = money(fingerprint.absolute_total);
     }
 
+    function renderLegacyCleanup() {
+        const selected = view.selectedRun;
+        const cleanupView = selected && selected.legacy_cleanup;
+        const card = document.getElementById('cutover-cleanup-card');
+        const applied = Boolean(selected && selected.run && selected.run.status === 'applied');
+        card.hidden = !applied || !cleanupView;
+        if (card.hidden) return;
+        const metrics = cleanupView.metrics || {};
+        document.getElementById('cutover-cleanup-tags').textContent = number(metrics.tags_to_deprecate);
+        document.getElementById('cutover-cleanup-aliases').textContent = number(metrics.aliases_to_disable);
+        document.getElementById('cutover-cleanup-history').textContent = number(metrics.transactions_retaining_history);
+        document.getElementById('cutover-cleanup-history-detail').textContent = `${number(metrics.referenced_legacy_tags)} referenced legacy tags remain as historical labels`;
+        document.getElementById('cutover-cleanup-canonical').textContent = number(metrics.protected_canonical_tags);
+        const state = document.getElementById('cutover-cleanup-state');
+        state.className = 'cutover-gate';
+        if (cleanupView.completed) {
+            document.getElementById('cutover-cleanup-title').textContent = 'Legacy catalogue retired';
+            document.getElementById('cutover-cleanup-copy').textContent = 'Old tags and matching rules no longer appear in future workflows. Historical transaction labels were preserved.';
+            state.textContent = 'Cleaned and audited';
+            state.classList.add('is-ready');
+        } else if (cleanupView.can_cleanup) {
+            document.getElementById('cutover-cleanup-title').textContent = 'Retire the legacy tag catalogue';
+            document.getElementById('cutover-cleanup-copy').textContent = 'This aggressive cleanup deprecates every active noncanonical legacy tag, including tags still referenced by deferred history.';
+            state.textContent = 'Ready to clean';
+            state.classList.add('is-ready');
+        } else {
+            state.textContent = 'Blocked safely';
+            state.classList.add('is-error');
+        }
+    }
+
     function renderProposals() {
         const plans = view.selectedRun && Array.isArray(view.selectedRun.proposals) ? view.selectedRun.proposals : [];
         const root = document.getElementById('cutover-proposals');
@@ -217,14 +258,22 @@ function initTagTaxonomyCutover() {
         const selected = view.selectedRun;
         const run = selected && selected.run;
         apply.hidden = Boolean(run && run.status !== 'ready');
+        cleanup.hidden = !(run && run.status === 'applied' && selected.legacy_cleanup && !selected.legacy_cleanup.completed);
         rollback.hidden = !(run && run.status === 'applied');
         apply.disabled = busy || !taxonomyCutoverCanApply(selected);
+        cleanup.disabled = busy || !taxonomyCutoverCanCleanLegacy(selected);
         rollback.disabled = busy || !(selected && selected.can_rollback === true);
         const title = document.getElementById('cutover-action-title');
         const copy = document.getElementById('cutover-action-copy');
         if (run && run.status === 'applied') {
-            title.textContent = 'Cutover audit retained';
-            copy.textContent = selected.can_rollback ? 'Rollback checks pass and the protected snapshot remains restorable.' : 'Rollback is blocked because live state has changed since cutover.';
+            const cleaned = Boolean(selected.legacy_cleanup && selected.legacy_cleanup.completed);
+            const canClean = taxonomyCutoverCanCleanLegacy(selected);
+            title.textContent = cleaned ? 'Canonical catalogue active' : (canClean ? 'Legacy cleanup is ready' : 'Legacy cleanup is blocked');
+            copy.textContent = cleaned
+                ? (selected.can_rollback ? 'Cleanup and cutover are fully audited and safely reversible.' : 'Rollback is blocked because live state has changed since cleanup.')
+                : (canClean
+                    ? 'Retire old tags from future use while retaining every historical assignment and the rollback path.'
+                    : String((selected.legacy_cleanup && selected.legacy_cleanup.blockers && selected.legacy_cleanup.blockers[0]) || 'Refresh the safety checks before cleanup.'));
         } else if (selected && selected.can_apply) {
             title.textContent = 'Ready for one atomic write';
             copy.textContent = `${number(selected.metrics.transactions_to_retag)} classifications will change; transaction dates, descriptions and amounts cannot change.`;
@@ -235,7 +284,7 @@ function initTagTaxonomyCutover() {
     }
 
     function render() {
-        renderRuns(); renderStatus(); renderMetrics(); renderChecks(); renderFingerprint(); renderProposals(); renderActions(); setBusy(busy);
+        renderRuns(); renderStatus(); renderMetrics(); renderChecks(); renderFingerprint(); renderLegacyCleanup(); renderProposals(); renderActions(); setBusy(busy);
     }
 
     async function load(runId = 0) {
@@ -258,11 +307,15 @@ function initTagTaxonomyCutover() {
     function openConfirm(action) {
         pendingAction = action;
         const isApply = action === 'apply';
-        const phrase = isApply ? 'APPLY_REVIEWED_TAXONOMY' : 'ROLLBACK_TAXONOMY_CUTOVER';
-        document.getElementById('cutover-confirm-title').textContent = isApply ? 'Apply reviewed taxonomy' : 'Rollback taxonomy cutover';
+        const isCleanup = action === 'cleanup_legacy';
+        const phrase = isApply ? 'APPLY_REVIEWED_TAXONOMY' : (isCleanup ? 'CLEAN_LEGACY_TAXONOMY' : 'ROLLBACK_TAXONOMY_CUTOVER');
+        document.getElementById('cutover-confirm-title').textContent = isApply
+            ? 'Apply reviewed taxonomy' : (isCleanup ? 'Retire legacy catalogue' : 'Rollback taxonomy cutover');
         document.getElementById('cutover-confirm-copy').textContent = isApply
             ? 'This writes only reviewed classifications and taxonomy relationships. All work is cancelled if reconciliation fails.'
-            : 'This restores snapshot classifications and the audited tag, category, and alias state. Newer transactions remain untouched.';
+            : (isCleanup
+                ? 'This deprecates every noncanonical legacy tag and disables its matching rules. Transactions are not deleted or retagged, and rollback restores the complete prior catalogue.'
+                : 'This restores snapshot classifications and the audited tag, category, and alias state. Newer transactions remain untouched.');
         document.getElementById('cutover-confirm-phrase').textContent = phrase;
         confirmInput.value = '';
         confirmInput.dataset.phrase = phrase;
@@ -290,6 +343,7 @@ function initTagTaxonomyCutover() {
     runSelect.addEventListener('change', () => load(selectedRunId()));
     refresh.addEventListener('click', () => load(selectedRunId()));
     apply.addEventListener('click', () => openConfirm('apply'));
+    cleanup.addEventListener('click', () => openConfirm('cleanup_legacy'));
     rollback.addEventListener('click', () => openConfirm('rollback'));
     confirmInput.addEventListener('input', () => { confirmSubmit.disabled = confirmInput.value !== confirmInput.dataset.phrase; });
     dialog.addEventListener('close', () => { if (dialog.returnValue === 'default') executePending(); });
@@ -297,4 +351,4 @@ function initTagTaxonomyCutover() {
 }
 
 if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', initTagTaxonomyCutover);
-if (typeof module !== 'undefined' && module.exports) module.exports = { normalizeCutoverPayload, taxonomyCutoverCanApply };
+if (typeof module !== 'undefined' && module.exports) module.exports = { normalizeCutoverPayload, taxonomyCutoverCanApply, taxonomyCutoverCanCleanLegacy };

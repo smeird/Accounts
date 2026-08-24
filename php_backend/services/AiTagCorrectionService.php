@@ -14,13 +14,15 @@ class AiTagCorrectionService {
 
     public function tagContext(): array {
         $rows = $this->db->query(
-            'SELECT t.id, t.name, COUNT(tx.id) AS transaction_count '
+            'SELECT t.id, t.name, t.status, COUNT(tx.id) AS transaction_count '
             . 'FROM tags t LEFT JOIN transactions tx ON tx.tag_id = t.id '
-            . 'GROUP BY t.id, t.name ORDER BY transaction_count DESC, t.name ASC LIMIT 2500'
+            . "WHERE t.status = 'active' OR tx.id IS NOT NULL "
+            . 'GROUP BY t.id, t.name, t.status ORDER BY transaction_count DESC, t.name ASC LIMIT 2500'
         )->fetchAll(PDO::FETCH_ASSOC);
         return array_map(static fn(array $row): array => [
             'id' => (int)$row['id'],
             'name' => (string)$row['name'],
+            'status' => (string)$row['status'],
             'transactions' => (int)$row['transaction_count'],
         ], $rows);
     }
@@ -28,7 +30,7 @@ class AiTagCorrectionService {
     public static function buildPrompt(string $problem, array $tags): string {
         return "A person has described a transaction tagging error. Interpret only a tag correction. "
             . "Never propose changes to amounts, dates, descriptions, accounts, transfers, categories, segments or groups. "
-            . "Choose source_tag_ids only from the supplied tag IDs. Prefer an existing target_tag_id; if no suitable tag exists, set it to null and supply a short target_tag_name. "
+            . "Choose source_tag_ids only from the supplied tag IDs. A deprecated tag may be a source when historical transactions still use it, but target_tag_id must always be an active tag. Prefer an existing active target_tag_id; if no suitable tag exists, set it to null and supply a short target_tag_name. "
             . "Use match_terms only when the correction applies to transactions whose description or memo contains merchant wording written in the person's problem. Every match term must be a literal phrase from that problem. "
             . "Leave match_terms empty only when every transaction carrying the source tag should move. "
             . "Return one JSON object: {\"summary\":\"plain English interpretation\",\"source_tag_ids\":[1],\"target_tag_id\":2,\"target_tag_name\":\"name\",\"match_terms\":[\"literal phrase\"],\"confidence\":0.95,\"warnings\":[\"optional warning\"]}.\n\n"
@@ -43,7 +45,10 @@ class AiTagCorrectionService {
         }
         $tagMap = [];
         foreach ($tags as $tag) {
-            $tagMap[(int)$tag['id']] = (string)$tag['name'];
+            $tagMap[(int)$tag['id']] = [
+                'name' => (string)$tag['name'],
+                'status' => (string)($tag['status'] ?? 'active'),
+            ];
         }
         $sourceIds = array_values(array_unique(array_filter(array_map('intval', $proposal['source_tag_ids'] ?? []))));
         if (!$sourceIds || array_diff($sourceIds, array_keys($tagMap))) {
@@ -53,10 +58,13 @@ class AiTagCorrectionService {
         if ($targetId && !isset($tagMap[$targetId])) {
             throw new InvalidArgumentException('The AI selected a destination tag that does not exist.');
         }
+        if ($targetId && $tagMap[$targetId]['status'] !== 'active') {
+            throw new InvalidArgumentException('The AI selected a retired destination tag. Choose an active canonical tag instead.');
+        }
         if ($targetId && in_array($targetId, $sourceIds, true)) {
             throw new InvalidArgumentException('The source and destination tags must be different.');
         }
-        $targetName = $targetId ? $tagMap[$targetId] : trim((string)($proposal['target_tag_name'] ?? ''));
+        $targetName = $targetId ? $tagMap[$targetId]['name'] : trim((string)($proposal['target_tag_name'] ?? ''));
         if ($targetName === '' || mb_strlen($targetName) > 100) {
             throw new InvalidArgumentException('The AI could not identify a valid destination tag.');
         }
@@ -93,7 +101,7 @@ class AiTagCorrectionService {
             'problem' => $problem,
             'summary' => mb_substr(trim((string)($proposal['summary'] ?? 'Tag correction')), 0, 500),
             'source_tag_ids' => $sourceIds,
-            'source_tags' => array_map(static fn(int $id): array => ['id' => $id, 'name' => $tagMap[$id]], $sourceIds),
+            'source_tags' => array_map(static fn(int $id): array => ['id' => $id, 'name' => $tagMap[$id]['name']], $sourceIds),
             'target_tag_id' => $targetId ?: null,
             'target_tag_name' => $targetName,
             'match_terms' => array_values($terms),

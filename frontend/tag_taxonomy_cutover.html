@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="site_system.css">
     <link rel="stylesheet" href="utility_refresh.css">
-    <link rel="stylesheet" href="tag_taxonomy_cutover.css?v=20260824-phase3">
+    <link rel="stylesheet" href="tag_taxonomy_cutover.css?v=20260824-legacy-cleanup">
+    <link rel="stylesheet" href="tag_taxonomy_cleanup.css?v=20260824-legacy-cleanup">
 </head>
 <body class="ops-body utility-refresh-page taxonomy-cutover-page">
     <div class="flex min-h-screen">
@@ -69,6 +70,24 @@
                 </article>
             </section>
 
+            <section id="cutover-cleanup-card" class="cards cutover-cleanup-card" hidden>
+                <div class="cutover-section-heading">
+                    <div>
+                        <span class="cutover-eyebrow">Post-cutover catalogue</span>
+                        <h2 id="cutover-cleanup-title">Retire the legacy tag catalogue</h2>
+                        <p id="cutover-cleanup-copy">Remove noncanonical legacy tags and rules from future use while retaining their historical transaction labels.</p>
+                    </div>
+                    <span id="cutover-cleanup-state" class="cutover-gate">Preview</span>
+                </div>
+                <dl class="cutover-cleanup-metrics">
+                    <div><dt>Legacy tags</dt><dd id="cutover-cleanup-tags">—</dd><small>Deprecated, not deleted</small></div>
+                    <div><dt>Matching rules</dt><dd id="cutover-cleanup-aliases">—</dd><small>Disabled for future imports</small></div>
+                    <div><dt>History retained</dt><dd id="cutover-cleanup-history">—</dd><small id="cutover-cleanup-history-detail">Transaction assignments unchanged</small></div>
+                    <div><dt>Canonical tags protected</dt><dd id="cutover-cleanup-canonical">—</dd><small>Remain active</small></div>
+                </dl>
+                <p class="cutover-cleanup-note"><i class="fas fa-shield-halved" aria-hidden="true"></i> IGNORE and genuine system tags are protected. The cleanup is recorded inside the cutover audit and the existing rollback restores every retired tag and rule.</p>
+            </section>
+
             <section class="cards cutover-plan-card">
                 <div class="cutover-section-heading">
                     <div>
@@ -85,6 +104,7 @@
                     <strong id="cutover-action-title">No live changes yet</strong>
                     <span id="cutover-action-copy">Refresh the preview to confirm that every safety check passes.</span>
                 </div>
+                <button id="cutover-cleanup" class="cutover-button cutover-button--cleanup" type="button" hidden>Clean legacy catalogue</button>
                 <button id="cutover-rollback" class="cutover-button cutover-button--rollback" type="button" hidden>Rollback cutover</button>
                 <button id="cutover-apply" class="cutover-button cutover-button--apply" type="button" disabled>Apply reviewed taxonomy</button>
             </section>
@@ -116,6 +136,6 @@
     <script src="js/menu.js"></script>
     <script src="js/input_help.js"></script>
     <script src="js/overlay.js"></script>
-    <script src="js/tag_taxonomy_cutover.js?v=20260824-phase3"></script>
+    <script src="js/tag_taxonomy_cutover.js?v=20260824-legacy-cleanup"></script>
 </body>
 </html>

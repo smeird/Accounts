@@ -44,7 +44,7 @@ class CategoryTag {
             }
 
             $placeholders = implode(',', array_fill(0, count($tagIds), '?'));
-            $tagCheck = $db->prepare("SELECT `id` FROM `tags` WHERE `id` IN ($placeholders)");
+            $tagCheck = $db->prepare("SELECT `id` FROM `tags` WHERE `status` = 'active' AND `id` IN ($placeholders)");
             $tagCheck->execute($tagIds);
             $existingTagIds = array_map('intval', $tagCheck->fetchAll(PDO::FETCH_COLUMN));
             sort($existingTagIds);
@@ -103,6 +103,11 @@ class CategoryTag {
      */
     public static function add(int $categoryId, int $tagId): void {
         $db = Database::getConnection();
+        $activeTag = $db->prepare("SELECT 1 FROM tags WHERE id = :tag_id AND status = 'active'");
+        $activeTag->execute(['tag_id' => $tagId]);
+        if (!$activeTag->fetchColumn()) {
+            throw new InvalidArgumentException('Only active tags can be assigned to a category');
+        }
         $check = $db->prepare('SELECT 1 FROM category_tags WHERE tag_id = :tag_id');
         $check->execute(['tag_id' => $tagId]);
         if ($check->fetch()) {
