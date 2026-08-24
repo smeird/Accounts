@@ -19,6 +19,22 @@ class Project {
         return max(0, min(5, $value));
     }
 
+    /**
+     * HTML number inputs submit an empty string when an optional field is left
+     * blank. Strict MySQL rejects that value for DECIMAL and INT columns, so
+     * store a genuine SQL NULL instead.
+     */
+    private static function nullableNumber(array $data, string $key, bool $integer = false) {
+        if (!array_key_exists($key, $data) || $data[$key] === null) {
+            return null;
+        }
+        $value = is_string($data[$key]) ? trim($data[$key]) : $data[$key];
+        if ($value === '' || !is_numeric($value)) {
+            return null;
+        }
+        return $integer ? (int)$value : $value;
+    }
+
     /** Return a transparent 0-100 importance score. */
     public static function calculatePriorityScore(array $project): int {
         $weighted = 0;
@@ -72,13 +88,13 @@ class Project {
             'name' => $data['name'] ?? '',
             'description' => $data['description'] ?? null,
             'rationale' => $data['rationale'] ?? null,
-            'cost_low' => $data['cost_low'] ?? null,
-            'cost_medium' => $data['cost_medium'] ?? null,
-            'cost_high' => $data['cost_high'] ?? null,
+            'cost_low' => self::nullableNumber($data, 'cost_low'),
+            'cost_medium' => self::nullableNumber($data, 'cost_medium'),
+            'cost_high' => self::nullableNumber($data, 'cost_high'),
             'funding_source' => $data['funding_source'] ?? null,
-            'recurring_cost' => $data['recurring_cost'] ?? null,
-            'estimated_time' => $data['estimated_time'] ?? null,
-            'expected_lifespan' => $data['expected_lifespan'] ?? null,
+            'recurring_cost' => self::nullableNumber($data, 'recurring_cost'),
+            'estimated_time' => self::nullableNumber($data, 'estimated_time', true),
+            'expected_lifespan' => self::nullableNumber($data, 'expected_lifespan', true),
             'benefit_financial' => self::rating($data, 'benefit_financial'),
             'benefit_quality' => self::rating($data, 'benefit_quality'),
             'benefit_risk' => self::rating($data, 'benefit_risk'),
@@ -148,13 +164,13 @@ class Project {
             'name' => $data['name'] ?? '',
             'description' => $data['description'] ?? null,
             'rationale' => $data['rationale'] ?? null,
-            'cost_low' => $data['cost_low'] ?? null,
-            'cost_medium' => $data['cost_medium'] ?? null,
-            'cost_high' => $data['cost_high'] ?? null,
+            'cost_low' => self::nullableNumber($data, 'cost_low'),
+            'cost_medium' => self::nullableNumber($data, 'cost_medium'),
+            'cost_high' => self::nullableNumber($data, 'cost_high'),
             'funding_source' => $data['funding_source'] ?? null,
-            'recurring_cost' => $data['recurring_cost'] ?? null,
-            'estimated_time' => $data['estimated_time'] ?? null,
-            'expected_lifespan' => $data['expected_lifespan'] ?? null,
+            'recurring_cost' => self::nullableNumber($data, 'recurring_cost'),
+            'estimated_time' => self::nullableNumber($data, 'estimated_time', true),
+            'expected_lifespan' => self::nullableNumber($data, 'expected_lifespan', true),
             'benefit_financial' => self::rating($data, 'benefit_financial'),
             'benefit_quality' => self::rating($data, 'benefit_quality'),
             'benefit_risk' => self::rating($data, 'benefit_risk'),

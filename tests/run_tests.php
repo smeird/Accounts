@@ -45,7 +45,7 @@ $db->exec('CREATE TABLE budgets (id INTEGER PRIMARY KEY AUTOINCREMENT, category_
 $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE totp_secrets (username TEXT PRIMARY KEY, secret TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
-$db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, archived TINYINT DEFAULT 0, group_id INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1);');
+$db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, rationale TEXT, cost_low REAL, cost_medium REAL, cost_high REAL, funding_source TEXT, recurring_cost REAL, estimated_time INTEGER, expected_lifespan INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1, dependencies TEXT, risks TEXT, archived TINYINT DEFAULT 0, group_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 
 $results = [];
 
@@ -550,6 +550,38 @@ assertEqual('critical', Project::priorityTier($criticalProject)['key'], 'Severe 
 assertEqual('nice', Project::priorityTier($cosmeticProject)['key'], 'A strong cosmetic benefit alone remains nice to have');
 assertEqual('preventive', Project::priorityTier($preservationProject)['key'], 'Strong asset preservation is surfaced as preventive work');
 assertEqual(100, Project::calculatePriorityScore(['benefit_risk' => 99, 'weight_risk' => 99, 'benefit_sustainability' => 99, 'benefit_financial' => 99, 'benefit_quality' => 99]), 'Project priority clamps every rating to the 0-5 scale');
+
+// Blank optional number inputs must persist as NULL under strict MySQL rules.
+$blankProjectId = Project::create([
+    'name' => 'Blank-number project',
+    'cost_low' => '',
+    'cost_medium' => ' ',
+    'cost_high' => null,
+    'recurring_cost' => '',
+    'estimated_time' => '',
+    'expected_lifespan' => ''
+]);
+$blankProject = $db->query('SELECT cost_low, cost_medium, cost_high, recurring_cost, estimated_time, expected_lifespan FROM projects WHERE id = ' . $blankProjectId)->fetch(PDO::FETCH_ASSOC);
+foreach ($blankProject as $field => $value) {
+    assertEqual(null, $value, 'Project creation stores blank ' . $field . ' as NULL');
+}
+Project::update($blankProjectId, [
+    'name' => 'Updated blank-number project',
+    'cost_low' => '',
+    'cost_medium' => '1250.50',
+    'cost_high' => '',
+    'recurring_cost' => '',
+    'estimated_time' => '6',
+    'expected_lifespan' => ''
+]);
+$updatedBlankProject = $db->query('SELECT cost_low, cost_medium, cost_high, recurring_cost, estimated_time, expected_lifespan FROM projects WHERE id = ' . $blankProjectId)->fetch(PDO::FETCH_ASSOC);
+assertEqual(null, $updatedBlankProject['cost_low'], 'Project updates retain blank decimal values as NULL');
+assertEqual(1250.5, (float)$updatedBlankProject['cost_medium'], 'Project updates retain supplied decimal values');
+assertEqual(null, $updatedBlankProject['cost_high'], 'Project updates store newly blank decimal values as NULL');
+assertEqual(null, $updatedBlankProject['recurring_cost'], 'Project updates store blank recurring cost as NULL');
+assertEqual(6, (int)$updatedBlankProject['estimated_time'], 'Project updates retain supplied integer values');
+assertEqual(null, $updatedBlankProject['expected_lifespan'], 'Project updates store blank lifespan as NULL');
+Project::delete($blankProjectId);
 
 // --- Link preview test ---
 $sample = 'file://' . realpath(__DIR__ . '/../sample_data/link_preview.html');
