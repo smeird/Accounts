@@ -1,66 +1,77 @@
 <!DOCTYPE html>
-<!-- Page for exporting transaction data in various formats -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Export Data</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="site_system.css">
+    <link rel="stylesheet" href="utility_refresh.css">
+    <link rel="stylesheet" href="export.css?v=20260824-financial-workbook">
 </head>
-<body class="ops-body">
-    <div class="flex min-h-screen">
-        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
-        <main class="ops-main flex-1 min-w-0 overflow-x-auto space-y-6">
-<p class="mb-4">Download transactions for a chosen period in your preferred format.</p>
-            <section class="space-y-4">
-                <h2 class="text-xl font-semibold">Create Export</h2>
-                <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-                    <div class="flex flex-col">
-                        <label for="start-date" class="font-semibold">Start Date</label>
-                        <input type="date" id="start-date" class="border p-2 rounded" data-help="First date to include in the export">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="end-date" class="font-semibold">End Date</label>
-                        <input type="date" id="end-date" class="border p-2 rounded" data-help="Last date to include in the export">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="format" class="font-semibold">Format</label>
-                        <select id="format" class="border p-2 rounded" data-help="Choose the output file format">
-                            <option value="ofx">OFX</option>
-                            <option value="csv">CSV</option>
-                            <option value="xlsx">XLSX</option>
-                            <option value="json">JSON</option>
-                        </select>
-                    </div>
-                </div>
-                <button id="export-data" class="bg-indigo-600 text-white px-4 py-2 rounded"><i class="fas fa-file-export inline w-4 h-4 mr-2"></i>Export</button>
-            </section>
-        </main>
-    </div>
+<body class="ops-body export-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+        <section class="export-intro" data-no-card="true" aria-labelledby="export-intro-title">
+            <div>
+                <span class="export-eyebrow"><i class="fas fa-file-export" aria-hidden="true"></i> Take your data with you</span>
+                <h2 id="export-intro-title">Choose an extract—or a workbook.</h2>
+                <p>Use a portable file for another system, or create a finished Excel view that explains the selected period for you.</p>
+            </div>
+            <span class="export-intro-icon" aria-hidden="true"><i class="fas fa-arrow-up-from-bracket"></i></span>
+        </section>
 
-    <script src="js/page_header.js"></script>
-    <script>
-const pageMain = document.querySelector('main.ops-main');
-window.renderPageHeader(pageMain, {
-    title: 'Export Data',
-    breadcrumb: 'System',
-    subtitle: 'Export transactions and related data in CSV, OFX, or XLSX formats.'
-});
-</script>
-    <script src="js/menu.js"></script>
-    <script src="js/input_help.js"></script>
-    <script src="js/overlay.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-    <script src="js/export.js"></script>
+        <section class="export-panel export-panel--standard" data-no-card="true" aria-labelledby="standard-export-title">
+            <header class="export-heading">
+                <div><span class="export-eyebrow">Portable data</span><h2 id="standard-export-title">Standard export</h2><p>A straightforward transaction extract for moving data into another tool or keeping a machine-readable copy.</p></div>
+                <span class="export-format-key"><i class="fas fa-code" aria-hidden="true"></i> OFX · CSV · JSON</span>
+            </header>
+            <form id="standard-export-form" class="export-controls">
+                <label for="start-date"><span>Start date</span><input type="date" id="start-date" required data-help="First date to include in the export"></label>
+                <label for="end-date"><span>End date</span><input type="date" id="end-date" required data-help="Last date to include in the export"></label>
+                <label for="format"><span>Format</span><select id="format" data-help="Choose a portable output format"><option value="ofx">OFX bank data</option><option value="csv">CSV table</option><option value="json">JSON data</option></select></label>
+                <button id="export-data" class="export-secondary-action" type="submit"><i class="fas fa-download" aria-hidden="true"></i><span>Download extract</span></button>
+            </form>
+            <p id="standard-export-status" class="export-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="export-workbook" data-no-card="true" aria-labelledby="excel-export-title">
+            <header class="export-workbook-heading">
+                <div>
+                    <span class="export-eyebrow"><i class="fas fa-file-excel" aria-hidden="true"></i> Excel financial workbook</span>
+                    <h2 id="excel-export-title">A finished view of your money.</h2>
+                    <p>Not just rows. The workbook opens with the period explained, grouped and ready to explore in Excel.</p>
+                </div>
+                <span class="export-xlsx-mark">.XLSX</span>
+            </header>
+
+            <div class="export-sheet-preview" aria-label="Workbook sheets">
+                <article><span><i class="fas fa-gauge-high" aria-hidden="true"></i></span><div><strong>Summary</strong><small>Income, spending, net movement, useful averages and the leading drivers for the period.</small></div></article>
+                <article><span><i class="fas fa-table-cells-large" aria-hidden="true"></i></span><div><strong>Pivot Analysis</strong><small>Ready-made monthly, account, segment, category and tag breakdowns with visual data bars.</small></div></article>
+                <article><span><i class="fas fa-list" aria-hidden="true"></i></span><div><strong>Transactions</strong><small>A filterable Excel table containing every ledger row, with transfers and ignored items clearly marked.</small></div></article>
+            </div>
+
+            <form id="excel-export-form" class="export-workbook-controls">
+                <label for="excel-start-date"><span>Workbook starts</span><input type="date" id="excel-start-date" required data-help="First date included in the financial workbook"></label>
+                <span class="export-date-bridge" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+                <label for="excel-end-date"><span>Workbook ends</span><input type="date" id="excel-end-date" required data-help="Last date included in the financial workbook"></label>
+                <button id="export-excel" class="export-primary-action" type="submit"><i class="fas fa-file-excel" aria-hidden="true"></i><span>Create Excel workbook</span></button>
+            </form>
+            <div class="export-workbook-note"><i class="fas fa-circle-check" aria-hidden="true"></i><span>Internal transfers stay visible in the ledger but are excluded from income and spending totals.</span></div>
+            <p id="excel-export-status" class="export-status export-status--light" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+</div>
+
+<script src="js/page_header.js"></script>
+<script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Export Data', breadcrumb: 'System', subtitle: 'Download a portable extract or create a complete Excel financial workbook.' });</script>
+<script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="js/export.js?v=20260824-financial-workbook"></script>
 </body>
 </html>

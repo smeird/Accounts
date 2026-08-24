@@ -42,7 +42,7 @@
 - Each page must provide a self-help overlay with a brief description of its purpose.
 - Automatically tag transactions and suggest budgets using AI.
 - Analyse recurring expenses and break down spending by segments and categories.
-- Support backups, restores, and exporting transactions to OFX, CSV, or XLSX.
+- Support backups, restores, portable OFX/CSV/JSON extracts, and a curated multi-sheet Excel financial workbook.
 - Backups and restores can include project data.
 - Secure accounts with two-factor authentication and offer detailed search and reporting.
 - Transaction groups include an `active` flag. Inactive groups are hidden from selection and projects set to archived automatically deactivate their associated group.
@@ -108,3 +108,4 @@
 - Routine tag removal means retirement, not deletion: retain historical transaction assignments and disable future rules. Canonical merges move transactions and rules atomically, preserve a merged audit record, and use the destination reporting category unless it is unassigned.
 - AI tagging may select only active canonical tags. Unfamiliar suggestions must be returned for explicit review and must never create a live tag automatically. Preserve the complete canonical-name allowlist when trimming alias examples for prompt size.
 - Tag rule execution records aggregated usage evidence. New or edited cross-tag rules with overlapping whole-word scope require an explicit confirmation, while direction-specific, exact and longer matches retain deterministic precedence.
+- Excel is a dedicated financial-workbook export rather than a raw format option. Keep Summary, Pivot Analysis and Transactions sheets together; retain transfer/ignored ledger rows while excluding them from income and spending calculations.

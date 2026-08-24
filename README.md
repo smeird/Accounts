@@ -17,7 +17,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Atomic multi-file OFX/QFX import with per-file progress and useful completion summaries.
 - Duplicate protection based on bank FITIDs and a storage-safe fallback transaction identity.
 - OFX ledger-balance handling with statement-date ordering and protection against unreliable zero placeholders.
-- Transaction search, saved reports, exports and printable/PDF reporting.
+- Transaction search, saved reports, portable exports, a polished multi-sheet Excel financial workbook, and printable/PDF reporting.
 - Assisted transfer matching. Confirmed transfers remain in the ledger but are excluded from income, expenditure, budgets, projects and forecasts.
 
 ### Insights
@@ -165,6 +165,6 @@ Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff -
 
 ## Backups and deployment safety
 
-Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and XLSX extracts. Full backups include tag-rebuild runs and their immutable classification snapshots. Treat these files as sensitive financial data.
+Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and JSON extracts or a complete Excel financial workbook. The Excel export includes a period summary, pivot-style analysis and a filterable transaction ledger; internal transfers and ignored rows remain visible but are excluded from analytical totals. Full backups include tag-rebuild runs and their immutable classification snapshots. Treat these files as sensitive financial data.
 
 Keep credentials and API tokens outside the repository, serve production over HTTPS, allow the included `.htaccess` cache policy, and deploy from `main`. Do not use `--allow-unrelated-histories` on a production checkout; preserve configuration/uploads and use a clean clone if the server directory does not share this repository’s history.

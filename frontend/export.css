@@ -1,0 +1,44 @@
+.export-page { --export-ink:#172033; --export-muted:#667085; --export-line:rgba(100,116,139,.2); --export-accent:#6366f1; }
+.export-page .ops-main { max-width:1400px; margin:0 auto; }
+.export-intro { display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:1.35rem 1.5rem; border-radius:22px; color:#fff; background:linear-gradient(125deg,#172033 0%,#29345c 58%,#6366f1 145%); box-shadow:0 18px 42px rgba(30,41,59,.16); }
+.export-intro h2 { margin:.25rem 0 .35rem; color:#fff; font-size:clamp(1.35rem,2vw,1.9rem); font-weight:700; letter-spacing:-.035em; }
+.export-intro p { max-width:760px; color:#dbe3f4; font-size:.86rem; }
+.export-intro-icon { display:grid; place-items:center; flex:0 0 3.3rem; width:3.3rem; height:3.3rem; border-radius:16px; color:#c7d2fe; background:rgba(255,255,255,.1); font-size:1.25rem; }
+.export-eyebrow { display:inline-flex; align-items:center; gap:.42rem; color:#818cf8; font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.export-intro .export-eyebrow,.export-workbook .export-eyebrow { color:#c7d2fe; }
+.export-panel { padding:1.25rem; border:1px solid var(--export-line); border-radius:20px; background:rgba(255,255,255,.86); }
+.export-heading,.export-workbook-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:1.5rem; }
+.export-heading h2,.export-workbook-heading h2 { margin:.15rem 0 .25rem; color:var(--export-ink); font-size:1.25rem; font-weight:700; letter-spacing:-.025em; }
+.export-heading p { max-width:720px; color:var(--export-muted); font-size:.78rem; }
+.export-format-key { display:inline-flex; align-items:center; gap:.4rem; flex:0 0 auto; padding:.45rem .65rem; border-radius:10px; color:#4f5d75; background:#f3f5f9; font-size:.68rem; font-weight:650; }
+.export-controls { display:grid; grid-template-columns:1fr 1fr 1.2fr auto; align-items:end; gap:.75rem; margin-top:1rem; }
+.export-controls label,.export-workbook-controls label { display:grid; gap:.35rem; color:#475467; font-size:.7rem; font-weight:650; }
+.export-controls input,.export-controls select,.export-workbook-controls input { width:100%; min-height:42px; padding:.62rem .72rem; border:1px solid #d5dce8; border-radius:11px; color:var(--export-ink); background:#fff; font-size:.78rem; }
+.export-secondary-action,.export-primary-action { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; min-height:42px; padding:.65rem .9rem; border-radius:11px; font-size:.75rem; font-weight:700; white-space:nowrap; transition:transform .15s ease,opacity .15s ease; }
+.export-secondary-action { color:#fff; background:#48556b; }
+.export-primary-action { color:#fff; background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 9px 22px rgba(99,102,241,.28); }
+.export-secondary-action:hover,.export-primary-action:hover { transform:translateY(-1px); }
+.export-secondary-action:disabled,.export-primary-action:disabled { cursor:wait; opacity:.65; transform:none; }
+.export-workbook { overflow:hidden; position:relative; padding:1.4rem; border-radius:24px; color:#fff; background:linear-gradient(135deg,#172033 0%,#252f54 62%,#4338ca 140%); box-shadow:0 24px 52px rgba(30,41,59,.2); }
+.export-workbook::after { content:""; position:absolute; right:-90px; bottom:-130px; width:340px; height:340px; border-radius:50%; background:radial-gradient(circle,rgba(167,139,250,.28),transparent 66%); pointer-events:none; }
+.export-workbook-heading,.export-sheet-preview,.export-workbook-controls,.export-workbook-note,.export-workbook .export-status { position:relative; z-index:1; }
+.export-workbook-heading h2 { color:#fff; font-size:1.45rem; }
+.export-workbook-heading p { max-width:720px; color:#d7def0; font-size:.8rem; }
+.export-xlsx-mark { padding:.5rem .65rem; border:1px solid rgba(255,255,255,.18); border-radius:11px; color:#c4b5fd; background:rgba(255,255,255,.08); font-size:.7rem; font-weight:800; letter-spacing:.1em; }
+.export-sheet-preview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:1.15rem 0; }
+.export-sheet-preview article { display:flex; gap:.7rem; min-height:105px; padding:.9rem; border:1px solid rgba(255,255,255,.11); border-radius:15px; background:rgba(255,255,255,.075); }
+.export-sheet-preview article > span { display:grid; place-items:center; flex:0 0 2.1rem; width:2.1rem; height:2.1rem; border-radius:9px; color:#c4b5fd; background:rgba(196,181,253,.13); }
+.export-sheet-preview strong,.export-sheet-preview small { display:block; }
+.export-sheet-preview strong { margin:.05rem 0 .25rem; color:#fff; font-size:.82rem; }
+.export-sheet-preview small { color:#cbd5e1; font-size:.68rem; font-weight:400; line-height:1.45; }
+.export-workbook-controls { display:grid; grid-template-columns:minmax(170px,1fr) auto minmax(170px,1fr) auto; align-items:end; gap:.7rem; padding:1rem; border-radius:16px; background:rgba(15,23,42,.36); }
+.export-workbook-controls label { color:#d7def0; }
+.site-system-page.export-page .export-workbook-controls label > span { color:#d7def0; }
+.export-date-bridge { align-self:center; padding-top:1.25rem; color:#9aa7c0; }
+.export-workbook-note { display:flex; align-items:center; gap:.45rem; margin-top:.75rem; color:#cbd5e1; font-size:.68rem; }
+.export-workbook-note i { color:#6ee7b7; }
+.export-status { min-height:1rem; margin-top:.55rem; color:var(--export-muted); font-size:.68rem; }
+.export-status--light { color:#cbd5e1; }
+@media (max-width:900px) { .export-controls { grid-template-columns:1fr 1fr; } .export-sheet-preview { grid-template-columns:1fr; } .export-sheet-preview article { min-height:0; } .export-workbook-controls { grid-template-columns:1fr 1fr; } .export-date-bridge { display:none; } }
+@media (max-width:600px) { .export-intro,.export-heading,.export-workbook-heading { align-items:flex-start; flex-direction:column; } .export-intro-icon { display:none; } .export-format-key,.export-xlsx-mark { align-self:flex-start; } .export-controls,.export-workbook-controls { grid-template-columns:1fr; } .export-secondary-action,.export-primary-action { width:100%; } .export-panel,.export-workbook { padding:1rem; border-radius:18px; } }
+@media (min-width:768px) { body.professional-view .export-panel { border-color:transparent; box-shadow:none; } }
