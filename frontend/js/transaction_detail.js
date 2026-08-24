@@ -7,6 +7,11 @@
     const params = new URLSearchParams(window.location.search);
     const transactionId = params.get('id');
     let transaction = null;
+    let selectedTag = null;
+    let tagSearchTimer = null;
+    let tagSearchController = null;
+    let tagSearchSequence = 0;
+    let activeTagOption = -1;
 
     function byId(id) { return document.getElementById(id); }
     function setText(id, value) { const element=byId(id); if(element) element.textContent=value; }
@@ -102,11 +107,109 @@
         const option=document.createElement('option'); option.value=String(value); option.textContent=label; option.selected=Boolean(selected); option.disabled=Boolean(disabled); select.appendChild(option); return option;
     }
 
-    function populateEditor(tx, groups, categories, tags) {
-        const tagSelect=byId('tag-select'), tagInput=byId('tag'), categorySelect=byId('category'), groupSelect=byId('group');
-        const tagByName={};
-        tags.forEach(tag=>{addOption(tagSelect,tag.id,tag.name,String(tag.id)===String(tx.tag_id));tagByName[String(tag.name||'').toLowerCase()]=String(tag.id);});
-        if(!tx.tag_id&&tx.tag_name){const match=tagByName[String(tx.tag_name).toLowerCase()];if(match)tagSelect.value=match;else tagInput.value=tx.tag_name;}
+    function setTagPickerOpen(open) {
+        const search=byId('tag-search'), results=byId('tag-results');
+        results.hidden=!open;
+        search.setAttribute('aria-expanded',open?'true':'false');
+        if(!open){search.removeAttribute('aria-activedescendant');activeTagOption=-1;}
+    }
+
+    function setTagSearchStatus(message, tone) {
+        const status=byId('tag-search-status');
+        status.textContent=message;
+        status.classList.toggle('is-selected',tone==='selected');
+        status.classList.toggle('is-error',tone==='error');
+    }
+
+    function selectExistingTag(tag) {
+        window.clearTimeout(tagSearchTimer);
+        if(tagSearchController)tagSearchController.abort();
+        tagSearchSequence++;
+        selectedTag={id:Number(tag.id),name:String(tag.name)};
+        byId('tag-select').value=String(selectedTag.id);
+        byId('tag-search').value=selectedTag.name;
+        byId('tag').value='';
+        byId('tag-results').replaceChildren();
+        setTagPickerOpen(false);
+        setTagSearchStatus('Selected existing tag: '+selectedTag.name,'selected');
+    }
+
+    function clearExistingTagSelection(clearSearch) {
+        window.clearTimeout(tagSearchTimer);
+        if(tagSearchController)tagSearchController.abort();
+        tagSearchSequence++;
+        selectedTag=null;
+        byId('tag-select').value='';
+        if(clearSearch)byId('tag-search').value='';
+        byId('tag-results').replaceChildren();
+        setTagPickerOpen(false);
+        setTagSearchStatus('Start typing, or focus the field to browse tags alphabetically.');
+    }
+
+    function updateActiveTagOption(index) {
+        const options=Array.from(byId('tag-results').querySelectorAll('[role="option"]'));
+        if(!options.length)return;
+        activeTagOption=(index+options.length)%options.length;
+        options.forEach((option,optionIndex)=>option.setAttribute('aria-selected',optionIndex===activeTagOption?'true':'false'));
+        const active=options[activeTagOption];
+        byId('tag-search').setAttribute('aria-activedescendant',active.id);
+        active.scrollIntoView({block:'nearest'});
+    }
+
+    function renderTagResults(data, query) {
+        const results=byId('tag-results');
+        const matches=Array.isArray(data.tags)?data.tags:[];
+        results.replaceChildren(); activeTagOption=-1;
+        if(!matches.length){const empty=document.createElement('div');empty.className='transaction-tag-picker__empty';empty.textContent=query?'No existing tags match “'+query+'”.':'No existing tags are available.';results.appendChild(empty);setTagPickerOpen(true);setTagSearchStatus('No matching existing tags found.');return;}
+        matches.forEach(tag=>{
+            const option=document.createElement('button'),name=document.createElement('span'),identifier=document.createElement('span');
+            option.type='button'; option.id='transaction-tag-option-'+tag.id; option.className='transaction-tag-picker__option'; option.setAttribute('role','option'); option.setAttribute('aria-selected','false');
+            name.className='transaction-tag-picker__option-name'; name.textContent=tag.name;
+            identifier.className='transaction-tag-picker__option-id'; identifier.textContent='#'+tag.id;
+            option.append(name,identifier); option.addEventListener('click',()=>selectExistingTag(tag)); results.appendChild(option);
+        });
+        setTagPickerOpen(true);
+        const qualifier=query?' matching':' alphabetical';
+        const suffix=data.has_more?' Keep typing to narrow the list.':'';
+        setTagSearchStatus(matches.length+qualifier+' tag'+(matches.length===1?'':'s')+'.'+suffix);
+    }
+
+    async function searchExistingTags(query) {
+        if(tagSearchController)tagSearchController.abort();
+        tagSearchController=new AbortController();
+        const sequence=++tagSearchSequence;
+        const params=new URLSearchParams({options:'1',q:query,limit:'20'});
+        setTagSearchStatus('Searching existing tags…');
+        try{const data=await requestJson('../php_backend/public/tags.php?'+params.toString(),{signal:tagSearchController.signal});if(sequence!==tagSearchSequence)return;renderTagResults(data,query);}
+        catch(error){if(error.name==='AbortError')return;byId('tag-results').replaceChildren();setTagPickerOpen(false);setTagSearchStatus(error.message||'Existing tags could not be loaded.','error');}
+    }
+
+    function configureTagPicker(tx) {
+        const picker=byId('transaction-tag-picker'),search=byId('tag-search'),tagInput=byId('tag');
+        if(tx.tag_id&&tx.tag_name)selectExistingTag({id:tx.tag_id,name:tx.tag_name});
+        else if(tx.tag_name)tagInput.value=tx.tag_name;
+
+        search.addEventListener('input',()=>{
+            if(tagSearchController)tagSearchController.abort();
+            tagSearchSequence++; selectedTag=null; byId('tag-select').value=''; window.clearTimeout(tagSearchTimer);
+            const query=search.value.trim();
+            tagSearchTimer=window.setTimeout(()=>searchExistingTags(query),140);
+        });
+        search.addEventListener('focus',()=>{if(!byId('tag-results').children.length)searchExistingTags(selectedTag?selectedTag.name:search.value.trim());else setTagPickerOpen(true);});
+        search.addEventListener('keydown',event=>{
+            const options=Array.from(byId('tag-results').querySelectorAll('[role="option"]'));
+            if(event.key==='ArrowDown'&&options.length){event.preventDefault();updateActiveTagOption(activeTagOption+1);}
+            else if(event.key==='ArrowUp'&&options.length){event.preventDefault();updateActiveTagOption(activeTagOption-1);}
+            else if(event.key==='Enter'&&activeTagOption>=0&&options[activeTagOption]){event.preventDefault();options[activeTagOption].click();}
+            else if(event.key==='Escape')setTagPickerOpen(false);
+        });
+        document.addEventListener('pointerdown',event=>{if(!picker.contains(event.target))setTagPickerOpen(false);});
+        tagInput.addEventListener('input',()=>{if(tagInput.value.trim())clearExistingTagSelection(true);});
+    }
+
+    function populateEditor(tx, groups, categories) {
+        const categorySelect=byId('category'), groupSelect=byId('group');
+        configureTagPicker(tx);
         const segments={};
         categories.forEach(category=>{const segment=category.segment_name||'Unassigned';if(!segments[segment]){const group=document.createElement('optgroup');group.label=segment;segments[segment]=group;categorySelect.appendChild(group);}const option=document.createElement('option');option.value=String(category.id);option.textContent=category.name;option.selected=String(category.id)===String(tx.category_id);segments[segment].appendChild(option);});
         groups.forEach(group=>{if(group.active||String(group.id)===String(tx.group_id))addOption(groupSelect,group.id,group.name,String(group.id)===String(tx.group_id),!group.active&&String(group.id)!==String(tx.group_id));});
@@ -119,8 +222,6 @@
             catch(error){showError(error.message||'The group could not be created.');groupSelect.value='';}
             finally{groupSelect.disabled=false;}
         });
-        tagSelect.addEventListener('change',function(){if(tagSelect.value)tagInput.value='';});
-        tagInput.addEventListener('input',function(){if(tagInput.value.trim())tagSelect.value='';});
     }
 
     function configureActions(tx) {
@@ -153,10 +254,9 @@
             const results=await Promise.all([
                 requestJson('../php_backend/public/transaction.php?id='+encodeURIComponent(transactionId)),
                 requestJson('../php_backend/public/groups.php'),
-                requestJson('../php_backend/public/categories.php'),
-                requestJson('../php_backend/public/tags.php')
+                requestJson('../php_backend/public/categories.php')
             ]);
-            transaction=results[0]; renderHero(transaction); renderRecord(transaction); populateEditor(transaction,results[1],results[2],results[3]); configureActions(transaction); byId('transaction-form').addEventListener('submit',saveTransaction); byId('transaction-loading').hidden=true; byId('transaction-workspace').hidden=false;
+            transaction=results[0]; renderHero(transaction); renderRecord(transaction); populateEditor(transaction,results[1],results[2]); configureActions(transaction); byId('transaction-form').addEventListener('submit',saveTransaction); byId('transaction-loading').hidden=true; byId('transaction-workspace').hidden=false;
         }catch(error){byId('transaction-loading').hidden=true;showError(error.message||'The transaction could not be loaded.');setText('transaction-hero-description','Transaction detail unavailable. Please return to Search and try again.');}
     }
 

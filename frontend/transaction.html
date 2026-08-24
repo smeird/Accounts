@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="transactions_workspace.css">
-    <link rel="stylesheet" href="transaction_detail.css?v=20260815-pill-key">
+    <link rel="stylesheet" href="transaction_detail.css?v=20260824-tag-picker">
 </head>
 <body class="ops-body transaction-page transaction-detail-page">
 <div class="flex min-h-screen">
@@ -71,7 +71,18 @@
             <form id="transaction-form" class="transaction-card transaction-detail-card transaction-editor no-print" data-no-card="true">
                 <div class="transaction-card__header"><div><p class="transaction-section-label">Classification</p><h2>Organise this movement</h2><p class="transaction-card__copy">Refine where this transaction belongs. Changes flow into dashboards, budgets and reports.</p></div></div>
                 <div class="transaction-field-stack">
-                    <label class="transaction-field" for="tag-select"><span>Existing tag <small>Choose one to reuse</small></span><select id="tag-select" data-help="Choose an existing tag name to reuse it"><option value="">Select an existing tag</option></select></label>
+                    <div class="transaction-field">
+                        <label for="tag-search"><span>Existing tag <small>Search and choose one to reuse</small></span></label>
+                        <div id="transaction-tag-picker" class="transaction-tag-picker">
+                            <div class="transaction-tag-picker__field">
+                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                                <input id="tag-search" class="transaction-tag-picker__input" type="search" placeholder="Search existing tags…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tag-results" aria-describedby="tag-search-status" data-help="Search by tag name. Results are limited and shown alphabetically.">
+                            </div>
+                            <input id="tag-select" type="hidden" value="">
+                            <div id="tag-search-status" class="transaction-tag-picker__status" role="status" aria-live="polite">Start typing, or focus the field to browse tags alphabetically.</div>
+                            <div id="tag-results" class="transaction-tag-picker__results" role="listbox" aria-label="Existing tag matches" hidden></div>
+                        </div>
+                    </div>
                     <label class="transaction-field" for="tag"><span>Or create a new tag <small>Only used when no tag is selected</small></span><input type="text" id="tag" placeholder="Enter a new tag name" autocomplete="off" data-help="Only fill this in when you need to create a brand new tag"></label>
                     <label class="transaction-field" for="category"><span>Category <small>Grouped by segment</small></span><select id="category" data-help="Assign a category"><option value="">No category</option></select></label>
                     <label class="transaction-field" for="group"><span>Group <small>Optional reporting group</small></span><select id="group" data-help="Assign a group"><option value="">No group</option></select></label>
@@ -95,7 +106,7 @@
 </script>
 <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
-<script src="js/transaction_detail.js"></script>
+<script src="js/transaction_detail.js?v=20260824-tag-picker"></script>
 <script src="js/overlay.js"></script>
 </body>
 </html>
