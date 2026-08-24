@@ -45,6 +45,7 @@ $data = json_decode(file_get_contents('php://input'), true) ?? [];
 $alias = trim($data['alias'] ?? '');
 $tagId = (int)($data['tag_id'] ?? 0);
 $matchType = $data['match_type'] ?? 'contains';
+$direction = TagAlias::normalizeDirection((string)($data['direction'] ?? 'any'));
 $active = isset($data['active'])
     ? filter_var($data['active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
     : true;
@@ -65,7 +66,7 @@ try {
             return;
         }
 
-        $id = TagAlias::create($tagId, $alias, $matchType, $active);
+        $id = TagAlias::create($tagId, $alias, $matchType, $active, 'manual', null, 1, $direction);
         Tag::clearMatchCaches();
         Log::write('Created tag alias ' . $alias . ' for tag ' . $tagId);
         echo json_encode(['id' => $id]);
@@ -82,7 +83,7 @@ try {
             return;
         }
 
-        TagAlias::update($id, $tagId, $alias, $matchType, $active);
+        TagAlias::update($id, $tagId, $alias, $matchType, $active, $direction);
         Tag::clearMatchCaches();
         Log::write('Updated tag alias ' . $id);
         echo json_encode(['status' => 'ok']);

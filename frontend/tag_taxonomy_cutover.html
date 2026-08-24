@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Taxonomy Cutover</title>
+    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="site_system.css">
+    <link rel="stylesheet" href="utility_refresh.css">
+    <link rel="stylesheet" href="tag_taxonomy_cutover.css?v=20260824-phase3">
+</head>
+<body class="ops-body utility-refresh-page taxonomy-cutover-page">
+    <div class="flex min-h-screen">
+        <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+        <main class="ops-main flex-1 min-w-0 overflow-x-auto">
+            <section id="cutover-status" class="cutover-hero" aria-live="polite" aria-busy="true">
+                <div class="cutover-hero__icon" aria-hidden="true"><i class="fas fa-shuffle"></i></div>
+                <div>
+                    <span class="cutover-eyebrow">Phase 3 · Reconciled cutover</span>
+                    <h2 id="cutover-status-title">Checking the reviewed taxonomy…</h2>
+                    <p id="cutover-status-copy">No change will be made until every safeguard passes and the final action is explicitly confirmed.</p>
+                </div>
+                <span id="cutover-state" class="cutover-state">Read-only preview</span>
+            </section>
+
+            <section class="cards cards-solid cutover-controls" aria-label="Cutover controls">
+                <div>
+                    <label for="cutover-run">Reviewed baseline</label>
+                    <select id="cutover-run"></select>
+                    <small id="cutover-run-detail">Loading reviewed taxonomy runs…</small>
+                </div>
+                <button id="cutover-refresh" class="cutover-button cutover-button--secondary" type="button">
+                    <i class="fas fa-rotate" aria-hidden="true"></i><span>Refresh checks</span>
+                </button>
+            </section>
+
+            <section class="cutover-metrics" aria-label="Cutover summary">
+                <article><span>Transactions ready</span><strong id="cutover-transactions">—</strong><small id="cutover-coverage">Awaiting preview</small></article>
+                <article><span>Canonical tags</span><strong id="cutover-tags">—</strong><small id="cutover-tags-detail">New and reused</small></article>
+                <article><span>Direction-aware rules</span><strong id="cutover-aliases">—</strong><small>Incoming and outgoing stay distinct</small></article>
+                <article><span>Left untouched</span><strong id="cutover-deferred">—</strong><small id="cutover-untouched-detail">Deferred and protected</small></article>
+            </section>
+
+            <section class="cutover-grid">
+                <article class="cards cutover-safety-card">
+                    <div class="cutover-section-heading">
+                        <div>
+                            <span class="cutover-eyebrow">Safety gate</span>
+                            <h2>Reconciliation before writing</h2>
+                        </div>
+                        <span id="cutover-gate" class="cutover-gate">Checking</span>
+                    </div>
+                    <ul id="cutover-checks" class="cutover-checks"></ul>
+                    <div id="cutover-blockers" class="cutover-blockers" hidden></div>
+                </article>
+
+                <article class="cards cutover-finance-card">
+                    <span class="cutover-eyebrow">Financial fingerprint</span>
+                    <h2>Money values are immutable</h2>
+                    <dl>
+                        <div><dt>Transactions</dt><dd id="cutover-fingerprint-count">—</dd></div>
+                        <div><dt>Signed total</dt><dd id="cutover-fingerprint-signed">—</dd></div>
+                        <div><dt>Absolute activity</dt><dd id="cutover-fingerprint-absolute">—</dd></div>
+                    </dl>
+                    <p>The same fingerprint must exist after apply or rollback, otherwise the database transaction is cancelled.</p>
+                </article>
+            </section>
+
+            <section class="cards cutover-plan-card">
+                <div class="cutover-section-heading">
+                    <div>
+                        <span class="cutover-eyebrow">Reviewed plan</span>
+                        <h2>Exactly what will become live</h2>
+                        <p>Canonical tags, their reporting category, and the strongest direction-aware transaction rules.</p>
+                    </div>
+                </div>
+                <div id="cutover-proposals" class="cutover-proposals" aria-live="polite"></div>
+            </section>
+
+            <section class="cutover-action-bar" aria-label="Apply or rollback taxonomy">
+                <div>
+                    <strong id="cutover-action-title">No live changes yet</strong>
+                    <span id="cutover-action-copy">Refresh the preview to confirm that every safety check passes.</span>
+                </div>
+                <button id="cutover-rollback" class="cutover-button cutover-button--rollback" type="button" hidden>Rollback cutover</button>
+                <button id="cutover-apply" class="cutover-button cutover-button--apply" type="button" disabled>Apply reviewed taxonomy</button>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="cutover-confirm" class="cutover-dialog">
+        <form method="dialog">
+            <span class="cutover-eyebrow">Explicit confirmation</span>
+            <h2 id="cutover-confirm-title">Confirm taxonomy cutover</h2>
+            <p id="cutover-confirm-copy"></p>
+            <label for="cutover-confirm-input">Type <code id="cutover-confirm-phrase"></code></label>
+            <input id="cutover-confirm-input" type="text" autocomplete="off" spellcheck="false">
+            <div>
+                <button value="cancel" class="cutover-button cutover-button--secondary">Cancel</button>
+                <button id="cutover-confirm-submit" value="default" class="cutover-button cutover-button--apply" disabled>Confirm</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/page_header.js"></script>
+    <script>
+        window.renderPageHeader(document.querySelector('main.ops-main'), {
+            title: 'Taxonomy Cutover',
+            breadcrumb: 'System / Tag Rebuild',
+            subtitle: 'Apply the reviewed tag language atomically, reconcile it, and retain a safe rollback path.'
+        });
+    </script>
+    <script src="js/menu.js"></script>
+    <script src="js/input_help.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="js/tag_taxonomy_cutover.js?v=20260824-phase3"></script>
+</body>
+</html>

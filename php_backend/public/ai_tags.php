@@ -125,7 +125,7 @@ foreach ($categories as $category) {
         'tokens' => categoryTokens($normalizedName),
     ];
 }
-$tagContextRows = $db->query('SELECT t.id AS tag_id, t.name AS tag_name, ta.alias FROM tags t LEFT JOIN tag_aliases ta ON ta.tag_id = t.id AND ta.active = 1 ORDER BY t.name ASC, ta.id ASC')->fetchAll(PDO::FETCH_ASSOC);
+$tagContextRows = $db->query("SELECT t.id AS tag_id, t.name AS tag_name, ta.alias, ta.direction FROM tags t LEFT JOIN tag_aliases ta ON ta.tag_id = t.id AND ta.active = 1 WHERE t.status = 'active' ORDER BY t.name ASC, ta.id ASC")->fetchAll(PDO::FETCH_ASSOC);
 $tagContext = AiTaggingPipeline::buildAliasAwareTagContext($tagContextRows, 5, 2500);
 
 $txnMap = [];
@@ -265,7 +265,7 @@ foreach ($suggestions as $s) {
 
     $txn = $txnMap[$txId] ?? null;
     if (!$txn) continue;
-    $resolved = AiTaggingPipeline::resolveCanonicalTag((string)$tagName, $tagContext['canonicalByName'], $tagContext['aliasToCanonical']);
+    $resolved = AiTaggingPipeline::resolveCanonicalTag((string)$tagName, $tagContext['canonicalByName'], $tagContext['aliasToCanonical'], (float)$txn['amount']);
     if ($resolved !== null) {
         $tagId = (int)$resolved['id'];
         $canonicalTagName = $resolved['name'];
@@ -291,7 +291,7 @@ foreach ($suggestions as $s) {
     // Every accepted AI decision teaches the deterministic application matcher.
     // This is deliberately separate from the tag name so one canonical tag can
     // accumulate many merchants without creating a tag per transaction.
-    $learned = Tag::learnTransactionAlias((int)$tagId, (string)$txn['description'], $txn['memo'], 'ai');
+    $learned = Tag::learnTransactionAlias((int)$tagId, (string)$txn['description'], $txn['memo'], 'ai', (float)$txn['amount']);
     $learned['tx_id'] = (int)$txId;
     $learned['canonical'] = (string)$tagName;
     $learned['trigger'] = $resolved !== null ? $resolved['source'] : 'new_or_normalized_canonical';

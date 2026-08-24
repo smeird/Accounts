@@ -33,7 +33,19 @@ Every canonical proposal must be reviewed. A reviewer can edit the name, definit
 
 The taxonomy can be marked ready when every eligible pattern resolves to an approved canonical proposal. Once transaction coverage reaches 95%, the reviewer may instead choose **Finish and defer remainder**. This requires every active canonical proposal to be approved and records the unresolved patterns as deferred, leaving those transactions unchanged. Ready means the staging vocabulary is frozen for the later cutover phase; it still does not create live tags, aliases or transaction assignments.
 
-Full backups use format version 4 and preserve the baseline, candidate patterns, canonical proposals, reviews and transaction-level staging coverage.
+## Phase 3: reconcile and apply
+
+After Phase 3 is deployed, run **System → Database Health** once more. This adds direction to live alias rules and the cutover audit field. Existing rules default to **Either direction**; reviewed patterns create distinct incoming and outgoing rules where the same wording has different meanings, such as a purchase and its refund.
+
+Open **System → Taxonomy Cutover** to review the exact plan. Apply stays disabled unless the immutable snapshot hash is valid, approved coverage is at least 95%, every analysed pattern points to one approved tag, and no direction-specific alias points to competing destinations. The preview identifies new and reused tags, category and segment mappings, direction-aware aliases, deferred transactions, newly protected transactions and imports made after the snapshot.
+
+The confirmed cutover runs inside one database transaction. It creates or reuses the reviewed canonical tags, installs their direction-aware aliases, applies reviewed category and segment relationships, and retags only covered, eligible snapshot transactions. Transfers, `IGNORE` rows, deferred patterns and post-snapshot imports remain unchanged. Old tags are deprecated only when the cutover leaves them unused.
+
+Before commit, the service verifies every expected classification, hashes the untouched classification set, and compares the complete ledger transaction count, signed amount total and absolute amount total with the pre-cutover fingerprint. Any difference cancels the entire operation. The audit record retains the previous tag, alias and category state plus the immutable snapshot reference.
+
+A rollback is available only while the audited cutover state still matches live state. It restores snapshot classifications and the previous taxonomy relationships atomically, leaves post-snapshot transactions untouched, and reconciles the financial fingerprint again. If later manual changes would make rollback unsafe, it is blocked instead of overwriting them.
+
+Full backups use format version 5 and preserve the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
 
 ## Acceptance thresholds
 

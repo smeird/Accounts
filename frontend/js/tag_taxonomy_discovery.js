@@ -49,6 +49,7 @@ function initTagTaxonomyDiscovery() {
     const batchSize = document.getElementById('taxonomy-batch-size');
     const refreshButton = document.getElementById('taxonomy-refresh');
     const readyButton = document.getElementById('taxonomy-ready');
+    const cutoverLink = document.getElementById('taxonomy-cutover-link');
     const readyButtonLabel = readyButton.querySelector('span');
     const proposalsNode = document.getElementById('taxonomy-proposals');
     let view = null;
@@ -75,6 +76,7 @@ function initTagTaxonomyDiscovery() {
         const isStaging = run && run.status === 'staging';
         const prepared = run && Boolean(run.discovery_started_at);
         const canFinishEarly = taxonomyCanFinishEarly(view);
+        cutoverLink.hidden = !(run && ['ready', 'applied', 'rolled_back'].includes(run.status));
         prepareButton.disabled = busy || !view || !view.schemaReady || !run || prepared || run.status !== 'snapshot';
         analyseButton.disabled = busy || !isStaging || Number((view.metrics || {}).pending_patterns || 0) === 0;
         batchSize.disabled = busy || !isStaging;

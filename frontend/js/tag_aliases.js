@@ -196,6 +196,11 @@ async function loadAliases() {
             { title: 'Canonical Tag', field: 'tag_name', formatter: badgeFormatter('bg-indigo-200 text-indigo-800') },
             { title: 'Match Type', field: 'match_type' },
             {
+                title: 'Direction',
+                field: 'direction',
+                formatter: cell => ({ outgoing: 'Money leaving', incoming: 'Money arriving', any: 'Either direction' }[String(cell.getValue() || 'any')] || 'Either direction')
+            },
+            {
                 title: 'Active',
                 field: 'active',
                 formatter: cell => Number(cell.getValue()) === 1 ? 'Yes' : 'No'
@@ -219,6 +224,8 @@ async function loadAliases() {
                         if (matchType === null) return;
                         const activeInput = prompt('Active? (yes/no)', Number(row.active) === 1 ? 'yes' : 'no');
                         if (activeInput === null) return;
+                        const direction = prompt('Direction (any/outgoing/incoming)', row.direction || 'any');
+                        if (direction === null) return;
 
                         try {
                             await fetchJson('../php_backend/public/tag_aliases.php', {
@@ -229,6 +236,7 @@ async function loadAliases() {
                                     alias,
                                     tag_id: Number(tagInput),
                                     match_type: matchType,
+                                    direction,
                                     active: activeInput.toLowerCase() === 'yes' || activeInput === '1' || activeInput.toLowerCase() === 'true'
                                 })
                             });
@@ -282,6 +290,7 @@ document.getElementById('tag-alias-form').addEventListener('submit', async event
         alias: document.getElementById('alias').value,
         tag_id: canonicalTagId,
         match_type: document.getElementById('match_type').value,
+        direction: document.getElementById('direction').value,
         active: document.getElementById('active').checked
     };
     const canonicalTagName = selectedTag.name;

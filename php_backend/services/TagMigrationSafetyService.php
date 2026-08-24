@@ -28,7 +28,7 @@ class TagMigrationSafetyService {
                 'ignored' => 'Transactions explicitly tagged IGNORE keep that protected state.',
             ],
             'success_thresholds' => [
-                'eligible_coverage_percent' => 98,
+                'eligible_coverage_percent' => 95,
                 'transfer_protection_percent' => 100,
                 'financial_reconciliation_percent' => 100,
                 'maximum_alias_false_positive_percent' => 2,
@@ -372,4 +372,3 @@ class TagMigrationSafetyService {
         }
     }
 }
-

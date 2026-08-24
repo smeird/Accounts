@@ -38,10 +38,12 @@ class AiTaggingPipeline {
                 continue;
             }
 
-            if (!isset($aliasToCanonical[$aliasNormalized])) {
-                $aliasToCanonical[$aliasNormalized] = $canonical;
+            $direction = TagAlias::normalizeDirection((string)($row['direction'] ?? 'any'));
+            $aliasKey = $direction . '|' . $aliasNormalized;
+            if (!isset($aliasToCanonical[$aliasKey])) {
+                $aliasToCanonical[$aliasKey] = $canonical;
             }
-            $aliasesByTag[$tagId]['aliases'][$aliasNormalized] = $alias;
+            $aliasesByTag[$tagId]['aliases'][$aliasKey] = $direction === 'any' ? $alias : ($alias . ' [' . $direction . ']');
         }
 
         $lines = [];
@@ -86,7 +88,7 @@ class AiTaggingPipeline {
      *
      * @return array|null ['id' => int, 'name' => string, 'source' => 'canonical'|'alias']
      */
-    public static function resolveCanonicalTag(string $modelTag, array $canonicalByName, array $aliasToCanonical): ?array {
+    public static function resolveCanonicalTag(string $modelTag, array $canonicalByName, array $aliasToCanonical, ?float $amount = null): ?array {
         $normalized = self::normalizeText($modelTag);
         if ($normalized === '') {
             return null;
@@ -97,9 +99,14 @@ class AiTaggingPipeline {
         }
 
         $aliasNormalized = TagAlias::normalizeAlias($modelTag);
-        if ($aliasNormalized !== '' && isset($aliasToCanonical[$aliasNormalized])) {
-            $canonical = $aliasToCanonical[$aliasNormalized];
-            return ['id' => (int)$canonical['id'], 'name' => (string)$canonical['name'], 'source' => 'alias'];
+        if ($aliasNormalized !== '') {
+            $direction = $amount === null || abs($amount) < 0.00001 ? 'any' : ($amount < 0 ? 'outgoing' : 'incoming');
+            foreach ([$direction . '|' . $aliasNormalized, 'any|' . $aliasNormalized] as $aliasKey) {
+                if (isset($aliasToCanonical[$aliasKey])) {
+                    $canonical = $aliasToCanonical[$aliasKey];
+                    return ['id' => (int)$canonical['id'], 'name' => (string)$canonical['name'], 'source' => 'alias'];
+                }
+            }
         }
 
         return null;

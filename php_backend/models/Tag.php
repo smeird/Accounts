@@ -95,7 +95,7 @@ class Tag {
         $queryEmpty = $query === '' ? 1 : 0;
 
         $sql = 'SELECT `id`, `name` FROM `tags` '
-             . 'WHERE (:query_empty = 1 OR `name` LIKE :contains ESCAPE \'!\') '
+             . "WHERE `status` = 'active' AND (:query_empty = 1 OR `name` LIKE :contains ESCAPE '!') "
              . 'ORDER BY CASE WHEN :prefix_empty = 0 AND `name` LIKE :prefix ESCAPE \'!\' THEN 0 ELSE 1 END, '
              . '`name` ASC, `id` ASC LIMIT :result_limit';
         $stmt = $db->prepare($sql);
@@ -171,13 +171,18 @@ class Tag {
     /**
      * Find a tag whose keyword appears in the provided text.
      */
-    public static function findMatch(string $text): ?int {
+    public static function findMatch(string $text, ?float $amount = null): ?int {
         if (self::$aliasCache === null) {
             self::$aliasCache = TagAlias::activeMappings();
         }
 
         $normalizedText = self::normalizeMatchPhrase($text);
+        $transactionDirection = $amount === null || abs($amount) < 0.00001 ? 'any' : ($amount < 0 ? 'outgoing' : 'incoming');
         foreach (self::$aliasCache as $row) {
+            $aliasDirection = TagAlias::normalizeDirection((string)($row['direction'] ?? 'any'));
+            if ($aliasDirection !== 'any' && $aliasDirection !== $transactionDirection) {
+                continue;
+            }
             $normalizedAlias = self::normalizeMatchPhrase((string)$row['alias']);
             if ($normalizedAlias === '') {
                 continue;
@@ -192,7 +197,7 @@ class Tag {
 
         if (self::$keywordCache === null) {
             $db = Database::getConnection();
-            $stmt = $db->query('SELECT `id`, `keyword` FROM `tags` WHERE `keyword` IS NOT NULL AND `keyword` != ""');
+            $stmt = $db->query("SELECT `id`, `keyword` FROM `tags` WHERE `status` = 'active' AND `keyword` IS NOT NULL AND `keyword` != ''");
             self::$keywordCache = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         foreach (self::$keywordCache as $row) {
@@ -210,7 +215,7 @@ class Tag {
      *
      * @return array{status:string,alias:?string,tag_id:int,existing_tag_id:?int}
      */
-    public static function learnTransactionAlias(int $tagId, string $description, ?string $memo = null, string $origin = 'manual'): array {
+    public static function learnTransactionAlias(int $tagId, string $description, ?string $memo = null, string $origin = 'manual', ?float $amount = null): array {
         $alias = self::buildReusableAlias($description, $memo);
         $result = [
             'status' => 'filtered',
@@ -224,8 +229,9 @@ class Tag {
 
         $db = Database::getConnection();
         $normalized = TagAlias::normalizeAlias($alias);
-        $stmt = $db->prepare('SELECT `id`, `tag_id` FROM `tag_aliases` WHERE `alias_normalized` = :alias LIMIT 1');
-        $stmt->execute(['alias' => $normalized]);
+        $direction = $amount === null || abs($amount) < 0.00001 ? 'any' : ($amount < 0 ? 'outgoing' : 'incoming');
+        $stmt = $db->prepare('SELECT `id`, `tag_id` FROM `tag_aliases` WHERE `alias_normalized` = :alias AND `direction` = :direction LIMIT 1');
+        $stmt->execute(['alias' => $normalized, 'direction' => $direction]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($existing) {
             $existingTagId = (int)$existing['tag_id'];
@@ -243,13 +249,13 @@ class Tag {
         }
 
         try {
-            TagAlias::create($tagId, $alias, 'contains', true, self::normalizeOrigin($origin));
+            TagAlias::create($tagId, $alias, 'contains', true, self::normalizeOrigin($origin), null, 1, $direction);
             self::clearMatchCaches();
             $result['status'] = 'created';
             return $result;
         } catch (PDOException $e) {
             // A concurrent request may have inserted the alias after our lookup.
-            $stmt->execute(['alias' => $normalized]);
+            $stmt->execute(['alias' => $normalized, 'direction' => $direction]);
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($existing) {
                 $existingTagId = (int)$existing['tag_id'];
@@ -410,12 +416,12 @@ class Tag {
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `description`, `memo`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL AND `transfer_id` IS NULL');
+        $stmt = $db->prepare('SELECT `id`, `description`, `memo`, `amount`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL AND `transfer_id` IS NULL');
         $stmt->execute(['acc' => $accountId]);
         $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
         $updated = 0;
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $tx) {
-            $tagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']));
+            $tagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']), (float)$tx['amount']);
             if ($tagId === null && $tx['ofx_type'] === 'INT') {
                 $tagId = self::getInterestChargeId();
             }
@@ -449,7 +455,7 @@ class Tag {
      */
     public static function remapAllTransactionsToCanonicalTags(bool $applyChanges = false): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `description`, `memo`, `ofx_type`, `tag_id` FROM `transactions` WHERE `transfer_id` IS NULL');
+        $stmt = $db->query('SELECT `id`, `description`, `memo`, `amount`, `ofx_type`, `tag_id` FROM `transactions` WHERE `transfer_id` IS NULL');
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $moves = [];
@@ -458,7 +464,7 @@ class Tag {
 
         foreach ($rows as $tx) {
             $currentTagId = $tx['tag_id'] !== null ? (int)$tx['tag_id'] : null;
-            $newTagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']));
+            $newTagId = self::findMatch(self::buildMatchText($tx['description'], $tx['memo']), (float)$tx['amount']);
             if ($newTagId === null && $tx['ofx_type'] === 'INT') {
                 $newTagId = self::getInterestChargeId();
             }
