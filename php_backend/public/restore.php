@@ -87,7 +87,7 @@ try {
     }
     if (isset($data['_meta'])) {
         if (($data['_meta']['format'] ?? '') !== 'newaccounts-backup'
-            || (int)($data['_meta']['version'] ?? 0) > 4) {
+            || (int)($data['_meta']['version'] ?? 0) > 5) {
             throw new InvalidArgumentException('Unsupported backup format or version.');
         }
         foreach (($data['_meta']['counts'] ?? []) as $section => $expected) {
@@ -235,7 +235,7 @@ try {
     }
 
     if (isset($data['tag_aliases'])) {
-        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, active, origin, confidence, support_count, last_matched_at, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :active, :origin, :confidence, :support_count, :last_matched_at, :created_at, :updated_at)');
+        $stmtAlias = $db->prepare('INSERT INTO tag_aliases (id, tag_id, alias, alias_normalized, match_type, direction, active, origin, confidence, support_count, last_matched_at, created_at, updated_at) VALUES (:id, :tag_id, :alias, :alias_normalized, :match_type, :direction, :active, :origin, :confidence, :support_count, :last_matched_at, :created_at, :updated_at)');
         foreach ($data['tag_aliases'] as $row) {
             $alias = trim((string)($row['alias'] ?? ''));
             if ($alias === '') {
@@ -248,6 +248,7 @@ try {
                 'alias' => $alias,
                 'alias_normalized' => TagAlias::normalizeAlias($alias),
                 'match_type' => ($row['match_type'] ?? 'contains') === 'exact' ? 'exact' : 'contains',
+                'direction' => TagAlias::normalizeDirection((string)($row['direction'] ?? 'any')),
                 'active' => isset($row['active']) ? (int)$row['active'] : 1,
                 'origin' => in_array(($row['origin'] ?? 'legacy'), ['system', 'manual', 'ai', 'legacy'], true) ? ($row['origin'] ?? 'legacy') : 'legacy',
                 'confidence' => isset($row['confidence']) && is_numeric($row['confidence']) ? max(0, min(1, (float)$row['confidence'])) : null,
@@ -365,7 +366,7 @@ try {
     }
 
     if (isset($data['tag_migration_runs'])) {
-        $stmtMigrationRun = $db->prepare('INSERT INTO tag_migration_runs (id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, discovery_started_at, ready_at, applied_at, rolled_back_at) VALUES (:id, :name, :status, :contract_version, :created_by, :transaction_count, :eligible_count, :protected_transfer_count, :protected_ignore_count, :snapshot_hash, :created_at, :discovery_started_at, :ready_at, :applied_at, :rolled_back_at)');
+        $stmtMigrationRun = $db->prepare('INSERT INTO tag_migration_runs (id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, discovery_started_at, ready_at, applied_at, rolled_back_at, cutover_summary) VALUES (:id, :name, :status, :contract_version, :created_by, :transaction_count, :eligible_count, :protected_transfer_count, :protected_ignore_count, :snapshot_hash, :created_at, :discovery_started_at, :ready_at, :applied_at, :rolled_back_at, :cutover_summary)');
         $validRunStatuses = ['snapshot', 'staging', 'ready', 'applied', 'rolled_back', 'cancelled'];
         foreach ($data['tag_migration_runs'] as $row) {
             $stmtMigrationRun->execute([
@@ -384,6 +385,7 @@ try {
                 'ready_at' => $row['ready_at'] ?? null,
                 'applied_at' => $row['applied_at'] ?? null,
                 'rolled_back_at' => $row['rolled_back_at'] ?? null,
+                'cutover_summary' => $row['cutover_summary'] ?? null,
             ]);
         }
     }

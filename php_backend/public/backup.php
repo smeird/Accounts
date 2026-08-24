@@ -36,7 +36,7 @@ try {
     $data = [];
     $data['_meta'] = [
         'format' => 'newaccounts-backup',
-        'version' => 4,
+        'version' => 5,
         'created_at' => gmdate('c'),
         'parts' => array_values($parts),
     ];
@@ -53,7 +53,7 @@ try {
     }
     if (in_array('tags', $parts)) {
         $data['tags'] = $getAll('SELECT id, name, name_normalized, keyword, description, origin, status, merged_into_tag_id, created_at, updated_at FROM tags ORDER BY id');
-        $data['tag_aliases'] = $getAll('SELECT id, tag_id, alias, alias_normalized, match_type, active, origin, confidence, support_count, last_matched_at, created_at, updated_at FROM tag_aliases ORDER BY id');
+        $data['tag_aliases'] = $getAll('SELECT id, tag_id, alias, alias_normalized, match_type, direction, active, origin, confidence, support_count, last_matched_at, created_at, updated_at FROM tag_aliases ORDER BY id');
     }
     if (in_array('categories', $parts) || in_array('tags', $parts)) {
         $data['category_tags'] = $getAll('SELECT category_id, tag_id FROM category_tags ORDER BY category_id, tag_id');
@@ -81,7 +81,7 @@ try {
         $data['projects'] = $getAll('SELECT id, name, description, rationale, cost_low, cost_medium, cost_high, funding_source, recurring_cost, estimated_time, expected_lifespan, benefit_financial, benefit_quality, benefit_risk, benefit_sustainability, weight_financial, weight_quality, weight_risk, weight_sustainability, dependencies, risks, archived, group_id, created_at FROM projects ORDER BY id');
     }
     if (in_array('tag_migrations', $parts)) {
-        $data['tag_migration_runs'] = $getAll('SELECT id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, discovery_started_at, ready_at, applied_at, rolled_back_at FROM tag_migration_runs ORDER BY id');
+        $data['tag_migration_runs'] = $getAll('SELECT id, name, status, contract_version, created_by, transaction_count, eligible_count, protected_transfer_count, protected_ignore_count, snapshot_hash, created_at, discovery_started_at, ready_at, applied_at, rolled_back_at, cutover_summary FROM tag_migration_runs ORDER BY id');
         $data['transaction_classification_snapshots'] = $getAll('SELECT run_id, transaction_id, tag_id, category_id, segment_id, eligible, protection_reason, created_at FROM transaction_classification_snapshots ORDER BY run_id, transaction_id');
         $data['tag_taxonomy_proposals'] = $getAll('SELECT id, run_id, canonical_name, canonical_name_normalized, description, category_id, confidence, rationale, status, origin, pattern_count, transaction_count, absolute_amount, reviewed_by, reviewed_at, created_at, updated_at FROM tag_taxonomy_proposals ORDER BY id');
         $data['tag_taxonomy_patterns'] = $getAll('SELECT id, run_id, proposal_id, signature, alias, alias_normalized, direction, sample_description, sample_memo, current_tags, transaction_count, absolute_amount, first_seen, last_seen, confidence, rationale, status, created_at, updated_at FROM tag_taxonomy_patterns ORDER BY id');

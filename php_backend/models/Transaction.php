@@ -196,7 +196,7 @@ class Transaction {
         }
 
         if ($tag === null) {
-            $tag = Tag::findMatch(Tag::buildMatchText($description, $memo));
+            $tag = Tag::findMatch(Tag::buildMatchText($description, $memo), $amount);
             if ($tag === null && $ofx_type === 'INT') {
                 $tag = Tag::getInterestChargeId();
             }

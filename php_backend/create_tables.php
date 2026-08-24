@@ -152,10 +152,11 @@ CREATE TABLE IF NOT EXISTS tag_aliases (
     alias VARCHAR(150) NOT NULL,
     alias_normalized VARCHAR(150) NOT NULL,
     match_type ENUM('exact', 'contains') NOT NULL DEFAULT 'contains',
+    direction ENUM('any', 'outgoing', 'incoming') NOT NULL DEFAULT 'any',
     active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_alias_normalized (alias_normalized),
+    UNIQUE KEY unique_alias_direction (alias_normalized, direction),
     KEY idx_tag_aliases_tag_id (tag_id),
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
@@ -287,10 +288,11 @@ if ($result->rowCount() === 0) {
         `alias` VARCHAR(150) NOT NULL,
         `alias_normalized` VARCHAR(150) NOT NULL,
         `match_type` ENUM('exact','contains') NOT NULL DEFAULT 'contains',
+        `direction` ENUM('any','outgoing','incoming') NOT NULL DEFAULT 'any',
         `active` TINYINT(1) DEFAULT 1,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY `unique_alias_normalized` (`alias_normalized`),
+        UNIQUE KEY `unique_alias_direction` (`alias_normalized`, `direction`),
         KEY `idx_tag_aliases_tag_id` (`tag_id`),
         FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE CASCADE
     )");
@@ -306,6 +308,13 @@ if ($result->rowCount() === 0) {
 $result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'match_type'");
 if ($result->rowCount() === 0) {
     $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `match_type` ENUM('exact','contains') NOT NULL DEFAULT 'contains'");
+}
+
+// Direction-specific rules allow identical bank wording to resolve differently
+// for money leaving and arriving. Legacy rules remain valid for either direction.
+$result = $db->query("SHOW COLUMNS FROM `tag_aliases` LIKE 'direction'");
+if ($result->rowCount() === 0) {
+    $db->exec("ALTER TABLE `tag_aliases` ADD COLUMN `direction` ENUM('any','outgoing','incoming') NOT NULL DEFAULT 'any' AFTER `match_type`");
 }
 
 // Ensure active column exists in tag_aliases
@@ -329,8 +338,13 @@ if ($result->rowCount() === 0) {
 $db->exec("UPDATE `tag_aliases` SET `alias_normalized` = LOWER(TRIM(`alias`)) WHERE `alias_normalized` = '' OR `alias_normalized` IS NULL");
 
 $result = $db->query("SHOW INDEX FROM `tag_aliases` WHERE Key_name = 'unique_alias_normalized'");
+if ($result->rowCount() > 0) {
+    $db->exec("ALTER TABLE `tag_aliases` DROP INDEX `unique_alias_normalized`");
+}
+
+$result = $db->query("SHOW INDEX FROM `tag_aliases` WHERE Key_name = 'unique_alias_direction'");
 if ($result->rowCount() === 0) {
-    $db->exec("ALTER TABLE `tag_aliases` ADD UNIQUE KEY `unique_alias_normalized` (`alias_normalized`)");
+    $db->exec("ALTER TABLE `tag_aliases` ADD UNIQUE KEY `unique_alias_direction` (`alias_normalized`, `direction`)");
 }
 
 $result = $db->query("SHOW INDEX FROM `tag_aliases` WHERE Key_name = 'idx_tag_aliases_tag_id'");

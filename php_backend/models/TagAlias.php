@@ -8,7 +8,7 @@ class TagAlias {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.active '
+        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.direction, ta.active '
              . 'FROM tag_aliases ta '
              . 'INNER JOIN tags t ON t.id = ta.tag_id '
              . 'ORDER BY ta.alias ASC';
@@ -30,6 +30,7 @@ class TagAlias {
             'alias' => 'ta.alias',
             'tag_name' => 't.name',
             'match_type' => 'ta.match_type',
+            'direction' => 'ta.direction',
             'active' => 'ta.active',
         ];
         $orderBy = $allowedSorts[$sortField] ?? $allowedSorts['alias'];
@@ -38,7 +39,7 @@ class TagAlias {
         $params = [];
         $query = trim($query);
         if ($query !== '') {
-            $where = " WHERE LOWER(ta.alias) LIKE :query ESCAPE '!' OR LOWER(t.name) LIKE :query ESCAPE '!' OR LOWER(ta.match_type) LIKE :query ESCAPE '!'";
+            $where = " WHERE LOWER(ta.alias) LIKE :query ESCAPE '!' OR LOWER(t.name) LIKE :query ESCAPE '!' OR LOWER(ta.match_type) LIKE :query ESCAPE '!' OR LOWER(ta.direction) LIKE :query ESCAPE '!'";
             $literalQuery = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], strtolower($query));
             $params['query'] = '%' . $literalQuery . '%';
         }
@@ -51,7 +52,7 @@ class TagAlias {
         $page = min($page, $lastPage);
         $offset = ($page - 1) * $size;
 
-        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.active '
+        $sql = 'SELECT ta.id, ta.tag_id, t.name AS tag_name, ta.alias, ta.match_type, ta.direction, ta.active '
              . 'FROM tag_aliases ta '
              . 'INNER JOIN tags t ON t.id = ta.tag_id'
              . $where
@@ -70,17 +71,18 @@ class TagAlias {
     /**
      * Create a new alias mapping.
      */
-    public static function create(int $tagId, string $alias, string $matchType = 'contains', bool $active = true, string $origin = 'manual', ?float $confidence = null, int $supportCount = 1): int {
+    public static function create(int $tagId, string $alias, string $matchType = 'contains', bool $active = true, string $origin = 'manual', ?float $confidence = null, int $supportCount = 1, string $direction = 'any'): int {
         $db = Database::getConnection();
         $normalized = self::normalizeAlias($alias);
         $origin = self::normalizeOrigin($origin);
         $confidence = $confidence === null ? null : max(0, min(1, $confidence));
-        $stmt = $db->prepare('INSERT INTO tag_aliases (tag_id, alias, alias_normalized, match_type, active, origin, confidence, support_count) VALUES (:tag_id, :alias, :alias_normalized, :match_type, :active, :origin, :confidence, :support_count)');
+        $stmt = $db->prepare('INSERT INTO tag_aliases (tag_id, alias, alias_normalized, match_type, direction, active, origin, confidence, support_count) VALUES (:tag_id, :alias, :alias_normalized, :match_type, :direction, :active, :origin, :confidence, :support_count)');
         $stmt->execute([
             'tag_id' => $tagId,
             'alias' => trim($alias),
             'alias_normalized' => $normalized,
             'match_type' => self::normalizeMatchType($matchType),
+            'direction' => self::normalizeDirection($direction),
             'active' => $active ? 1 : 0,
             'origin' => $origin,
             'confidence' => $confidence,
@@ -92,15 +94,16 @@ class TagAlias {
     /**
      * Update an existing alias mapping.
      */
-    public static function update(int $id, int $tagId, string $alias, string $matchType = 'contains', bool $active = true): bool {
+    public static function update(int $id, int $tagId, string $alias, string $matchType = 'contains', bool $active = true, string $direction = 'any'): bool {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE tag_aliases SET tag_id = :tag_id, alias = :alias, alias_normalized = :alias_normalized, match_type = :match_type, active = :active WHERE id = :id');
+        $stmt = $db->prepare('UPDATE tag_aliases SET tag_id = :tag_id, alias = :alias, alias_normalized = :alias_normalized, match_type = :match_type, direction = :direction, active = :active WHERE id = :id');
         return $stmt->execute([
             'id' => $id,
             'tag_id' => $tagId,
             'alias' => trim($alias),
             'alias_normalized' => self::normalizeAlias($alias),
             'match_type' => self::normalizeMatchType($matchType),
+            'direction' => self::normalizeDirection($direction),
             'active' => $active ? 1 : 0,
         ]);
     }
@@ -119,11 +122,11 @@ class TagAlias {
      */
     public static function activeMappings(): array {
         $db = Database::getConnection();
-        $sql = 'SELECT ta.tag_id, ta.alias, ta.alias_normalized, ta.match_type '
+        $sql = 'SELECT ta.tag_id, ta.alias, ta.alias_normalized, ta.match_type, ta.direction '
              . 'FROM tag_aliases ta '
              . 'INNER JOIN tags t ON t.id = ta.tag_id '
-             . 'WHERE ta.active = 1 '
-             . 'ORDER BY CASE WHEN ta.match_type = "exact" THEN 0 ELSE 1 END, LENGTH(ta.alias_normalized) DESC, ta.id ASC';
+             . "WHERE ta.active = 1 AND t.status = 'active' "
+             . 'ORDER BY CASE WHEN ta.direction = "any" THEN 1 ELSE 0 END, CASE WHEN ta.match_type = "exact" THEN 0 ELSE 1 END, LENGTH(ta.alias_normalized) DESC, ta.id ASC';
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -143,6 +146,10 @@ class TagAlias {
      */
     public static function normalizeAlias(string $alias): string {
         return strtolower(trim($alias));
+    }
+
+    public static function normalizeDirection(string $direction): string {
+        return in_array($direction, ['outgoing', 'incoming'], true) ? $direction : 'any';
     }
 
     private static function normalizeMatchType(string $matchType): string {

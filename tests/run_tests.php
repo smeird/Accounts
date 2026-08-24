@@ -28,6 +28,7 @@ require_once __DIR__ . '/../php_backend/services/TagMigrationSafetyService.php';
 require_once __DIR__ . '/../php_backend/TagTaxonomyPattern.php';
 require_once __DIR__ . '/../php_backend/TagTaxonomyDiscoveryAi.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyDiscoveryService.php';
+require_once __DIR__ . '/../php_backend/services/TagTaxonomyCutoverService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -37,7 +38,7 @@ $db = Database::getConnection();
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
 $db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT, closed INTEGER NOT NULL DEFAULT 0, closed_at TEXT);');
 $db->exec("CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT, origin TEXT NOT NULL DEFAULT 'legacy', status TEXT NOT NULL DEFAULT 'active', merged_into_tag_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);");
-$db->exec("CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT UNIQUE, match_type TEXT, active TINYINT DEFAULT 1, origin TEXT NOT NULL DEFAULT 'legacy', confidence REAL, support_count INTEGER NOT NULL DEFAULT 0, last_matched_at DATETIME, created_at DATETIME, updated_at DATETIME);");
+$db->exec("CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT, match_type TEXT, direction TEXT NOT NULL DEFAULT 'any', active TINYINT DEFAULT 1, origin TEXT NOT NULL DEFAULT 'legacy', confidence REAL, support_count INTEGER NOT NULL DEFAULT 0, last_matched_at DATETIME, created_at DATETIME, updated_at DATETIME, UNIQUE(alias_normalized, direction));");
 $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, created_at DATETIME, updated_at DATETIME);');
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER, created_at DATETIME, updated_at DATETIME);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
@@ -50,7 +51,7 @@ $db->exec('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT, 
 $db->exec('CREATE TABLE saved_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, filters TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE totp_secrets (username TEXT PRIMARY KEY, secret TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
 $db->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, rationale TEXT, cost_low REAL, cost_medium REAL, cost_high REAL, funding_source TEXT, recurring_cost REAL, estimated_time INTEGER, expected_lifespan INTEGER, benefit_financial REAL DEFAULT 0, weight_financial REAL DEFAULT 1, benefit_quality REAL DEFAULT 0, weight_quality REAL DEFAULT 1, benefit_risk REAL DEFAULT 0, weight_risk REAL DEFAULT 1, benefit_sustainability REAL DEFAULT 0, weight_sustainability REAL DEFAULT 1, dependencies TEXT, risks TEXT, archived TINYINT DEFAULT 0, group_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);');
-$db->exec("CREATE TABLE tag_migration_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'snapshot', contract_version TEXT NOT NULL DEFAULT 'v1', created_by TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, eligible_count INTEGER NOT NULL DEFAULT 0, protected_transfer_count INTEGER NOT NULL DEFAULT 0, protected_ignore_count INTEGER NOT NULL DEFAULT 0, snapshot_hash TEXT NOT NULL DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, discovery_started_at DATETIME, ready_at DATETIME, applied_at DATETIME, rolled_back_at DATETIME);");
+$db->exec("CREATE TABLE tag_migration_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'snapshot', contract_version TEXT NOT NULL DEFAULT 'v1', created_by TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, eligible_count INTEGER NOT NULL DEFAULT 0, protected_transfer_count INTEGER NOT NULL DEFAULT 0, protected_ignore_count INTEGER NOT NULL DEFAULT 0, snapshot_hash TEXT NOT NULL DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, discovery_started_at DATETIME, ready_at DATETIME, applied_at DATETIME, rolled_back_at DATETIME, cutover_summary TEXT);");
 $db->exec("CREATE TABLE transaction_classification_snapshots (run_id INTEGER NOT NULL, transaction_id INTEGER NOT NULL, tag_id INTEGER, category_id INTEGER, segment_id INTEGER, eligible INTEGER NOT NULL DEFAULT 1, protection_reason TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (run_id, transaction_id));");
 $db->exec("CREATE TABLE tag_taxonomy_proposals (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER NOT NULL, canonical_name TEXT NOT NULL, canonical_name_normalized TEXT NOT NULL, description TEXT, category_id INTEGER, confidence REAL, rationale TEXT, status TEXT NOT NULL DEFAULT 'pending', origin TEXT NOT NULL DEFAULT 'ai', pattern_count INTEGER NOT NULL DEFAULT 0, transaction_count INTEGER NOT NULL DEFAULT 0, absolute_amount REAL NOT NULL DEFAULT 0, reviewed_by TEXT, reviewed_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(run_id, canonical_name_normalized));");
 $db->exec("CREATE TABLE tag_taxonomy_patterns (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER NOT NULL, proposal_id INTEGER, signature TEXT NOT NULL, alias TEXT NOT NULL, alias_normalized TEXT NOT NULL, direction TEXT NOT NULL, sample_description TEXT, sample_memo TEXT, current_tags TEXT, transaction_count INTEGER NOT NULL DEFAULT 0, absolute_amount REAL NOT NULL DEFAULT 0, first_seen TEXT, last_seen TEXT, confidence REAL, rationale TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(run_id, signature));");
@@ -1028,6 +1029,7 @@ $migrationSafety = new TagMigrationSafetyService($db);
 assertEqual(true, $migrationSafety->schemaReady(), 'Tag rebuild safety detects its complete schema');
 $migrationContract = TagMigrationSafetyService::contract();
 assertEqual(0, $migrationContract['success_thresholds']['unreviewed_new_tags'] ?? null, 'Tag rebuild contract permits no unreviewed canonical tags');
+assertEqual(95, $migrationContract['success_thresholds']['eligible_coverage_percent'] ?? null, 'Tag rebuild contract uses the agreed 95% reviewed coverage threshold');
 $ignoreTagId = Tag::getIgnoreId();
 $safetyAccountId = (int)$db->query('SELECT id FROM accounts ORDER BY id LIMIT 1')->fetchColumn();
 $insertSafetyTransaction = $db->prepare('INSERT INTO transactions (account_id, date, amount, description, memo, category_id, segment_id, tag_id, group_id, transfer_id) VALUES (?,?,?,?,?,?,?,?,?,?)');
@@ -1148,6 +1150,67 @@ assertEqual(0, $earlyFinishView['metrics']['pending_patterns'] ?? null, 'A froze
 assertEqual('excluded', $db->query("SELECT status FROM tag_taxonomy_patterns WHERE run_id=$earlyFinishRunId AND proposal_id IS NULL")->fetchColumn(), 'Deferred patterns are excluded from later cutover');
 assertEqual($earlyFinishLiveState, $db->query("SELECT COUNT(*) AS tags, (SELECT COUNT(*) FROM tag_aliases) AS aliases, (SELECT COUNT(*) FROM transactions WHERE tag_id IS NOT NULL) AS tagged_transactions FROM tags")->fetch(PDO::FETCH_ASSOC), 'Early finish does not modify the live taxonomy or transaction assignments');
 
+// Direction-aware aliases may safely reuse the same wording for money leaving
+// and arriving, while Phase 3 must apply and roll back as one reconciled unit.
+$outgoingDirectionTag = Tag::create('Direction outgoing test');
+$incomingDirectionTag = Tag::create('Direction incoming test');
+TagAlias::create($outgoingDirectionTag, 'DIRECTION SHARED MERCHANT', 'contains', true, 'manual', null, 1, 'outgoing');
+TagAlias::create($incomingDirectionTag, 'DIRECTION SHARED MERCHANT', 'contains', true, 'manual', null, 1, 'incoming');
+Tag::clearMatchCaches();
+assertEqual($outgoingDirectionTag, Tag::findMatch('DIRECTION SHARED MERCHANT 123', -10), 'Outgoing alias rules match money leaving');
+assertEqual($incomingDirectionTag, Tag::findMatch('DIRECTION SHARED MERCHANT 123', 10), 'Incoming alias rules match money arriving');
+assertEqual(null, Tag::findMatch('DIRECTION SHARED MERCHANT 123'), 'Direction-specific rules do not guess when amount direction is unavailable');
+
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -8.00, 'CUTOVER SHARED 111111', null, null, null, $outgoingDirectionTag, null, null]);
+$cutoverOutgoingId = (int)$db->lastInsertId();
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', 8.00, 'CUTOVER SHARED 222222', null, null, null, $incomingDirectionTag, null, null]);
+$cutoverIncomingId = (int)$db->lastInsertId();
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -7.00, 'CUTOVER DEFERRED 333333', null, null, null, $outgoingDirectionTag, null, null]);
+$cutoverDeferredId = (int)$db->lastInsertId();
+for ($cutoverIndex = 1; $cutoverIndex <= 20; $cutoverIndex++) {
+    $insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -1.00, 'CUTOVER BULK ' . (400000 + $cutoverIndex), null, null, null, $outgoingDirectionTag, null, null]);
+}
+$cutoverRun = $migrationSafety->createSnapshot('Phase 3 cutover baseline', 'test-suite');
+$cutoverRunId = (int)$cutoverRun['id'];
+$taxonomyService->prepare($cutoverRunId);
+$db->exec("INSERT INTO tag_taxonomy_proposals (run_id, canonical_name, canonical_name_normalized, description, category_id, confidence, status, origin, pattern_count, transaction_count, absolute_amount, reviewed_by, reviewed_at) VALUES ($cutoverRunId, 'Cutover canonical test', 'cutover canonical test', 'Reviewed Phase 3 destination', $taxonomyCategoryId, 0.96, 'approved', 'manual', 1, 1, 1, 'test-suite', CURRENT_TIMESTAMP)");
+$cutoverProposalId = (int)$db->lastInsertId();
+$deferredPatternId = (int)$db->query("SELECT pattern_id FROM transaction_tag_proposals WHERE run_id=$cutoverRunId AND transaction_id=$cutoverDeferredId")->fetchColumn();
+$db->exec("UPDATE tag_taxonomy_patterns SET proposal_id=$cutoverProposalId, status='proposed', confidence=0.96 WHERE run_id=$cutoverRunId");
+$db->exec("UPDATE transaction_tag_proposals SET proposal_id=$cutoverProposalId, confidence=0.96 WHERE run_id=$cutoverRunId");
+$db->exec("UPDATE tag_taxonomy_patterns SET proposal_id=NULL, status='excluded', confidence=NULL WHERE id=$deferredPatternId");
+$db->exec("UPDATE transaction_tag_proposals SET proposal_id=NULL, confidence=NULL WHERE run_id=$cutoverRunId AND pattern_id=$deferredPatternId");
+$proposalMetrics = $db->query("SELECT COUNT(*) AS patterns, COALESCE(SUM(transaction_count),0) AS transactions, COALESCE(SUM(absolute_amount),0) AS absolute_amount FROM tag_taxonomy_patterns WHERE run_id=$cutoverRunId AND proposal_id=$cutoverProposalId")->fetch(PDO::FETCH_ASSOC);
+$db->exec("UPDATE tag_taxonomy_proposals SET pattern_count=" . (int)$proposalMetrics['patterns'] . ", transaction_count=" . (int)$proposalMetrics['transactions'] . ", absolute_amount=" . (float)$proposalMetrics['absolute_amount'] . " WHERE id=$cutoverProposalId");
+$taxonomyService->markReady($cutoverRunId, false);
+$db->exec("UPDATE transactions SET transfer_id=777001 WHERE id=$cutoverOutgoingId");
+$insertSafetyTransaction->execute([$safetyAccountId, '2026-08-24', -4.00, 'CUTOVER POST SNAPSHOT', null, null, null, $outgoingDirectionTag, null, null]);
+$cutoverPostSnapshotId = (int)$db->lastInsertId();
+$cutoverPostSnapshotTag = (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverPostSnapshotId")->fetchColumn();
+$cutoverDeferredTag = (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverDeferredId")->fetchColumn();
+$cutoverProtectedTag = (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverOutgoingId")->fetchColumn();
+$cutoverFinancialBefore = $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC);
+$cutoverService = new TagTaxonomyCutoverService($db);
+assertEqual(true, $cutoverService->schemaReady(), 'Taxonomy cutover detects direction and audit schema');
+$cutoverPreview = $cutoverService->preview($cutoverRunId);
+assertEqual(true, $cutoverPreview['can_apply'], 'A fully reviewed and reconciled taxonomy is available for cutover');
+assertEqual(true, (int)$cutoverPreview['metrics']['newly_protected_transactions'] >= 1, 'Cutover rechecks transactions that became protected after snapshot');
+$cutoverResult = $cutoverService->apply($cutoverRunId, 'test-suite');
+$cutoverCanonicalId = (int)$db->query("SELECT id FROM tags WHERE name_normalized='cutover canonical test'")->fetchColumn();
+assertEqual('applied', $cutoverResult['status'], 'Phase 3 applies the reviewed taxonomy atomically');
+assertEqual($cutoverCanonicalId, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverIncomingId")->fetchColumn(), 'Cutover applies the approved canonical tag to covered eligible transactions');
+assertEqual($cutoverProtectedTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverOutgoingId")->fetchColumn(), 'Cutover leaves a newly confirmed transfer unchanged');
+assertEqual($cutoverDeferredTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverDeferredId")->fetchColumn(), 'Cutover leaves explicitly deferred patterns unchanged');
+assertEqual($cutoverPostSnapshotTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverPostSnapshotId")->fetchColumn(), 'Cutover leaves post-snapshot transactions unchanged');
+assertEqual(2, (int)$db->query("SELECT COUNT(DISTINCT direction) FROM tag_aliases WHERE tag_id=$cutoverCanonicalId AND direction IN ('incoming','outgoing')")->fetchColumn(), 'Cutover installs independent incoming and outgoing alias rules');
+assertEqual($cutoverFinancialBefore, $db->query('SELECT COUNT(*) AS rows_count, SUM(amount) AS total FROM transactions')->fetch(PDO::FETCH_ASSOC), 'Cutover preserves the financial ledger fingerprint');
+assertEqual(true, $cutoverService->rollbackPreview($cutoverRunId)['can_rollback'], 'An unchanged audited cutover is safely reversible');
+$cutoverRollback = $cutoverService->rollback($cutoverRunId, 'test-suite');
+assertEqual('rolled_back', $cutoverRollback['status'], 'Phase 3 rollback restores the audited taxonomy state');
+assertEqual($incomingDirectionTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverIncomingId")->fetchColumn(), 'Rollback restores the original transaction classification');
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tags WHERE id=$cutoverCanonicalId")->fetchColumn(), 'Rollback removes a cutover-created tag when it is no longer referenced');
+assertEqual($cutoverPostSnapshotTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$cutoverPostSnapshotId")->fetchColumn(), 'Rollback still leaves post-snapshot transactions untouched');
+
 // Static page shells and their local code/style assets must be revalidated so
 // a deployment cannot leave users with a mixture of old and new UI files.
 $frontendCachePolicy = file_get_contents(__DIR__ . '/../frontend/.htaccess');
@@ -1188,7 +1251,9 @@ $backupJson = $backupSignature === false ? false : gzdecode(substr($backupArchiv
 $backupPayload = json_decode($backupJson, true);
 assertEqual(null, $backupPayload['error'] ?? null, 'Backup generation completes without a database error');
 assertEqual('newaccounts-backup', $backupPayload['_meta']['format'] ?? null, 'Backup includes a format manifest');
-assertEqual(4, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(5, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(true, array_key_exists('direction', $backupPayload['tag_aliases'][0] ?? []), 'Backup preserves direction-aware tag rules');
+assertEqual(true, array_key_exists('cutover_summary', $backupPayload['tag_migration_runs'][0] ?? []), 'Backup preserves taxonomy cutover audit fields');
 assertEqual(1, count($backupPayload['totp_secrets'] ?? []), 'Backup includes two-factor authentication state');
 assertEqual(true, count($backupPayload['saved_reports'] ?? []) >= 1, 'Backup includes saved reports');
 assertEqual(true, count($backupPayload['tag_migration_runs'] ?? []) >= 1, 'Backup includes tag rebuild safety runs');

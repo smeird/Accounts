@@ -56,6 +56,13 @@
                             <option value="exact">Exact</option>
                         </select>
                     </label>
+                    <label class="block">Transaction Direction
+                        <select id="direction" class="border p-2 rounded w-full" data-help="Use either direction for general rules, or restrict wording that means something different when money leaves or arrives.">
+                            <option value="any">Either direction</option>
+                            <option value="outgoing">Money leaving</option>
+                            <option value="incoming">Money arriving</option>
+                        </select>
+                    </label>
                     <label class="inline-flex items-center gap-2" data-help="Disable an alias without deleting it.">
                         <input type="checkbox" id="active" checked>
                         <span>Active</span>
@@ -83,7 +90,7 @@ window.renderPageHeader(pageMain, {
     <script src="js/input_help.js"></script>
     <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
-    <script src="js/tag_aliases.js?v=20260815-pill-key"></script>
+    <script src="js/tag_aliases.js?v=20260824-direction-aware"></script>
     <script src="js/overlay.js"></script>
 </body>
 </html>

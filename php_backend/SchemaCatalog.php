@@ -119,6 +119,7 @@ class SchemaCatalog {
                 'alias' => self::column('VARCHAR(150) NOT NULL', 'varchar', false, false, 150),
                 'alias_normalized' => self::column('VARCHAR(150) NOT NULL', 'varchar', false, true, 150, null, null, null, null, "VARCHAR(150) NOT NULL DEFAULT ''"),
                 'match_type' => self::column("ENUM('exact','contains') NOT NULL DEFAULT 'contains'", 'enum', false, true),
+                'direction' => self::column("ENUM('any','outgoing','incoming') NOT NULL DEFAULT 'any'", 'enum', false, true),
                 'active' => self::column('TINYINT(1) DEFAULT 1', 'tinyint', true, true),
                 'origin' => self::column("ENUM('system','manual','ai','legacy') NOT NULL DEFAULT 'legacy'", 'enum', false, true),
                 'confidence' => self::column('DECIMAL(5,4) DEFAULT NULL', 'decimal', true, true, null, null, 5, 4),
@@ -127,7 +128,7 @@ class SchemaCatalog {
                 'created_at' => self::column('TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'timestamp', null, true),
                 'updated_at' => self::column('TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'timestamp', null, true, null, 'on update CURRENT_TIMESTAMP'),
             ], ['id'], [
-                'unique_alias_normalized' => self::index(['alias_normalized'], true),
+                'unique_alias_direction' => self::index(['alias_normalized', 'direction'], true),
                 'idx_tag_aliases_tag_id' => self::index(['tag_id']),
             ], [
                 'fk_tag_aliases_tag' => self::foreignKey(['tag_id'], 'tags', ['id'], 'CASCADE'),
@@ -189,6 +190,7 @@ class SchemaCatalog {
                 'ready_at' => self::column('TIMESTAMP NULL DEFAULT NULL', 'timestamp', true, true),
                 'applied_at' => self::column('TIMESTAMP NULL DEFAULT NULL', 'timestamp', true, true),
                 'rolled_back_at' => self::column('TIMESTAMP NULL DEFAULT NULL', 'timestamp', true, true),
+                'cutover_summary' => self::column('LONGTEXT DEFAULT NULL', 'longtext', true, true),
             ], ['id'], [
                 'idx_tag_migration_runs_created' => self::index(['created_at']),
                 'idx_tag_migration_runs_status' => self::index(['status']),
@@ -292,6 +294,9 @@ class SchemaCatalog {
         return [
             'transactions' => [
                 'unique_txn' => 'Legacy core-field uniqueness can reject genuine matching purchases.',
+            ],
+            'tag_aliases' => [
+                'unique_alias_normalized' => 'Direction-aware aliases replace the legacy text-only uniqueness rule.',
             ],
         ];
     }
