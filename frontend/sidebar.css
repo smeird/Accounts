@@ -1,4 +1,31 @@
 /* Shared navigation rail and mobile drawer. */
+.app-shell-root {
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+}
+
+.app-shell-body,
+.app-shell {
+    height:100vh!important;
+    min-height:100vh!important;
+    overflow:hidden;
+}
+
+.app-shell-main {
+    min-height:0;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+}
+
+@supports (height:100dvh) {
+    .app-shell-body,
+    .app-shell {
+        height:100dvh!important;
+        min-height:100dvh!important;
+    }
+}
+
 .site-menu {
     --menu-ink:#172033;
     --menu-muted:#64748b;
