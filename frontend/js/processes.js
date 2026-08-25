@@ -6,6 +6,7 @@
     const statusMessage = document.getElementById('process-status-message');
     const statusResults = document.getElementById('process-results');
     const clearDialog = document.getElementById('process-clear-dialog');
+    const resetPanel = document.querySelector('.process-reset');
     const actionButtons = Array.from(document.querySelectorAll('[data-process-action]'));
     const processCards = Array.from(document.querySelectorAll('[data-process-card]'));
 
@@ -173,6 +174,18 @@
 
     actionButtons.forEach(button => {
         button.addEventListener('click', () => runProcess(button.dataset.processAction));
+    });
+
+    // Expanding the final section changes the scroll height. iPad Safari can
+    // otherwise leave the new action inside its bottom rubber-band region.
+    resetPanel?.addEventListener('toggle', () => {
+        if (!resetPanel.open) return;
+        window.requestAnimationFrame(() => {
+            resetPanel.querySelector('.process-reset__action')?.scrollIntoView({
+                behavior: 'auto',
+                block: 'nearest'
+            });
+        });
     });
 
     document.getElementById('clear-btn').addEventListener('click', () => {
