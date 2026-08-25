@@ -30,6 +30,7 @@ require_once __DIR__ . '/../php_backend/TagTaxonomyDiscoveryAi.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyDiscoveryService.php';
 require_once __DIR__ . '/../php_backend/services/TagTaxonomyCutoverService.php';
 require_once __DIR__ . '/../php_backend/services/TaggingWorkspaceService.php';
+require_once __DIR__ . '/../php_backend/services/TaggingFreshStartService.php';
 require_once __DIR__ . '/../php_backend/services/FinancialWorkbookExportService.php';
 
 // Use an in-memory SQLite database for tests.
@@ -1469,6 +1470,69 @@ assertEqual(true, strpos($failedRestoreMessage, 'Restore integrity check failed'
 assertEqual($transactionCountBeforeFailure, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Failed restore rolls back the original transactions');
 assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Failed restore rolls back the original saved reports');
 unlink($backupFile);
+
+// A deliberate fresh start keeps the controlled vocabulary and protected
+// transactions, while clearing live classifications and learned structure only
+// after an immutable safety snapshot has been created.
+$freshSegmentId = Segment::create('Fresh start segment', 'Reset verification');
+$freshCategoryId = Category::create('Fresh start category', 'Reset verification');
+$db->prepare('UPDATE categories SET segment_id = :segment WHERE id = :category')->execute(['segment' => $freshSegmentId, 'category' => $freshCategoryId]);
+$freshTagId = Tag::create('Fresh Start Canonical', 'fresh-start-keyword', 'Reset verification', 'manual');
+CategoryTag::add($freshCategoryId, $freshTagId);
+$freshIgnoreId = Tag::getIgnoreId();
+$db->prepare("UPDATE tags SET keyword = 'IGNORE' WHERE id = :id")->execute(['id' => $freshIgnoreId]);
+$freshRuleId = TagAlias::create($freshTagId, 'fresh-start-merchant', 'contains', true, 'ai', 0.99, 4, 'outgoing');
+$freshIgnoreRuleId = TagAlias::create($freshIgnoreId, 'fresh-start-protected-ignore', 'exact', true, 'system', 1.0, 1, 'outgoing');
+$freshAccountId = Account::create('Fresh start account', '00-00-00', 'fresh-start-account');
+$freshInsert = $db->prepare('INSERT INTO transactions (account_id,date,amount,description,memo,tag_id,category_id,segment_id,transfer_id) VALUES (?,?,?,?,?,?,?,?,?)');
+$freshInsert->execute([$freshAccountId, '2026-08-01', -12.00, 'fresh-start-merchant', null, $freshTagId, $freshCategoryId, $freshSegmentId, null]);
+$freshEligibleTransaction = (int)$db->lastInsertId();
+$freshInsert->execute([$freshAccountId, '2026-08-02', -5.00, 'fresh-start-partial', null, null, $freshCategoryId, $freshSegmentId, null]);
+$freshPartialTransaction = (int)$db->lastInsertId();
+$freshInsert->execute([$freshAccountId, '2026-08-03', -20.00, 'fresh-start-transfer', null, $freshTagId, $freshCategoryId, $freshSegmentId, 777]);
+$freshTransferTransaction = (int)$db->lastInsertId();
+$freshInsert->execute([$freshAccountId, '2026-08-04', -2.00, 'fresh-start-protected-ignore', null, $freshIgnoreId, null, null, null]);
+$freshIgnoredTransaction = (int)$db->lastInsertId();
+
+$freshService = new TaggingFreshStartService($db);
+$freshPreview = $freshService->preview();
+assertEqual(true, $freshPreview['classified_transactions'] >= 2, 'Fresh-start preview counts classifications that will be cleared');
+assertEqual(true, $freshPreview['rules_to_remove'] >= 1, 'Fresh-start preview counts learned rules that will be removed');
+assertEqual(true, $freshPreview['canonical_tags_retained'] >= 2, 'Fresh-start preview confirms the canonical vocabulary is retained');
+$freshRejected = false;
+try {
+    $freshService->reset('RESET');
+} catch (InvalidArgumentException $e) {
+    $freshRejected = true;
+}
+assertEqual(true, $freshRejected, 'Fresh start rejects an incorrect confirmation phrase');
+
+$freshResult = $freshService->reset(TaggingFreshStartService::CONFIRMATION, 'test-user');
+$freshEligibleState = $db->query("SELECT tag_id,category_id,segment_id FROM transactions WHERE id=$freshEligibleTransaction")->fetch(PDO::FETCH_ASSOC);
+$freshPartialState = $db->query("SELECT tag_id,category_id,segment_id FROM transactions WHERE id=$freshPartialTransaction")->fetch(PDO::FETCH_ASSOC);
+$freshTransferState = $db->query("SELECT tag_id,category_id,segment_id FROM transactions WHERE id=$freshTransferTransaction")->fetch(PDO::FETCH_ASSOC);
+$freshIgnoredState = $db->query("SELECT tag_id,category_id,segment_id FROM transactions WHERE id=$freshIgnoredTransaction")->fetch(PDO::FETCH_ASSOC);
+assertEqual(['tag_id' => null, 'category_id' => null, 'segment_id' => null], $freshEligibleState, 'Fresh start clears tag, category and segment from eligible transactions');
+assertEqual(['tag_id' => null, 'category_id' => null, 'segment_id' => null], $freshPartialState, 'Fresh start clears partial classifications as well as tagged transactions');
+assertEqual($freshTagId, (int)$freshTransferState['tag_id'], 'Fresh start preserves confirmed transfer classifications');
+assertEqual($freshCategoryId, (int)$freshTransferState['category_id'], 'Fresh start preserves confirmed transfer categories');
+assertEqual($freshIgnoreId, (int)$freshIgnoredState['tag_id'], 'Fresh start preserves IGNORE transactions');
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM tag_aliases WHERE id=$freshRuleId")->fetchColumn(), 'Fresh start removes ordinary learned rules so AI can relearn without conflicts');
+assertEqual(1, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$freshIgnoreRuleId")->fetchColumn(), 'Fresh start preserves the protected IGNORE rule');
+assertEqual(0, (int)$db->query("SELECT COUNT(*) FROM category_tags WHERE tag_id=$freshTagId")->fetchColumn(), 'Fresh start clears tag-to-category links');
+assertEqual(null, $db->query("SELECT keyword FROM tags WHERE id=$freshTagId")->fetchColumn(), 'Fresh start clears legacy tag keywords');
+assertEqual('active', $db->query("SELECT status FROM tags WHERE id=$freshTagId")->fetchColumn(), 'Fresh start retains canonical tags for the AI allowlist');
+$freshRunId = (int)$freshResult['snapshot_run_id'];
+$freshAudit = json_decode((string)$db->query("SELECT cutover_summary FROM tag_migration_runs WHERE id=$freshRunId")->fetchColumn(), true);
+assertEqual(true, isset($freshAudit['fresh_start']['previous_rule_state'], $freshAudit['fresh_start']['previous_category_links']), 'Fresh start records the removed rule and category-link state in its audit');
+$freshRollbackPreview = (new TagMigrationSafetyService($db))->rollbackPreview($freshRunId);
+assertEqual(true, $freshRollbackPreview['restorable'], 'Fresh-start transaction classifications remain restorable from the hashed snapshot');
+assertEqual(true, $freshRollbackPreview['changed_transactions'] >= 2, 'Fresh-start snapshot records the classifications changed by the reset');
+$db->prepare('UPDATE transactions SET category_id = NULL WHERE id = :id')->execute(['id' => $freshTransferTransaction]);
+CategoryTag::assign($freshCategoryId, $freshTagId);
+assertEqual(null, $db->query("SELECT category_id FROM transactions WHERE id=$freshTransferTransaction")->fetch(PDO::FETCH_ASSOC)['category_id'], 'Category assignment does not rewrite a confirmed transfer after a fresh start');
+CategoryTag::applyToAllTransactions();
+assertEqual(null, $db->query("SELECT category_id FROM transactions WHERE id=$freshTransferTransaction")->fetch(PDO::FETCH_ASSOC)['category_id'], 'Category propagation keeps confirmed transfers protected after AI tagging');
 
 // Output results and set exit code
 $failed = false;

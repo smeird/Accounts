@@ -407,9 +407,76 @@
         finally { button.disabled = false; }
     });
 
+    function renderFreshStartPreview(preview) {
+        const host = document.getElementById('fresh-start-summary');
+        host.replaceChildren();
+        [
+            ['Transactions to clear', preview.classified_transactions],
+            ['Rules to remove', preview.rules_to_remove],
+            ['Category links to clear', preview.category_links_to_clear],
+            ['Canonical tags retained', preview.canonical_tags_retained]
+        ].forEach(item => {
+            const card = element('div');
+            card.append(element('span', '', item[0]), element('strong', '', number(item[1])));
+            host.appendChild(card);
+        });
+    }
+
+    const freshStartDialog = document.getElementById('fresh-start-dialog');
+    const freshStartConfirmation = document.getElementById('fresh-start-confirmation');
+    const freshStartSubmit = document.getElementById('fresh-start-submit');
+    document.getElementById('open-fresh-start').addEventListener('click', () => {
+        renderFreshStartPreview(state.snapshot.fresh_start || {});
+        freshStartConfirmation.value = '';
+        freshStartSubmit.disabled = true;
+        freshStartDialog.showModal();
+        freshStartConfirmation.focus();
+    });
+    freshStartConfirmation.addEventListener('input', () => {
+        freshStartSubmit.disabled = freshStartConfirmation.value.trim() !== 'START FRESH';
+    });
+    document.getElementById('fresh-start-form').addEventListener('submit', async event => {
+        if (event.submitter && event.submitter.value === 'cancel') return;
+        event.preventDefault();
+        if (freshStartConfirmation.value.trim() !== 'START FRESH') return;
+        freshStartSubmit.disabled = true;
+        announce('Taking a safety snapshot and resetting tagging…', 'loading');
+        try {
+            const response = await requestJson('../php_backend/public/tagging_workspace.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'start_fresh', confirmation: freshStartConfirmation.value.trim() })
+            });
+            const result = response.result;
+            freshStartDialog.close();
+            if (state.rulesTable) await state.rulesTable.setData();
+            await loadSnapshot(false);
+            const configured = state.snapshot.automation && state.snapshot.automation.configured;
+            showAutomationResult(configured ? 'Ready for a clean AI pass' : 'Reset complete — configure AI next', `${number(result.transactions_reset)} transactions cleared, ${number(result.rules_removed)} old rules removed and ${number(result.category_links_cleared)} category links removed. Safety snapshot #${number(result.snapshot_run_id)} was saved.`);
+            announce(configured ? 'Tagging reset complete. Run smart tagging when ready.' : 'Tagging reset complete. Configure AI before rebuilding.', configured ? 'success' : 'warning');
+            (configured ? document.getElementById('run-ai-tagging') : document.querySelector('a[href="../settings.php"]'))?.focus();
+        } catch (error) {
+            announce(error.message, 'error');
+        } finally {
+            freshStartSubmit.disabled = freshStartConfirmation.value.trim() !== 'START FRESH';
+        }
+    });
+
     function renderHistory(historyData) {
         const host = document.getElementById('rebuild-history'); host.replaceChildren();
         if (!historyData) { host.appendChild(element('div', 'tagging-empty', 'No taxonomy rebuild has been recorded.')); return; }
+        if (historyData.fresh_start) {
+            const reset = historyData.fresh_start;
+            const result = reset.result || {};
+            const status = element('div');
+            status.append(element('span', 'tagging-eyebrow', 'Fresh-start safety snapshot'), element('h3', 'tagging-tag-name', historyData.name), element('p', 'tagging-meta', `Reset ${reset.reset_at || historyData.created_at || '—'} · Run #${historyData.id}`));
+            host.appendChild(status);
+            const grid = element('div', 'tagging-history-grid');
+            [['Transactions cleared', result.transactions_reset], ['Rules removed', result.rules_removed], ['Category links cleared', result.category_links_cleared], ['Canonical tags retained', reset.retained && reset.retained.canonical_tags]].forEach(item => {
+                const card = element('div'); card.append(element('span', '', item[0]), element('strong', '', item[1] === undefined || item[1] === null ? '—' : number(item[1])), element('small', '', 'Audited reset')); grid.appendChild(card);
+            });
+            host.appendChild(grid);
+            return;
+        }
         const status = element('div'); status.append(element('span', 'tagging-eyebrow', historyData.cleanup_completed ? 'Completed and cleaned' : historyData.status), element('h3', 'tagging-tag-name', historyData.name), element('p', 'tagging-meta', `Applied ${historyData.applied_at || '—'} · Run #${historyData.id}`));
         host.appendChild(status);
         const metrics = historyData.cleanup_metrics || {};
@@ -424,6 +491,7 @@
         state.snapshot = await requestJson('../php_backend/public/tagging_workspace.php?limit=100');
         renderMetrics(state.snapshot.metrics || {});
         renderInbox(); renderCatalogue(); renderHistory(state.snapshot.rebuild_history);
+        renderFreshStartPreview(state.snapshot.fresh_start || {});
         const configured = state.snapshot.automation && state.snapshot.automation.configured;
         document.getElementById('run-ai-tagging').disabled = !configured;
         document.getElementById('run-ai-categories').disabled = !configured;

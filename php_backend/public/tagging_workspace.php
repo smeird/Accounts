@@ -45,6 +45,11 @@ try {
             (string)($data['direction'] ?? 'any'),
             !empty($data['confirm_overlap'])
         );
+    } elseif ($action === 'start_fresh') {
+        $result = $service->startFresh(
+            (string)($data['confirmation'] ?? ''),
+            isset($_SESSION['username']) ? (string)$_SESSION['username'] : null
+        );
     } else {
         throw new InvalidArgumentException('Unknown tagging action.');
     }
