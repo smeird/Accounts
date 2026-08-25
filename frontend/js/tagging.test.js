@@ -12,11 +12,15 @@ assert.match(page, /data-tagging-panel="inbox"/, 'unified tagging page includes 
 assert.match(page, /data-tagging-panel="catalogue"/, 'unified tagging page includes the canonical catalogue');
 assert.match(page, /data-tagging-panel="rules"/, 'unified tagging page includes deterministic rules');
 assert.match(page, /data-tagging-panel="history"/, 'unified tagging page preserves rebuild history');
+assert.match(page, /id="open-fresh-start"/, 'automation offers a guarded fresh-start action');
+assert.match(page, /START FRESH[\s\S]*id="fresh-start-confirmation"/, 'fresh start requires an explicit typed confirmation');
 assert.match(styles, /#inbox-dialog\s*\{\s*width:min\(680px,calc\(100% - 2rem\)\);\s*\}/, 'resolve pattern dialog gets additional desktop width while retaining the mobile gutter');
 assert.match(script, /action:\s*'merge_tag'/, 'catalogue UI uses guarded canonical merge');
 assert.match(script, /action:\s*'retire_tag'/, 'catalogue UI uses non-destructive retirement');
 assert.match(script, /requires_confirmation/, 'rule editor surfaces overlap confirmation');
 assert.match(script, /review_required/, 'AI results surface unfamiliar suggestions for review');
+assert.match(script, /action:\s*'start_fresh'/, 'fresh-start UI calls the guarded workspace action');
+assert.match(script, /Ready for a clean AI pass/, 'fresh-start completion leads back to smart tagging');
 assert.doesNotMatch(aiEndpoint, /Tag::create\(\$tagName/, 'AI tagging cannot silently create canonical tags');
 assert.match(menu, /href="tagging\.html"/, 'sidebar exposes one permanent Tagging destination');
 assert.doesNotMatch(menu, /href="tag_(?:migration|taxonomy_discovery|taxonomy_cutover)\.html"/, 'completed rebuild phases are absent from everyday navigation');

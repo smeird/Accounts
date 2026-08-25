@@ -6,6 +6,7 @@ require_once __DIR__ . '/../models/TagAlias.php';
 require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Segment.php';
 require_once __DIR__ . '/../models/Setting.php';
+require_once __DIR__ . '/TaggingFreshStartService.php';
 
 class TaggingWorkspaceService {
     private PDO $db;
@@ -27,6 +28,7 @@ class TaggingWorkspaceService {
                 'batch_size' => (int)(Setting::get('ai_tag_batch_size') ?? 100),
             ],
             'rebuild_history' => $this->latestRebuild(),
+            'fresh_start' => (new TaggingFreshStartService($this->db))->preview(),
         ];
     }
 
@@ -111,6 +113,10 @@ class TaggingWorkspaceService {
         $categorised = CategoryTag::applyToAllTransactions();
         $segmented = Segment::applyToTransactions();
         return ['tagged' => $tagged, 'categorised' => $categorised, 'segmented' => $segmented];
+    }
+
+    public function startFresh(string $confirmation, ?string $createdBy = null): array {
+        return (new TaggingFreshStartService($this->db))->reset($confirmation, $createdBy);
     }
 
     private function metrics(): array {
@@ -203,6 +209,9 @@ class TaggingWorkspaceService {
         $cleanup = is_array($summary) && isset($summary['legacy_cleanup']) && is_array($summary['legacy_cleanup'])
             ? $summary['legacy_cleanup']
             : null;
+        $freshStart = is_array($summary) && isset($summary['fresh_start']) && is_array($summary['fresh_start'])
+            ? $summary['fresh_start']
+            : null;
         return [
             'id' => (int)$row['id'],
             'name' => (string)$row['name'],
@@ -213,6 +222,7 @@ class TaggingWorkspaceService {
             'cleanup_completed' => $cleanup !== null,
             'cleanup_at' => $cleanup['cleaned_at'] ?? null,
             'cleanup_metrics' => $cleanup['metrics'] ?? null,
+            'fresh_start' => $freshStart,
         ];
     }
 }

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="site_system.css">
     <link rel="stylesheet" href="utility_refresh.css">
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
-    <link rel="stylesheet" href="tagging.css?v=20260824-resolve-dialog">
+    <link rel="stylesheet" href="tagging.css?v=20260825-fresh-start">
 </head>
 <body class="ops-body tagging-page">
 <div class="flex min-h-screen">
@@ -86,12 +86,13 @@
                 <article><span class="tagging-automation-icon"><i class="fas fa-robot" aria-hidden="true"></i></span><h3>Tag unmatched transactions</h3><p>Apply saved rules first, then ask AI to choose only from your current canonical tags.</p><button id="run-ai-tagging" class="tagging-primary" type="button">Run smart tagging</button></article>
                 <article><span class="tagging-automation-icon"><i class="fas fa-folder-tree" aria-hidden="true"></i></span><h3>Connect tags to categories</h3><p>Assign only unmapped tags when AI is confident. Existing category links remain untouched.</p><button id="run-ai-categories" class="tagging-primary" type="button">Categorise unmapped tags</button></article>
                 <article><span class="tagging-automation-icon"><i class="fas fa-arrows-rotate" aria-hidden="true"></i></span><h3>Apply saved structure</h3><p>Imports already do this automatically. Use the maintenance centre only after changing many rules.</p><a class="tagging-secondary" href="processes.html">Open maintenance centre</a></article>
+                <article class="tagging-reset-card"><span class="tagging-automation-icon"><i class="fas fa-rotate-left" aria-hidden="true"></i></span><div><span class="tagging-eyebrow">Guarded reset</span><h3>Start tagging again</h3><p>Take a safety snapshot, clear ordinary tag/category/segment assignments, and remove old matching rules. Canonical names, transfers and IGNORE remain protected.</p></div><button id="open-fresh-start" class="tagging-danger" type="button">Start fresh…</button></article>
             </div>
             <div id="automation-result" class="tagging-result" aria-live="polite" hidden></div>
         </section>
 
         <section class="tagging-panel" data-tagging-panel="history" aria-labelledby="history-title" data-no-card="true" hidden>
-            <header class="tagging-section-heading"><div><span class="tagging-eyebrow">Audit record</span><h2 id="history-title">Completed taxonomy rebuild</h2><p>The one-off rebuild tools have been removed from everyday navigation. Their immutable evidence remains available here and in backups.</p></div></header>
+            <header class="tagging-section-heading"><div><span class="tagging-eyebrow">Audit record</span><h2 id="history-title">Classification history</h2><p>Fresh starts and completed taxonomy rebuilds retain recovery evidence here and in backups.</p></div></header>
             <div id="rebuild-history" class="tagging-history" aria-live="polite"></div>
         </section>
     </main>
@@ -102,6 +103,18 @@
         <span class="tagging-eyebrow">Resolve pattern</span><h2>Choose the reusable tag</h2><p id="inbox-dialog-copy"></p>
         <div id="inbox-tag-picker" class="tagging-picker"><label for="inbox-tag-search">Canonical tag</label><input id="inbox-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="inbox-tag-results"><input id="inbox-tag-id" type="hidden"><div id="inbox-tag-status" class="tagging-picker-status" role="status"></div><div id="inbox-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
         <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="inbox-submit" value="default" class="tagging-primary">Save rule &amp; apply</button></div>
+    </form>
+</dialog>
+
+<dialog id="fresh-start-dialog" class="tagging-dialog tagging-reset-dialog">
+    <form method="dialog" id="fresh-start-form">
+        <span class="tagging-eyebrow">Destructive classification reset</span>
+        <h2>Start tagging from scratch?</h2>
+        <p>This clears live classifications and removes old matching rules, but never deletes transactions or your approved tag, category and segment names. A hashed safety snapshot and rule audit are taken first.</p>
+        <div id="fresh-start-summary" class="tagging-reset-summary" aria-live="polite"></div>
+        <div class="tagging-reset-protection"><i class="fas fa-shield-halved" aria-hidden="true"></i><span>Confirmed transfers and IGNORE transactions keep their current state.</span></div>
+        <label for="fresh-start-confirmation">Type <strong>START FRESH</strong> to confirm<input id="fresh-start-confirmation" maxlength="20" autocomplete="off" data-help="This exact phrase prevents an accidental reset." required></label>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="fresh-start-submit" value="default" class="tagging-danger" disabled>Take snapshot &amp; reset</button></div>
     </form>
 </dialog>
 
@@ -140,6 +153,6 @@
 <script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Tagging', breadcrumb: 'Organise', subtitle: 'One place to maintain transaction language, rules and automation.' });</script>
 <script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
 <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script><script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
-<script src="js/tagging.js?v=20260824-unified"></script>
+<script src="js/tagging.js?v=20260825-fresh-start"></script>
 </body>
 </html>
