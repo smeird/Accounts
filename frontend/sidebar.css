@@ -15,6 +15,7 @@
 .app-shell-main {
     min-height:0;
     overscroll-behavior-y:contain;
+    scroll-padding-block-end:max(1.5rem,calc(env(safe-area-inset-bottom) + 1rem));
     -webkit-overflow-scrolling:touch;
 }
 

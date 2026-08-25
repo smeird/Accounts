@@ -37,7 +37,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const sidebarLink = document.createElement('link');
     sidebarLink.id = 'sidebar-css';
     sidebarLink.rel = 'stylesheet';
-    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20260825-ipad-shell');
+    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20260825-sitewide-ipad-shell');
     document.head.appendChild(sidebarLink);
   }
 
@@ -489,8 +489,9 @@ const attachSidebarSearchHandler = (root = document) => {
       .catch(err => console.error('Menu load failed', err));
   }
 
-  const content = document.querySelector('body > div.flex');
-  if (content) {
+  const main = document.querySelector('body > div > main');
+  const content = main?.parentElement;
+  if (content && content.parentElement === document.body) {
     // Prevent the document itself from scrolling so only the main content
     // panel owns vertical scrolling. This avoids double right-edge scrollbars.
     document.documentElement.classList.add('app-shell-root');
@@ -500,10 +501,7 @@ const attachSidebarSearchHandler = (root = document) => {
     // sidebar on larger displays so the menu and utility bar position
     // consistently across pages.
     content.classList.add('flex', 'flex-col', 'md:flex-row', 'min-h-screen', 'h-screen', 'overflow-hidden', 'app-shell');
-    const main = content.querySelector('main');
-    if (main) {
-      main.classList.add('flex-1', 'min-w-0', 'h-full', 'overflow-y-auto', 'md:ml-64', 'pt-16', 'md:pt-0', 'app-shell-main');
-    }
+    main.classList.add('flex-1', 'min-w-0', 'h-full', 'overflow-y-auto', 'md:ml-64', 'pt-16', 'md:pt-0', 'app-shell-main');
   }
 
   attachSidebarSearchHandler(document);
