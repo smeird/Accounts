@@ -10,7 +10,7 @@ const menuJs = fs.readFileSync(path.join(__dirname, 'menu.js'), 'utf8');
 const sidebarCss = fs.readFileSync(path.join(frontendDirectory, 'sidebar.css'), 'utf8');
 
 assert.match(menuJs, /app-shell-root[\s\S]*app-shell-body[\s\S]*app-shell[\s\S]*app-shell-main/, 'the authenticated layout should expose stable shell hooks');
-assert.match(menuJs, /sidebar\.css\?v=20260825-ipad-shell/, 'the shared shell stylesheet cache key should include the tablet fix');
+assert.match(menuJs, /sidebar\.css\?v=20260825-sitewide-ipad-shell/, 'the shared shell stylesheet cache key should include the site-wide tablet fix');
 assert.match(sidebarCss, /@supports \(height:100dvh\)[\s\S]*height:100dvh!important/, 'the application shell should follow the live mobile browser viewport');
 assert.match(sidebarCss, /\.app-shell-main[\s\S]*overscroll-behavior-y:contain/, 'the main touch scroller should not chain into the page');
 assert.match(processesCss, /\.processes-main[\s\S]*safe-area-inset-bottom/, 'Automation Centre should preserve tappable space below its final action');

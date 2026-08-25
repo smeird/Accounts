@@ -204,7 +204,7 @@ $bg600 = "bg-{$colorScheme}-600";
       <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css">
-    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260817-completeness-audit">
+    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260825-ipad-safe-area">
       <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
       <style>
           a { transition: color 0.2s ease; }
