@@ -1,8 +1,11 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const {
     normaliseRecurringPayload,
     buildRecurringSummary,
     buildRecurringSelectionSummary,
+    recurringTablePaging,
     ordinal,
     formatSchedule,
     formatCurrency
@@ -41,10 +44,18 @@ assert.deepStrictEqual(buildRecurringSelectionSummary(null), {
     income: 0,
     net: 0
 });
+assert.deepStrictEqual(recurringTablePaging(10), { pagination: false, paginationSize: 10 });
+assert.deepStrictEqual(recurringTablePaging(11), { pagination: true, paginationSize: 10 });
+assert.deepStrictEqual(recurringTablePaging(73), { pagination: true, paginationSize: 10 });
 assert.strictEqual(ordinal(1), '1st');
 assert.strictEqual(ordinal(12), '12th');
 assert.strictEqual(ordinal(23), '23rd');
 assert.strictEqual(formatSchedule(21), 'Around the 21st');
 assert.strictEqual(formatCurrency(12.5), '£12.50');
+
+const recurringCss = fs.readFileSync(path.resolve(__dirname, '..', 'recurring_spend.css'), 'utf8');
+assert.match(recurringCss, /\.recurring-panel \.modern-table-search/, 'table searches should be scoped through the recurring panel');
+assert.match(recurringCss, /\.recurring-table\.modern-table\.tabulator/, 'table states should target the classes Tabulator applies to the same element');
+assert.doesNotMatch(recurringCss, /\.recurring-table \.modern-table\.tabulator/, 'recurring table rules must not assume a nested Tabulator element');
 
 console.log('recurring_spend.js tests passed');

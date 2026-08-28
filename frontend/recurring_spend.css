@@ -180,7 +180,33 @@
 .recurring-panel__totals small { color: var(--recurring-muted); font-size: .6875rem; font-weight: 760; text-transform: uppercase; }
 .recurring-panel__totals strong { margin-top: .14rem; color: var(--recurring-ink); font-size: .875rem; font-weight: 850; letter-spacing: -.025em; }
 .recurring-table { padding: .75rem; }
-.recurring-table .modern-table-shell { margin: 0; }
+.recurring-panel .modern-table-shell { margin: 0; }
+.recurring-panel .modern-table-toolbar { align-items: center; gap: .65rem; margin: 0 0 .65rem; }
+.recurring-panel .modern-table-search {
+    width: min(26rem, 100%);
+    min-height: 2.5rem;
+    padding: 0 .72rem;
+    border-color: #dbe3ef;
+    border-radius: .72rem;
+    background: #f8fafc;
+    box-shadow: none;
+}
+.recurring-panel .modern-table-search:focus-within { border-color: rgba(79, 70, 229, .5); background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, .1); }
+body.recurring-spend-page .recurring-panel .modern-table-search-input {
+    min-height: 2.35rem !important;
+    height: 2.35rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+.recurring-table.modern-table.tabulator .tabulator-footer-contents { display: flex; align-items: center; justify-content: space-between; gap: .65rem; }
+.recurring-table.modern-table.tabulator .tabulator-page-counter { margin: 0 auto 0 0; color: var(--recurring-muted); font-size: .75rem; }
+.recurring-table.modern-table.tabulator .tabulator-paginator { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .18rem; }
 .recurring-merchant { display: flex; min-width: 0; align-items: center; gap: .58rem; }
 .recurring-select-control { display: grid; width: 1.8rem; height: 2rem; flex: 0 0 auto; place-items: center; border-right: 1px solid #e2e8f0; cursor: pointer; }
 .recurring-select-control input { width: 1.05rem; height: 1.05rem; margin: 0; accent-color: var(--site-brand, #4f46e5); cursor: pointer; }
@@ -193,8 +219,8 @@
 .recurring-money { color: var(--recurring-ink); font-weight: 820; font-variant-numeric: tabular-nums; }
 .recurring-history-link { display: inline-flex; align-items: center; gap: .35rem; color: var(--site-brand-dark, #4338ca); font-size: .75rem; font-weight: 800; text-decoration: none; }
 .recurring-history-link:hover { text-decoration: underline; }
-.recurring-table .modern-table.tabulator .tabulator-row.is-running-total-selected,
-.recurring-table .modern-table.tabulator .tabulator-row.is-running-total-selected:hover { background: linear-gradient(90deg, rgba(224, 231, 255, .94), rgba(207, 250, 254, .74)) !important; box-shadow: inset .22rem 0 0 var(--site-brand, #4f46e5); }
+.recurring-table.modern-table.tabulator .tabulator-row.is-running-total-selected,
+.recurring-table.modern-table.tabulator .tabulator-row.is-running-total-selected:hover { background: linear-gradient(90deg, rgba(224, 231, 255, .94), rgba(207, 250, 254, .74)) !important; box-shadow: inset .22rem 0 0 var(--site-brand, #4f46e5); }
 .recurring-empty { display: grid; min-height: 10rem; place-items: center; align-content: center; padding: 1.5rem; color: var(--recurring-muted); text-align: center; }
 .recurring-empty[hidden] { display: none; }
 .recurring-empty i { margin-bottom: .65rem; color: #10b981; font-size: 1.25rem; }
@@ -243,6 +269,34 @@
     .recurring-panel__totals { display: grid; width: 100%; grid-template-columns: 1fr 1fr; gap: .45rem; padding-left: 0; }
     .recurring-panel__totals > span { min-width: 0; }
     .recurring-table { padding: .55rem; }
+    .recurring-panel .modern-table-toolbar { align-items: stretch; }
+    .recurring-panel .modern-table-search { width: 100%; }
+    body.recurring-spend-page .recurring-table.tabulator .tabulator-footer .tabulator-footer-contents {
+        align-items: stretch !important;
+        flex-direction: column !important;
+    }
+    body.recurring-spend-page .recurring-table.tabulator .tabulator-page-counter {
+        display: block;
+        width: 100%;
+        flex: 0 0 auto !important;
+        float: none !important;
+        margin: 0 !important;
+    }
+    body.recurring-spend-page .recurring-table.tabulator .tabulator-paginator {
+        display: grid !important;
+        width: 100%;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .28rem;
+        flex: 0 0 auto !important;
+        float: none !important;
+        text-align: left !important;
+        white-space: normal;
+    }
+    body.recurring-spend-page .recurring-table.tabulator .tabulator-pages { display: contents; }
+    body.recurring-spend-page .recurring-table.tabulator .tabulator-footer .tabulator-page {
+        width: 100%;
+        margin: 0;
+    }
     .recurring-notes { grid-template-columns: 1fr; padding: .85rem; }
     .recurring-notes ul { grid-template-columns: 1fr; }
 }

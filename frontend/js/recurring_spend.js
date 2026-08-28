@@ -2,6 +2,7 @@
     'use strict';
 
     const currency = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' });
+    const RECURRING_PAGE_SIZE = 10;
 
     function finiteNumber(value) {
         const number = Number(value);
@@ -53,6 +54,14 @@
         return summary;
     }
 
+    function recurringTablePaging(rowCount) {
+        const count = Math.max(0, Math.round(finiteNumber(rowCount)));
+        return {
+            pagination: count > RECURRING_PAGE_SIZE,
+            paginationSize: RECURRING_PAGE_SIZE
+        };
+    }
+
     function ordinal(day) {
         const number = Math.min(31, Math.max(1, Math.round(finiteNumber(day) || 1)));
         const remainder = number % 100;
@@ -76,6 +85,7 @@
             normaliseRecurringPayload,
             buildRecurringSummary,
             buildRecurringSelectionSummary,
+            recurringTablePaging,
             ordinal,
             formatSchedule,
             formatCurrency
@@ -269,6 +279,7 @@
         const preparedRows = rows.map(row => Object.assign({}, row, {
             selection_key: recurringPatternKey(kind, row)
         }));
+        const paging = recurringTablePaging(rows.length);
         tableInstances[kind] = root.tailwindTabulator(grid, {
             data: preparedRows,
             columns: tableColumns(kind),
@@ -276,9 +287,10 @@
             initialSort: [{ column: 'total', dir: 'desc' }],
             searchFields: ['description'],
             modernLabel: kind === 'outgoings' ? 'Recurring outgoings' : 'Recurring income',
-            modernMaxHeight: '32rem',
-            pagination: rows.length > 30,
-            paginationSize: 30,
+            pagination: paging.pagination,
+            paginationMode: 'local',
+            paginationSize: paging.paginationSize,
+            paginationCounter: 'rows',
             rowFormatter: row => {
                 row.getElement().classList.toggle(
                     'is-running-total-selected',

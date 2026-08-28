@@ -304,7 +304,10 @@ function tailwindTabulator(element, options) {
         searchInput.type = 'text';
         searchInput.placeholder = 'Search this table';
         searchInput.setAttribute('aria-label', `Search ${resolvedLabel}`);
-        searchInput.className = 'tabulator-search modern-table-search-input';
+        // This control owns its complete appearance. Mark it unstyled so the
+        // shared form decorator cannot reapply a native Safari text field
+        // inside the modern search surface.
+        searchInput.className = 'tabulator-search modern-table-search-input unstyled';
         searchInput.style.colorScheme = 'light';
         count.className = 'modern-table-count';
         count.setAttribute('role', 'status');

@@ -15,6 +15,7 @@ assert.doesNotMatch(adapter, /modern-table-pill-label/, 'classification pills sh
 assert.match(adapter, /createClassificationKey\(classificationKinds\)/, 'classification tables should include a compact colour key');
 assert.match(adapter, /isTransactionColumnSet\(options\.columns\)/, 'transaction tables should be detected from their column definitions');
 assert.match(adapter, /createTagCorrectionLink\(\)/, 'transaction tables should offer the AI tag correction entry point');
+assert.match(adapter, /modern-table-search-input unstyled/, 'modern table search should not inherit Safari native field decoration');
 
 const monthlyStatement = fs.readFileSync(path.join(frontendDirectory, 'monthly_statement.html'), 'utf8');
 assert.match(monthlyStatement, /statement-classification-key/, 'monthly statement should include the classification colour key');
