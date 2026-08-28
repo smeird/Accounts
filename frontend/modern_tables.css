@@ -54,15 +54,19 @@
 .modern-table-search-input::placeholder { color:#94a3b8; }
 
 .modern-table-count {
+    display:inline-flex;
+    min-height:2.35rem;
     flex:0 0 auto;
-    padding:.32rem .6rem;
-    border:1px solid #dbeafe;
-    border-radius:999px;
-    color:#3730a3;
-    background:linear-gradient(120deg,#eef2ff,#ecfeff);
-    font-size:.61rem;
-    font-weight:850;
-    letter-spacing:.02em;
+    align-items:center;
+    padding:0 .15rem;
+    border:0;
+    border-radius:0;
+    color:#64748b;
+    background:transparent;
+    font-size:.6875rem;
+    font-weight:650;
+    letter-spacing:0;
+    white-space:nowrap;
 }
 
 .classification-key { display:flex; min-width:0; align-items:center; flex-wrap:wrap; gap:.35rem .52rem; color:#64748b; font-size:.56rem; font-weight:760; }
@@ -237,7 +241,7 @@
     .modern-table-toolbar { align-items:stretch; flex-direction:column; }
     .modern-table-search { width:100%; }
     .modern-table-key { order:3; }
-    .modern-table-count { align-self:flex-start; }
+    .modern-table-count { min-height:auto; align-self:flex-start; }
 
     .modern-table--cards.tabulator,
     .site-system-page .modern-table--cards.tabulator,

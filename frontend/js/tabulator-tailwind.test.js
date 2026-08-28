@@ -5,6 +5,7 @@ const path = require('path');
 const frontendDirectory = path.resolve(__dirname, '..');
 const adapterPath = path.join(__dirname, 'tabulator-tailwind.js');
 const adapter = fs.readFileSync(adapterPath, 'utf8');
+const modernTableStyles = fs.readFileSync(path.join(frontendDirectory, 'modern_tables.css'), 'utf8');
 
 assert.match(adapter, /getDataCount\('active'\)/, 'row counts should use Tabulator metadata');
 assert.doesNotMatch(adapter, /getRows\('active'\)\.forEach\(decorateModernRow\)/, 'processed data must not trigger a second full row pass');
@@ -16,6 +17,7 @@ assert.match(adapter, /createClassificationKey\(classificationKinds\)/, 'classif
 assert.match(adapter, /isTransactionColumnSet\(options\.columns\)/, 'transaction tables should be detected from their column definitions');
 assert.match(adapter, /createTagCorrectionLink\(\)/, 'transaction tables should offer the AI tag correction entry point');
 assert.match(adapter, /modern-table-search-input unstyled/, 'modern table search should not inherit Safari native field decoration');
+assert.match(modernTableStyles, /\.modern-table-count\s*\{[\s\S]*?border:0;[\s\S]*?background:transparent;/, 'row counts should be quiet status text rather than detached pills');
 
 const monthlyStatement = fs.readFileSync(path.join(frontendDirectory, 'monthly_statement.html'), 'utf8');
 assert.match(monthlyStatement, /statement-classification-key/, 'monthly statement should include the classification colour key');

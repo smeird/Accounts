@@ -9,7 +9,7 @@ function ensureModernTableStyles() {
     const source = document.currentScript && document.currentScript.src;
     link.id = 'modern-tables-css';
     link.rel = 'stylesheet';
-    link.href = source ? new URL('../modern_tables.css?v=20260815-pill-key', source).href : 'modern_tables.css?v=20260815-pill-key';
+    link.href = source ? new URL('../modern_tables.css?v=20260828-toolbar-spacing', source).href : 'modern_tables.css?v=20260828-toolbar-spacing';
     document.head.appendChild(link);
 }
 
