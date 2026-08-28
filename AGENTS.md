@@ -95,6 +95,7 @@
 - Recurring Spend loads its read-only analysis automatically, describes its detection rules, separates trailing twelve-month totals from next-month estimates, and links each detected pattern to its transaction history.
 - Recurring Spend quick totals use explicit row checkboxes and the latest observed amount (the same basis as the next-month estimate). Keep selected outgoings, income, and net visible together, and clear the temporary selection whenever the analysis is refreshed.
 - Recurring Spend uses ten-row local pagination for large pattern lists instead of an invisible nested table scroller. Modern table search inputs own their complete appearance and remain excluded from shared form decoration so Safari does not render nested input chrome.
+- Recurring Spend table surfaces are inset from their panels; keep the toolbar and table edges aligned rather than rendering the rows full-bleed against the container.
 - Modern table toolbars align their search control and row count with the table content. Row counts are quiet status text rather than coloured pills.
 - Pivot Analysis loads automatically, excludes internal transfers, presents income, outgoings and net movement before its expandable segment/category/tag matrix, and opens transaction evidence from every amount cell.
 - Sidebar information architecture is task-led and uses six stable groups: Overview, Transactions, Insights, Planning, Organise, and System. Navigation labels describe user goals while existing page URLs remain unchanged for bookmarks.

@@ -57,5 +57,6 @@ const recurringCss = fs.readFileSync(path.resolve(__dirname, '..', 'recurring_sp
 assert.match(recurringCss, /\.recurring-panel \.modern-table-search/, 'table searches should be scoped through the recurring panel');
 assert.match(recurringCss, /\.recurring-table\.modern-table\.tabulator/, 'table states should target the classes Tabulator applies to the same element');
 assert.doesNotMatch(recurringCss, /\.recurring-table \.modern-table\.tabulator/, 'recurring table rules must not assume a nested Tabulator element');
+assert.match(recurringCss, /\.recurring-table\.modern-table\.tabulator\s*\{[\s\S]*?width: calc\(100% - 1\.5rem\)/, 'desktop recurring tables should be inset from their panel edges');
 
 console.log('recurring_spend.js tests passed');
