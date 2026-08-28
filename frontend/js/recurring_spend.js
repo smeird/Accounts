@@ -41,6 +41,18 @@
         };
     }
 
+    function buildRecurringSelectionSummary(items) {
+        const summary = { count: 0, outgoings: 0, income: 0, net: 0 };
+        (Array.isArray(items) ? items : []).forEach(item => {
+            if (!item || (item.kind !== 'outgoings' && item.kind !== 'income')) return;
+            const amount = Math.abs(finiteNumber(item.amount));
+            summary.count += 1;
+            summary[item.kind] += amount;
+        });
+        summary.net = summary.income - summary.outgoings;
+        return summary;
+    }
+
     function ordinal(day) {
         const number = Math.min(31, Math.max(1, Math.round(finiteNumber(day) || 1)));
         const remainder = number % 100;
@@ -60,18 +72,28 @@
     }
 
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { normaliseRecurringPayload, buildRecurringSummary, ordinal, formatSchedule, formatCurrency };
+        module.exports = {
+            normaliseRecurringPayload,
+            buildRecurringSummary,
+            buildRecurringSelectionSummary,
+            ordinal,
+            formatSchedule,
+            formatCurrency
+        };
     }
 
     if (!root || !root.document) return;
 
     const document = root.document;
     const tableInstances = { outgoings: null, income: null };
+    const selectedPatterns = new Map();
     const runButton = document.getElementById('run-analysis');
     const retryButton = document.getElementById('recurring-retry');
+    const clearSelectionButton = document.getElementById('clear-recurring-selection');
     const statePanel = document.getElementById('recurring-state');
     const resultsPanel = document.getElementById('recurring-results');
     const summaryPanel = document.getElementById('recurring-summary');
+    const selectionPanel = document.getElementById('recurring-selection');
 
     function setText(id, value) {
         const element = document.getElementById(id);
@@ -113,22 +135,82 @@
         return normaliseRecurringPayload(payload);
     }
 
-    function descriptionFormatter(cell) {
-        const wrapper = document.createElement('div');
-        const icon = document.createElement('span');
-        const copy = document.createElement('span');
-        const title = document.createElement('strong');
-        const detail = document.createElement('small');
-        const row = cell.getRow().getData();
-        wrapper.className = 'recurring-merchant';
-        icon.className = 'recurring-merchant__icon';
-        icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = String(row.description || '?').trim().charAt(0).toUpperCase() || '?';
-        title.textContent = row.description;
-        detail.textContent = `${row.occurrences} occurrence${row.occurrences === 1 ? '' : 's'} in the last year`;
-        copy.append(title, detail);
-        wrapper.append(icon, copy);
-        return wrapper;
+    function recurringPatternKey(kind, row) {
+        return JSON.stringify([kind, String(row.description || ''), finiteNumber(row.day)]);
+    }
+
+    function updateSelectionSummary(announce) {
+        const summary = buildRecurringSelectionSummary(Array.from(selectedPatterns.values()));
+        const itemLabel = `${summary.count} item${summary.count === 1 ? '' : 's'}`;
+        setText('selected-count', itemLabel);
+        setText('selected-outgoings', formatCurrency(summary.outgoings));
+        setText('selected-income', formatCurrency(summary.income));
+        setText('selected-net', formatCurrency(summary.net));
+        clearSelectionButton.disabled = summary.count === 0;
+        selectionPanel.classList.toggle('has-selection', summary.count > 0);
+        document.getElementById('selected-net-card').classList.toggle('is-negative', summary.net < 0);
+        if (announce !== false) {
+            setText(
+                'recurring-selection-announcement',
+                summary.count === 0
+                    ? 'No recurring patterns selected.'
+                    : `${itemLabel} selected. Outgoings ${formatCurrency(summary.outgoings)}, income ${formatCurrency(summary.income)}, net ${formatCurrency(summary.net)}.`
+            );
+        }
+    }
+
+    function clearRecurringSelection(announce) {
+        selectedPatterns.clear();
+        document.querySelectorAll('.recurring-select-control input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+            const row = checkbox.closest('.tabulator-row');
+            if (row) row.classList.remove('is-running-total-selected');
+        });
+        updateSelectionSummary(announce);
+    }
+
+    function updatePatternSelection(kind, row, checked, rowElement) {
+        const key = row.selection_key || recurringPatternKey(kind, row);
+        if (checked) {
+            selectedPatterns.set(key, { kind, amount: row.last_amount });
+        } else {
+            selectedPatterns.delete(key);
+        }
+        if (rowElement) rowElement.classList.toggle('is-running-total-selected', checked);
+        updateSelectionSummary(true);
+    }
+
+    function descriptionFormatter(kind) {
+        return function (cell) {
+            const wrapper = document.createElement('div');
+            const selection = document.createElement('label');
+            const checkbox = document.createElement('input');
+            const icon = document.createElement('span');
+            const copy = document.createElement('span');
+            const title = document.createElement('strong');
+            const detail = document.createElement('small');
+            const rowComponent = cell.getRow();
+            const row = rowComponent.getData();
+            const key = row.selection_key || recurringPatternKey(kind, row);
+            wrapper.className = 'recurring-merchant';
+            selection.className = 'recurring-select-control';
+            checkbox.type = 'checkbox';
+            checkbox.checked = selectedPatterns.has(key);
+            checkbox.setAttribute('aria-label', `Include ${row.description} (${formatCurrency(row.last_amount)}) in the quick total`);
+            checkbox.setAttribute('data-tooltip', 'Include in quick total');
+            checkbox.addEventListener('change', () => {
+                updatePatternSelection(kind, row, checkbox.checked, rowComponent.getElement());
+            });
+            selection.appendChild(checkbox);
+            icon.className = 'recurring-merchant__icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = String(row.description || '?').trim().charAt(0).toUpperCase() || '?';
+            title.textContent = row.description;
+            detail.textContent = `${row.occurrences} occurrence${row.occurrences === 1 ? '' : 's'} in the last year`;
+            copy.append(title, detail);
+            wrapper.append(selection, icon, copy);
+            return wrapper;
+        };
     }
 
     function scheduleFormatter(cell) {
@@ -159,13 +241,13 @@
         return link;
     }
 
-    function tableColumns() {
+    function tableColumns(kind) {
         return [
-            { title: 'Commitment', field: 'description', minWidth: 210, formatter: descriptionFormatter },
+            { title: 'Pattern', field: 'description', minWidth: 250, formatter: descriptionFormatter(kind) },
             { title: 'Usual timing', field: 'day', minWidth: 130, formatter: scheduleFormatter },
             { title: 'Latest amount', field: 'last_amount', hozAlign: 'right', minWidth: 120, sorter: 'number', formatter: moneyFormatter },
             { title: '12-month total', field: 'total', hozAlign: 'right', minWidth: 120, sorter: 'number', formatter: moneyFormatter },
-            { title: '', field: 'history', hozAlign: 'right', headerSort: false, minWidth: 90, formatter: historyFormatter }
+            { title: 'History', field: 'history', hozAlign: 'right', headerSort: false, minWidth: 90, formatter: historyFormatter }
         ];
     }
 
@@ -184,16 +266,25 @@
 
         grid.hidden = false;
         empty.hidden = true;
+        const preparedRows = rows.map(row => Object.assign({}, row, {
+            selection_key: recurringPatternKey(kind, row)
+        }));
         tableInstances[kind] = root.tailwindTabulator(grid, {
-            data: rows,
-            columns: tableColumns(),
+            data: preparedRows,
+            columns: tableColumns(kind),
             layout: 'fitColumns',
             initialSort: [{ column: 'total', dir: 'desc' }],
             searchFields: ['description'],
             modernLabel: kind === 'outgoings' ? 'Recurring outgoings' : 'Recurring income',
             modernMaxHeight: '32rem',
             pagination: rows.length > 30,
-            paginationSize: 30
+            paginationSize: 30,
+            rowFormatter: row => {
+                row.getElement().classList.toggle(
+                    'is-running-total-selected',
+                    selectedPatterns.has(row.getData().selection_key)
+                );
+            }
         });
     }
 
@@ -216,6 +307,7 @@
     }
 
     function renderAnalysis(data) {
+        clearRecurringSelection(false);
         renderSummary(data);
         renderSection('outgoings', data.outgoings);
         renderSection('income', data.income);
@@ -243,5 +335,7 @@
 
     runButton.addEventListener('click', () => loadAnalysis(true));
     retryButton.addEventListener('click', () => loadAnalysis(true));
+    clearSelectionButton.addEventListener('click', () => clearRecurringSelection(true));
+    updateSelectionSummary(false);
     loadAnalysis(false);
 })(typeof window !== 'undefined' ? window : null);

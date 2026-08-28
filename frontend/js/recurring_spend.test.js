@@ -1,5 +1,12 @@
 const assert = require('assert');
-const { normaliseRecurringPayload, buildRecurringSummary, ordinal, formatSchedule, formatCurrency } = require('./recurring_spend.js');
+const {
+    normaliseRecurringPayload,
+    buildRecurringSummary,
+    buildRecurringSelectionSummary,
+    ordinal,
+    formatSchedule,
+    formatCurrency
+} = require('./recurring_spend.js');
 
 const payload = normaliseRecurringPayload({
     outgoings: { results: [{ description: 'Broadband', day: '21', occurrences: '12', average: '-30', last_amount: '-32', total: '-360' }], total: '360', next_month: '32' },
@@ -16,6 +23,23 @@ assert.deepStrictEqual(buildRecurringSummary(payload), {
     patterns: 2,
     outgoingPatterns: 1,
     incomePatterns: 1
+});
+assert.deepStrictEqual(buildRecurringSelectionSummary([
+    { kind: 'outgoings', amount: -32 },
+    { kind: 'outgoings', amount: 18 },
+    { kind: 'income', amount: '2050' },
+    { kind: 'unknown', amount: 999 }
+]), {
+    count: 3,
+    outgoings: 50,
+    income: 2050,
+    net: 2000
+});
+assert.deepStrictEqual(buildRecurringSelectionSummary(null), {
+    count: 0,
+    outgoings: 0,
+    income: 0,
+    net: 0
 });
 assert.strictEqual(ordinal(1), '1st');
 assert.strictEqual(ordinal(12), '12th');

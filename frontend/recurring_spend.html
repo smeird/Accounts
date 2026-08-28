@@ -13,7 +13,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
-    <link rel="stylesheet" href="recurring_spend.css?v=20260817-recurring-refresh">
+    <link rel="stylesheet" href="recurring_spend.css?v=20260828-quick-total">
 </head>
 <body class="ops-body recurring-spend-page">
     <div class="flex min-h-screen">
@@ -64,6 +64,25 @@
             </section>
 
             <div id="recurring-results" class="recurring-results" hidden>
+                <section id="recurring-selection" class="recurring-selection" data-no-card aria-labelledby="recurring-selection-title">
+                    <span class="recurring-selection__icon" aria-hidden="true"><i class="fas fa-calculator"></i></span>
+                    <div class="recurring-selection__copy">
+                        <span class="recurring-eyebrow">Quick total</span>
+                        <h2 id="recurring-selection-title">Select the patterns you want to combine</h2>
+                        <p>Tick any row below. The running total uses its latest amount, matching the next-month estimate.</p>
+                    </div>
+                    <dl class="recurring-selection__totals" aria-label="Selected recurring pattern totals">
+                        <div><dt>Selected</dt><dd id="selected-count">0 items</dd></div>
+                        <div><dt>Outgoings</dt><dd id="selected-outgoings">£0.00</dd></div>
+                        <div><dt>Income</dt><dd id="selected-income">£0.00</dd></div>
+                        <div id="selected-net-card"><dt>Net</dt><dd id="selected-net">£0.00</dd></div>
+                    </dl>
+                    <button id="clear-recurring-selection" class="recurring-selection__clear" type="button" aria-label="Clear selected recurring patterns" disabled>
+                        <i class="fas fa-xmark" aria-hidden="true"></i><span>Clear</span>
+                    </button>
+                    <p id="recurring-selection-announcement" class="sr-only" role="status" aria-live="polite">No recurring patterns selected.</p>
+                </section>
+
                 <section class="recurring-panel recurring-panel--outgoing" data-no-card aria-labelledby="outgoing-title">
                     <header class="recurring-panel__header">
                         <span class="recurring-panel__icon" aria-hidden="true"><i class="fas fa-receipt"></i></span>
@@ -127,6 +146,6 @@
     <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
     <script src="js/overlay.js"></script>
-    <script src="js/recurring_spend.js?v=20260817-recurring-refresh"></script>
+    <script src="js/recurring_spend.js?v=20260828-quick-total"></script>
 </body>
 </html>
