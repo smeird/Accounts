@@ -33,7 +33,7 @@
                 </div>
                 <div class="recurring-method" aria-label="Detection method">
                     <span class="recurring-method__icon" aria-hidden="true"><i class="fas fa-wave-square"></i></span>
-                    <div><strong>Active repeat patterns</strong><p>Two or more matching transactions in the last year, with activity in the latest 40 days.</p></div>
+                    <div><strong>Active monthly patterns</strong><p>Two or more matching months in the last year, allowing normal collection-date shifts and activity within the latest 50 days.</p></div>
                     <span class="recurring-method__badge">Transfers excluded</span>
                 </div>
             </section>
@@ -125,7 +125,7 @@
             <section class="recurring-notes" data-no-card aria-labelledby="recurring-notes-title">
                 <div><span class="recurring-eyebrow">Reading the analysis</span><h2 id="recurring-notes-title">Useful context</h2></div>
                 <ul>
-                    <li><i class="fas fa-calendar-day" aria-hidden="true"></i><span><strong>Timing is approximate</strong>Transactions are matched by description and day of month.</span></li>
+                    <li><i class="fas fa-calendar-day" aria-hidden="true"></i><span><strong>Timing is approximate</strong>Merchant wording is normalised and monthly dates may move for weekdays, weekends or bank processing.</span></li>
                     <li><i class="fas fa-calculator" aria-hidden="true"></i><span><strong>Next month uses the latest amount</strong>This reacts faster when a bill has recently changed.</span></li>
                     <li><i class="fas fa-ban" aria-hidden="true"></i><span><strong>Internal transfers are excluded</strong>Moving money between your accounts is not treated as spend or income.</span></li>
                 </ul>
@@ -146,6 +146,6 @@
     <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
     <script src="js/tabulator-tailwind.js?v=20260828-toolbar-spacing"></script>
     <script src="js/overlay.js"></script>
-    <script src="js/recurring_spend.js?v=20260828-safari-table"></script>
+    <script src="js/recurring_spend.js?v=20260829-monthly-cadence"></script>
 </body>
 </html>

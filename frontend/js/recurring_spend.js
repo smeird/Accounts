@@ -14,6 +14,10 @@
         return {
             results: Array.isArray(value.results) ? value.results.map(row => ({
                 description: String(row.description || 'Unknown transaction'),
+                search_term: String(row.search_term || row.description || ''),
+                descriptions: Array.isArray(row.descriptions) ? row.descriptions.map(String) : [],
+                frequency: String(row.frequency || 'monthly'),
+                schedule: String(row.schedule || ''),
                 day: Math.min(31, Math.max(1, Math.round(finiteNumber(row.day) || 1))),
                 occurrences: Math.max(0, Math.round(finiteNumber(row.occurrences))),
                 average: Math.abs(finiteNumber(row.average)),
@@ -72,8 +76,8 @@
         return `${number}th`;
     }
 
-    function formatSchedule(day) {
-        return `Around the ${ordinal(day)}`;
+    function formatSchedule(day, schedule) {
+        return schedule ? String(schedule) : `Monthly · around the ${ordinal(day)}`;
     }
 
     function formatCurrency(value) {
@@ -225,8 +229,9 @@
 
     function scheduleFormatter(cell) {
         const value = document.createElement('span');
+        const row = cell.getRow().getData();
         value.className = 'recurring-schedule';
-        value.textContent = formatSchedule(cell.getValue());
+        value.textContent = formatSchedule(cell.getValue(), row.schedule);
         return value;
     }
 
@@ -242,7 +247,7 @@
         const link = document.createElement('a');
         const icon = document.createElement('i');
         link.className = 'recurring-history-link';
-        link.href = `search.html?value=${encodeURIComponent(row.description)}`;
+        link.href = `search.html?value=${encodeURIComponent(row.search_term || row.description)}`;
         link.setAttribute('aria-label', `View transaction history for ${row.description}`);
         link.append(document.createTextNode('History'));
         icon.className = 'fas fa-arrow-right';

@@ -118,6 +118,9 @@
                 .concat(data && Array.isArray(data.results) ? data.results : []);
             rows.forEach(item => {
                 if (item.description) recurring.add(String(item.description).toLowerCase());
+                if (Array.isArray(item.descriptions)) {
+                    item.descriptions.forEach(description => recurring.add(String(description).toLowerCase()));
+                }
             });
             return recurring;
         } catch (error) {

@@ -33,6 +33,7 @@ require_once __DIR__ . '/../php_backend/services/TagTaxonomyCutoverService.php';
 require_once __DIR__ . '/../php_backend/services/TaggingWorkspaceService.php';
 require_once __DIR__ . '/../php_backend/services/TaggingFreshStartService.php';
 require_once __DIR__ . '/../php_backend/services/FinancialWorkbookExportService.php';
+require_once __DIR__ . '/../php_backend/services/RecurringPatternDetector.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -71,6 +72,56 @@ function assertEqual($expected, $actual, string $message) {
         $results[] = "FAIL: $message (expected " . var_export($expected, true) . ", got " . var_export($actual, true) . ")";
     }
 }
+
+// Recurring bills are merchant/cadence patterns, not exact description/day
+// duplicates. A first-Tuesday utility with changing bank references must be one
+// pattern, while irregular or high-frequency merchants must remain excluded.
+$recurringAsOf = new DateTimeImmutable('2026-08-29');
+$affinityDates = [
+    '2025-09-02', '2025-10-07', '2025-11-04', '2025-12-02',
+    '2026-01-06', '2026-02-03', '2026-03-03', '2026-04-07',
+    '2026-05-05', '2026-06-02', '2026-07-07', '2026-08-04',
+];
+$affinityRows = [];
+foreach ($affinityDates as $index => $date) {
+    $affinityRows[] = [
+        'id' => $index + 1,
+        'date' => $date,
+        'amount' => -30 - ($index % 3),
+        'description' => 'AFFINITY WATER PAYMENT REF ' . (4100 + $index),
+        'memo' => null,
+    ];
+}
+$affinityPatterns = RecurringPatternDetector::analyse($affinityRows, $recurringAsOf);
+assertEqual(1, count($affinityPatterns), 'Recurring analysis consolidates a flexible monthly utility pattern');
+assertEqual('Affinity Water', $affinityPatterns[0]['description'] ?? null, 'Recurring analysis removes changing bank reference text');
+assertEqual(12, $affinityPatterns[0]['occurrences'] ?? null, 'Recurring analysis reports every utility occurrence in the year');
+assertEqual('Monthly · first Tuesday', $affinityPatterns[0]['schedule'] ?? null, 'Recurring analysis recognises a weekday-based monthly schedule');
+assertEqual(12, count($affinityPatterns[0]['descriptions'] ?? []), 'Recurring analysis retains raw descriptions for monthly-statement matching');
+
+$irregularRows = [];
+foreach (['2025-09-01', '2025-10-17', '2025-11-09', '2026-01-25', '2026-03-13', '2026-04-29', '2026-06-05', '2026-08-21'] as $index => $date) {
+    $irregularRows[] = [
+        'id' => 100 + $index,
+        'date' => $date,
+        'amount' => -20,
+        'description' => 'MARKETPLACE ORDER ' . (9000 + $index),
+        'memo' => null,
+    ];
+}
+assertEqual(0, count(RecurringPatternDetector::analyse($irregularRows, $recurringAsOf)), 'Recurring analysis rejects irregular repeat shopping');
+
+$frequentRows = [];
+foreach (['2026-06-03', '2026-06-10', '2026-06-17', '2026-06-24', '2026-07-01', '2026-07-08', '2026-07-15', '2026-07-22', '2026-08-05', '2026-08-12', '2026-08-19', '2026-08-26'] as $index => $date) {
+    $frequentRows[] = [
+        'id' => 200 + $index,
+        'date' => $date,
+        'amount' => -45,
+        'description' => 'WEEKLY GROCER',
+        'memo' => null,
+    ];
+}
+assertEqual(0, count(RecurringPatternDetector::analyse($frequentRows, $recurringAsOf)), 'Recurring analysis rejects high-frequency merchants from the monthly baseline');
 
 // Database driver should be sqlite
 assertEqual('sqlite', $db->getAttribute(PDO::ATTR_DRIVER_NAME), 'Database driver is sqlite');

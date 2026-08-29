@@ -12,12 +12,15 @@ const {
 } = require('./recurring_spend.js');
 
 const payload = normaliseRecurringPayload({
-    outgoings: { results: [{ description: 'Broadband', day: '21', occurrences: '12', average: '-30', last_amount: '-32', total: '-360' }], total: '360', next_month: '32' },
+    outgoings: { results: [{ description: 'Broadband', search_term: 'broadband', descriptions: ['BROADBAND REF 1', 'BROADBAND REF 2'], schedule: 'Monthly · around the 21st', day: '21', occurrences: '12', average: '-30', last_amount: '-32', total: '-360' }], total: '360', next_month: '32' },
     income: { results: [{ description: 'Salary', day: 28, occurrences: 12, average: 2000, last_amount: 2050, total: 24000 }], total: 24000, next_month: 2050 }
 });
 
 assert.strictEqual(payload.outgoings.results[0].last_amount, 32);
 assert.strictEqual(payload.outgoings.results[0].total, 360);
+assert.strictEqual(payload.outgoings.results[0].search_term, 'broadband');
+assert.deepStrictEqual(payload.outgoings.results[0].descriptions, ['BROADBAND REF 1', 'BROADBAND REF 2']);
+assert.strictEqual(payload.outgoings.results[0].schedule, 'Monthly · around the 21st');
 assert.strictEqual(payload.income.results[0].occurrences, 12);
 assert.deepStrictEqual(buildRecurringSummary(payload), {
     outgoingNext: 32,
@@ -50,7 +53,8 @@ assert.deepStrictEqual(recurringTablePaging(73), { pagination: true, paginationS
 assert.strictEqual(ordinal(1), '1st');
 assert.strictEqual(ordinal(12), '12th');
 assert.strictEqual(ordinal(23), '23rd');
-assert.strictEqual(formatSchedule(21), 'Around the 21st');
+assert.strictEqual(formatSchedule(21), 'Monthly · around the 21st');
+assert.strictEqual(formatSchedule(4, 'Monthly · first Tuesday'), 'Monthly · first Tuesday');
 assert.strictEqual(formatCurrency(12.5), '£12.50');
 
 const recurringCss = fs.readFileSync(path.resolve(__dirname, '..', 'recurring_spend.css'), 'utf8');

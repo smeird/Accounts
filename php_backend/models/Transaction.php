@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/Tag.php';
 require_once __DIR__ . '/Log.php';
+require_once __DIR__ . '/../services/RecurringPatternDetector.php';
 
 class Transaction {
     const DESC_MAX_LENGTH = 255;
@@ -1335,60 +1336,30 @@ class Transaction {
     }
 
     /**
-     * Analyse the last 12 months to find regularly occurring spend items.
-     * Transactions marked as transfers are ignored.
+     * Analyse the last 12 months to find active monthly transaction patterns.
+     * Changing bank references and normal collection-date shifts are tolerated;
+     * transfers and IGNORE-tagged transactions remain excluded.
      *
-     * @return array{description:string, occurrences:int, total:float}[]
+     * @return array<int,array<string,mixed>>
      */
     public static function getRecurringSpend(bool $income = false): array {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        $dayExpr = $driver === 'sqlite' ? "CAST(STRFTIME('%d', `date`) AS INTEGER)" : 'DAY(`date`)';
         $dateCond = $driver === 'sqlite'
-            ? "`date` >= DATE('now','-12 months')"
-            : '`date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)';
-
-        $recentCond = $driver === 'sqlite'
-            ? "MAX(`date`) >= DATE('now','-40 days')"
-            : 'MAX(`date`) >= DATE_SUB(CURDATE(), INTERVAL 40 DAY)';
+            ? "t.`date` >= DATE('now','-12 months') AND t.`date` <= DATE('now')"
+            : 't.`date` >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) AND t.`date` <= CURDATE()';
         $sign = $income ? '>' : '<';
-        $sql = "SELECT `description`, $dayExpr AS `day`, COUNT(*) AS occurrences, "
-             . "SUM(`amount`) AS total, AVG(`amount`) AS average, MAX(`date`) AS last_date "
-
-             . 'FROM `transactions` '
+        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo` '
+             . 'FROM `transactions` t '
              . 'WHERE ' . $dateCond . ' '
-             . 'AND `amount` ' . $sign . ' 0 '
-             . 'AND `transfer_id` IS NULL '
-             . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
-             . "GROUP BY `description`, $dayExpr "
-
-             . 'HAVING COUNT(*) > 1 AND ' . $recentCond . ' '
-
-             . 'ORDER BY `description`, `day`';
+             . 'AND t.`amount` ' . $sign . ' 0 '
+             . 'AND t.`transfer_id` IS NULL '
+             . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
+             . 'ORDER BY t.`date`, t.`id`';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($rows as &$row) {
-            $row['day'] = (int)$row['day'];
-            $row['occurrences'] = (int)$row['occurrences'];
-            $row['total'] = abs((float)$row['total']);
-            $row['average'] = abs((float)$row['average']);
-
-            // fetch the most recent amount for next-month estimates
-            $stmtLast = $db->prepare('SELECT `amount` FROM `transactions` '
-                . 'WHERE `description` = :desc AND ' . $dayExpr . ' = :day '
-                . 'AND `amount` ' . $sign . ' 0 AND `transfer_id` IS NULL '
-                . 'AND (`tag_id` IS NULL OR `tag_id` != :ignore) '
-                . 'ORDER BY `date` DESC LIMIT 1');
-            $stmtLast->execute(['desc' => $row['description'], 'day' => $row['day'], 'ignore' => $ignore]);
-            $last = $stmtLast->fetchColumn();
-            $row['last_amount'] = $last !== false ? abs((float)$last) : $row['average'];
-            unset($row['last_date']);
-
- 
-        }
-        return $rows;
+        return RecurringPatternDetector::analyse($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 }
 ?>
