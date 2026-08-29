@@ -1398,6 +1398,21 @@ foreach (glob(__DIR__ . '/../frontend/*.html') as $staticPage) {
 }
 assertEqual([], $staticPagesMissingCacheMeta, 'Every static page includes a cache-control fallback');
 
+// Keep Safari and iOS Password AutoFill on the correct credential type at
+// each stage of sign-in. In particular, focusing the TOTP field as soon as the
+// second step renders can reopen the password chooser instead of offering a
+// saved verification code.
+$loginMarkup = (string)file_get_contents(__DIR__ . '/../index.php');
+preg_match('/<form[^>]+id="token-form"[^>]*>(.*?)<\/form>/s', $loginMarkup, $tokenFormMatch);
+$tokenFormMarkup = $tokenFormMatch[0] ?? '';
+assertEqual(true, strpos($tokenFormMarkup, 'autocomplete="one-time-code"') !== false, 'Login verification field advertises one-time-code AutoFill');
+assertEqual(false, strpos($tokenFormMarkup, 'autofocus') !== false, 'Login verification field does not automatically reopen credential AutoFill');
+assertEqual(false, strpos($tokenFormMarkup, 'current-password') !== false, 'Login verification form contains no password AutoFill signal');
+preg_match('/<form[^>]+id="login-form"[^>]*>(.*?)<\/form>/s', $loginMarkup, $credentialFormMatch);
+$credentialFormMarkup = $credentialFormMatch[0] ?? '';
+assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="username"') !== false, 'Login username retains username AutoFill');
+assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="current-password"') !== false, 'Login password retains password AutoFill');
+
 $navigationMarkup = (string)file_get_contents(__DIR__ . '/../frontend/menu.php');
 preg_match_all('/href="([a-z0-9_\-]+\.html)"/i', $navigationMarkup, $navigationMatches);
 $navigationPagesMissingModernHeader = [];

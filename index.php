@@ -160,10 +160,10 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         <p class="login-error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><?= htmlspecialchars($error) ?></p>
                     <?php endif; ?>
                     <?php if ($needsToken): ?>
-                        <form method="post" class="login-form" id="token-form">
-                            <label class="login-field" for="login-token">Authenticator code
-                                <span class="login-input-wrap"><i class="fa-solid fa-key" aria-hidden="true"></i>
-                                    <input id="login-token" type="text" name="token" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autofocus required data-help="Enter your 6-digit code">
+                        <form method="post" class="login-form" id="token-form" autocomplete="on">
+                            <label class="login-field" for="login-token">Six-digit verification code
+                                <span class="login-input-wrap"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+                                    <input id="login-token" type="text" name="token" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" required data-help="Enter your 6-digit code">
                                 </span>
                             </label>
                             <button type="submit" aria-label="Verify code" class="brand-action-btn login-submit">Verify code <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
