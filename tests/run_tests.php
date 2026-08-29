@@ -19,6 +19,7 @@ require_once __DIR__ . '/../php_backend/models/DailyBurn.php';
 require_once __DIR__ . '/../php_backend/models/Budget.php';
 require_once __DIR__ . '/../php_backend/models/Project.php';
 require_once __DIR__ . '/../php_backend/models/Account.php';
+require_once __DIR__ . '/../php_backend/models/Setting.php';
 require_once __DIR__ . '/../php_backend/AiTaggingPipeline.php';
 require_once __DIR__ . '/../php_backend/AiCategoryTagger.php';
 require_once __DIR__ . '/../php_backend/services/OfxImportService.php';
@@ -73,6 +74,27 @@ function assertEqual($expected, $actual, string $message) {
 
 // Database driver should be sqlite
 assertEqual('sqlite', $db->getAttribute(PDO::ATTR_DRIVER_NAME), 'Database driver is sqlite');
+
+$defaultAppearance = Setting::getBrand();
+assertEqual('glass', $defaultAppearance['surface_style'], 'Appearance defaults to glass surfaces');
+assertEqual('comfortable', $defaultAppearance['interface_density'], 'Appearance defaults to comfortable density');
+assertEqual('soft', $defaultAppearance['corner_style'], 'Appearance defaults to soft corners');
+assertEqual('balanced', $defaultAppearance['backdrop_strength'], 'Appearance defaults to a balanced backdrop');
+assertEqual('standard', $defaultAppearance['motion_preference'], 'Appearance defaults to standard motion');
+Setting::set('surface_style', 'paper');
+Setting::set('interface_density', 'compact');
+Setting::set('corner_style', 'balanced');
+Setting::set('backdrop_strength', 'vivid');
+Setting::set('motion_preference', 'reduced');
+$customAppearance = Setting::getBrand();
+assertEqual('paper', $customAppearance['surface_style'], 'Appearance returns the saved surface style');
+assertEqual('compact', $customAppearance['interface_density'], 'Appearance returns the saved density');
+assertEqual('balanced', $customAppearance['corner_style'], 'Appearance returns the saved corner style');
+assertEqual('vivid', $customAppearance['backdrop_strength'], 'Appearance returns the saved backdrop strength');
+assertEqual('reduced', $customAppearance['motion_preference'], 'Appearance returns the saved motion preference');
+Setting::set('interface_density', 'unsupported');
+assertEqual('comfortable', Setting::getBrand()['interface_density'], 'Invalid appearance settings fall back safely');
+$db->exec('DELETE FROM settings');
 
 // Masked credit card numbers should have masking removed
 $maskedOfx = <<<OFX
@@ -1397,6 +1419,14 @@ foreach (glob(__DIR__ . '/../frontend/*.html') as $staticPage) {
     }
 }
 assertEqual([], $staticPagesMissingCacheMeta, 'Every static page includes a cache-control fallback');
+
+$settingsMarkup = (string)file_get_contents(__DIR__ . '/../settings.php');
+foreach (['surface_style', 'interface_density', 'corner_style', 'backdrop_strength', 'motion_preference'] as $appearanceField) {
+    assertEqual(true, strpos($settingsMarkup, 'name="' . $appearanceField . '"') !== false, 'Settings page exposes ' . $appearanceField);
+}
+$menuScript = (string)file_get_contents(__DIR__ . '/../frontend/js/menu.js');
+assertEqual(true, strpos($menuScript, 'applyAppearancePreferences') !== false, 'Shared application shell applies appearance settings');
+assertEqual(true, strpos($menuScript, 'interface-preferences.css') !== false, 'Shared application shell loads appearance preference styles');
 
 // Keep Safari and iOS Password AutoFill on the correct credential type at
 // each stage of sign-in. In particular, focusing the TOTP field as soon as the

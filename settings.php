@@ -48,6 +48,11 @@ $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
 $chartFont = $brand['chart_font'];
 $accentWeight = $brand['accent_font_weight'];
+$surfaceStyle = $brand['surface_style'];
+$interfaceDensity = $brand['interface_density'];
+$cornerStyle = $brand['corner_style'];
+$backdropStrength = $brand['backdrop_strength'];
+$motionPreference = $brand['motion_preference'];
 $fontOptions = ['' => 'Default',
     'Arial' => 'Arial',
     'Helvetica' => 'Helvetica',
@@ -83,6 +88,29 @@ $fontOptions = ['' => 'Default',
     'Source Serif Pro' => 'Source Serif Pro',
 ];
 $weightOptions = ['' => 'Default', '100' => 'Thin', '300' => 'Light', '700' => 'Bold'];
+$surfaceOptions = [
+    'glass' => ['Glass', 'Layered, softly translucent cards'],
+    'paper' => ['Paper', 'Flat, crisp professional surfaces'],
+];
+$densityOptions = [
+    'compact' => ['Compact', 'More information on screen'],
+    'comfortable' => ['Comfortable', 'The balanced site default'],
+    'roomy' => ['Roomy', 'More breathing space between controls'],
+];
+$cornerOptions = [
+    'soft' => ['Soft', 'The current generous rounding'],
+    'balanced' => ['Balanced', 'Subtle, practical rounding'],
+    'square' => ['Square', 'A precise document-like finish'],
+];
+$backdropOptions = [
+    'calm' => ['Calm', 'A quieter background wash'],
+    'balanced' => ['Balanced', 'Clear colour without distraction'],
+    'vivid' => ['Vivid', 'A stronger branded backdrop'],
+];
+$motionOptions = [
+    'standard' => ['Standard', 'Normal transitions and reveal effects'],
+    'reduced' => ['Reduced', 'Minimise non-essential movement'],
+];
 $colorOptions = [
     'indigo',
     'blue',
@@ -129,6 +157,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tableFont = trim($_POST['font_table'] ?? '');
     $chartFont = trim($_POST['font_chart'] ?? '');
     $accentWeight = trim($_POST['accent_font_weight'] ?? '');
+    $surfaceStyle = trim($_POST['surface_style'] ?? $surfaceStyle);
+    $interfaceDensity = trim($_POST['interface_density'] ?? $interfaceDensity);
+    $cornerStyle = trim($_POST['corner_style'] ?? $cornerStyle);
+    $backdropStrength = trim($_POST['backdrop_strength'] ?? $backdropStrength);
+    $motionPreference = trim($_POST['motion_preference'] ?? $motionPreference);
     if (!array_key_exists($accentWeight, $weightOptions)) {
         $accentWeight = '';
     }
@@ -181,161 +214,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Setting::set('accent_font_weight', $accentWeight);
     Setting::set('font_accent_weight', $accentWeight);
     Log::write('Updated font settings');
+    if (!array_key_exists($surfaceStyle, $surfaceOptions)) $surfaceStyle = 'glass';
+    if (!array_key_exists($interfaceDensity, $densityOptions)) $interfaceDensity = 'comfortable';
+    if (!array_key_exists($cornerStyle, $cornerOptions)) $cornerStyle = 'soft';
+    if (!array_key_exists($backdropStrength, $backdropOptions)) $backdropStrength = 'balanced';
+    if (!array_key_exists($motionPreference, $motionOptions)) $motionPreference = 'standard';
+    Setting::set('surface_style', $surfaceStyle);
+    Setting::set('interface_density', $interfaceDensity);
+    Setting::set('corner_style', $cornerStyle);
+    Setting::set('backdrop_strength', $backdropStrength);
+    Setting::set('motion_preference', $motionPreference);
+    Log::write('Updated interface appearance settings');
     $message = 'Settings updated.';
 }
 
 $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
-$text600 = "text-{$colorScheme}-600";
-$text700 = "text-{$colorScheme}-700";
-$text900 = "text-{$colorScheme}-900";
-$bg600 = "bg-{$colorScheme}-600";
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>System Settings</title>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
     </script>
 
-      <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css">
     <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260825-ipad-safe-area">
-      <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
-      <style>
-          a { transition: color 0.2s ease; }
-          a:hover { color: <?= $colorHex ?>; }
-          button { transition: transform 0.1s ease, box-shadow 0.1s ease; }
-          button:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-      </style>
+    <link rel="stylesheet" href="frontend/settings.css?v=20260829-customisation">
+    <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 </head>
-<body class="ops-body admin-refresh-page" data-api-base="php_backend/public">
+<body class="ops-body admin-refresh-page settings-page" data-api-base="php_backend/public">
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <section class="max-w-4xl mx-auto admin-shell">
-                <header class="page-header">
-                    <div>
-                        <h1 class="text-2xl font-semibold <?= $text700 ?> page-title">System Settings</h1>
-                        <span class="page-breadcrumb">System / Settings</span>
-                        <p class="page-subtitle">Adjust application configuration values.</p>
-                    </div>
-                </header>
-                <div class="cards cards-solid border border-gray-400 admin-card">
+            <section class="settings-shell" data-no-card="true">
                 <?php if ($message): ?>
-                    <p class="mb-4 text-green-600"><?= htmlspecialchars($message) ?></p>
+                    <div class="settings-saved" role="status"><i class="fas fa-circle-check" aria-hidden="true"></i><span><?= htmlspecialchars($message) ?> The new defaults are ready across the site.</span></div>
                 <?php endif; ?>
-                <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <h2 class="admin-section-title">AI &amp; automation</h2>
-            <p class="admin-section-copy">Control how AI-assisted tagging and reviews connect to your account.</p>
-            <label class="block">OpenAI API Token:
-                <input type="password" name="openai_api_token" value="" autocomplete="new-password" placeholder="<?= $openaiConfigured ? 'Token configured — enter a replacement' : 'Enter an API token' ?>" class="border p-2 rounded w-full" data-help="Enter a new token to replace the configured OpenAI API token">
-                <span class="block mt-2 text-gray-600"><?= $openaiConfigured ? 'A token is configured. Its saved value is never returned to the browser.' : 'No token is currently configured.' ?></span>
-                <?php if ($openaiConfigured): ?>
-                    <span class="inline-flex items-center gap-2 mt-2">
-                        <input type="checkbox" name="clear_openai_api_token" value="1">
-                        Remove the saved token
-                    </span>
-                <?php endif; ?>
-            </label>
-            <label class="block">AI Tag Batch Size:
-                <input type="number" name="ai_tag_batch_size" value="<?= htmlspecialchars($batch) ?>" class="border p-2 rounded w-full" data-help="How many transactions to submit for AI tagging at once">
-            </label>
-            <label class="block">AI Model:
-                <select id="ai-model-select" class="border p-2 rounded w-full" data-help="Choose from recommended models or models available to your API token">
-                    <?php foreach ($recommendedModels as $modelOption): ?>
-                        <option value="<?= htmlspecialchars($modelOption) ?>" <?= $modelOption === $aiModel ? 'selected' : '' ?>><?= htmlspecialchars($modelOption) ?></option>
-                    <?php endforeach; ?>
-                    <?php if (!in_array($aiModel, $recommendedModels, true) && $aiModel !== ''): ?>
-                        <option value="<?= htmlspecialchars($aiModel) ?>" selected><?= htmlspecialchars($aiModel) ?> (Saved)</option>
-                    <?php endif; ?>
-                    <option value="__custom__">Custom model…</option>
-                </select>
-                <input type="text" id="ai-model-input" name="ai_model" value="<?= htmlspecialchars($aiModel) ?>" class="border p-2 rounded w-full mt-2" data-help="Model name for OpenAI responses">
-                <button type="button" id="refresh-models" class="mt-2 text-sm px-3 py-1 border rounded" aria-label="Refresh available AI models">Refresh available models</button>
-                <p id="ai-model-status" class="text-xs text-gray-600 mt-1"></p>
-            </label>
-            <label class="block">AI Temperature:
-                <input type="number" step="0.1" name="ai_temperature" value="<?= htmlspecialchars($aiTemp) ?>" class="border p-2 rounded w-full" data-help="Creativity level for AI responses">
-            </label>
-            <label class="block">AI Debug Mode:
-                <input type="checkbox" name="ai_debug" value="1" <?= $aiDebug ? 'checked' : '' ?> class="ml-2" data-help="Show AI request and response details on pages for troubleshooting">
-            </label>
-            <h2 class="admin-section-title">Security &amp; maintenance</h2>
-            <p class="admin-section-copy">Choose retention and inactivity limits for this installation.</p>
-            <label class="block">Log Retention Days:
-                <input type="number" name="log_retention_days" value="<?= htmlspecialchars($retention) ?>" class="border p-2 rounded w-full" data-help="Automatically prune logs older than this many days">
-            </label>
-            <label class="block">Auto-Logout Minutes:
-                <input type="number" name="session_timeout_minutes" value="<?= htmlspecialchars($timeout) ?>" class="border p-2 rounded w-full" data-help="Minutes of inactivity before automatic logout">
-            </label>
-            <h2 class="admin-section-title">Brand &amp; typography</h2>
-            <p class="admin-section-copy">Preview the identity and type choices used throughout the site.</p>
-            <label class="block">Site Name:
-                <input type="text" name="site_name" value="<?= htmlspecialchars($siteName) ?>" class="border p-2 rounded w-full" data-help="Displayed name of the website">
-            </label>
-            <label class="block">Color Scheme:
-                <select name="color_scheme" class="border p-2 rounded w-full" data-help="Primary Tailwind color">
-                    <?php foreach ($colorOptions as $opt): ?>
-                        <option value="<?= htmlspecialchars($opt) ?>" <?= $opt === $colorScheme ? 'selected' : '' ?>><?= htmlspecialchars($colorLabels[$opt] ?? ucfirst($opt)) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <label class="block">Heading Font:
-                <select name="font_heading" class="border p-2 rounded w-full" data-help="Font for headings" data-preview-target="font-preview-heading">
-                    <?php foreach ($fontOptions as $k => $v): ?>
-                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $headingFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <p id="font-preview-heading" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Heading preview: The quick brown fox jumps over £1,234.56.</p>
-            </label>
-            <label class="block">Body Font:
-                <select name="font_body" class="border p-2 rounded w-full" data-help="Font for body text" data-preview-target="font-preview-body">
-                    <?php foreach ($fontOptions as $k => $v): ?>
-                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $bodyFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <p id="font-preview-body" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Body preview: Your settings save this font across the app.</p>
-            </label>
-            <label class="block">Table Font:
-                <select name="font_table" class="border p-2 rounded w-full" data-help="Font for tables" data-preview-target="font-preview-table">
-                    <?php foreach ($fontOptions as $k => $v): ?>
-                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $tableFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <p id="font-preview-table" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Table preview: Category | Amount | Month.</p>
-            </label>
-            <label class="block">Chart Font:
-                <select name="font_chart" class="border p-2 rounded w-full" data-help="Font for charts" data-preview-target="font-preview-chart">
-                    <?php foreach ($fontOptions as $k => $v): ?>
-                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $chartFont ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <p id="font-preview-chart" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Chart preview: Q1 25% · Q2 35% · Q3 40%.</p>
-            </label>
-            <label class="block">Accent Font Weight:
-                <select name="accent_font_weight" class="border p-2 rounded w-full" data-help="Weight for accent text like search inputs" data-preview-target="font-preview-weight">
-                    <?php foreach ($weightOptions as $k => $v): ?>
-                        <option value="<?= htmlspecialchars($k) ?>" <?= $k === $accentWeight ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <p id="font-preview-weight" class="mt-2 rounded border border-gray-300 bg-gray-50 p-2 text-sm">Accent weight preview: Search, filters and highlights.</p>
-            </label>
-                    <div class="admin-actions"><button
-                        type="submit"
-                        class="text-white px-4 py-2 rounded"
-                        style="background-color: <?= htmlspecialchars($colorHex, ENT_QUOTES, 'UTF-8') ?>;"
-                        aria-label="Save Settings"
-                    ><i class="fas fa-save inline w-4 h-4 mr-2"></i>Save Settings</button></div>
+                <nav class="settings-jump" aria-label="Settings sections">
+                    <a href="#appearance"><i class="fas fa-palette" aria-hidden="true"></i>Appearance</a>
+                    <a href="#typography"><i class="fas fa-font" aria-hidden="true"></i>Typography</a>
+                    <a href="#automation"><i class="fas fa-robot" aria-hidden="true"></i>AI &amp; automation</a>
+                    <a href="#security"><i class="fas fa-shield-halved" aria-hidden="true"></i>Security</a>
+                </nav>
+
+                <form method="post" id="settings-form" class="settings-form">
+                    <section id="appearance" class="settings-section" data-no-card="true">
+                        <header class="settings-section__header"><span class="settings-section__icon"><i class="fas fa-palette" aria-hidden="true"></i></span><div><span>Look &amp; feel</span><h2>Appearance</h2><p>Choose the visual character and information density used throughout the application.</p></div></header>
+                        <div class="settings-appearance-layout">
+                            <div class="settings-field-grid">
+                                <label class="settings-field settings-field--wide" for="site-name"><span>Site name</span><input id="site-name" type="text" name="site_name" value="<?= htmlspecialchars($siteName) ?>" data-help="Displayed name of the website"></label>
+                                <label class="settings-field" for="color-scheme"><span>Accent colour</span><select id="color-scheme" name="color_scheme" data-help="Primary colour used for actions, headings and highlights"><?php foreach ($colorOptions as $opt): ?><option value="<?= htmlspecialchars($opt) ?>" data-color="<?= htmlspecialchars($colorMap[$opt]) ?>" <?= $opt === $colorScheme ? 'selected' : '' ?>><?= htmlspecialchars($colorLabels[$opt] ?? ucfirst($opt)) ?></option><?php endforeach; ?></select></label>
+                                <fieldset class="settings-field settings-field--surface"><legend>Default surface</legend><div class="settings-choice-row"><?php foreach ($surfaceOptions as $value => $details): ?><label><input type="radio" name="surface_style" value="<?= htmlspecialchars($value) ?>" <?= $value === $surfaceStyle ? 'checked' : '' ?> data-help="Choose the default surface treatment; the sidebar switch can override this on one device"><span><strong><?= htmlspecialchars($details[0]) ?></strong><small><?= htmlspecialchars($details[1]) ?></small></span></label><?php endforeach; ?></div></fieldset>
+                                <label class="settings-field" for="interface-density"><span>Information density</span><select id="interface-density" name="interface_density" data-help="Adjust desktop spacing without shrinking mobile touch targets"><?php foreach ($densityOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $interfaceDensity ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
+                                <label class="settings-field" for="corner-style"><span>Corner shape</span><select id="corner-style" name="corner_style" data-help="Choose how rounded cards and major panels appear"><?php foreach ($cornerOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $cornerStyle ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
+                                <label class="settings-field" for="backdrop-strength"><span>Backdrop strength</span><select id="backdrop-strength" name="backdrop_strength" data-help="Control how strongly the selected accent colour appears behind the workspace"><?php foreach ($backdropOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $backdropStrength ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
+                                <label class="settings-field" for="motion-preference"><span>Interface motion</span><select id="motion-preference" name="motion_preference" data-help="Reduce decorative animation and transitions across the site"><?php foreach ($motionOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $motionPreference ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
+                            </div>
+                            <aside id="appearance-preview" class="settings-preview" aria-label="Live appearance preview">
+                                <div class="settings-preview__bar"><span><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>Live preview</span><small>Updates before you save</small></div>
+                                <div class="settings-preview__canvas">
+                                    <div class="settings-preview__header"><span></span><div><strong>Financial overview</strong><small>Your money, clearly organised</small></div></div>
+                                    <div class="settings-preview__metrics"><article><small>Available</small><strong>£12,480</strong></article><article><small>This month</small><strong>£2,146</strong></article></div>
+                                    <div class="settings-preview__table"><div><strong>Mortgage</strong><span>Fixed costs</span><b>£1,840</b></div><div><strong>Groceries</strong><span>Essentials</span><b>£286</b></div></div>
+                                </div>
+                            </aside>
+                        </div>
+                    </section>
+
+                    <section id="typography" class="settings-section" data-no-card="true">
+                        <header class="settings-section__header"><span class="settings-section__icon settings-section__icon--violet"><i class="fas fa-font" aria-hidden="true"></i></span><div><span>Reading character</span><h2>Typography</h2><p>Give headings, everyday copy, tables and charts their own clear voice.</p></div></header>
+                        <div class="settings-field-grid settings-field-grid--fonts">
+                            <?php foreach ([['font_heading', 'Heading font', $headingFont, 'font-preview-heading', 'The shape of page titles and section headings.'], ['font_body', 'Body font', $bodyFont, 'font-preview-body', 'Everyday guidance and interface copy.'], ['font_table', 'Table font', $tableFont, 'font-preview-table', 'Dense financial evidence and amounts.'], ['font_chart', 'Chart font', $chartFont, 'font-preview-chart', 'Labels, legends and chart annotations.']] as $fontField): ?>
+                                <label class="settings-field" for="<?= htmlspecialchars($fontField[0]) ?>"><span><?= htmlspecialchars($fontField[1]) ?></span><select id="<?= htmlspecialchars($fontField[0]) ?>" name="<?= htmlspecialchars($fontField[0]) ?>" data-help="<?= htmlspecialchars($fontField[4]) ?>" data-preview-target="<?= htmlspecialchars($fontField[3]) ?>"><?php foreach ($fontOptions as $k => $v): ?><option value="<?= htmlspecialchars($k) ?>" <?= $k === $fontField[2] ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option><?php endforeach; ?></select><p id="<?= htmlspecialchars($fontField[3]) ?>" class="settings-font-preview"><?= htmlspecialchars($fontField[4]) ?> £1,234.56</p></label>
+                            <?php endforeach; ?>
+                            <label class="settings-field settings-field--wide" for="accent-font-weight"><span>Accent font weight</span><select id="accent-font-weight" name="accent_font_weight" data-help="Weight for accent text such as search inputs and highlights" data-preview-target="font-preview-weight"><?php foreach ($weightOptions as $k => $v): ?><option value="<?= htmlspecialchars($k) ?>" <?= $k === $accentWeight ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option><?php endforeach; ?></select><p id="font-preview-weight" class="settings-font-preview">Search, filters and important highlights.</p></label>
+                        </div>
+                    </section>
+
+                    <section id="automation" class="settings-section" data-no-card="true">
+                        <header class="settings-section__header"><span class="settings-section__icon settings-section__icon--cyan"><i class="fas fa-robot" aria-hidden="true"></i></span><div><span>Assisted organisation</span><h2>AI &amp; automation</h2><p>Control how AI-assisted tagging and reviews connect to this installation.</p></div></header>
+                        <div class="settings-field-grid">
+                            <div class="settings-field settings-field--wide"><label for="openai-token">OpenAI API token</label><input id="openai-token" type="password" name="openai_api_token" value="" autocomplete="new-password" placeholder="<?= $openaiConfigured ? 'Token configured — enter a replacement' : 'Enter an API token' ?>" data-help="Enter a new token to replace the configured OpenAI API token"><small><?= $openaiConfigured ? 'A token is configured. Its saved value is never returned to the browser.' : 'No token is currently configured.' ?></small><?php if ($openaiConfigured): ?><label class="settings-check"><input type="checkbox" name="clear_openai_api_token" value="1"><span>Remove the saved token</span></label><?php endif; ?></div>
+                            <label class="settings-field" for="ai-tag-batch"><span>AI tag batch size</span><input id="ai-tag-batch" type="number" min="1" name="ai_tag_batch_size" value="<?= htmlspecialchars($batch) ?>" data-help="How many transactions to submit for AI tagging at once"></label>
+                            <label class="settings-field" for="ai-temperature"><span>AI temperature</span><input id="ai-temperature" type="number" min="0" max="2" step="0.1" name="ai_temperature" value="<?= htmlspecialchars($aiTemp) ?>" data-help="Creativity level for AI responses"></label>
+                            <label class="settings-field settings-field--wide" for="ai-model-select"><span>AI model</span><div class="settings-model-row"><select id="ai-model-select" data-help="Choose from recommended models or models available to your API token"><?php foreach ($recommendedModels as $modelOption): ?><option value="<?= htmlspecialchars($modelOption) ?>" <?= $modelOption === $aiModel ? 'selected' : '' ?>><?= htmlspecialchars($modelOption) ?></option><?php endforeach; ?><?php if (!in_array($aiModel, $recommendedModels, true) && $aiModel !== ''): ?><option value="<?= htmlspecialchars($aiModel) ?>" selected><?= htmlspecialchars($aiModel) ?> (Saved)</option><?php endif; ?><option value="__custom__">Custom model…</option></select><button type="button" id="refresh-models" class="settings-secondary-button" aria-label="Refresh available AI models"><i class="fas fa-rotate" aria-hidden="true"></i>Refresh list</button></div><input type="text" id="ai-model-input" name="ai_model" value="<?= htmlspecialchars($aiModel) ?>" data-help="Model name for OpenAI responses"><small id="ai-model-status" role="status"></small></label>
+                            <label class="settings-toggle settings-field--wide"><span><strong>AI debug details</strong><small>Show submitted prompts and AI responses on supported pages for troubleshooting.</small></span><input type="checkbox" name="ai_debug" value="1" <?= $aiDebug ? 'checked' : '' ?> data-help="Show AI request and response details on pages for troubleshooting"></label>
+                        </div>
+                    </section>
+
+                    <section id="security" class="settings-section" data-no-card="true">
+                        <header class="settings-section__header"><span class="settings-section__icon settings-section__icon--emerald"><i class="fas fa-shield-halved" aria-hidden="true"></i></span><div><span>Safe operation</span><h2>Security &amp; maintenance</h2><p>Choose sensible retention and inactivity limits for this installation.</p></div></header>
+                        <div class="settings-field-grid">
+                            <label class="settings-field" for="log-retention"><span>Log retention days</span><input id="log-retention" type="number" min="1" name="log_retention_days" value="<?= htmlspecialchars($retention) ?>" data-help="Automatically prune logs older than this many days"><small>Older operational records can be pruned from the System Log.</small></label>
+                            <label class="settings-field" for="session-timeout"><span>Automatic logout</span><div class="settings-suffix"><input id="session-timeout" type="number" min="0" name="session_timeout_minutes" value="<?= htmlspecialchars($timeout) ?>" data-help="Minutes of inactivity before automatic logout"><span>minutes</span></div><small>Use 0 to keep the session open until explicit sign-out.</small></label>
+                        </div>
+                    </section>
+
+                    <div class="admin-actions settings-actions"><span><i class="fas fa-circle-info" aria-hidden="true"></i>Appearance choices become the default for every signed-in page.</span><button type="submit" class="settings-save" style="--settings-accent:<?= htmlspecialchars($colorHex, ENT_QUOTES, 'UTF-8') ?>" aria-label="Save settings"><i class="fas fa-floppy-disk" aria-hidden="true"></i>Save settings</button></div>
                 </form>
-                </div>
             </section>
         </main>
     </div>
+    <script src="frontend/js/page_header.js"></script>
+    <script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Settings', breadcrumb: 'System', subtitle: 'Shape the workspace, tune automation, and keep the installation secure.' });</script>
     <script src="frontend/js/menu.js"></script>
     <script src="frontend/js/input_help.js"></script>
     <script src="frontend/js/page_help.js"></script>
@@ -385,6 +375,56 @@ $bg600 = "bg-{$colorScheme}-600";
       updateWeightPreview();
       if (weightSelect) {
         weightSelect.addEventListener('change', updateWeightPreview);
+      }
+
+      const settingsForm = document.getElementById('settings-form');
+      const appearancePreview = document.getElementById('appearance-preview');
+      const previewCanvas = appearancePreview?.querySelector('.settings-preview__canvas');
+      const colorSelect = document.getElementById('color-scheme');
+      const densitySelect = document.getElementById('interface-density');
+      const cornerSelect = document.getElementById('corner-style');
+      const backdropSelect = document.getElementById('backdrop-strength');
+      const siteNameInput = document.getElementById('site-name');
+
+      const colorToRgb = color => {
+        const clean = String(color || '').replace('#', '');
+        if (!/^[0-9a-f]{6}$/i.test(clean)) return '79,70,229';
+        return `${parseInt(clean.slice(0, 2), 16)},${parseInt(clean.slice(2, 4), 16)},${parseInt(clean.slice(4, 6), 16)}`;
+      };
+
+      const updateAppearancePreview = () => {
+        if (!appearancePreview || !previewCanvas) return;
+        const surface = document.querySelector('input[name="surface_style"]:checked')?.value || 'glass';
+        const density = densitySelect?.value || 'comfortable';
+        const corners = cornerSelect?.value || 'soft';
+        const backdrop = backdropSelect?.value || 'balanced';
+        const accent = colorSelect?.selectedOptions[0]?.dataset.color || '#4f46e5';
+        const rgb = colorToRgb(accent);
+        const alpha = backdrop === 'calm' ? .07 : (backdrop === 'vivid' ? .27 : .16);
+        appearancePreview.classList.toggle('is-paper', surface === 'paper');
+        appearancePreview.classList.toggle('is-compact', density === 'compact');
+        appearancePreview.classList.toggle('is-roomy', density === 'roomy');
+        appearancePreview.classList.toggle('is-balanced-corners', corners === 'balanced');
+        appearancePreview.classList.toggle('is-square-corners', corners === 'square');
+        appearancePreview.classList.toggle('is-calm', backdrop === 'calm');
+        appearancePreview.classList.toggle('is-vivid', backdrop === 'vivid');
+        appearancePreview.style.setProperty('--site-brand', accent);
+        previewCanvas.style.background = `linear-gradient(145deg,rgba(${rgb},${alpha}),rgba(6,182,212,${alpha * .45}),rgba(255,255,255,.98) 76%)`;
+        const previewTitle = appearancePreview.querySelector('.settings-preview__header strong');
+        if (previewTitle) previewTitle.textContent = siteNameInput?.value.trim() || 'Financial overview';
+      };
+
+      document.querySelectorAll('#appearance input,#appearance select').forEach(control => {
+        control.addEventListener('input', updateAppearancePreview);
+        control.addEventListener('change', updateAppearancePreview);
+      });
+      updateAppearancePreview();
+
+      if (settingsForm) {
+        settingsForm.addEventListener('submit', () => {
+          const surface = document.querySelector('input[name="surface_style"]:checked')?.value || 'glass';
+          localStorage.setItem('professionalThemeEnabled', String(surface === 'paper'));
+        });
       }
 
       const modelSelect = document.getElementById('ai-model-select');

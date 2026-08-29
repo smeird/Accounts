@@ -50,6 +50,14 @@ const attachSidebarSearchHandler = (root = document) => {
     document.head.appendChild(themeLink);
   }
 
+  if (!document.getElementById('interface-preferences-css')) {
+    const preferencesLink = document.createElement('link');
+    preferencesLink.id = 'interface-preferences-css';
+    preferencesLink.rel = 'stylesheet';
+    preferencesLink.href = resolveFrontendAsset('css/interface-preferences.css?v=20260829-customisation');
+    document.head.appendChild(preferencesLink);
+  }
+
   const hasSpecialistPageDesign = document.body.matches([
     '.landing-page',
     '.instant-page',
@@ -82,8 +90,38 @@ const attachSidebarSearchHandler = (root = document) => {
   }
 
   const PROFESSIONAL_THEME_KEY = 'professionalThemeEnabled';
-  const professionalThemeEnabled = localStorage.getItem(PROFESSIONAL_THEME_KEY) === 'true';
+  const savedProfessionalTheme = localStorage.getItem(PROFESSIONAL_THEME_KEY);
+  const professionalThemeEnabled = savedProfessionalTheme === 'true';
   document.body.classList.toggle('theme-professional', professionalThemeEnabled);
+
+  let backdropStrength = 'balanced';
+  const applyAppearancePreferences = (preferences = {}) => {
+    const density = ['compact', 'comfortable', 'roomy'].includes(preferences.interface_density)
+      ? preferences.interface_density : 'comfortable';
+    const corners = ['soft', 'balanced', 'square'].includes(preferences.corner_style)
+      ? preferences.corner_style : 'soft';
+    const motion = preferences.motion_preference === 'reduced' ? 'reduced' : 'standard';
+    backdropStrength = ['calm', 'balanced', 'vivid'].includes(preferences.backdrop_strength)
+      ? preferences.backdrop_strength : 'balanced';
+
+    ['compact', 'comfortable', 'roomy'].forEach(value => document.body.classList.remove(`ui-density-${value}`));
+    ['soft', 'balanced', 'square'].forEach(value => document.body.classList.remove(`ui-corners-${value}`));
+    document.body.classList.remove('ui-motion-reduced');
+    document.body.classList.add(`ui-density-${density}`, `ui-corners-${corners}`);
+    document.body.classList.toggle('ui-motion-reduced', motion === 'reduced');
+    document.documentElement.dataset.interfaceDensity = density;
+    document.documentElement.dataset.cornerStyle = corners;
+    document.documentElement.dataset.backdropStrength = backdropStrength;
+    document.documentElement.dataset.motionPreference = motion;
+
+    const usePaper = savedProfessionalTheme === null
+      ? preferences.surface_style === 'paper'
+      : savedProfessionalTheme === 'true';
+    document.body.classList.toggle('theme-professional', usePaper);
+    const themeToggle = document.getElementById('professional-theme-toggle');
+    if (themeToggle) themeToggle.checked = usePaper;
+  };
+  window.applyAppearancePreferences = applyAppearancePreferences;
 
   document.body.classList.add('pt-4');
   let colorScheme = 'indigo';
@@ -117,10 +155,22 @@ const attachSidebarSearchHandler = (root = document) => {
     }
     const colors = colorMap[colorScheme] || colorMap.indigo;
     const cssRoot = document.documentElement;
+    const hexToRgb = hex => {
+      const clean = String(hex || '').replace('#', '');
+      if (!/^[0-9a-f]{6}$/i.test(clean)) return '79, 70, 229';
+      return `${parseInt(clean.slice(0, 2), 16)}, ${parseInt(clean.slice(2, 4), 16)}, ${parseInt(clean.slice(4, 6), 16)}`;
+    };
+    const primaryRgb = hexToRgb(colors[600]);
+    const secondaryRgb = hexToRgb(colors[700]);
+    const washAlpha = { calm: .08, balanced: .16, vivid: .25 }[backdropStrength] || .16;
+    const brandGradient = backdropStrength === 'balanced' && colors.gradient
+      ? colors.gradient
+      : `linear-gradient(145deg, rgba(${primaryRgb}, ${washAlpha}) 0%, rgba(${secondaryRgb}, ${washAlpha * .72}) 48%, rgba(255, 255, 255, .98) 100%)`;
     cssRoot.style.setProperty('--brand-color-600', colors[600]);
     cssRoot.style.setProperty('--brand-color-700', colors[700]);
+    cssRoot.style.setProperty('--brand-color-rgb', primaryRgb);
     cssRoot.style.setProperty('--page-title-color', colors[700]);
-    cssRoot.style.setProperty('--brand-gradient', colors.gradient || `linear-gradient(135deg, ${colors[600]} 0%, ${colors[700]} 100%)`);
+    cssRoot.style.setProperty('--brand-gradient', brandGradient);
     hoverStyle.textContent = `
       a { transition: color 0.2s ease; }
       a:hover { color: ${colors[600]}; }
@@ -193,6 +243,7 @@ const attachSidebarSearchHandler = (root = document) => {
     .then(f => {
       siteName = f.site_name || siteName;
       colorScheme = f.color_scheme || colorScheme;
+      applyAppearancePreferences(f);
       loadFontsModule(() => applyFonts(f));
       document.title = document.title.replace('Finance Manager', siteName);
       document.querySelectorAll('#landing-site-name, [data-landing-site-name]').forEach(el => {
@@ -207,6 +258,7 @@ const attachSidebarSearchHandler = (root = document) => {
     })
     .catch(err => {
       console.error('Brand load failed', err);
+      applyAppearancePreferences();
       applyColorScheme();
       applyIconColor();
     });

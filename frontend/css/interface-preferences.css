@@ -1,0 +1,49 @@
+/* Shared appearance preferences supplied by the installation settings. */
+
+@media (min-width: 768px) {
+  body.ui-density-compact .ops-main > * + * { margin-top: .8rem; }
+  body.ui-density-compact .cards { --card-padding: .85rem; }
+  body.ui-density-compact :where(.transaction-card,.budget-card,.project-card,.utility-panel) { padding: .9rem; }
+  body.ui-density-compact .page-header { padding-block: .62rem; }
+  body.ui-density-compact :where(input:not([type="checkbox"]):not([type="radio"]),select,button.site-button,.ops-btn-primary) { min-height: 2.3rem; }
+  body.ui-density-compact .modern-table.tabulator .tabulator-row,
+  body.ui-density-compact .modern-table.tabulator .tabulator-cell { min-height: 2.65rem; }
+  body.ui-density-compact .modern-table.tabulator .tabulator-cell { padding-block: .48rem; }
+  body.ui-density-compact :where(.account-table td,.statement-table td) { padding-block: .56rem; }
+
+  body.ui-density-roomy .ops-main > * + * { margin-top: 1.45rem; }
+  body.ui-density-roomy .cards { --card-padding: 1.65rem; }
+  body.ui-density-roomy :where(.transaction-card,.budget-card,.project-card,.utility-panel) { padding: 1.55rem; }
+  body.ui-density-roomy .page-header { padding-block: 1rem; }
+  body.ui-density-roomy :where(input:not([type="checkbox"]):not([type="radio"]),select,button.site-button,.ops-btn-primary) { min-height: 2.9rem; }
+  body.ui-density-roomy .modern-table.tabulator .tabulator-row,
+  body.ui-density-roomy .modern-table.tabulator .tabulator-cell { min-height: 3.45rem; }
+  body.ui-density-roomy .modern-table.tabulator .tabulator-cell { padding-block: .82rem; }
+  body.ui-density-roomy :where(.account-table td,.statement-table td) { padding-block: .92rem; }
+}
+
+body.ui-corners-balanced :where(
+  .cards,.page-header,.site-card,.ops-section,.ops-table-block,.ops-chart-block,
+  .utility-panel,.transaction-card,.transaction-hero,.budget-card,.budget-hero,
+  .project-card,.project-hero,.recurring-panel,.recurring-hero,.pivot-panel,
+  .pivot-hero,.account-ledger,.account-chart-panel,.monthly-statement,
+  .statement-chart-panel,.modern-table.tabulator,.settings-section
+) { border-radius: .78rem!important; }
+
+body.ui-corners-square :where(
+  .cards,.page-header,.site-card,.ops-section,.ops-table-block,.ops-chart-block,
+  .utility-panel,.transaction-card,.transaction-hero,.budget-card,.budget-hero,
+  .project-card,.project-hero,.recurring-panel,.recurring-hero,.pivot-panel,
+  .pivot-hero,.account-ledger,.account-chart-panel,.monthly-statement,
+  .statement-chart-panel,.modern-table.tabulator,.settings-section
+) { border-radius: .28rem!important; }
+
+body.ui-motion-reduced *,
+body.ui-motion-reduced *::before,
+body.ui-motion-reduced *::after {
+  scroll-behavior: auto!important;
+  transition-duration: .01ms!important;
+  animation-duration: .01ms!important;
+  animation-iteration-count: 1!important;
+}
+

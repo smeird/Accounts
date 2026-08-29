@@ -44,7 +44,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Backup and restore for accounts, transactions, classifications, taxonomy staging, projects, budgets and settings.
 - Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
 - The three-phase taxonomy rebuild creates an immutable classification snapshot, stages and reviews a compact AI-assisted vocabulary, then applies it through an atomic, financially reconciled cutover with an audited rollback path.
-- Automation Centre, logs, duplicate checks and configurable branding/typography.
+- Automation Centre, logs, duplicate checks and configurable branding, typography, surfaces, spacing, corners, backdrop strength and motion.
 - Explicit no-store/revalidation rules prevent stale HTML, CSS and JavaScript after deployments.
 
 ## Financial rules

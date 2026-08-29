@@ -42,6 +42,9 @@ The default view must answer the page’s main question before the user interact
 
 ## 3. Surfaces and spacing
 
+- Installation appearance settings provide the default surface style, desktop density, corner shape, backdrop strength and motion level. Implement shared components so they continue to respond to the classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
+- Glass is the expressive default; Paper reuses Professional view’s flat, document-like treatment. The sidebar switch remains a per-device override of the installation default.
+- Compact and Roomy density change desktop spacing only. Preserve standard mobile touch targets and card-row spacing.
 - Use `cards` for the standard glass surface.
 - Use `cards cards-solid` for dense filters or controls needing stronger contrast.
 - Use `cards cards-tight` for compact forms, tables and comparable chart panels.
@@ -132,6 +135,7 @@ Test at a normal desktop width and around 390px mobile width.
 - Ensure chart legends, labels and drill-down controls remain reachable.
 - Verify `document.body.scrollWidth === window.innerWidth` unless horizontal navigation is explicitly contained within a matrix/table region.
 - The sidebar becomes the shared mobile drawer; do not implement a page-specific mobile menu.
+- User-selected density must not reduce mobile touch targets below the standard responsive design.
 
 ## 10. States, accessibility and help
 
