@@ -44,6 +44,7 @@ The default view must answer the page’s main question before the user interact
 
 - Installation appearance settings provide the default surface style, desktop density, corner shape, backdrop strength, page-header size, primary top-accent thickness and motion level. Implement shared components so they continue to respond to the classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
 - The top-accent setting applies to the shared page header, sidebar and primary dashboard heroes. New specialist heroes should use the shared `--ui-accent-bar-height` treatment or be added to the central selector.
+- Primary top accents reveal rapidly from left to right when a page loads. Honour both the saved reduced-motion setting and the browser's reduced-motion preference; small section markers should remain static.
 - Glass is the expressive default; Paper reuses Professional view’s flat, document-like treatment. The sidebar switch remains a per-device override of the installation default.
 - Compact and Roomy density change desktop spacing only. Preserve standard mobile touch targets and card-row spacing.
 - Use `cards` for the standard glass surface.

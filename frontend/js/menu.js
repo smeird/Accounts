@@ -101,7 +101,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const corners = ['soft', 'balanced', 'square'].includes(preferences.corner_style)
       ? preferences.corner_style : 'soft';
     const motion = preferences.motion_preference === 'reduced' ? 'reduced' : 'standard';
-    const accentBar = ['small', 'medium', 'large'].includes(preferences.accent_bar_size)
+    const accentBar = ['hairline', 'small', 'medium', 'large'].includes(preferences.accent_bar_size)
       ? preferences.accent_bar_size : 'medium';
     const pageHeader = ['small', 'medium', 'large'].includes(preferences.page_header_size)
       ? preferences.page_header_size : 'medium';
@@ -110,7 +110,7 @@ const attachSidebarSearchHandler = (root = document) => {
 
     ['compact', 'comfortable', 'roomy'].forEach(value => document.body.classList.remove(`ui-density-${value}`));
     ['soft', 'balanced', 'square'].forEach(value => document.body.classList.remove(`ui-corners-${value}`));
-    ['small', 'medium', 'large'].forEach(value => {
+    ['hairline', 'small', 'medium', 'large'].forEach(value => {
       document.body.classList.remove(`ui-accent-bar-${value}`, `ui-page-header-${value}`);
     });
     document.body.classList.remove('ui-motion-reduced');

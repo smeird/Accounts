@@ -113,7 +113,13 @@ $motionOptions = [
     'standard' => ['Standard', 'Normal transitions and reveal effects'],
     'reduced' => ['Reduced', 'Minimise non-essential movement'],
 ];
-$sizeOptions = [
+$accentBarSizeOptions = [
+    'hairline' => ['Hairline', 'The lightest possible one-pixel edge'],
+    'small' => ['Small', 'A quieter, more compact treatment'],
+    'medium' => ['Medium', 'The balanced site default'],
+    'large' => ['Large', 'A stronger, more prominent treatment'],
+];
+$pageHeaderSizeOptions = [
     'small' => ['Small', 'A quieter, more compact treatment'],
     'medium' => ['Medium', 'The balanced site default'],
     'large' => ['Large', 'A stronger, more prominent treatment'],
@@ -228,8 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!array_key_exists($cornerStyle, $cornerOptions)) $cornerStyle = 'soft';
     if (!array_key_exists($backdropStrength, $backdropOptions)) $backdropStrength = 'balanced';
     if (!array_key_exists($motionPreference, $motionOptions)) $motionPreference = 'standard';
-    if (!array_key_exists($accentBarSize, $sizeOptions)) $accentBarSize = 'medium';
-    if (!array_key_exists($pageHeaderSize, $sizeOptions)) $pageHeaderSize = 'medium';
+    if (!array_key_exists($accentBarSize, $accentBarSizeOptions)) $accentBarSize = 'medium';
+    if (!array_key_exists($pageHeaderSize, $pageHeaderSizeOptions)) $pageHeaderSize = 'medium';
     Setting::set('surface_style', $surfaceStyle);
     Setting::set('interface_density', $interfaceDensity);
     Setting::set('corner_style', $cornerStyle);
@@ -290,8 +296,8 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
                                 <label class="settings-field" for="interface-density"><span>Information density</span><select id="interface-density" name="interface_density" data-help="Adjust desktop spacing without shrinking mobile touch targets"><?php foreach ($densityOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $interfaceDensity ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
                                 <label class="settings-field" for="corner-style"><span>Corner shape</span><select id="corner-style" name="corner_style" data-help="Choose how rounded cards and major panels appear"><?php foreach ($cornerOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $cornerStyle ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
                                 <label class="settings-field" for="backdrop-strength"><span>Backdrop strength</span><select id="backdrop-strength" name="backdrop_strength" data-help="Control how strongly the selected accent colour appears behind the workspace"><?php foreach ($backdropOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $backdropStrength ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
-                                <label class="settings-field" for="accent-bar-size"><span>Top colour bar</span><select id="accent-bar-size" name="accent_bar_size" data-help="Choose the thickness of the coloured top edge on page headers and primary dashboard heroes"><?php foreach ($sizeOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $accentBarSize ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
-                                <label class="settings-field" for="page-header-size"><span>Page header size</span><select id="page-header-size" name="page_header_size" data-help="Adjust the title scale and vertical space used by page headers"><?php foreach ($sizeOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $pageHeaderSize ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
+                                <label class="settings-field" for="accent-bar-size"><span>Top colour bar</span><select id="accent-bar-size" name="accent_bar_size" data-help="Choose the thickness of the coloured top edge on page headers and primary dashboard heroes"><?php foreach ($accentBarSizeOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $accentBarSize ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
+                                <label class="settings-field" for="page-header-size"><span>Page header size</span><select id="page-header-size" name="page_header_size" data-help="Adjust the title scale and vertical space used by page headers"><?php foreach ($pageHeaderSizeOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $pageHeaderSize ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
                                 <label class="settings-field" for="motion-preference"><span>Interface motion</span><select id="motion-preference" name="motion_preference" data-help="Reduce decorative animation and transitions across the site"><?php foreach ($motionOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $motionPreference ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
                             </div>
                             <aside id="appearance-preview" class="settings-preview" aria-label="Live appearance preview">
@@ -428,6 +434,7 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
         appearancePreview.classList.toggle('is-calm', backdrop === 'calm');
         appearancePreview.classList.toggle('is-vivid', backdrop === 'vivid');
         appearancePreview.classList.toggle('is-accent-small', accentBar === 'small');
+        appearancePreview.classList.toggle('is-accent-hairline', accentBar === 'hairline');
         appearancePreview.classList.toggle('is-accent-large', accentBar === 'large');
         appearancePreview.classList.toggle('is-header-small', pageHeader === 'small');
         appearancePreview.classList.toggle('is-header-large', pageHeader === 'large');

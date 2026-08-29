@@ -88,7 +88,7 @@ Setting::set('interface_density', 'compact');
 Setting::set('corner_style', 'balanced');
 Setting::set('backdrop_strength', 'vivid');
 Setting::set('motion_preference', 'reduced');
-Setting::set('accent_bar_size', 'large');
+Setting::set('accent_bar_size', 'hairline');
 Setting::set('page_header_size', 'small');
 $customAppearance = Setting::getBrand();
 assertEqual('paper', $customAppearance['surface_style'], 'Appearance returns the saved surface style');
@@ -96,7 +96,7 @@ assertEqual('compact', $customAppearance['interface_density'], 'Appearance retur
 assertEqual('balanced', $customAppearance['corner_style'], 'Appearance returns the saved corner style');
 assertEqual('vivid', $customAppearance['backdrop_strength'], 'Appearance returns the saved backdrop strength');
 assertEqual('reduced', $customAppearance['motion_preference'], 'Appearance returns the saved motion preference');
-assertEqual('large', $customAppearance['accent_bar_size'], 'Appearance returns the saved top accent bar size');
+assertEqual('hairline', $customAppearance['accent_bar_size'], 'Appearance returns the saved hairline top accent bar size');
 assertEqual('small', $customAppearance['page_header_size'], 'Appearance returns the saved page header size');
 Setting::set('interface_density', 'unsupported');
 assertEqual('comfortable', Setting::getBrand()['interface_density'], 'Invalid appearance settings fall back safely');
@@ -1433,6 +1433,11 @@ foreach (['surface_style', 'interface_density', 'corner_style', 'backdrop_streng
 $menuScript = (string)file_get_contents(__DIR__ . '/../frontend/js/menu.js');
 assertEqual(true, strpos($menuScript, 'applyAppearancePreferences') !== false, 'Shared application shell applies appearance settings');
 assertEqual(true, strpos($menuScript, 'interface-preferences.css') !== false, 'Shared application shell loads appearance preference styles');
+$preferenceStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/interface-preferences.css');
+assertEqual(true, strpos($preferenceStyles, 'ui-accent-bar-hairline') !== false, 'Appearance styles include the hairline top accent option');
+assertEqual(true, strpos($preferenceStyles, 'ui-accent-reveal') !== false, 'Primary top accents use the shared reveal animation');
+$trendStyles = (string)file_get_contents(__DIR__ . '/../frontend/financial_trends.css');
+assertEqual(true, strpos($trendStyles, '.trends-controls::before { inset:0 0 auto; width:100%') !== false, 'Trends period controls use a full-width top accent');
 
 // Keep Safari and iOS Password AutoFill on the correct credential type at
 // each stage of sign-in. In particular, focusing the TOTP field as soon as the

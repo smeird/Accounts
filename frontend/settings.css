@@ -52,6 +52,7 @@
 .settings-preview__bar small { color:#94a3b8; font-size:.53rem; font-weight:650; }
 .settings-preview__canvas { --preview-radius:1rem; --preview-accent-height:.22rem; position:relative; display:grid; overflow:hidden; gap:.65rem; padding:.8rem; background:linear-gradient(145deg,rgba(79,70,229,.16),rgba(255,255,255,.98) 70%); transition:background 180ms ease; }
 .settings-preview__canvas::before { position:absolute; inset:0 0 auto; height:var(--preview-accent-height); content:""; background:linear-gradient(90deg,var(--site-brand,#4f46e5),#22d3ee,#34d399); }
+.settings-preview.is-accent-hairline .settings-preview__canvas { --preview-accent-height:1px; }
 .settings-preview.is-accent-small .settings-preview__canvas { --preview-accent-height:.12rem; }
 .settings-preview.is-accent-large .settings-preview__canvas { --preview-accent-height:.38rem; }
 .settings-preview.is-calm .settings-preview__canvas { background:linear-gradient(145deg,rgba(79,70,229,.07),rgba(255,255,255,.99) 70%); }

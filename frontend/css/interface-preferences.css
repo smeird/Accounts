@@ -38,6 +38,7 @@ body.ui-corners-square :where(
   .statement-chart-panel,.modern-table.tabulator,.settings-section
 ) { border-radius: .28rem!important; }
 
+body.ui-accent-bar-hairline { --ui-accent-bar-height:1px; }
 body.ui-accent-bar-small { --ui-accent-bar-height:.12rem; }
 body.ui-accent-bar-medium { --ui-accent-bar-height:.22rem; }
 body.ui-accent-bar-large { --ui-accent-bar-height:.38rem; }
@@ -45,8 +46,15 @@ body.ui-accent-bar-large { --ui-accent-bar-height:.38rem; }
 body[class*="ui-accent-bar-"] :where(
   .site-menu,.page-header,.landing-hero,.instant-hero,.transaction-hero,
   .budget-hero,.project-hero,.yearly-hero,.forecast-hero,.recurring-hero,
-  .process-hero,.pivot-hero,.database-health-hero
-)::before { height:var(--ui-accent-bar-height)!important; }
+  .process-hero,.pivot-hero,.database-health-hero,.trends-controls
+)::before {
+  height:var(--ui-accent-bar-height)!important;
+  transform:scaleX(0);
+  transform-origin:left center;
+  animation:ui-accent-reveal 480ms cubic-bezier(.22,1,.36,1) forwards;
+}
+
+@keyframes ui-accent-reveal { to { transform:scaleX(1); } }
 
 body.ui-page-header-small .page-header { padding-block:.62rem!important; }
 body.ui-page-header-small .page-header .page-title { font-size:clamp(1.15rem,1.7vw,1.35rem)!important; }
@@ -71,4 +79,12 @@ body.ui-motion-reduced *::after {
   transition-duration: .01ms!important;
   animation-duration: .01ms!important;
   animation-iteration-count: 1!important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[class*="ui-accent-bar-"] :where(
+    .site-menu,.page-header,.landing-hero,.instant-hero,.transaction-hero,
+    .budget-hero,.project-hero,.yearly-hero,.forecast-hero,.recurring-hero,
+    .process-hero,.pivot-hero,.database-health-hero,.trends-controls
+  )::before { animation:none; transform:none; }
 }
