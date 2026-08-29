@@ -1,0 +1,185 @@
+/*
+ * Shared hero density
+ *
+ * Dashboard heroes are financial briefs, not splash screens. Keep their
+ * useful context, but use horizontal space before consuming page height.
+ */
+
+:where(
+  .instant-hero,
+  .transaction-hero,
+  .budget-hero,
+  .project-hero,
+  .yearly-hero,
+  .forecast-hero,
+  .recurring-hero,
+  .pivot-hero,
+  .process-hero,
+  .database-health-hero,
+  .burn-hero,
+  .trends-primary-card
+) {
+  min-height:0!important;
+}
+
+@media (min-width:921px) {
+  :where(.instant-hero,.transaction-hero,.budget-hero,.project-hero,.yearly-hero,.forecast-hero) {
+    padding:1rem 1.15rem!important;
+  }
+
+  :where(
+    .instant-hero__primary,
+    .transaction-hero__body,
+    .budget-hero__body,
+    .project-hero__body,
+    .yearly-hero__body,
+    .forecast-hero__body
+  ) {
+    gap:1.25rem!important;
+    padding:.72rem 0!important;
+  }
+
+  .instant-position,
+  :is(.transaction-hero__body,.budget-hero__body,.project-hero__body,.yearly-hero__body) > :first-child,
+  .forecast-hero__headline {
+    display:grid;
+    grid-template-columns:auto minmax(11rem,1fr);
+    align-items:center;
+    column-gap:1.2rem;
+    row-gap:.18rem;
+  }
+
+  :where(.instant-kicker,.transaction-kicker,.budget-kicker,.project-kicker,.yearly-kicker,.forecast-kicker) {
+    grid-column:1/-1;
+    margin-bottom:.12rem!important;
+  }
+
+  :where(.instant-balance,.transaction-hero__value,.budget-remaining,.project-hero__value,.yearly-cashflow,.forecast-position) {
+    grid-column:1;
+    grid-row:2/4;
+  }
+
+  :where(.instant-message,.transaction-hero__message,.budget-hero-message,.project-hero__message,.yearly-message,.forecast-message) {
+    grid-column:2;
+    grid-row:2;
+    margin:0!important;
+  }
+
+  .instant-pace {
+    grid-column:2;
+    grid-row:3;
+    justify-self:start;
+    margin-top:.15rem;
+  }
+
+  .instant-balance { font-size:clamp(2.75rem,4vw,3.8rem); }
+  :where(.transaction-hero__value,.budget-remaining,.project-hero__value) { font-size:clamp(2.65rem,4vw,3.55rem); }
+  .yearly-cashflow { font-size:clamp(2.8rem,4.4vw,3.9rem); }
+  .forecast-position { font-size:clamp(2.7rem,4.2vw,3.7rem)!important; }
+
+  :where(.instant-score,.yearly-rate) { width:7rem; }
+  :where(.instant-score__ring,.yearly-rate__ring) { width:5.5rem; height:5.5rem; }
+  :where(.instant-score__centre,.yearly-rate__centre) { width:4.35rem; height:4.35rem; }
+  :where(.instant-score__centre > span,.yearly-rate__centre strong) { font-size:1.25rem; }
+  :where(.instant-score > p,.yearly-rate small) { margin-top:.28rem; font-size:.58rem; }
+
+  :where(.instant-metric,.transaction-hero__metrics article,.budget-summary-grid article,.project-hero__metrics article,.yearly-metrics article) {
+    min-height:4.25rem!important;
+    padding:.55rem .75rem!important;
+  }
+
+  :where(.instant-metric__icon,.transaction-summary-icon,.budget-summary-icon,.project-summary-icon,.yearly-metric-icon) {
+    width:2.05rem;
+    height:2.05rem;
+  }
+
+  .forecast-hero__footer { padding-top:.55rem; }
+
+  :where(.recurring-hero,.pivot-hero) {
+    grid-template-columns:minmax(0,1.6fr) minmax(14rem,.4fr);
+    gap:1rem;
+    padding:1rem 1.1rem;
+  }
+
+  :where(.recurring-hero,.pivot-hero) h2 { margin:.28rem 0 .38rem; }
+  .recurring-hero__actions { margin-top:.65rem; }
+  :where(.recurring-method,.pivot-guide) { padding:.65rem; }
+  :where(.recurring-method__icon,.pivot-guide__icon) { width:2.15rem; height:2.15rem; }
+
+  .process-hero {
+    grid-template-columns:minmax(0,1fr) 9rem;
+    gap:1rem;
+    padding:1.15rem 1.25rem;
+  }
+
+  .process-hero h2 { margin:.35rem 0 .45rem; }
+  .process-sequence { margin:.75rem 0; }
+  .process-hero__visual { width:8.5rem; }
+  .process-node { width:2.15rem; height:2.15rem; font-size:.7rem; }
+  .process-hero__core { font-size:1rem; }
+
+  .database-health-hero { padding:1rem 1.1rem; }
+  .database-health-hero__icon { width:3rem; height:3rem; border-radius:.9rem; font-size:1rem; }
+
+  .burn-summary {
+    grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,.65fr));
+    gap:.7rem;
+  }
+
+  .burn-hero { padding:1rem 1.1rem; }
+  .burn-hero > strong { font-size:clamp(2.4rem,3.5vw,3.35rem); }
+  .burn-chip { margin-top:.65rem; }
+  .burn-metrics { display:contents; }
+  .burn-metrics article { align-items:flex-start; padding:.8rem; }
+
+  .trends-summary {
+    grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,.62fr));
+    gap:.7rem;
+  }
+
+  .trends-primary-card { padding:1rem 1.1rem; }
+  .trends-primary-card > strong { font-size:clamp(2.35rem,3.5vw,3.4rem); }
+  .trends-metric-grid { display:contents; }
+  .trends-metric-card { align-items:flex-start; padding:.8rem; }
+}
+
+@media (max-width:920px) {
+  :where(.instant-hero,.transaction-hero,.budget-hero,.project-hero,.yearly-hero,.forecast-hero,.recurring-hero,.pivot-hero,.process-hero,.burn-hero,.trends-primary-card) {
+    padding:1rem!important;
+  }
+
+  :where(.instant-hero__primary,.transaction-hero__body,.budget-hero__body,.project-hero__body,.yearly-hero__body,.forecast-hero__body) {
+    gap:.75rem!important;
+    padding:.8rem 0!important;
+  }
+
+  :where(.instant-metric,.transaction-hero__metrics article,.budget-summary-grid article,.project-hero__metrics article,.yearly-metrics article) {
+    min-height:4.35rem!important;
+    padding:.58rem .68rem!important;
+  }
+
+  .process-sequence { margin:.8rem 0; }
+}
+
+@media (max-width:640px) {
+  :where(.instant-hero,.transaction-hero,.budget-hero,.project-hero,.yearly-hero,.forecast-hero,.recurring-hero,.pivot-hero,.process-hero,.burn-hero,.trends-primary-card) {
+    padding:.9rem!important;
+  }
+
+  :where(.instant-hero__primary,.transaction-hero__body,.budget-hero__body,.project-hero__body,.yearly-hero__body,.forecast-hero__body) {
+    gap:.6rem!important;
+    padding:.7rem 0!important;
+  }
+
+  :where(.instant-score__ring,.yearly-rate__ring) { width:4.9rem; height:4.9rem; }
+  :where(.instant-score__centre,.yearly-rate__centre) { width:3.9rem; height:3.9rem; }
+  :where(.instant-score__centre > span,.yearly-rate__centre strong) { font-size:1.1rem; }
+
+  :where(.instant-metric,.transaction-hero__metrics article,.budget-summary-grid article,.project-hero__metrics article) {
+    min-height:4.05rem!important;
+  }
+
+  .yearly-metrics article { min-height:5rem!important; }
+  :where(.recurring-hero,.pivot-hero,.process-hero) { gap:.7rem; }
+  :where(.recurring-method,.pivot-guide) { padding:.65rem; }
+}

@@ -58,6 +58,14 @@ const attachSidebarSearchHandler = (root = document) => {
     document.head.appendChild(preferencesLink);
   }
 
+  if (!document.getElementById('hero-density-css')) {
+    const heroDensityLink = document.createElement('link');
+    heroDensityLink.id = 'hero-density-css';
+    heroDensityLink.rel = 'stylesheet';
+    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20260829-financial-briefs');
+    document.head.appendChild(heroDensityLink);
+  }
+
   const hasSpecialistPageDesign = document.body.matches([
     '.landing-page',
     '.instant-page',

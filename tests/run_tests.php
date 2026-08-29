@@ -1436,6 +1436,11 @@ assertEqual(true, strpos($menuScript, 'interface-preferences.css') !== false, 'S
 $preferenceStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/interface-preferences.css');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-bar-hairline') !== false, 'Appearance styles include the hairline top accent option');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-reveal') !== false, 'Primary top accents use the shared reveal animation');
+$heroDensityScript = (string)file_get_contents(__DIR__ . '/../frontend/js/menu.js');
+$heroDensityStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/hero-density.css');
+assertEqual(true, strpos($heroDensityScript, 'hero-density.css') !== false, 'Shared application shell loads compact dashboard hero styles');
+assertEqual(true, strpos($heroDensityStyles, 'min-height:0!important') !== false, 'Dashboard heroes do not reserve decorative empty height');
+assertEqual(true, strpos($heroDensityStyles, '.instant-position') !== false, 'Headline hero content uses the shared compact financial brief layout');
 $paperStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/theme-professional.css');
 assertEqual(true, strpos($paperStyles, '--paper-canvas') !== false, 'Paper view defines its own document canvas');
 assertEqual(true, strpos($paperStyles, 'border-top:1px solid var(--paper-rule)') !== false, 'Paper sections use horizontal rules instead of card outlines');

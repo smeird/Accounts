@@ -46,6 +46,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - The three-phase taxonomy rebuild creates an immutable classification snapshot, stages and reviews a compact AI-assisted vocabulary, then applies it through an atomic, financially reconciled cutover with an audited rollback path.
 - Automation Centre, logs, duplicate checks and configurable branding, typography, surfaces, spacing, corners, backdrop strength, header scale, animated accent-bar thickness and motion.
 - Distinct Glass and Paper workspaces: Glass keeps the expressive layered interface, while Paper presents a flatter, denser document canvas with ruled sections and ledger-style tables.
+- Dashboard heroes use a compact financial-brief layout, keeping headline context and supporting metrics while using horizontal space before page height.
 - Explicit no-store/revalidation rules prevent stale HTML, CSS and JavaScript after deployments.
 
 ## Financial rules
