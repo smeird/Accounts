@@ -11,6 +11,8 @@ class Setting {
     private const DEFAULT_CORNER_STYLE = 'soft';
     private const DEFAULT_BACKDROP_STRENGTH = 'balanced';
     private const DEFAULT_MOTION_PREFERENCE = 'standard';
+    private const DEFAULT_ACCENT_BAR_SIZE = 'medium';
+    private const DEFAULT_PAGE_HEADER_SIZE = 'medium';
 
     /**
      * Retrieve a setting value by name.
@@ -44,7 +46,8 @@ class Setting {
      *               body_font: string, table_font: string, chart_font: string,
      *               accent_font_weight: string, surface_style: string,
      *               interface_density: string, corner_style: string,
-     *               backdrop_strength: string, motion_preference: string}
+     *               backdrop_strength: string, motion_preference: string,
+     *               accent_bar_size: string, page_header_size: string}
      */
     public static function getBrand(): array {
         $settings = self::all();
@@ -70,6 +73,8 @@ class Setting {
             'corner_style' => self::choice($settings, 'corner_style', ['soft', 'balanced', 'square'], self::DEFAULT_CORNER_STYLE),
             'backdrop_strength' => self::choice($settings, 'backdrop_strength', ['calm', 'balanced', 'vivid'], self::DEFAULT_BACKDROP_STRENGTH),
             'motion_preference' => self::choice($settings, 'motion_preference', ['standard', 'reduced'], self::DEFAULT_MOTION_PREFERENCE),
+            'accent_bar_size' => self::choice($settings, 'accent_bar_size', ['small', 'medium', 'large'], self::DEFAULT_ACCENT_BAR_SIZE),
+            'page_header_size' => self::choice($settings, 'page_header_size', ['small', 'medium', 'large'], self::DEFAULT_PAGE_HEADER_SIZE),
         ];
     }
 

@@ -101,18 +101,32 @@ const attachSidebarSearchHandler = (root = document) => {
     const corners = ['soft', 'balanced', 'square'].includes(preferences.corner_style)
       ? preferences.corner_style : 'soft';
     const motion = preferences.motion_preference === 'reduced' ? 'reduced' : 'standard';
+    const accentBar = ['small', 'medium', 'large'].includes(preferences.accent_bar_size)
+      ? preferences.accent_bar_size : 'medium';
+    const pageHeader = ['small', 'medium', 'large'].includes(preferences.page_header_size)
+      ? preferences.page_header_size : 'medium';
     backdropStrength = ['calm', 'balanced', 'vivid'].includes(preferences.backdrop_strength)
       ? preferences.backdrop_strength : 'balanced';
 
     ['compact', 'comfortable', 'roomy'].forEach(value => document.body.classList.remove(`ui-density-${value}`));
     ['soft', 'balanced', 'square'].forEach(value => document.body.classList.remove(`ui-corners-${value}`));
+    ['small', 'medium', 'large'].forEach(value => {
+      document.body.classList.remove(`ui-accent-bar-${value}`, `ui-page-header-${value}`);
+    });
     document.body.classList.remove('ui-motion-reduced');
-    document.body.classList.add(`ui-density-${density}`, `ui-corners-${corners}`);
+    document.body.classList.add(
+      `ui-density-${density}`,
+      `ui-corners-${corners}`,
+      `ui-accent-bar-${accentBar}`,
+      `ui-page-header-${pageHeader}`
+    );
     document.body.classList.toggle('ui-motion-reduced', motion === 'reduced');
     document.documentElement.dataset.interfaceDensity = density;
     document.documentElement.dataset.cornerStyle = corners;
     document.documentElement.dataset.backdropStrength = backdropStrength;
     document.documentElement.dataset.motionPreference = motion;
+    document.documentElement.dataset.accentBarSize = accentBar;
+    document.documentElement.dataset.pageHeaderSize = pageHeader;
 
     const usePaper = savedProfessionalTheme === null
       ? preferences.surface_style === 'paper'

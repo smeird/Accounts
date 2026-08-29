@@ -81,17 +81,23 @@ assertEqual('comfortable', $defaultAppearance['interface_density'], 'Appearance 
 assertEqual('soft', $defaultAppearance['corner_style'], 'Appearance defaults to soft corners');
 assertEqual('balanced', $defaultAppearance['backdrop_strength'], 'Appearance defaults to a balanced backdrop');
 assertEqual('standard', $defaultAppearance['motion_preference'], 'Appearance defaults to standard motion');
+assertEqual('medium', $defaultAppearance['accent_bar_size'], 'Appearance defaults to a medium top accent bar');
+assertEqual('medium', $defaultAppearance['page_header_size'], 'Appearance defaults to medium page headers');
 Setting::set('surface_style', 'paper');
 Setting::set('interface_density', 'compact');
 Setting::set('corner_style', 'balanced');
 Setting::set('backdrop_strength', 'vivid');
 Setting::set('motion_preference', 'reduced');
+Setting::set('accent_bar_size', 'large');
+Setting::set('page_header_size', 'small');
 $customAppearance = Setting::getBrand();
 assertEqual('paper', $customAppearance['surface_style'], 'Appearance returns the saved surface style');
 assertEqual('compact', $customAppearance['interface_density'], 'Appearance returns the saved density');
 assertEqual('balanced', $customAppearance['corner_style'], 'Appearance returns the saved corner style');
 assertEqual('vivid', $customAppearance['backdrop_strength'], 'Appearance returns the saved backdrop strength');
 assertEqual('reduced', $customAppearance['motion_preference'], 'Appearance returns the saved motion preference');
+assertEqual('large', $customAppearance['accent_bar_size'], 'Appearance returns the saved top accent bar size');
+assertEqual('small', $customAppearance['page_header_size'], 'Appearance returns the saved page header size');
 Setting::set('interface_density', 'unsupported');
 assertEqual('comfortable', Setting::getBrand()['interface_density'], 'Invalid appearance settings fall back safely');
 $db->exec('DELETE FROM settings');
@@ -1421,7 +1427,7 @@ foreach (glob(__DIR__ . '/../frontend/*.html') as $staticPage) {
 assertEqual([], $staticPagesMissingCacheMeta, 'Every static page includes a cache-control fallback');
 
 $settingsMarkup = (string)file_get_contents(__DIR__ . '/../settings.php');
-foreach (['surface_style', 'interface_density', 'corner_style', 'backdrop_strength', 'motion_preference'] as $appearanceField) {
+foreach (['surface_style', 'interface_density', 'corner_style', 'backdrop_strength', 'motion_preference', 'accent_bar_size', 'page_header_size'] as $appearanceField) {
     assertEqual(true, strpos($settingsMarkup, 'name="' . $appearanceField . '"') !== false, 'Settings page exposes ' . $appearanceField);
 }
 $menuScript = (string)file_get_contents(__DIR__ . '/../frontend/js/menu.js');
