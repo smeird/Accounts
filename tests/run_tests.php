@@ -1436,6 +1436,10 @@ assertEqual(true, strpos($menuScript, 'interface-preferences.css') !== false, 'S
 $preferenceStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/interface-preferences.css');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-bar-hairline') !== false, 'Appearance styles include the hairline top accent option');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-reveal') !== false, 'Primary top accents use the shared reveal animation');
+$paperStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/theme-professional.css');
+assertEqual(true, strpos($paperStyles, '--paper-canvas') !== false, 'Paper view defines its own document canvas');
+assertEqual(true, strpos($paperStyles, 'border-top:1px solid var(--paper-rule)') !== false, 'Paper sections use horizontal rules instead of card outlines');
+assertEqual(true, strpos($paperStyles, 'background:transparent!important') !== false, 'Paper content surfaces flatten into the shared sheet');
 $trendStyles = (string)file_get_contents(__DIR__ . '/../frontend/financial_trends.css');
 assertEqual(true, strpos($trendStyles, '.trends-controls::before { inset:0 0 auto; width:100%') !== false, 'Trends period controls use a full-width top accent');
 

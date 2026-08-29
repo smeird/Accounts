@@ -45,7 +45,7 @@ The default view must answer the page’s main question before the user interact
 - Installation appearance settings provide the default surface style, desktop density, corner shape, backdrop strength, page-header size, primary top-accent thickness and motion level. Implement shared components so they continue to respond to the classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
 - The top-accent setting applies to the shared page header, sidebar and primary dashboard heroes. New specialist heroes should use the shared `--ui-accent-bar-height` treatment or be added to the central selector.
 - Primary top accents reveal rapidly from left to right when a page loads. Honour both the saved reduced-motion setting and the browser's reduced-motion preference; small section markers should remain static.
-- Glass is the expressive default; Paper reuses Professional view’s flat, document-like treatment. The sidebar switch remains a per-device override of the installation default.
+- Glass is the expressive default. Paper is a deliberately distinct compact document workspace: one warm-white canvas, horizontal rules instead of card outlines, square ledger tables, restrained colour, flatter heroes, compact desktop controls and almost no elevation. Do not treat Paper as merely Glass with blur disabled. The sidebar switch remains a per-device override of the installation default.
 - Compact and Roomy density change desktop spacing only. Preserve standard mobile touch targets and card-row spacing.
 - Use `cards` for the standard glass surface.
 - Use `cards cards-solid` for dense filters or controls needing stronger contrast.
@@ -113,7 +113,7 @@ Choose the table mechanism based on the task:
 
 In Professional view, desktop tables use the compact density defined by `frontend/css/theme-professional.css`: reduced row, header and control height with tighter vertical padding. Do not apply that density below the mobile breakpoint, where card rows and touch targets retain their standard spacing.
 
-Professional view uses a plain-paper surface model. Most content cards and panels keep their white background but omit their outline and elevation; use spacing, typography and internal dividers to communicate structure. Inputs, buttons, warnings, deliberate hero treatments and the sidebar may retain boundaries where they support interaction or orientation.
+Professional/Paper view uses a continuous document surface. Content sections are transparent against the sheet and separated primarily by horizontal rules; primary heroes flatten into report sections, tables use square ruled ledger edges, and desktop controls become denser. Inputs, buttons, warnings and the sidebar retain boundaries where they support interaction or orientation. Mobile keeps normal touch heights even though its surfaces remain flat.
 
 ## 8. Charts and metrics
 

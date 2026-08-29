@@ -77,6 +77,8 @@ body.theme-professional.ops-body {
   .ops-section,
   .ops-table-block,
   .ops-chart-block,
+  [class$="-section"],
+  [class*="-section "],
   .monthly-statement,
   .statement-chart-panel,
   .account-ledger,
@@ -175,4 +177,357 @@ body.theme-professional.ops-body {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/*
+ * Paper workspace
+ *
+ * Paper is deliberately more than "glass without blur". It behaves like a
+ * compact financial document: one continuous sheet, horizontal rules instead
+ * of outlined cards, restrained colour, and ledger-like data surfaces.
+ */
+body.theme-professional {
+  --paper-canvas:#f5f4f0;
+  --paper-sheet:#fffefb;
+  --paper-ink:#172033;
+  --paper-muted:#5f6b7c;
+  --paper-rule:#d9dee7;
+  --paper-rule-strong:#aeb8c7;
+  color:var(--paper-ink);
+  background:var(--paper-canvas)!important;
+}
+
+body.theme-professional.ops-body,
+body.theme-professional .ops-main {
+  background-color:var(--paper-sheet)!important;
+  background-image:none!important;
+}
+
+body.theme-professional .page-header {
+  padding-inline:.35rem!important;
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule-strong)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+body.theme-professional .page-title { color:var(--paper-ink)!important; letter-spacing:-.035em; }
+body.theme-professional .page-breadcrumb { color:var(--paper-muted)!important; }
+body.theme-professional .page-subtitle { color:#475569!important; }
+
+body.theme-professional .ops-main :is(
+  .cards,
+  .glass-surface,
+  .site-card,
+  .site-metric-card,
+  .ops-section,
+  .ops-table-block,
+  .ops-chart-block,
+  [class$="-section"],
+  [class*="-section "],
+  .monthly-statement,
+  .statement-chart-panel,
+  .account-ledger,
+  .account-chart-panel,
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-panel"],
+  [class*="-panel "]
+) {
+  border:0!important;
+  border-top:1px solid var(--paper-rule)!important;
+  border-radius:0!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+body.theme-professional .ops-main :is(
+  .cards,
+  .site-card,
+  .ops-section,
+  .ops-table-block,
+  .ops-chart-block
+) { --card-radius:0; --card-padding:.85rem; }
+
+/* Primary dashboard stories become printed report sections rather than cards. */
+body.theme-professional :is(
+  .landing-hero,
+  .instant-hero,
+  .transaction-hero,
+  .budget-hero,
+  .project-hero,
+  .yearly-hero,
+  .forecast-hero,
+  .recurring-hero,
+  .process-hero,
+  .pivot-hero,
+  .database-health-hero,
+  .trends-primary-card
+) {
+  min-height:0!important;
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule-strong)!important;
+  border-radius:0!important;
+  color:var(--paper-ink)!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+body.theme-professional :is(
+  .landing-hero,
+  .instant-hero,
+  .transaction-hero,
+  .budget-hero,
+  .project-hero,
+  .yearly-hero,
+  .forecast-hero,
+  .recurring-hero,
+  .process-hero,
+  .pivot-hero,
+  .database-health-hero,
+  .trends-primary-card
+) :where(h1,h2,h3,strong,dt,dd) { color:var(--paper-ink)!important; }
+
+body.theme-professional :is(
+  .landing-hero,
+  .instant-hero,
+  .transaction-hero,
+  .budget-hero,
+  .project-hero,
+  .yearly-hero,
+  .forecast-hero,
+  .recurring-hero,
+  .process-hero,
+  .pivot-hero,
+  .database-health-hero,
+  .trends-primary-card
+) :where(p,small) { color:var(--paper-muted)!important; }
+
+body.theme-professional :is(
+  .landing-hero,
+  .instant-hero,
+  .transaction-hero,
+  .budget-hero,
+  .project-hero,
+  .yearly-hero,
+  .forecast-hero,
+  .recurring-hero,
+  .process-hero,
+  .pivot-hero,
+  .database-health-hero,
+  .trends-primary-card
+) :is([class*="__orb"],[class*="__glow"]) { display:none!important; }
+
+body.theme-professional :is(
+  .landing-hero,
+  .instant-hero,
+  .transaction-hero,
+  .budget-hero,
+  .project-hero,
+  .yearly-hero,
+  .forecast-hero,
+  .recurring-hero,
+  .process-hero,
+  .pivot-hero,
+  .database-health-hero
+) :is(article,[class*="metric"],[class*="snapshot"]) {
+  border-color:var(--paper-rule)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+/* Controls read like compact document fields rather than soft glass objects. */
+body.theme-professional :is(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .choices__inner,
+  .glass-input,
+  .ops-input,
+  .ops-select
+) {
+  border-color:#b9c2cf!important;
+  border-radius:.18rem!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional :is(
+  .site-button,
+  .ops-btn-primary,
+  [class$="-button"],
+  [class*="-button "]
+) {
+  border-radius:.18rem!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional :is(
+  .site-button--primary,
+  .ops-btn-primary,
+  [class$="-button--primary"],
+  [class*="-button--primary "]
+) { background:var(--brand-color-600,#4f46e5)!important; }
+
+/* Ledger treatment: square edges, ruled headers and restrained row states. */
+body.theme-professional :is(
+  .tabulator,
+  .ops-standard-table,
+  .modern-table,
+  .ops-native-table,
+  .statement-table,
+  .account-table,
+  .trends-table
+) {
+  border:0!important;
+  border-top:1px solid var(--paper-rule-strong)!important;
+  border-bottom:1px solid var(--paper-rule-strong)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional .tabulator .tabulator-header,
+body.theme-professional .ops-standard-table .tabulator-header {
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule-strong)!important;
+  background:transparent!important;
+}
+
+body.theme-professional .tabulator :is(.tabulator-row,.tabulator-cell,.tabulator-col),
+body.theme-professional :is(.ops-native-table,.statement-table,.account-table,.trends-table) :is(th,td) {
+  border-color:#e5e8ee!important;
+}
+
+body.theme-professional .tabulator .tabulator-row,
+body.theme-professional :is(.ops-native-table,.statement-table,.account-table,.trends-table) tbody tr {
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional .tabulator .tabulator-row:nth-child(even),
+body.theme-professional :is(.ops-native-table,.statement-table,.account-table,.trends-table) tbody tr:nth-child(even) {
+  background:#fafaf8!important;
+}
+
+body.theme-professional .tabulator .tabulator-row:hover,
+body.theme-professional :is(.ops-native-table,.statement-table,.account-table,.trends-table) tbody tr:hover {
+  background:#f1f3f5!important;
+}
+
+body.theme-professional .tabulator .tabulator-footer,
+body.theme-professional .tabulator .tabulator-calcs-holder,
+body.theme-professional .ops-table-paginator {
+  border-color:var(--paper-rule)!important;
+  border-radius:0!important;
+  background:#f7f7f4!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional :is(.highcharts-container,.highcharts-container.glass-chart) {
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional .highcharts-grid-line { stroke:#e3e6eb!important; }
+
+/* Trends is especially report-like in Paper: one compact summary ledger. */
+body.theme-professional.trends-page .trends-controls {
+  padding:.75rem .35rem!important;
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+@media (min-width:1101px) {
+  body.theme-professional.trends-page .trends-summary {
+    grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,.62fr))!important;
+    gap:0!important;
+    border-top:1px solid var(--paper-rule-strong);
+    border-bottom:1px solid var(--paper-rule-strong);
+  }
+
+  body.theme-professional.trends-page .trends-primary-card {
+    padding:.9rem 1rem!important;
+    border:0!important;
+    border-right:1px solid var(--paper-rule)!important;
+  }
+
+  body.theme-professional.trends-page .trends-metric-grid { display:contents!important; }
+
+  body.theme-professional.trends-page .trends-metric-card {
+    align-items:flex-start!important;
+    padding:.85rem!important;
+    border:0!important;
+    border-left:1px solid var(--paper-rule)!important;
+  }
+}
+
+/* The navigation becomes a quiet document index. */
+body.theme-professional .site-menu {
+  padding-inline:.65rem!important;
+  border-right:1px solid var(--paper-rule)!important;
+  background:#fbfaf7!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional .site-menu-brand img,
+body.theme-professional .site-menu #sidebar-search,
+body.theme-professional .site-menu-group-toggle,
+body.theme-professional .site-menu .site-menu-link,
+body.theme-professional .site-menu-theme {
+  border-radius:.18rem!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional .site-menu .site-menu-link.is-active {
+  color:var(--paper-ink)!important;
+  background:#eceff3!important;
+}
+
+@media (min-width:768px) {
+  body.theme-professional .ops-main { padding:1rem 1.15rem!important; }
+  body.theme-professional .ops-main > * + * { margin-top:.78rem!important; }
+
+  body.theme-professional :is([class$="-grid"],[class*="-grid "]) { gap:.7rem!important; }
+
+  body.theme-professional :is(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea,
+    .choices__inner,
+    .glass-input,
+    .ops-input,
+    .ops-select
+  ) {
+    min-height:2.25rem!important;
+    padding-top:.42rem!important;
+    padding-bottom:.42rem!important;
+  }
+
+  body.theme-professional :is(.site-button,.ops-btn-primary,[class$="-button"],[class*="-button "]) {
+    min-height:2.15rem!important;
+    padding-top:.4rem!important;
+    padding-bottom:.4rem!important;
+  }
+}
+
+@media (max-width:767px) {
+  body.theme-professional .ops-main { padding-inline:.7rem!important; }
+  body.theme-professional .ops-main > * + * { margin-top:.85rem!important; }
+  body.theme-professional .page-header { padding-left:3.35rem!important; }
+  body.theme-professional .site-menu { padding-inline:.78rem!important; }
 }
