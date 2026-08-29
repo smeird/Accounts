@@ -42,7 +42,7 @@ The default view must answer the page’s main question before the user interact
 
 ## 3. Surfaces and spacing
 
-- Installation appearance settings provide the default surface style, desktop density, corner shape, backdrop strength, page-header size, primary top-accent thickness and motion level. Implement shared components so they continue to respond to the classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
+- Installation appearance settings provide the default accent palette, typography, surface style, desktop density, corner shape, backdrop strength, page-header size, primary top-accent thickness and motion level. Implement shared components so they continue to respond to the variables and classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
 - The top-accent setting applies to the shared page header, sidebar and primary dashboard heroes. New specialist heroes should use the shared `--ui-accent-bar-height` treatment or be added to the central selector.
 - Primary top accents reveal rapidly from left to right when a page loads. Honour both the saved reduced-motion setting and the browser's reduced-motion preference; small section markers should remain static.
 - Dashboard heroes are compact financial briefs rather than splash screens. Preserve the headline, explanation, secondary signal and supporting metrics, but use the available width to keep them together and avoid decorative minimum heights. Shared density rules belong in `frontend/css/hero-density.css`.
@@ -57,7 +57,7 @@ The default view must answer the page’s main question before the user interact
 
 ## 4. Colour and gradients
 
-Brand colours come from shared settings and CSS variables. Do not hardcode a second global palette.
+Brand colours come from the curated catalogue in `Setting::colorPalettes()` and are exposed through shared primary/secondary CSS variables. Do not hardcode a second global palette or assume a saved palette name maps directly to a Tailwind colour.
 
 - Use gradients for hero metrics, progress/runway and a small number of high-signal accents.
 - Keep ordinary data surfaces neutral so semantic colours remain meaningful.
@@ -79,7 +79,7 @@ Use a compact visible key where classifications appear. Pills contain the assign
 
 ## 5. Typography
 
-`frontend/js/fonts.js` is the font authority. Honour the configured heading, body, table and chart families and accent weight. Choosing **Default** must restore the page’s designed typography rather than forcing a browser fallback.
+`frontend/js/fonts.js` is the font authority. Honour the configured heading, body, table and chart families and accent weight. Choices are grouped through `Setting::fontGroups()`; load only the selected web fonts, with supported weights, so expanding the catalogue does not slow the Settings page. Choosing **Default** must restore the page’s designed typography rather than forcing a browser fallback.
 
 The shared readable scale in `frontend/typography.css` targets:
 

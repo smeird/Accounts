@@ -54,7 +54,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const preferencesLink = document.createElement('link');
     preferencesLink.id = 'interface-preferences-css';
     preferencesLink.rel = 'stylesheet';
-    preferencesLink.href = resolveFrontendAsset('css/interface-preferences.css?v=20260829-customisation');
+    preferencesLink.href = resolveFrontendAsset('css/interface-preferences.css?v=20260829-expanded-branding');
     document.head.appendChild(preferencesLink);
   }
 
@@ -147,25 +147,16 @@ const attachSidebarSearchHandler = (root = document) => {
 
   document.body.classList.add('pt-4');
   let colorScheme = 'indigo';
+  let brandPrimary = '#4f46e5';
+  let brandSecondary = '#4338ca';
   let siteName = 'Finance Manager';
-  const colorMap = {
-    indigo: {600: '#4f46e5', 700: '#4338ca', gradient: 'linear-gradient(160deg, rgba(79, 70, 229, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    blue:   {600: '#2563eb', 700: '#1d4ed8', gradient: 'linear-gradient(160deg, rgba(37, 99, 235, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    green:  {600: '#059669', 700: '#047857', gradient: 'linear-gradient(160deg, rgba(5, 150, 105, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    red:    {600: '#dc2626', 700: '#b91c1c', gradient: 'linear-gradient(160deg, rgba(220, 38, 38, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    purple: {600: '#9333ea', 700: '#7e22ce', gradient: 'linear-gradient(160deg, rgba(147, 51, 234, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    teal:   {600: '#0d9488', 700: '#0f766e', gradient: 'linear-gradient(160deg, rgba(13, 148, 136, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    orange: {600: '#ea580c', 700: '#c2410c', gradient: 'linear-gradient(160deg, rgba(234, 88, 12, 0.16) 0%, rgba(255, 255, 255, 0.96) 72%, #ffffff 100%)'},
-    sunset: {600: '#f97316', 700: '#ec4899', gradient: 'linear-gradient(135deg, rgba(249, 115, 22, 0.16) 0%, rgba(236, 72, 153, 0.12) 52%, rgba(255, 255, 255, 0.98) 100%)'},
-    ocean: {600: '#0891b2', 700: '#2563eb', gradient: 'linear-gradient(135deg, rgba(8, 145, 178, 0.16) 0%, rgba(37, 99, 235, 0.12) 52%, rgba(255, 255, 255, 0.98) 100%)'},
-    'violet-rose': {600: '#8b5cf6', 700: '#e11d48', gradient: 'linear-gradient(135deg, rgba(139, 92, 246, 0.16) 0%, rgba(225, 29, 72, 0.12) 52%, rgba(255, 255, 255, 0.98) 100%)'}
-  };
+  const tailwindColorSchemes = new Set(['blue', 'green', 'red', 'purple', 'teal', 'orange', 'slate', 'emerald', 'cyan', 'rose', 'amber']);
 
   const hoverStyle = document.createElement('style');
   document.head.appendChild(hoverStyle);
 
   const applyColorScheme = (root = document) => {
-    if (colorScheme !== 'indigo') {
+    if (colorScheme !== 'indigo' && tailwindColorSchemes.has(colorScheme)) {
       root.querySelectorAll('*').forEach(el => {
         el.classList.forEach(c => {
           if (c.includes('indigo')) {
@@ -175,7 +166,7 @@ const attachSidebarSearchHandler = (root = document) => {
         });
       });
     }
-    const colors = colorMap[colorScheme] || colorMap.indigo;
+    const colors = { 600: brandPrimary, 700: brandSecondary };
     const cssRoot = document.documentElement;
     const hexToRgb = hex => {
       const clean = String(hex || '').replace('#', '');
@@ -185,18 +176,24 @@ const attachSidebarSearchHandler = (root = document) => {
     const primaryRgb = hexToRgb(colors[600]);
     const secondaryRgb = hexToRgb(colors[700]);
     const washAlpha = { calm: .08, balanced: .16, vivid: .25 }[backdropStrength] || .16;
-    const brandGradient = backdropStrength === 'balanced' && colors.gradient
-      ? colors.gradient
-      : `linear-gradient(145deg, rgba(${primaryRgb}, ${washAlpha}) 0%, rgba(${secondaryRgb}, ${washAlpha * .72}) 48%, rgba(255, 255, 255, .98) 100%)`;
+    const brandGradient = `linear-gradient(145deg, rgba(${primaryRgb}, ${washAlpha}) 0%, rgba(${secondaryRgb}, ${washAlpha * .72}) 48%, rgba(255, 255, 255, .98) 100%)`;
     cssRoot.style.setProperty('--brand-color-600', colors[600]);
     cssRoot.style.setProperty('--brand-color-700', colors[700]);
     cssRoot.style.setProperty('--brand-color-rgb', primaryRgb);
+    cssRoot.style.setProperty('--site-brand', colors[600]);
+    cssRoot.style.setProperty('--site-brand-dark', colors[700]);
+    cssRoot.style.setProperty('--site-brand-secondary', colors[700]);
     cssRoot.style.setProperty('--page-title-color', colors[700]);
     cssRoot.style.setProperty('--brand-gradient', brandGradient);
     hoverStyle.textContent = `
       a { transition: color 0.2s ease; }
       a:hover { color: ${colors[600]}; }
       button { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease; }
+      .site-brand-icon,.site-brand-breadcrumb { color:${colors[600]}!important; }
+      .site-brand-active { border-color:${colors[600]}!important; background-color:rgba(${primaryRgb},.09)!important; }
+      .text-indigo-600,.text-indigo-700,.text-indigo-900 { color:${colors[600]}!important; }
+      .border-indigo-600 { border-color:${colors[600]}!important; }
+      .bg-indigo-50 { background-color:rgba(${primaryRgb},.09)!important; }
     `;
   };
 
@@ -212,7 +209,7 @@ const attachSidebarSearchHandler = (root = document) => {
         icon.classList.forEach(c => { if (c.startsWith('text-')) icon.classList.remove(c); });
         icon.classList.add('text-white');
       } else if (!hasColor && !hasExplicitParentText) {
-        icon.classList.add(`text-${colorScheme}-600`);
+        icon.classList.add('site-brand-icon');
       }
     });
   };
@@ -255,7 +252,7 @@ const attachSidebarSearchHandler = (root = document) => {
   function loadFontsModule(cb) {
     if (window.applyFonts) { cb(); return; }
     const s = document.createElement('script');
-    s.src = resolveFrontendAsset('js/fonts.js?v=20260811-font-weights');
+    s.src = resolveFrontendAsset('js/fonts.js?v=20260829-expanded-fonts');
     s.onload = cb;
     document.head.appendChild(s);
   }
@@ -265,6 +262,8 @@ const attachSidebarSearchHandler = (root = document) => {
     .then(f => {
       siteName = f.site_name || siteName;
       colorScheme = f.color_scheme || colorScheme;
+      brandPrimary = f.brand_color || brandPrimary;
+      brandSecondary = f.brand_color_dark || brandSecondary;
       applyAppearancePreferences(f);
       loadFontsModule(() => applyFonts(f));
       document.title = document.title.replace('Finance Manager', siteName);
@@ -363,7 +362,7 @@ const attachSidebarSearchHandler = (root = document) => {
       'border',
       'border-white/40',
       'shadow-2xl',
-      `to-${colorScheme}-100/30`
+      'to-indigo-100/30'
     );
     menu.classList.add('menu-surface', 'site-menu');
 
@@ -495,15 +494,14 @@ const attachSidebarSearchHandler = (root = document) => {
           link.setAttribute('aria-current', 'page');
           link.classList.add(
             'border-l-2',
-            `border-${colorScheme}-600`,
             'font-medium',
             'text-gray-900',
-            `bg-${colorScheme}-50`
+            'site-brand-active'
           );
           const activeIcon = link.querySelector('i');
           if (activeIcon) {
             activeIcon.classList.remove('text-slate-400');
-            activeIcon.classList.add(`text-${colorScheme}-600`);
+            activeIcon.classList.add('site-brand-icon');
           }
           const activeSection = link.closest('.site-menu-group');
           if (activeSection) setSectionExpanded(activeSection, true);
@@ -518,7 +516,7 @@ const attachSidebarSearchHandler = (root = document) => {
             if (breadcrumb && heading) {
               const crumb = document.createElement('div');
               crumb.textContent = breadcrumb;
-              crumb.className = `page-breadcrumb text-${colorScheme}-900`;
+              crumb.className = 'page-breadcrumb site-brand-breadcrumb';
               heading.insertAdjacentElement('afterend', crumb);
             }
           }

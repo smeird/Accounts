@@ -44,7 +44,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Backup and restore for accounts, transactions, classifications, taxonomy staging, projects, budgets and settings.
 - Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
 - The three-phase taxonomy rebuild creates an immutable classification snapshot, stages and reviews a compact AI-assisted vocabulary, then applies it through an atomic, financially reconciled cutover with an audited rollback path.
-- Automation Centre, logs, duplicate checks and configurable branding, typography, surfaces, spacing, corners, backdrop strength, header scale, animated accent-bar thickness and motion.
+- Automation Centre, logs, duplicate checks and configurable branding, expanded accent palettes, grouped typography choices, surfaces, spacing, corners, backdrop strength, header scale, animated accent-bar thickness and motion.
 - Distinct Glass and Paper workspaces: Glass keeps the expressive layered interface, while Paper presents a flatter, denser document canvas with ruled sections and ledger-style tables.
 - Dashboard heroes use a compact financial-brief layout, keeping headline context and supporting metrics while using horizontal space before page height.
 - Explicit no-store/revalidation rules prevent stale HTML, CSS and JavaScript after deployments.
@@ -141,7 +141,7 @@ New pages must follow the shared system rather than introducing a standalone vis
 
 - Render the modern page header with `frontend/js/page_header.js`.
 - Use shared glass/solid card surfaces and the readable type scale.
-- Honour configured heading, body, table and chart fonts.
+- Honour configured heading, body, table and chart fonts; use the curated grouped catalogue and load only selected web fonts.
 - Use native tables for straightforward read-only views and the shared Tabulator adapter for large interactive datasets.
 - Use consistent classification colours and a visible key rather than repeating type names inside every pill.
 - Provide useful loading, empty and error states, contextual help and accessible labels.

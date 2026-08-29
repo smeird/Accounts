@@ -6,6 +6,24 @@
   ]);
 
   const FONT_WEIGHTS = '100;300;400;700';
+  const FONT_WEIGHT_SETS = {
+    'Atkinson Hyperlegible': '400;700',
+    'Bangers': '400',
+    'Caveat': '400;700',
+    'Dancing Script': '400;700',
+    'Fjalla One': '400',
+    'Fredoka': '300;400;700',
+    'Libre Baskerville': '400;700',
+    'Lora': '400;700',
+    'Merriweather': '300;400;700',
+    'Oswald': '300;400;700',
+    'Pacifico': '400',
+    'Playfair Display': '400;700',
+    'Source Sans 3': '300;400;700',
+    'Source Serif Pro': '300;400;700',
+    'Source Serif 4': '300;400;700',
+    'Space Grotesk': '300;400;700'
+  };
 
   function loadFont(font, includeWeights) {
     if (!font || systemFonts.has(font)) return;
@@ -19,7 +37,7 @@
     link.rel = 'stylesheet';
     link.href = 'https://fonts.googleapis.com/css2?family=' +
       encodeURIComponent(font).replace(/%20/g, '+') +
-      (includeWeights ? ':wght@' + FONT_WEIGHTS : '') +
+      (includeWeights ? ':wght@' + (FONT_WEIGHT_SETS[font] || FONT_WEIGHTS) : '') +
       '&display=swap';
     document.head.appendChild(link);
   }

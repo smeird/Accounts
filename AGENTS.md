@@ -69,6 +69,7 @@
 - Table font CSS variables (`--tabulator-*`) are set in the shared menu so Tabulator tables use the correct fonts during initial render.
 - Settings page offers additional funky font options: Bangers, Caveat, Dancing Script, Fredoka, Pacifico.
 - Settings allow selecting fonts for headings, body text, tables and charts with options ranging from modern to funky.
+- Typography and accent choices come from the allowlisted catalogues exposed by `Setting::fontGroups()` and `Setting::colorPalettes()`. Keep font selectors grouped, load only the selected web fonts, and propagate palette primary/secondary values through shared CSS variables rather than assuming every palette is a Tailwind colour name.
 - `frontend/js/fonts.js` is the shared typography authority: form controls inherit the selected body/table family, selected web fonts load the configured 100/300/400/700 faces, accent weight overrides component defaults, and choosing Default removes the corresponding CSS variable.
 
 - Page headings use a shared pattern: `<header class="page-header">` with an `h1.page-title` and optional `.page-subtitle` / `.page-header-actions`; keep this header directly on the page canvas above the first content card.

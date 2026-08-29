@@ -21,13 +21,13 @@ if (isset($_GET['timeout'])) {
 }
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
-$colorScheme = $brand['color_scheme'];
 $headingFont = $brand['heading_font'];
 $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
 $chartFont = $brand['chart_font'];
 $accentWeight = $brand['accent_font_weight'];
-$buttonClass = "bg-{$colorScheme}-500/90 hover:bg-{$colorScheme}-400/90";
+$brandColor = $brand['brand_color'];
+$brandColorDark = $brand['brand_color_dark'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,14 +65,15 @@ $buttonClass = "bg-{$colorScheme}-500/90 hover:bg-{$colorScheme}-400/90";
             </div>
             <h1 class="mb-3 text-3xl font-semibold text-white">You've signed out</h1>
             <p class="mb-6 text-sm text-white/80">Your <?= htmlspecialchars($siteName) ?> session has closed securely. You can return to the login screen whenever you're ready.</p>
-            <a href="index.php" aria-label="Return to the login page" class="inline-flex w-full items-center justify-center rounded-xl <?= $buttonClass ?> px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5">Return to Login</a>
+            <a href="index.php" aria-label="Return to the login page" class="logout-return inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5">Return to Login</a>
         </div>
     </div>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
-    <script src="frontend/js/fonts.js?v=20260811-font-weights"></script>
+    <style>.logout-return{background:<?= htmlspecialchars($brandColor, ENT_QUOTES, 'UTF-8') ?>}.logout-return:hover,.logout-return:focus-visible{background:<?= htmlspecialchars($brandColorDark, ENT_QUOTES, 'UTF-8') ?>}</style>
+    <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($headingFont) ?>,

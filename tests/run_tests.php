@@ -134,6 +134,10 @@ assertEqual('balanced', $defaultAppearance['backdrop_strength'], 'Appearance def
 assertEqual('standard', $defaultAppearance['motion_preference'], 'Appearance defaults to standard motion');
 assertEqual('medium', $defaultAppearance['accent_bar_size'], 'Appearance defaults to a medium top accent bar');
 assertEqual('medium', $defaultAppearance['page_header_size'], 'Appearance defaults to medium page headers');
+assertEqual('#4f46e5', $defaultAppearance['brand_color'], 'Appearance exposes the default accent colour');
+assertEqual(true, count(Setting::colorPalettes()) >= 20, 'Appearance offers an expanded curated colour palette');
+assertEqual(true, isset(Setting::colorPalettes()['aurora'], Setting::colorPalettes()['graphite']), 'Appearance includes multitone and neutral palette choices');
+assertEqual(true, isset(Setting::fontOptions()['Atkinson Hyperlegible'], Setting::fontOptions()['Lexend'], Setting::fontOptions()['Space Grotesk'], Setting::fontOptions()['Lora']), 'Typography offers additional accessible, modern and editorial fonts');
 Setting::set('surface_style', 'paper');
 Setting::set('interface_density', 'compact');
 Setting::set('corner_style', 'balanced');
@@ -141,6 +145,9 @@ Setting::set('backdrop_strength', 'vivid');
 Setting::set('motion_preference', 'reduced');
 Setting::set('accent_bar_size', 'hairline');
 Setting::set('page_header_size', 'small');
+Setting::set('color_scheme', 'aurora');
+Setting::set('font_heading', 'Lexend');
+Setting::set('font_body', 'Atkinson Hyperlegible');
 $customAppearance = Setting::getBrand();
 assertEqual('paper', $customAppearance['surface_style'], 'Appearance returns the saved surface style');
 assertEqual('compact', $customAppearance['interface_density'], 'Appearance returns the saved density');
@@ -149,8 +156,15 @@ assertEqual('vivid', $customAppearance['backdrop_strength'], 'Appearance returns
 assertEqual('reduced', $customAppearance['motion_preference'], 'Appearance returns the saved motion preference');
 assertEqual('hairline', $customAppearance['accent_bar_size'], 'Appearance returns the saved hairline top accent bar size');
 assertEqual('small', $customAppearance['page_header_size'], 'Appearance returns the saved page header size');
+assertEqual('aurora', $customAppearance['color_scheme'], 'Appearance returns an expanded palette choice');
+assertEqual('#7c3aed', $customAppearance['brand_color'], 'Appearance resolves the selected palette primary colour');
+assertEqual('#0f766e', $customAppearance['brand_color_dark'], 'Appearance resolves the selected palette secondary colour');
+assertEqual('Lexend', $customAppearance['heading_font'], 'Appearance returns an expanded heading font choice');
+assertEqual('Atkinson Hyperlegible', $customAppearance['body_font'], 'Appearance returns an accessible body font choice');
 Setting::set('interface_density', 'unsupported');
 assertEqual('comfortable', Setting::getBrand()['interface_density'], 'Invalid appearance settings fall back safely');
+Setting::set('font_body', 'Untrusted Remote Font');
+assertEqual('', Setting::getBrand()['body_font'], 'Unknown font settings fall back without loading arbitrary resources');
 $db->exec('DELETE FROM settings');
 
 // Masked credit card numbers should have masking removed
@@ -1484,6 +1498,12 @@ foreach (['surface_style', 'interface_density', 'corner_style', 'backdrop_streng
 $menuScript = (string)file_get_contents(__DIR__ . '/../frontend/js/menu.js');
 assertEqual(true, strpos($menuScript, 'applyAppearancePreferences') !== false, 'Shared application shell applies appearance settings');
 assertEqual(true, strpos($menuScript, 'interface-preferences.css') !== false, 'Shared application shell loads appearance preference styles');
+assertEqual(true, strpos($menuScript, "setProperty('--site-brand'") !== false, 'Shared application shell propagates the selected palette through site variables');
+assertEqual(true, strpos($settingsMarkup, 'settings-palette-grid') !== false, 'Settings page presents colour choices as visible palette swatches');
+assertEqual(true, strpos($settingsMarkup, '<optgroup') !== false, 'Settings page groups the expanded font catalogue for easier selection');
+$fontScript = (string)file_get_contents(__DIR__ . '/../frontend/js/fonts.js');
+assertEqual(true, strpos($fontScript, "'Atkinson Hyperlegible': '400;700'") !== false, 'Font loading requests only supported Atkinson weights');
+assertEqual(false, strpos($settingsMarkup, 'fontChoices.forEach') !== false, 'Settings page no longer downloads every available web font');
 $preferenceStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/interface-preferences.css');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-bar-hairline') !== false, 'Appearance styles include the hairline top accent option');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-reveal') !== false, 'Primary top accents use the shared reveal animation');

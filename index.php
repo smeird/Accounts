@@ -9,7 +9,6 @@ require_once __DIR__ . '/php_backend/models/Setting.php';
 $db = Database::getConnection();
 $brand = Setting::getBrand();
 $siteName = $brand['site_name'];
-$scheme = $brand['color_scheme'];
 $headingFont = $brand['heading_font'];
 $bodyFont = $brand['body_font'];
 $tableFont = $brand['table_font'];
@@ -17,19 +16,7 @@ $chartFont = $brand['chart_font'];
 $accentWeight = $brand['accent_font_weight'];
 $error = '';
 
-$brandPalette = [
-    'indigo' => ['600' => '#4f46e5', '700' => '#4338ca'],
-    'blue' => ['600' => '#2563eb', '700' => '#1d4ed8'],
-    'green' => ['600' => '#059669', '700' => '#047857'],
-    'red' => ['600' => '#dc2626', '700' => '#b91c1c'],
-    'purple' => ['600' => '#9333ea', '700' => '#7e22ce'],
-    'teal' => ['600' => '#0d9488', '700' => '#0f766e'],
-    'orange' => ['600' => '#ea580c', '700' => '#c2410c'],
-    'sunset' => ['600' => '#f97316', '700' => '#ec4899'],
-    'ocean' => ['600' => '#0891b2', '700' => '#2563eb'],
-    'violet-rose' => ['600' => '#8b5cf6', '700' => '#e11d48']
-];
-$buttonColors = $brandPalette[$scheme] ?? $brandPalette['indigo'];
+$buttonColors = ['600' => $brand['brand_color'], '700' => $brand['brand_color_dark']];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_SESSION['pending_user_id'])) {
@@ -193,7 +180,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
-    <script src="frontend/js/fonts.js?v=20260811-font-weights"></script>
+    <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($headingFont) ?>,

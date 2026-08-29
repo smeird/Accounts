@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
-    <script src="frontend/js/fonts.js?v=20260811-font-weights"></script>
+    <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($brand['heading_font']) ?>,

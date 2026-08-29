@@ -55,40 +55,8 @@ $backdropStrength = $brand['backdrop_strength'];
 $motionPreference = $brand['motion_preference'];
 $accentBarSize = $brand['accent_bar_size'];
 $pageHeaderSize = $brand['page_header_size'];
-$fontOptions = ['' => 'Default',
-    'Arial' => 'Arial',
-    'Helvetica' => 'Helvetica',
-    'Times New Roman' => 'Times New Roman',
-    'Georgia' => 'Georgia',
-    'Courier New' => 'Courier New',
-    'JetBrains Mono' => 'JetBrains Mono',
-    'Fira Code' => 'Fira Code',
-    'Source Code Pro' => 'Source Code Pro',
-    'IBM Plex Mono' => 'IBM Plex Mono',
-    'Verdana' => 'Verdana',
-    'Trebuchet MS' => 'Trebuchet MS',
-    'Garamond' => 'Garamond',
-    'Roboto' => 'Roboto',
-    'Open Sans' => 'Open Sans',
-    'Lato' => 'Lato',
-    'Montserrat' => 'Montserrat',
-    'Poppins' => 'Poppins',
-    'Inter' => 'Inter',
-    'Comic Sans MS' => 'Comic Sans MS',
-    'Bangers' => 'Bangers',
-    'Caveat' => 'Caveat',
-    'Dancing Script' => 'Dancing Script',
-    'Fredoka' => 'Fredoka',
-    'Pacifico' => 'Pacifico',
-    'Playfair Display' => 'Playfair Display',
-    'Merriweather' => 'Merriweather',
-    'Oswald' => 'Oswald',
-    'Raleway' => 'Raleway',
-    'Nunito' => 'Nunito',
-    'Quicksand' => 'Quicksand',
-    'Fjalla One' => 'Fjalla One',
-    'Source Serif Pro' => 'Source Serif Pro',
-];
+$fontGroups = Setting::fontGroups();
+$fontOptions = Setting::fontOptions();
 $weightOptions = ['' => 'Default', '100' => 'Thin', '300' => 'Light', '700' => 'Bold'];
 $surfaceOptions = [
     'glass' => ['Glass', 'Layered, softly translucent cards'],
@@ -124,35 +92,7 @@ $pageHeaderSizeOptions = [
     'medium' => ['Medium', 'The balanced site default'],
     'large' => ['Large', 'A stronger, more prominent treatment'],
 ];
-$colorOptions = [
-    'indigo',
-    'blue',
-    'green',
-    'red',
-    'purple',
-    'teal',
-    'orange',
-    'sunset',
-    'ocean',
-    'violet-rose',
-];
-$colorMap = [
-    'indigo' => '#4f46e5',
-    'blue'   => '#2563eb',
-    'green'  => '#059669',
-    'red'    => '#dc2626',
-    'purple' => '#9333ea',
-    'teal'   => '#0d9488',
-    'orange' => '#ea580c',
-    'sunset' => '#f97316',
-    'ocean' => '#0891b2',
-    'violet-rose' => '#8b5cf6',
-];
-$colorLabels = [
-    'sunset' => 'Sunset (Orange → Pink)',
-    'ocean' => 'Ocean (Cyan → Blue)',
-    'violet-rose' => 'Violet Rose (Violet → Rose)',
-];
+$colorOptions = Setting::colorPalettes();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $openai = trim($_POST['openai_api_token'] ?? '');
@@ -177,6 +117,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $motionPreference = trim($_POST['motion_preference'] ?? $motionPreference);
     $accentBarSize = trim($_POST['accent_bar_size'] ?? $accentBarSize);
     $pageHeaderSize = trim($_POST['page_header_size'] ?? $pageHeaderSize);
+    $headingFont = array_key_exists($headingFont, $fontOptions) ? $headingFont : '';
+    $bodyFont = array_key_exists($bodyFont, $fontOptions) ? $bodyFont : '';
+    $tableFont = array_key_exists($tableFont, $fontOptions) ? $tableFont : '';
+    $chartFont = array_key_exists($chartFont, $fontOptions) ? $chartFont : '';
     if (!array_key_exists($accentWeight, $weightOptions)) {
         $accentWeight = '';
     }
@@ -215,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Setting::set('site_name', $siteName);
         Log::write('Updated site name');
     }
-    if ($newColorScheme !== '' && in_array($newColorScheme, $colorOptions, true)) {
+    if ($newColorScheme !== '' && array_key_exists($newColorScheme, $colorOptions)) {
         if ($newColorScheme !== $colorScheme) {
             Setting::set('color_scheme', $newColorScheme);
             Log::write('Updated color scheme');
@@ -247,7 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = 'Settings updated.';
 }
 
-$colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
+$selectedPalette = $colorOptions[$colorScheme] ?? $colorOptions['indigo'];
+$colorHex = $selectedPalette['primary'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -267,7 +212,7 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css">
     <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260825-ipad-safe-area">
-    <link rel="stylesheet" href="frontend/settings.css?v=20260829-customisation">
+    <link rel="stylesheet" href="frontend/settings.css?v=20260829-expanded-branding">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 </head>
 <body class="ops-body admin-refresh-page settings-page" data-api-base="php_backend/public">
@@ -291,7 +236,7 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
                         <div class="settings-appearance-layout">
                             <div class="settings-field-grid">
                                 <label class="settings-field settings-field--wide" for="site-name"><span>Site name</span><input id="site-name" type="text" name="site_name" value="<?= htmlspecialchars($siteName) ?>" data-help="Displayed name of the website"></label>
-                                <label class="settings-field" for="color-scheme"><span>Accent colour</span><select id="color-scheme" name="color_scheme" data-help="Primary colour used for actions, headings and highlights"><?php foreach ($colorOptions as $opt): ?><option value="<?= htmlspecialchars($opt) ?>" data-color="<?= htmlspecialchars($colorMap[$opt]) ?>" <?= $opt === $colorScheme ? 'selected' : '' ?>><?= htmlspecialchars($colorLabels[$opt] ?? ucfirst($opt)) ?></option><?php endforeach; ?></select></label>
+                                <fieldset class="settings-field settings-field--wide settings-field--palette"><legend>Accent palette</legend><div class="settings-palette-grid"><?php foreach ($colorOptions as $value => $palette): ?><label><input type="radio" name="color_scheme" value="<?= htmlspecialchars($value) ?>" data-color="<?= htmlspecialchars($palette['primary']) ?>" data-color-dark="<?= htmlspecialchars($palette['secondary']) ?>" <?= $value === $colorScheme ? 'checked' : '' ?> data-help="Primary colour used for actions, headings and highlights"><span style="--palette-primary:<?= htmlspecialchars($palette['primary'], ENT_QUOTES, 'UTF-8') ?>;--palette-secondary:<?= htmlspecialchars($palette['secondary'], ENT_QUOTES, 'UTF-8') ?>"><i aria-hidden="true"></i><b><?= htmlspecialchars($palette['label']) ?></b><small><?= htmlspecialchars($palette['description']) ?></small></span></label><?php endforeach; ?></div></fieldset>
                                 <fieldset class="settings-field settings-field--surface"><legend>Default surface</legend><div class="settings-choice-row"><?php foreach ($surfaceOptions as $value => $details): ?><label><input type="radio" name="surface_style" value="<?= htmlspecialchars($value) ?>" <?= $value === $surfaceStyle ? 'checked' : '' ?> data-help="Choose the default surface treatment; the sidebar switch can override this on one device"><span><strong><?= htmlspecialchars($details[0]) ?></strong><small><?= htmlspecialchars($details[1]) ?></small></span></label><?php endforeach; ?></div></fieldset>
                                 <label class="settings-field" for="interface-density"><span>Information density</span><select id="interface-density" name="interface_density" data-help="Adjust desktop spacing without shrinking mobile touch targets"><?php foreach ($densityOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $interfaceDensity ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
                                 <label class="settings-field" for="corner-style"><span>Corner shape</span><select id="corner-style" name="corner_style" data-help="Choose how rounded cards and major panels appear"><?php foreach ($cornerOptions as $value => $details): ?><option value="<?= htmlspecialchars($value) ?>" <?= $value === $cornerStyle ? 'selected' : '' ?>><?= htmlspecialchars($details[0]) ?> — <?= htmlspecialchars($details[1]) ?></option><?php endforeach; ?></select></label>
@@ -315,7 +260,7 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
                         <header class="settings-section__header"><span class="settings-section__icon settings-section__icon--violet"><i class="fas fa-font" aria-hidden="true"></i></span><div><span>Reading character</span><h2>Typography</h2><p>Give headings, everyday copy, tables and charts their own clear voice.</p></div></header>
                         <div class="settings-field-grid settings-field-grid--fonts">
                             <?php foreach ([['font_heading', 'Heading font', $headingFont, 'font-preview-heading', 'The shape of page titles and section headings.'], ['font_body', 'Body font', $bodyFont, 'font-preview-body', 'Everyday guidance and interface copy.'], ['font_table', 'Table font', $tableFont, 'font-preview-table', 'Dense financial evidence and amounts.'], ['font_chart', 'Chart font', $chartFont, 'font-preview-chart', 'Labels, legends and chart annotations.']] as $fontField): ?>
-                                <label class="settings-field" for="<?= htmlspecialchars($fontField[0]) ?>"><span><?= htmlspecialchars($fontField[1]) ?></span><select id="<?= htmlspecialchars($fontField[0]) ?>" name="<?= htmlspecialchars($fontField[0]) ?>" data-help="<?= htmlspecialchars($fontField[4]) ?>" data-preview-target="<?= htmlspecialchars($fontField[3]) ?>"><?php foreach ($fontOptions as $k => $v): ?><option value="<?= htmlspecialchars($k) ?>" <?= $k === $fontField[2] ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option><?php endforeach; ?></select><p id="<?= htmlspecialchars($fontField[3]) ?>" class="settings-font-preview"><?= htmlspecialchars($fontField[4]) ?> £1,234.56</p></label>
+                                <label class="settings-field" for="<?= htmlspecialchars($fontField[0]) ?>"><span><?= htmlspecialchars($fontField[1]) ?></span><select id="<?= htmlspecialchars($fontField[0]) ?>" name="<?= htmlspecialchars($fontField[0]) ?>" data-help="<?= htmlspecialchars($fontField[4]) ?>" data-preview-target="<?= htmlspecialchars($fontField[3]) ?>"><?php foreach ($fontGroups as $groupLabel => $groupOptions): ?><optgroup label="<?= htmlspecialchars($groupLabel) ?>"><?php foreach ($groupOptions as $k => $v): ?><option value="<?= htmlspecialchars($k) ?>" <?= $k === $fontField[2] ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select><p id="<?= htmlspecialchars($fontField[3]) ?>" class="settings-font-preview"><?= htmlspecialchars($fontField[4]) ?> £1,234.56</p></label>
                             <?php endforeach; ?>
                             <label class="settings-field settings-field--wide" for="accent-font-weight"><span>Accent font weight</span><select id="accent-font-weight" name="accent_font_weight" data-help="Weight for accent text such as search inputs and highlights" data-preview-target="font-preview-weight"><?php foreach ($weightOptions as $k => $v): ?><option value="<?= htmlspecialchars($k) ?>" <?= $k === $accentWeight ? 'selected' : '' ?>><?= htmlspecialchars($v) ?></option><?php endforeach; ?></select><p id="font-preview-weight" class="settings-font-preview">Search, filters and important highlights.</p></label>
                         </div>
@@ -353,7 +298,7 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
-    <script src="frontend/js/fonts.js?v=20260811-font-weights"></script>
+    <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($headingFont) ?>,
@@ -362,12 +307,6 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
         chart_font: <?= json_encode($chartFont) ?>,
         accent_font_weight: <?= json_encode($accentWeight) ?>
       });
-      const fontChoices = <?= json_encode(array_keys($fontOptions)) ?>;
-      fontChoices.forEach(f => { if (f) window.loadFont(f); });
-      document.querySelectorAll('select[name^="font_"] option').forEach(opt => {
-        if (opt.value) opt.style.fontFamily = opt.value;
-      });
-
       const updateFontPreview = (selectElement) => {
         if (!selectElement || !selectElement.dataset.previewTarget) {
             return;
@@ -376,6 +315,7 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
         if (!previewElement) {
             return;
         }
+        if (selectElement.value) window.loadFont(selectElement.value, true);
         previewElement.style.fontFamily = selectElement.value || '';
       };
 
@@ -401,7 +341,6 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
       const settingsForm = document.getElementById('settings-form');
       const appearancePreview = document.getElementById('appearance-preview');
       const previewCanvas = appearancePreview?.querySelector('.settings-preview__canvas');
-      const colorSelect = document.getElementById('color-scheme');
       const densitySelect = document.getElementById('interface-density');
       const cornerSelect = document.getElementById('corner-style');
       const backdropSelect = document.getElementById('backdrop-strength');
@@ -423,8 +362,11 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
         const backdrop = backdropSelect?.value || 'balanced';
         const accentBar = accentBarSelect?.value || 'medium';
         const pageHeader = pageHeaderSelect?.value || 'medium';
-        const accent = colorSelect?.selectedOptions[0]?.dataset.color || '#4f46e5';
+        const selectedPalette = document.querySelector('input[name="color_scheme"]:checked');
+        const accent = selectedPalette?.dataset.color || '#4f46e5';
+        const accentDark = selectedPalette?.dataset.colorDark || '#4338ca';
         const rgb = colorToRgb(accent);
+        const darkRgb = colorToRgb(accentDark);
         const alpha = backdrop === 'calm' ? .07 : (backdrop === 'vivid' ? .27 : .16);
         appearancePreview.classList.toggle('is-paper', surface === 'paper');
         appearancePreview.classList.toggle('is-compact', density === 'compact');
@@ -439,7 +381,8 @@ $colorHex = $colorMap[$colorScheme] ?? '#4f46e5';
         appearancePreview.classList.toggle('is-header-small', pageHeader === 'small');
         appearancePreview.classList.toggle('is-header-large', pageHeader === 'large');
         appearancePreview.style.setProperty('--site-brand', accent);
-        previewCanvas.style.background = `linear-gradient(145deg,rgba(${rgb},${alpha}),rgba(6,182,212,${alpha * .45}),rgba(255,255,255,.98) 76%)`;
+        appearancePreview.style.setProperty('--site-brand-secondary', accentDark);
+        previewCanvas.style.background = `linear-gradient(145deg,rgba(${rgb},${alpha}),rgba(${darkRgb},${alpha * .55}),rgba(255,255,255,.98) 76%)`;
         const previewTitle = appearancePreview.querySelector('.settings-preview__header strong');
         if (previewTitle) previewTitle.textContent = siteNameInput?.value.trim() || 'Financial overview';
       };
