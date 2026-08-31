@@ -89,6 +89,10 @@ class RecurringPatternDetector {
                 'average' => abs((float)$total / $occurrences),
                 'last_amount' => abs((float)$latest['amount']),
                 'last_date' => $latest['date']->format('Y-m-d'),
+                'latest_transaction_id' => (int)$latest['id'],
+                'transaction_ids' => array_values(array_filter(array_map(function ($entry) {
+                    return (int)$entry['id'];
+                }, $group['entries']))),
                 'confidence' => $cadence['confidence'],
             ];
         }

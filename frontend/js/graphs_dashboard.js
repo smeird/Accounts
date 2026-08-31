@@ -20,6 +20,7 @@
     const status = document.getElementById('graphs-status');
     const content = document.getElementById('graphs-content');
     let activeRequest = null;
+    let dataYear = new Date().getFullYear();
 
     function element(tag, className, text) {
         const node = document.createElement(tag);
@@ -146,9 +147,20 @@
                 element('p', 'graphs-metric-value', card.value),
                 element('p', 'graphs-metric-context', card.context)
             );
+            if(card.label!=='Current net position'){
+                const direction=card.label==='Income'?'income':card.label==='Spending'?'spending':'all';
+                const value=item.querySelector('.graphs-metric-value');TransactionDrilldown.linkify(value,TransactionDrilldown.financial({...TransactionDrilldown.yearRange(data.year),direction,label:`${card.label} · ${data.year}`}),card.value);
+            }
             target.appendChild(item);
         });
     }
+
+    function dimensionOptions(row,dimension,year,month){
+        const range=month?TransactionDrilldown.monthRange(year,month):TransactionDrilldown.yearRange(year);
+        const memberIds=row.is_other&&Array.isArray(row.member_ids)?row.member_ids.filter(Boolean):[];
+        return TransactionDrilldown.financial({...range,direction:'spending',dimension,dimension_id:row.id,dimension_ids:memberIds.length?memberIds:undefined,unclassified:!!row.unclassified||!!(row.is_other&&row.includes_unclassified&&!memberIds.length),include_unclassified:!!(row.is_other&&row.includes_unclassified&&memberIds.length),label:`${row.name} spending · ${month?range.start.slice(0,7):year}`});
+    }
+    function svgLink(href,child,label){const link=svgElement('a',{href,'aria-label':label,tabindex:0});child.classList.add('graphs-drilldown-shape');link.appendChild(child);return link;}
 
     function renderInsights(items) {
         const target = document.getElementById('graphs-insights');
@@ -256,7 +268,8 @@
                 class: 'graphs-spending-bar'
             });
             addSvgTitle(spendingRect, `${month.label} spending: ${formatCurrency(spending)}`);
-            svg.append(incomeRect, spendingRect);
+            const monthRange=TransactionDrilldown.monthRange(dataYear,month.month);
+            svg.append(svgLink(TransactionDrilldown.url(TransactionDrilldown.financial({...monthRange,direction:'income',label:`${month.label} income`})),incomeRect,`View ${month.label} income transactions`),svgLink(TransactionDrilldown.url(TransactionDrilldown.financial({...monthRange,direction:'spending',label:`${month.label} spending`})),spendingRect,`View ${month.label} spending transactions`));
             cashflowPoints.push([center, y(cashflow), month, cashflow]);
 
             const monthLabel = svgElement('text', {
@@ -276,7 +289,7 @@
         cashflowPoints.forEach(point => {
             const circle = svgElement('circle', { cx: point[0], cy: point[1], r: 4, class: 'graphs-cashflow-point' });
             addSvgTitle(circle, `${point[2].label} cash flow: ${formatCurrency(point[3])}`);
-            svg.appendChild(circle);
+            const range=TransactionDrilldown.monthRange(dataYear,point[2].month);svg.appendChild(svgLink(TransactionDrilldown.url(TransactionDrilldown.financial({...range,label:`${point[2].label} net cash flow`})),circle,`View ${point[2].label} cash-flow transactions`));
         });
         target.appendChild(svg);
     }
@@ -293,7 +306,7 @@
             const value = Number(options.value(row)) || 0;
             const item = element('div', 'graphs-bar-row');
             const labelText = options.label(row);
-            const label = element('span', 'graphs-bar-label', labelText);
+            const label = element(options.link?'a':'span', 'graphs-bar-label', labelText);if(options.link)label.href=options.link(row);
             label.title = labelText;
             item.appendChild(label);
             const track = element('div', 'graphs-diverging-track');
@@ -304,17 +317,18 @@
             fill.style.width = `${Math.max(1.5, Math.abs(value) / maximum * 100)}%`;
             (value < 0 ? negative : positive).appendChild(fill);
             track.append(negative, positive);
-            item.append(track, element('span', 'graphs-bar-value', formatCurrency(value)));
+            const valueNode=element(options.link?'a':'span', `graphs-bar-value${options.link?' transaction-drilldown-link':''}`, formatCurrency(value));if(options.link)valueNode.href=options.link(row);item.append(track,valueNode);
             target.appendChild(item);
         });
     }
 
-    function renderCashflow(months) {
+    function renderCashflow(months,year) {
         const active = months.filter(month => Number(month.income) || Number(month.spending));
         renderDivergingRows('cashflow-chart', active, {
             label: row => row.label,
             value: row => row.cashflow,
-            empty: 'No active months are available for cash-flow comparison.'
+            empty: 'No active months are available for cash-flow comparison.',
+            link:row=>TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.monthRange(year,row.month),label:`${row.label} net cash flow`}))
         });
     }
 
@@ -328,17 +342,13 @@
         const maximum = Math.max.apply(null, rows.map(row => Number(row.amount) || 0).concat([1]));
         rows.forEach(row => {
             const item = element('div', 'graphs-bar-row');
-            const label = element(row.is_other ? 'span' : 'a', 'graphs-bar-label', row.name);
-            if (!row.is_other) {
-                label.href = `search.html?value=${encodeURIComponent(row.name)}`;
-                label.title = `Find transactions matching ${row.name}`;
-            }
+            const label = element('a', 'graphs-bar-label', row.name);label.href=TransactionDrilldown.url(dimensionOptions(row,targetId==='category-chart'?'category':'tag',dataYear));label.title=`View transactions for ${row.name}`;
             const track = element('span', 'graphs-bar-track');
             const fill = element('span', 'graphs-bar-fill');
             fill.dataset.tone = tone;
             fill.style.width = `${Math.max(1.5, Number(row.amount) / maximum * 100)}%`;
             track.appendChild(fill);
-            const value = element('span', 'graphs-bar-value', `${formatCurrency(row.amount)} · ${percentage.format(row.share)}%`);
+            const value = element('a', 'graphs-bar-value transaction-drilldown-link', `${formatCurrency(row.amount)} · ${percentage.format(row.share)}%`);value.href=TransactionDrilldown.url(dimensionOptions(row,targetId==='category-chart'?'category':'tag',dataYear));
             item.append(label, track, value);
             target.appendChild(item);
         });
@@ -366,7 +376,7 @@
             const maximum = Math.max.apply(null, visibleMonths.map(month => Number(month.amount) || 0).concat([0]));
             visibleMonths.forEach(month => {
                 const amount = Number(month.amount) || 0;
-                const cell = element('span', `graphs-heatmap-cell${amount === 0 ? ' is-empty' : ''}`, amount ? formatCompactCurrency(amount) : '–');
+                const cell = element(amount?'a':'span', `graphs-heatmap-cell${amount === 0 ? ' is-empty' : ''}`, amount ? formatCompactCurrency(amount) : '–');if(amount)cell.href=TransactionDrilldown.url(dimensionOptions(category,'category',dataYear,month.month));
                 const intensity = maximum > 0 ? amount / maximum : 0;
                 cell.style.setProperty('--cell-alpha', (0.08 + intensity * 0.72).toFixed(2));
                 cell.title = `${category.name}, ${month.label}: ${formatCurrency(amount)}`;
@@ -394,12 +404,13 @@
         });
         const list = element('ul', 'graphs-composition-list');
         rows.forEach(row => {
-            const item = element('li', 'graphs-composition-item');
-            item.append(
+            const item = element('li', 'graphs-composition-item');const link=element('a','transaction-drilldown-link');link.href=TransactionDrilldown.url(dimensionOptions(row,'segment',dataYear));
+            link.append(
                 element('span', 'graphs-composition-dot'),
                 element('span', 'graphs-composition-name', row.name),
                 element('span', 'graphs-composition-value', `${percentage.format(row.share)}%`)
             );
+            item.appendChild(link);
             list.appendChild(item);
         });
         target.append(composition, list);
@@ -422,8 +433,7 @@
             return;
         }
         rows.forEach(row => {
-            const card = element(row.is_other ? 'div' : 'a', `graphs-tag${row.is_other ? ' is-summary' : ''}`);
-            if (!row.is_other) card.href = `search.html?value=${encodeURIComponent(row.name)}`;
+            const card = element('a', `graphs-tag${row.is_other ? ' is-summary' : ''}`);card.href=TransactionDrilldown.url(dimensionOptions(row,'tag',dataYear));
             card.appendChild(element('span', 'graphs-tag-name', row.name));
             const meta = element('span', 'graphs-tag-meta');
             meta.append(
@@ -436,12 +446,13 @@
     }
 
     function renderDashboard(data) {
+        dataYear=data.year;
         document.getElementById('graphs-scope').textContent = data.scope.label;
-        document.getElementById('graphs-scope-note').textContent = `${data.scope.note} ${data.scope.transaction_count.toLocaleString('en-GB')} included transaction${data.scope.transaction_count === 1 ? '' : 's'}.`;
+        const note=document.getElementById('graphs-scope-note');note.replaceChildren(document.createTextNode(data.scope.note+' '));const count=document.createElement('a');count.className='transaction-drilldown-link';count.href=TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.yearRange(data.year),label:`Included transactions · ${data.year}`}));count.textContent=`${data.scope.transaction_count.toLocaleString('en-GB')} included transaction${data.scope.transaction_count===1?'':'s'}`;note.append(count,document.createTextNode('.'));
         renderMetrics(data);
         renderInsights(data.insights);
         renderMovementChart(data.months || [], data.scope.latest_month);
-        renderCashflow(data.months || []);
+        renderCashflow(data.months || [],data.year);
         renderRankedBars('category-chart', data.categories || [], 'blue', 'No spending categories are available for this year.');
         renderHeatmap(data.categories || [], data.scope.latest_month);
         renderSegments(data.segments || []);

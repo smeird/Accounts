@@ -22,7 +22,9 @@
                 occurrences: Math.max(0, Math.round(finiteNumber(row.occurrences))),
                 average: Math.abs(finiteNumber(row.average)),
                 last_amount: Math.abs(finiteNumber(row.last_amount || row.average)),
-                total: Math.abs(finiteNumber(row.total))
+                total: Math.abs(finiteNumber(row.total)),
+                transaction_ids: Array.isArray(row.transaction_ids) ? row.transaction_ids.map(Number).filter(id => id > 0) : [],
+                latest_transaction_id: Math.max(0, Math.round(finiteNumber(row.latest_transaction_id)))
             })) : [],
             total: Math.abs(finiteNumber(value.total)),
             next_month: Math.abs(finiteNumber(value.next_month))
@@ -160,6 +162,10 @@
         setText('selected-outgoings', formatCurrency(summary.outgoings));
         setText('selected-income', formatCurrency(summary.income));
         setText('selected-net', formatCurrency(summary.net));
+        const selected=Array.from(selectedPatterns.values()),allIds=selected.map(item=>item.latest_transaction_id).filter(Boolean),outIds=selected.filter(item=>item.kind==='outgoings').map(item=>item.latest_transaction_id).filter(Boolean),inIds=selected.filter(item=>item.kind==='income').map(item=>item.latest_transaction_id).filter(Boolean);
+        if(outIds.length)TransactionDrilldown.linkify('selected-outgoings',{transaction_ids:outIds,transfer_scope:'exclude',ignored_scope:'exclude',label:'Selected recurring outgoing transactions'},formatCurrency(summary.outgoings));
+        if(inIds.length)TransactionDrilldown.linkify('selected-income',{transaction_ids:inIds,transfer_scope:'exclude',ignored_scope:'exclude',label:'Selected recurring income transactions'},formatCurrency(summary.income));
+        if(allIds.length)TransactionDrilldown.linkify('selected-net',{transaction_ids:allIds,transfer_scope:'exclude',ignored_scope:'exclude',label:'Selected recurring net contributors'},formatCurrency(summary.net));
         clearSelectionButton.disabled = summary.count === 0;
         selectionPanel.classList.toggle('has-selection', summary.count > 0);
         document.getElementById('selected-net-card').classList.toggle('is-negative', summary.net < 0);
@@ -186,7 +192,7 @@
     function updatePatternSelection(kind, row, checked, rowElement) {
         const key = row.selection_key || recurringPatternKey(kind, row);
         if (checked) {
-            selectedPatterns.set(key, { kind, amount: row.last_amount });
+            selectedPatterns.set(key, { kind, amount: row.last_amount, latest_transaction_id:row.latest_transaction_id });
         } else {
             selectedPatterns.delete(key);
         }
@@ -220,7 +226,7 @@
             icon.setAttribute('aria-hidden', 'true');
             icon.textContent = String(row.description || '?').trim().charAt(0).toUpperCase() || '?';
             title.textContent = row.description;
-            detail.textContent = `${row.occurrences} occurrence${row.occurrences === 1 ? '' : 's'} in the last year`;
+            const history=document.createElement('a');history.className='transaction-drilldown-link';history.href=TransactionDrilldown.url({transaction_ids:row.transaction_ids,direction:kind==='income'?'income':'spending',transfer_scope:'exclude',ignored_scope:'exclude',label:`${row.description} recurring history`});history.textContent=`${row.occurrences} occurrence${row.occurrences===1?'':'s'} in the last year`;history.setAttribute('aria-label',`View ${row.description} transaction history`);detail.appendChild(history);
             copy.append(title, detail);
             wrapper.append(selection, icon, copy);
             return wrapper;
@@ -238,7 +244,9 @@
     function moneyFormatter(cell) {
         const value = document.createElement('span');
         value.className = 'recurring-money';
-        value.textContent = formatCurrency(cell.getValue());
+        if(cell.getField()==='total'){
+            const row=cell.getRow().getData(),link=document.createElement('a');link.className='transaction-drilldown-link';link.href=TransactionDrilldown.url({transaction_ids:row.transaction_ids,transfer_scope:'exclude',ignored_scope:'exclude',label:`${row.description} 12-month total`});link.textContent=formatCurrency(cell.getValue());value.appendChild(link);
+        }else value.textContent = formatCurrency(cell.getValue());
         return value;
     }
 
@@ -247,7 +255,7 @@
         const link = document.createElement('a');
         const icon = document.createElement('i');
         link.className = 'recurring-history-link';
-        link.href = `search.html?value=${encodeURIComponent(row.search_term || row.description)}`;
+        link.href = TransactionDrilldown.url({transaction_ids:row.transaction_ids,transfer_scope:'exclude',ignored_scope:'exclude',label:`${row.description} recurring history`});
         link.setAttribute('aria-label', `View transaction history for ${row.description}`);
         link.append(document.createTextNode('History'));
         icon.className = 'fas fa-arrow-right';
@@ -321,6 +329,7 @@
         setText(`${prefix}-total`, formatCurrency(section.total));
         setText(`${prefix}-next`, formatCurrency(section.next_month));
         renderTable(kind, section.results);
+        const ids=section.results.flatMap(row=>row.transaction_ids||[]);if(ids.length&&ids.length<=250)TransactionDrilldown.linkify(`${prefix}-total`,{transaction_ids:ids,transfer_scope:'exclude',ignored_scope:'exclude',label:`Recurring ${kind} · trailing 12 months`},formatCurrency(section.total));
     }
 
     function renderAnalysis(data) {

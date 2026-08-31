@@ -61,13 +61,12 @@ class GraphsDashboard {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
-            'SELECT t.`date`, t.`amount`, '
+            'SELECT t.`date`, t.`amount`, c.`id` AS category_id, '
             . 'COALESCE(c.`name`, \'Uncategorised\') AS category, '
-            . 'COALESCE(ts.`name`, cs.`name`, \'Not segmented\') AS segment, '
-            . 'COALESCE(tg.`name`, \'Untagged\') AS tag '
+            . 'cs.`id` AS segment_id, COALESCE(cs.`name`, \'Not segmented\') AS segment, '
+            . 'tg.`id` AS tag_id, COALESCE(tg.`name`, \'Untagged\') AS tag '
             . 'FROM `transactions` t '
             . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `segments` ts ON ts.`id` = t.`segment_id` '
             . 'LEFT JOIN `segments` cs ON cs.`id` = c.`segment_id` '
             . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
             . 'WHERE t.`date` >= :start AND t.`date` < :end '
@@ -121,6 +120,9 @@ class GraphsDashboard {
         $categoryMonths = [];
         $segmentTotals = [];
         $tagTotals = [];
+        $categoryLabels = [];
+        $segmentLabels = [];
+        $tagLabels = [];
 
         foreach ($activity as $row) {
             $amount = (float)$row['amount'];
@@ -129,18 +131,21 @@ class GraphsDashboard {
             }
             $expense = -$amount;
             $month = (int)substr((string)$row['date'], 5, 2);
-            $category = (string)$row['category'];
-            $segment = (string)$row['segment'];
-            $tag = (string)$row['tag'];
-            $categoryTotals[$category] = ($categoryTotals[$category] ?? 0.0) + $expense;
-            if (!isset($categoryMonths[$category])) {
-                $categoryMonths[$category] = array_fill(1, 12, 0.0);
+            $categoryKey = $row['category_id'] === null ? 'unclassified' : 'id:' . (int)$row['category_id'];
+            $segmentKey = $row['segment_id'] === null ? 'unclassified' : 'id:' . (int)$row['segment_id'];
+            $tagKey = $row['tag_id'] === null ? 'unclassified' : 'id:' . (int)$row['tag_id'];
+            $categoryLabels[$categoryKey] = (string)$row['category'];
+            $segmentLabels[$segmentKey] = (string)$row['segment'];
+            $tagLabels[$tagKey] = (string)$row['tag'];
+            $categoryTotals[$categoryKey] = ($categoryTotals[$categoryKey] ?? 0.0) + $expense;
+            if (!isset($categoryMonths[$categoryKey])) {
+                $categoryMonths[$categoryKey] = array_fill(1, 12, 0.0);
             }
             if ($month >= 1 && $month <= 12) {
-                $categoryMonths[$category][$month] += $expense;
+                $categoryMonths[$categoryKey][$month] += $expense;
             }
-            $segmentTotals[$segment] = ($segmentTotals[$segment] ?? 0.0) + $expense;
-            $tagTotals[$tag] = ($tagTotals[$tag] ?? 0.0) + $expense;
+            $segmentTotals[$segmentKey] = ($segmentTotals[$segmentKey] ?? 0.0) + $expense;
+            $tagTotals[$tagKey] = ($tagTotals[$tagKey] ?? 0.0) + $expense;
         }
 
         arsort($categoryTotals);
@@ -151,28 +156,36 @@ class GraphsDashboard {
             'categories' => self::rankedWithMonths(
                 $categoryTotals,
                 $categoryMonths,
+                $categoryLabels,
                 self::CATEGORY_LIMIT,
                 $totalSpending,
                 'Other spending'
             ),
-            'segments' => self::ranked($segmentTotals, self::SEGMENT_LIMIT, $totalSpending, 'Other segments'),
-            'tags' => self::ranked($tagTotals, self::TAG_LIMIT, $totalSpending, 'Other tags'),
+            'segments' => self::ranked($segmentTotals, $segmentLabels, self::SEGMENT_LIMIT, $totalSpending, 'Other segments'),
+            'tags' => self::ranked($tagTotals, $tagLabels, self::TAG_LIMIT, $totalSpending, 'Other tags'),
         ];
     }
 
-    private static function ranked(array $totals, int $limit, float $grandTotal, string $otherLabel): array {
+    private static function ranked(array $totals, array $labels, int $limit, float $grandTotal, string $otherLabel): array {
         $head = array_slice($totals, 0, $limit, true);
         $tail = array_slice($totals, $limit, null, true);
         if (!empty($tail)) {
             $head[$otherLabel] = array_sum($tail);
         }
         $output = [];
-        foreach ($head as $name => $amount) {
+        foreach ($head as $key => $amount) {
+            $isOther = !empty($tail) && $key === $otherLabel;
             $output[] = [
-                'name' => (string)$name,
+                'id' => (!$isOther && strpos((string)$key, 'id:') === 0) ? (int)substr((string)$key, 3) : null,
+                'name' => $isOther ? $otherLabel : (string)($labels[$key] ?? $key),
                 'amount' => round((float)$amount, 2),
                 'share' => $grandTotal > 0 ? round(((float)$amount / $grandTotal) * 100, 1) : 0.0,
-                'is_other' => !empty($tail) && $name === $otherLabel,
+                'is_other' => $isOther,
+                'unclassified' => !$isOther && $key === 'unclassified',
+                'member_ids' => $isOther ? array_values(array_map(function ($memberKey) {
+                    return strpos((string)$memberKey, 'id:') === 0 ? (int)substr((string)$memberKey, 3) : null;
+                }, array_keys($tail))) : [],
+                'includes_unclassified' => $isOther && array_key_exists('unclassified', $tail),
             ];
         }
         return $output;
@@ -181,6 +194,7 @@ class GraphsDashboard {
     private static function rankedWithMonths(
         array $totals,
         array $monthsByName,
+        array $labels,
         int $limit,
         float $grandTotal,
         string $otherLabel
@@ -189,24 +203,24 @@ class GraphsDashboard {
         $topNames = array_slice($names, 0, $limit);
         $otherNames = array_slice($names, $limit);
         $rows = [];
-        foreach ($topNames as $name) {
-            $rows[] = self::categoryRow($name, $totals[$name], $monthsByName[$name], $grandTotal, false);
+        foreach ($topNames as $key) {
+            $rows[] = self::categoryRow($key, $labels[$key] ?? $key, $totals[$key], $monthsByName[$key], $grandTotal, false, []);
         }
         if (!empty($otherNames)) {
             $otherMonths = array_fill(1, 12, 0.0);
             $otherTotal = 0.0;
-            foreach ($otherNames as $name) {
-                $otherTotal += $totals[$name];
-                foreach ($monthsByName[$name] as $month => $amount) {
+            foreach ($otherNames as $key) {
+                $otherTotal += $totals[$key];
+                foreach ($monthsByName[$key] as $month => $amount) {
                     $otherMonths[$month] += $amount;
                 }
             }
-            $rows[] = self::categoryRow($otherLabel, $otherTotal, $otherMonths, $grandTotal, true);
+            $rows[] = self::categoryRow($otherLabel, $otherLabel, $otherTotal, $otherMonths, $grandTotal, true, $otherNames);
         }
         return $rows;
     }
 
-    private static function categoryRow(string $name, float $total, array $months, float $grandTotal, bool $isOther): array {
+    private static function categoryRow(string $key, string $name, float $total, array $months, float $grandTotal, bool $isOther, array $memberKeys): array {
         $monthRows = [];
         for ($month = 1; $month <= 12; $month++) {
             $monthRows[] = [
@@ -216,11 +230,17 @@ class GraphsDashboard {
             ];
         }
         return [
+            'id' => (!$isOther && strpos($key, 'id:') === 0) ? (int)substr($key, 3) : null,
             'name' => $name,
             'amount' => round($total, 2),
             'share' => $grandTotal > 0 ? round(($total / $grandTotal) * 100, 1) : 0.0,
             'months' => $monthRows,
             'is_other' => $isOther,
+            'unclassified' => !$isOther && $key === 'unclassified',
+            'member_ids' => $isOther ? array_values(array_filter(array_map(function ($memberKey) {
+                return strpos((string)$memberKey, 'id:') === 0 ? (int)substr((string)$memberKey, 3) : null;
+            }, $memberKeys))) : [],
+            'includes_unclassified' => $isOther && in_array('unclassified', $memberKeys, true),
         ];
     }
 }

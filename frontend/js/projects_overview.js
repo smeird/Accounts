@@ -26,6 +26,7 @@
     }
     function actions(project) { const wrap=document.createElement('div'); wrap.className='project-actions'; wrap.append(editButton(project),archiveButton(project),deleteButton(project)); return wrap; }
     function priorityFormatter(cell) { const tier=UI.priorityTier(cell.getRow().getData()); const badge=document.createElement('span'); badge.className=`project-priority-badge project-priority-badge--${tier.key}`; badge.textContent=tier.label; return badge; }
+    function spentFormatter(cell){const project=cell.getRow().getData();if(!project.group_id)return UI.preciseMoney(project.spent);const link=document.createElement('a');link.className='transaction-drilldown-link';link.href=TransactionDrilldown.url({direction:'spending',transfer_scope:'exclude',ignored_scope:'include',dimension:'group',dimension_id:project.group_id,label:`${project.name} spending`});link.textContent=UI.preciseMoney(project.spent);link.addEventListener('click',event=>event.stopPropagation());return link;}
 
     function drawChart() {
         const xKey=document.getElementById('x-axis').value; const yKey=document.getElementById('y-axis').value; const xOpt=axisOptions[xKey]; const yOpt=axisOptions[yKey];
@@ -43,7 +44,7 @@
     function renderTable() {
         if (table) { table.setData(visibleProjects); return; }
         table=tailwindTabulator('#projects-table',{data:visibleProjects,layout:'fitDataStretch',placeholder:'No active projects match this shortlist.',rowClick:(event,row)=>{window.location.href=`project_add.html?id=${encodeURIComponent(row.getData().id)}`;},columns:[
-            {title:'Project',field:'name',minWidth:170},{title:'Priority',field:'priority_label',formatter:priorityFormatter,minWidth:155},{title:'Score',field:'score',hozAlign:'right'},{title:'Consequence',field:'benefit_risk',hozAlign:'right'},{title:'Urgency',field:'weight_risk',hozAlign:'right'},{title:'Preservation',field:'benefit_sustainability',hozAlign:'right'},{title:'Mid cost',field:'cost_medium',formatter:'money',formatterParams:{symbol:'£',precision:0},hozAlign:'right'},{title:'Spent',field:'spent',formatter:'money',formatterParams:{symbol:'£',precision:0},hozAlign:'right'},{title:'Actions',formatter:cell=>actions(cell.getRow().getData()),width:125,hozAlign:'center',headerSort:false}
+            {title:'Project',field:'name',minWidth:170},{title:'Priority',field:'priority_label',formatter:priorityFormatter,minWidth:155},{title:'Score',field:'score',hozAlign:'right'},{title:'Consequence',field:'benefit_risk',hozAlign:'right'},{title:'Urgency',field:'weight_risk',hozAlign:'right'},{title:'Preservation',field:'benefit_sustainability',hozAlign:'right'},{title:'Mid cost',field:'cost_medium',formatter:'money',formatterParams:{symbol:'£',precision:0},hozAlign:'right'},{title:'Spent',field:'spent',formatter:spentFormatter,hozAlign:'right'},{title:'Actions',formatter:cell=>actions(cell.getRow().getData()),width:125,hozAlign:'center',headerSort:false}
         ]});
     }
 

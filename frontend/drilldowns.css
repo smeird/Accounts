@@ -1,0 +1,7 @@
+.transaction-drilldown-link{display:inline-flex;align-items:center;gap:.32rem;color:inherit;text-decoration-line:underline;text-decoration-color:rgba(79,70,229,.35);text-decoration-thickness:.08em;text-underline-offset:.16em;cursor:pointer;border-radius:.28rem;transition:color 150ms ease,background-color 150ms ease,text-decoration-color 150ms ease}
+.transaction-drilldown-link::after{font-family:"Font Awesome 6 Free";font-size:.42em;font-weight:900;content:"\f35d";opacity:.58}
+.transaction-drilldown-link:hover{color:var(--brand-color-700,#4338ca);text-decoration-color:currentColor}
+.transaction-drilldown-link:focus-visible{outline:3px solid rgba(79,70,229,.22);outline-offset:3px;background:rgba(238,242,255,.72)}
+.has-transaction-drilldown{position:relative}
+.highcharts-point.transaction-drilldown-point,.graphs-drilldown-shape{cursor:pointer}
+@media(prefers-reduced-motion:reduce){.transaction-drilldown-link{transition:none}}

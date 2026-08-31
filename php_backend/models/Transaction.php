@@ -373,11 +373,11 @@ class Transaction {
         $start = sprintf('%04d-%02d-01', $year, $month);
         $end = (new DateTimeImmutable($start))->modify('+1 month')->format('Y-m-d');
         $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, '
-             . 't.`category_id`, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
+             . 't.`category_id`, s.`id` AS segment_id, t.`tag_id`, t.`group_id`, t.`transfer_id`, '
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
-             . 'LEFT JOIN `segments` s ON t.`segment_id` = s.`id` '
+             . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
              . 'LEFT JOIN `transaction_groups` g ON t.`group_id` = g.`id` '
              . 'WHERE t.`date` >= :start AND t.`date` < :end '
@@ -923,13 +923,57 @@ class Transaction {
         ?string $dimension = null,
         ?int $dimensionId = null,
         bool $unclassified = false,
-        bool $spendingOnly = false
+        bool $spendingOnly = false,
+        ?string $direction = null,
+        string $transferScope = 'include',
+        string $ignoredScope = 'exclude',
+        ?int $accountId = null,
+        array $dimensionIds = [],
+        array $transactionIds = [],
+        ?string $exactDescription = null,
+        ?string $exactMemo = null,
+        bool $includeUnclassified = false
     ): array {
         $db = Database::getConnection();
 
-        $sql = 'SELECT t.`id`, t.`account_id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
+        foreach (['start' => $start, 'end' => $end] as $label => $date) {
+            if ($date === null || $date === '') continue;
+            $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+            if (!$parsed || $parsed->format('Y-m-d') !== $date) {
+                throw new InvalidArgumentException('Invalid transaction search ' . $label . ' date');
+            }
+        }
+        if ($start !== null && $end !== null && $start > $end) {
+            throw new InvalidArgumentException('Transaction search start date must not follow its end date');
+        }
+        if ($direction !== null && !in_array($direction, ['income', 'spending', 'all'], true)) {
+            throw new InvalidArgumentException('Unsupported transaction direction');
+        }
+        if (!in_array($transferScope, ['include', 'exclude', 'only'], true)
+            || !in_array($ignoredScope, ['include', 'exclude', 'only'], true)) {
+            throw new InvalidArgumentException('Unsupported transaction inclusion scope');
+        }
+        if ($accountId !== null && $accountId <= 0) {
+            throw new InvalidArgumentException('A valid account ID is required');
+        }
+        $validateIds = static function (array $ids, int $limit, string $label) {
+            if (count(array_unique($ids, SORT_REGULAR)) > $limit) {
+                throw new InvalidArgumentException('Too many ' . $label . ' IDs');
+            }
+            foreach ($ids as $id) {
+                if (!is_int($id) && !ctype_digit((string)$id)) {
+                    throw new InvalidArgumentException('Invalid ' . $label . ' ID');
+                }
+                if ((int)$id <= 0) throw new InvalidArgumentException('Invalid ' . $label . ' ID');
+            }
+        };
+        $validateIds($dimensionIds, 100, 'dimension');
+        $validateIds($transactionIds, 250, 'transaction');
+
+        $sql = 'SELECT t.`id`, t.`account_id`, a.`name` AS account_name, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
              . 'c.`name` AS category_name, s.`name` AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
              . 'FROM `transactions` t '
+             . 'LEFT JOIN `accounts` a ON t.`account_id` = a.`id` '
              . 'LEFT JOIN `categories` c ON t.`category_id` = c.`id` '
              . 'LEFT JOIN `segments` s ON c.`segment_id` = s.`id` '
              . 'LEFT JOIN `tags` tg ON t.`tag_id` = tg.`id` '
@@ -994,19 +1038,70 @@ class Transaction {
             }
             if ($unclassified) {
                 $conditions[] = $dimensionColumns[$dimension] . ' IS NULL';
+            } elseif ($dimensionIds) {
+                $placeholders = [];
+                foreach (array_values(array_unique(array_map('intval', $dimensionIds))) as $index => $id) {
+                    if ($id <= 0) continue;
+                    $key = 'dimension_id_' . $index;
+                    $placeholders[] = ':' . $key;
+                    $params[$key] = $id;
+                }
+                if ($placeholders) {
+                    $dimensionCondition = $dimensionColumns[$dimension] . ' IN (' . implode(', ', $placeholders) . ')';
+                    $conditions[] = $includeUnclassified ? '(' . $dimensionCondition . ' OR ' . $dimensionColumns[$dimension] . ' IS NULL)' : $dimensionCondition;
+                }
             } elseif ($dimensionId !== null) {
                 $conditions[] = $dimensionColumns[$dimension] . ' = :dimension_id';
                 $params['dimension_id'] = $dimensionId;
             }
         }
         if ($spendingOnly) {
+            $direction = 'spending';
+            $transferScope = 'exclude';
+        }
+        if ($direction === 'income') {
+            $conditions[] = 't.`amount` > 0';
+        } elseif ($direction === 'spending') {
             $conditions[] = 't.`amount` < 0';
+        }
+        if ($transferScope === 'exclude') {
             $conditions[] = 't.`transfer_id` IS NULL';
+        } elseif ($transferScope === 'only') {
+            $conditions[] = 't.`transfer_id` IS NOT NULL';
+        }
+        if ($accountId !== null) {
+            $conditions[] = 't.`account_id` = :account_id';
+            $params['account_id'] = $accountId;
+        }
+        if ($transactionIds) {
+            $placeholders = [];
+            foreach (array_values(array_unique(array_map('intval', $transactionIds))) as $index => $id) {
+                if ($id <= 0) continue;
+                $key = 'transaction_id_' . $index;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $id;
+            }
+            if ($placeholders) {
+                $conditions[] = 't.`id` IN (' . implode(', ', $placeholders) . ')';
+            }
+        }
+        if ($exactDescription !== null) {
+            $conditions[] = 't.`description` = :exact_description';
+            $params['exact_description'] = $exactDescription;
+        }
+        if ($exactMemo !== null) {
+            $conditions[] = 'COALESCE(t.`memo`, \'\') = :exact_memo';
+            $params['exact_memo'] = $exactMemo;
         }
 
         $ignore = Tag::getIgnoreId();
-        $conditions[] = '(t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
-        $params['ignore'] = $ignore;
+        if ($ignoredScope === 'exclude') {
+            $conditions[] = '(t.`tag_id` IS NULL OR t.`tag_id` != :ignore)';
+            $params['ignore'] = $ignore;
+        } elseif ($ignoredScope === 'only') {
+            $conditions[] = 't.`tag_id` = :ignore';
+            $params['ignore'] = $ignore;
+        }
         if ($conditions) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }

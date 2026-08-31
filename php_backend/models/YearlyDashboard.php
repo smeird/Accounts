@@ -29,7 +29,7 @@ class YearlyDashboard {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
-            'SELECT t.`date`, t.`amount`, COALESCE(c.`name`, \'Uncategorised\') AS category '
+            'SELECT t.`date`, t.`amount`, c.`id` AS category_id, COALESCE(c.`name`, \'Uncategorised\') AS category '
             . 'FROM `transactions` t '
             . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
             . 'WHERE t.`date` >= :start AND t.`date` < :end '
@@ -61,8 +61,11 @@ class YearlyDashboard {
                 $expense = abs($amount);
                 $spending += $expense;
                 $months[$month]['spending'] += $expense;
+                $categoryId = $row['category_id'] !== null ? (int)$row['category_id'] : null;
                 $category = (string)$row['category'];
-                $categories[$category] = ($categories[$category] ?? 0.0) + $expense;
+                $categoryKey = $categoryId === null ? 'unclassified' : 'id:' . $categoryId;
+                if (!isset($categories[$categoryKey])) $categories[$categoryKey] = ['id' => $categoryId, 'name' => $category, 'amount' => 0.0];
+                $categories[$categoryKey]['amount'] += $expense;
             }
         }
 
@@ -73,7 +76,7 @@ class YearlyDashboard {
         }
         unset($month);
 
-        arsort($categories);
+        uasort($categories, function ($left, $right) { return $right['amount'] <=> $left['amount']; });
         return [
             'income' => round($income, 2),
             'spending' => round($spending, 2),
@@ -115,10 +118,12 @@ class YearlyDashboard {
         }
 
         $topCategories = [];
-        $categoryMax = !empty($current['categories']) ? max($current['categories']) : 0;
-        foreach (array_slice($current['categories'], 0, 7, true) as $name => $amount) {
+        $categoryMax = !empty($current['categories']) ? max(array_column($current['categories'], 'amount')) : 0;
+        foreach (array_slice($current['categories'], 0, 7, true) as $category) {
+            $amount = $category['amount'];
             $topCategories[] = [
-                'name' => $name,
+                'id' => $category['id'],
+                'name' => $category['name'],
                 'amount' => round($amount, 2),
                 'share' => $current['spending'] > 0 ? round(($amount / $current['spending']) * 100, 1) : 0,
                 'relative' => $categoryMax > 0 ? round(($amount / $categoryMax) * 100, 1) : 0

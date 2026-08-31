@@ -91,7 +91,7 @@
             plotOptions: {
                 series: { animation: false, marker: { enabled: false }, lineWidth: 2.5, connectNulls: false }
             },
-            accessibility: { enabled: false }
+            accessibility: { enabled: true }
         };
     }
 
@@ -116,9 +116,9 @@
             },
             tooltip: { shared: true },
             series: [
-                { name: 'Observed income', color: '#0f766e', data: history.map(month => month.income).concat(Array(forecast.length).fill(null)) },
+                { name: 'Observed income', color: '#0f766e', cursor:'pointer',point:{events:{click:function(){if(this.options.drilldown)window.location.href=this.options.drilldown;}}}, data: history.map(month => ({y:month.income,drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.monthRange(...month.key.split('-').map(Number)),direction:'income',label:`${month.label} observed income`}))})).concat(Array(forecast.length).fill(null)) },
                 { name: 'Forecast income', color: '#14b8a6', dashStyle: 'ShortDash', data: padding.concat([bridgeIncome]).concat(forecast.map(month => month.income)) },
-                { name: 'Observed spending', color: '#6d28d9', data: history.map(month => month.spending).concat(Array(forecast.length).fill(null)) },
+                { name: 'Observed spending', color: '#6d28d9', cursor:'pointer',point:{events:{click:function(){if(this.options.drilldown)window.location.href=this.options.drilldown;}}}, data: history.map(month => ({y:month.spending,drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.monthRange(...month.key.split('-').map(Number)),direction:'spending',label:`${month.label} observed spending`}))})).concat(Array(forecast.length).fill(null)) },
                 { name: 'Forecast spending', color: '#8b5cf6', dashStyle: 'ShortDash', data: padding.concat([bridgeSpending]).concat(forecast.map(month => month.spending)) }
             ]
         }));
@@ -146,9 +146,8 @@
             return;
         }
         categories.forEach((category, index) => {
-            const item = document.createElement('a');
+            const item = document.createElement('div');
             item.className = 'forecast-category';
-            item.href = `search.html?value=${encodeURIComponent(category.name)}`;
             const rank = document.createElement('span');
             rank.className = 'forecast-category__rank';
             rank.textContent = String(index + 1).padStart(2, '0');
@@ -195,11 +194,11 @@
         });
     }
 
-    function appendDefinition(host, termText, definitionText) {
+    function appendDefinition(host, termText, definitionText, href) {
         const term = document.createElement('dt');
         term.textContent = termText;
         const definition = document.createElement('dd');
-        definition.textContent = definitionText;
+        if(href){const link=document.createElement('a');link.className='transaction-drilldown-link';link.href=href;link.textContent=definitionText;definition.appendChild(link);}else definition.textContent = definitionText;
         host.append(term, definition);
     }
 
@@ -217,7 +216,7 @@
         const coverage = document.getElementById('forecast-coverage');
         clear(coverage);
         appendDefinition(coverage, 'History', data.coverage.history_start ? `${formatDate(data.coverage.history_start)} to ${formatDate(data.coverage.history_end)}` : 'No complete history');
-        appendDefinition(coverage, 'Included activity', `${data.coverage.transaction_count} transactions across ${data.coverage.active_months} active months`);
+        appendDefinition(coverage, 'Included activity', `${data.coverage.transaction_count} transactions across ${data.coverage.active_months} active months`,data.coverage.transaction_count?TransactionDrilldown.url(TransactionDrilldown.financial({start:data.coverage.history_start,end:data.coverage.latest_transaction_date||data.coverage.history_end,label:'Forecast model input transactions'})):null);
         appendDefinition(coverage, 'Recent baseline', `${data.coverage.modelled_months} complete active months`);
         appendDefinition(coverage, 'Position date', formatDate(data.coverage.balance_as_of || data.period.anchor_date));
     }

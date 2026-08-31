@@ -17,6 +17,7 @@
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main transaction-main flex-1 min-w-0 overflow-x-hidden">
         <div id="search-error" class="transaction-error" role="alert" hidden></div>
+        <div id="search-filter-context" class="transaction-filter-context" aria-label="Active transaction evidence filters" hidden></div>
 
         <section class="transaction-hero" data-no-card="true" aria-labelledby="search-hero-value">
             <div class="transaction-hero__glow" aria-hidden="true"></div>
@@ -40,6 +41,15 @@
                 <article><span class="transaction-summary-icon transaction-summary-icon--spend"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i></span><div><p>Money out</p><strong id="search-spending">£—</strong><small>Matched spending</small></div></article>
                 <article><span class="transaction-summary-icon transaction-summary-icon--period"><i class="fas fa-calendar-days" aria-hidden="true"></i></span><div><p>Date span</p><strong id="search-period">—</strong><small id="search-period-note">Across all dates</small></div></article>
                 <article><span class="transaction-summary-icon"><i class="fas fa-right-left" aria-hidden="true"></i></span><div><p>Transfers</p><strong id="search-transfers">—</strong><small>Excluded from net</small></div></article>
+            </div>
+        </section>
+
+        <section id="search-comparison" class="transaction-card transaction-comparison" data-no-card="true" hidden>
+            <div class="transaction-card__header"><div><p class="transaction-section-label">Comparison evidence</p><h2>Both sides of the change</h2><p id="search-comparison-copy" class="transaction-card__copy"></p></div></div>
+            <div class="transaction-hero__metrics">
+                <article><div><p>Selected period</p><strong id="search-current-net">£—</strong><small id="search-current-count">— transactions</small></div></article>
+                <article><div><p>Comparison period</p><strong id="search-comparison-net">£—</strong><small id="search-comparison-count">— transactions</small></div></article>
+                <article><div><p>Difference</p><strong id="search-comparison-change">£—</strong><small>Selected less comparison</small></div></article>
             </div>
         </section>
 
@@ -83,6 +93,7 @@
 <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
 <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="js/color_map.js?v=20260814-lazy-charts"></script>
 <script src="js/search_transactions.js"></script>
 <script src="js/overlay.js"></script>

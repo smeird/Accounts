@@ -65,6 +65,7 @@ class InstantDashboard {
             'period' => [
                 'label' => $monthStart->format('F Y'),
                 'start' => $monthStart->format('Y-m-d'),
+                'end' => $nextMonthStart->modify('-1 day')->format('Y-m-d'),
                 'is_current_month' => $isCurrentMonth,
                 'progress' => round($periodProgress * 100, 1),
                 'latest_transaction_date' => $latestDate ? $latestDate->format('Y-m-d') : null,
@@ -282,6 +283,7 @@ class InstantDashboard {
             'count' => count($items),
             'over_count' => $overCount,
             'watch_count' => $watchCount,
+            'category_ids' => array_values(array_map(function ($item) { return (int)$item['category_id']; }, $items)),
             'items' => array_slice($items, 0, 4),
         ];
     }
@@ -303,18 +305,22 @@ class InstantDashboard {
             if ($amount >= 0) {
                 continue;
             }
+            $id = isset($row['category_id']) ? (int)$row['category_id'] : 0;
             $name = trim((string)($row['category_name'] ?? '')) ?: 'Uncategorised';
-            $totals[$name] = ($totals[$name] ?? 0) + (-$amount);
+            $key = $id > 0 ? 'id:' . $id : 'unclassified';
+            if (!isset($totals[$key])) $totals[$key] = ['id' => $id > 0 ? $id : null, 'name' => $name, 'amount' => 0.0];
+            $totals[$key]['amount'] += -$amount;
         }
 
-        arsort($totals);
-        $grandTotal = array_sum($totals);
+        uasort($totals, function ($left, $right) { return $right['amount'] <=> $left['amount']; });
+        $grandTotal = array_sum(array_column($totals, 'amount'));
         $output = [];
-        foreach (array_slice($totals, 0, 5, true) as $name => $amount) {
+        foreach (array_slice($totals, 0, 5, true) as $item) {
             $output[] = [
-                'name' => $name,
-                'amount' => round($amount, 2),
-                'share' => $grandTotal > 0 ? round(($amount / $grandTotal) * 100, 1) : 0,
+                'id' => $item['id'],
+                'name' => $item['name'],
+                'amount' => round($item['amount'], 2),
+                'share' => $grandTotal > 0 ? round(($item['amount'] / $grandTotal) * 100, 1) : 0,
             ];
         }
         return $output;

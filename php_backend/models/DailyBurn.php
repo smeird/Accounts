@@ -20,11 +20,10 @@ class DailyBurn {
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
             'SELECT t.`id`, t.`date`, ABS(t.`amount`) AS expense, '
-            . 'COALESCE(ts.`id`, cs.`id`) AS segment_id, '
-            . 'COALESCE(ts.`name`, cs.`name`, \'Unsegmented\') AS segment_name '
+            . 'cs.`id` AS segment_id, '
+            . 'COALESCE(cs.`name`, \'Unsegmented\') AS segment_name '
             . 'FROM `transactions` t '
             . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `segments` ts ON ts.`id` = t.`segment_id` '
             . 'LEFT JOIN `segments` cs ON cs.`id` = c.`segment_id` '
             . 'WHERE t.`date` >= :start AND t.`date` <= :end '
             . 'AND t.`amount` < 0 '

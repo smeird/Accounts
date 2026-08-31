@@ -126,7 +126,7 @@
     function renderMetrics(metrics) {
         document.getElementById('tagging-coverage').textContent = `${Number(metrics.coverage || 0).toFixed(1)}%`;
         document.getElementById('tagging-coverage-bar').style.width = `${Math.min(100, Number(metrics.coverage || 0))}%`;
-        document.getElementById('metric-untagged').textContent = number(metrics.untagged);
+        TransactionDrilldown.linkify('metric-untagged',{dimension:'tag',unclassified:true,direction:'all',transfer_scope:'exclude',ignored_scope:'exclude',label:'Untagged transactions'},number(metrics.untagged),'View untagged transactions');
         document.getElementById('metric-tags').textContent = number(metrics.active_tags);
         document.getElementById('metric-tags-detail').textContent = `${number(metrics.unused_tags)} unused · ${number(metrics.active_tags)} active`;
         document.getElementById('metric-rules').textContent = number(metrics.active_rules);
@@ -158,7 +158,9 @@
             const scope = element('div');
             scope.append(element('span', 'tagging-direction', row.direction === 'outgoing' ? 'Money leaving' : row.direction === 'incoming' ? 'Money arriving' : 'Either direction'), element('small', '', `Latest ${row.latest_date || '—'}`));
             const totals = element('div');
-            totals.append(element('strong', '', number(row.transaction_count)), element('small', '', money(row.total_amount)));
+            const evidence={description_exact:row.description,memo_exact:row.memo||'',direction:row.direction==='incoming'?'income':'spending',transfer_scope:'exclude',ignored_scope:'exclude',label:`Unmatched ${row.description}`};
+            const count=element('strong');const countLink=element('a','transaction-drilldown-link',number(row.transaction_count));countLink.href=TransactionDrilldown.url(evidence);countLink.setAttribute('aria-label',`View ${row.transaction_count} unmatched transactions`);count.appendChild(countLink);
+            const total=element('small');const totalLink=element('a','transaction-drilldown-link',money(row.total_amount));totalLink.href=TransactionDrilldown.url(evidence);total.appendChild(totalLink);totals.append(count,total);
             const button = element('button', 'tagging-primary', 'Resolve');
             button.type = 'button';
             button.addEventListener('click', () => openInbox(row));
@@ -222,7 +224,7 @@
             identity.append(element('span', 'tagging-tag-name', tag.name), element('span', 'tagging-meta', tag.description || 'No description'));
             const home = document.createElement('td');
             home.append(element('span', '', tag.category_name || 'Unassigned'), element('span', 'tagging-meta', tag.segment_name || 'No segment'));
-            const transactions = element('td', '', number(tag.transaction_count));
+            const transactions = element('td');const transactionLink=element('a','transaction-drilldown-link',number(tag.transaction_count));transactionLink.href=TransactionDrilldown.url({dimension:'tag',dimension_id:tag.id,direction:'all',transfer_scope:'include',ignored_scope:'include',label:`Transactions tagged ${tag.name}`});transactionLink.setAttribute('aria-label',`View transactions tagged ${tag.name}`);transactions.appendChild(transactionLink);
             const rules = document.createElement('td');
             rules.append(element('span', '', number(tag.rule_count)), element('span', 'tagging-meta', tag.last_rule_match ? `Last used ${String(tag.last_rule_match).slice(0, 10)}` : 'No recorded use yet'));
             const actions = document.createElement('td');

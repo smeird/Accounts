@@ -6,6 +6,8 @@
     const compactMoney = new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP', maximumFractionDigits:0 });
     const shortDate = new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'short', year:'numeric' });
     let resultTable = null;
+    let resultTableHasComparison = false;
+    const structuredKeys=['start','end','direction','transfer_scope','ignored_scope','dimension','dimension_id','dimension_ids','unclassified','include_unclassified','account_id','transaction_ids','description_exact','memo_exact','compare_start','compare_end','all','label'];
 
     function byId(id) { return document.getElementById(id); }
     function setText(id, value) { const element = byId(id); if (element) element.textContent = value; }
@@ -60,13 +62,18 @@
     }
     function renderTable(rows) {
         const grid = byId('results-grid');
-        if (!rows.length) { if (resultTable) { resultTable.destroy(); resultTable = null; } grid.replaceChildren(emptyState('No matching transactions', 'Try another term or widen the amount range.', 'fa-magnifying-glass')); return; }
-        if (resultTable) { resultTable.setData(rows); return; }
+        const hasComparison = rows.some(row=>row._evidence_period);
+        if (!rows.length) { if (resultTable) { resultTable.destroy(); resultTable = null; } resultTableHasComparison=false; grid.replaceChildren(emptyState('No matching transactions', 'Try another term or widen the amount range.', 'fa-magnifying-glass')); return; }
+        if (resultTable && resultTableHasComparison === hasComparison) { resultTable.setData(rows); return; }
+        if (resultTable) resultTable.destroy();
         grid.replaceChildren();
+        resultTableHasComparison=hasComparison;
         resultTable = tailwindTabulator(grid, {
             data:rows, layout:'fitDataStretch', responsiveLayout:'collapse', placeholder:'No matching transactions',
             columns:[
+                { title:'Period', field:'_evidence_period', width:105, visible:hasComparison, responsive:1 },
                 { title:'Date', field:'date', width:112, sorter:'date' },
+                { title:'Account', field:'account_name', minWidth:130, responsive:3 },
                 { title:'Description', field:'description', minWidth:190, formatter:function(cell){ const row=cell.getRow().getData(); const link=document.createElement('a'); link.href='transaction.html?id='+encodeURIComponent(row.id); link.textContent=cell.getValue() || 'Untitled'; return link; } },
                 { title:'Memo', field:'memo', minWidth:150, responsive:2 },
                 { title:'Category', field:'category_name', formatter:badgeFormatter('bg-green-200 text-green-800'), responsive:1 },
@@ -76,6 +83,33 @@
                 { title:'Amount', field:'amount', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right', sorter:'number', width:120 }
             ]
         });
+    }
+    function netFor(rows){return rows.reduce((sum,row)=>(row.transfer_id===null||typeof row.transfer_id==='undefined')?sum+amount(row.amount):sum,0);}
+    function renderComparison(current,comparison,params){
+        const panel=byId('search-comparison');
+        if(!comparison){panel.hidden=true;return current;}
+        const currentNet=netFor(current),comparisonNet=netFor(comparison);
+        panel.hidden=false;
+        setText('search-current-net',money.format(currentNet));setText('search-current-count',`${current.length} transaction${current.length===1?'':'s'}`);
+        setText('search-comparison-net',money.format(comparisonNet));setText('search-comparison-count',`${comparison.length} transaction${comparison.length===1?'':'s'}`);
+        setText('search-comparison-change',money.format(currentNet-comparisonNet));
+        setText('search-comparison-copy',`${params.get('start')||'Selected start'} to ${params.get('end')||'selected end'} compared with ${params.get('compare_start')} to ${params.get('compare_end')}.`);
+        return current.map(row=>Object.assign({_evidence_period:'Selected'},row)).concat(comparison.map(row=>Object.assign({_evidence_period:'Comparison'},row)));
+    }
+    function renderFilterContext(params){
+        const host=byId('search-filter-context');host.replaceChildren();
+        const labels=[];
+        if(params.get('label'))labels.push(params.get('label'));
+        if(params.get('start')||params.get('end'))labels.push(`${params.get('start')||'First record'} → ${params.get('end')||'Latest record'}`);
+        if(params.get('direction'))labels.push(params.get('direction')==='all'?'Income and spending':params.get('direction'));
+        if(params.get('dimension'))labels.push(`${params.get('dimension')}${params.get('unclassified')==='1'?' · unclassified':''}`);
+        if(params.get('dimension_id'))labels.push(`Exact classification #${params.get('dimension_id')}`);
+        if(params.get('dimension_ids'))labels.push(`${params.get('dimension_ids').split(',').filter(Boolean).length} classifications`);
+        if(params.get('transaction_ids'))labels.push(`${params.get('transaction_ids').split(',').filter(Boolean).length} exact transactions`);
+        if(params.get('account_id'))labels.push(`Account #${params.get('account_id')}`);
+        if(params.get('transfer_scope'))labels.push(`Transfers ${params.get('transfer_scope')}`);
+        if(params.get('ignored_scope'))labels.push(`Excluded items ${params.get('ignored_scope')}`);
+        labels.forEach(label=>{const chip=document.createElement('span');chip.textContent=label;host.appendChild(chip);});host.hidden=!labels.length;
     }
     function groupSpending(rows) {
         const spending = rows.filter(row => (row.transfer_id === null || typeof row.transfer_id === 'undefined') && amount(row.amount) < 0);
@@ -93,7 +127,7 @@
         const grouped=groupSpending(rows); setText('search-bucket-label', grouped.label);
         if (!grouped.values.length) { const chart=Highcharts.charts.find(item=>item&&item.renderTo.id==='results-chart'); if(chart) chart.destroy(); byId('results-chart').replaceChildren(emptyState('No spending to plot', 'The matched transactions contain no non-transfer outgoings.', 'fa-chart-column')); return; }
         Highcharts.chart('results-chart', {
-            chart:{type:'areaspline',backgroundColor:'transparent',spacing:[10,4,2,0],animation:false}, title:{text:null}, credits:{enabled:false}, accessibility:{enabled:false},
+            chart:{type:'areaspline',backgroundColor:'transparent',spacing:[10,4,2,0],animation:false}, title:{text:null}, credits:{enabled:false}, accessibility:{enabled:true,description:'Spending pattern across the matching transaction evidence.'},
             xAxis:{categories:grouped.categories,lineColor:'rgba(148,163,184,.24)',tickLength:0,labels:{style:{color:'#64748b',fontSize:'10px'}}},
             yAxis:{min:0,title:{text:null},gridLineColor:'rgba(148,163,184,.16)',labels:{style:{color:'#64748b',fontSize:'10px'},formatter:function(){return '£'+Highcharts.numberFormat(this.value,0);}}},
             legend:{enabled:false}, tooltip:{valuePrefix:'£',valueDecimals:2,borderRadius:10},
@@ -108,24 +142,28 @@
         const term=byId('term').value.trim(), min=byId('min-amount').value, max=byId('max-amount').value;
         const activeParams=new URLSearchParams(location.search), start=activeParams.get('start')||'', end=activeParams.get('end')||'', dimension=activeParams.get('dimension')||'', dimensionId=activeParams.get('dimension_id')||'', unclassified=activeParams.get('unclassified')==='1', spendingOnly=activeParams.get('spending_only')==='1', linkLabel=activeParams.get('label')||'';
         const error=byId('search-error'); error.hidden=true;
-        if (!term && !min && !max && !dimension) { error.textContent='Enter a search term or at least one amount limit.'; error.hidden=false; byId('term').focus(); return; }
+        const hasStructured=structuredKeys.some(key=>activeParams.has(key));
+        if (!term && !min && !max && !dimension && !hasStructured) { error.textContent='Enter a search term or at least one amount limit.'; error.hidden=false; byId('term').focus(); return; }
         if (min && max && Number(min)>Number(max)) { error.textContent='The minimum amount cannot be greater than the maximum amount.'; error.hidden=false; byId('min-amount').focus(); return; }
-        const params=new URLSearchParams(); if(term)params.set('value',term); if(min)params.set('min_amount',min); if(max)params.set('max_amount',max); if(start)params.set('start',start); if(end)params.set('end',end); if(dimension)params.set('dimension',dimension); if(dimensionId)params.set('dimension_id',dimensionId); if(unclassified)params.set('unclassified','1'); if(spendingOnly)params.set('spending_only','1'); if(linkLabel)params.set('label',linkLabel);
+        const params=new URLSearchParams(); structuredKeys.forEach(key=>{if(activeParams.has(key))params.set(key,activeParams.get(key));}); if(term)params.set('value',term); if(min)params.set('min_amount',min); if(max)params.set('max_amount',max); if(start)params.set('start',start); if(end)params.set('end',end); if(dimension)params.set('dimension',dimension); if(dimensionId)params.set('dimension_id',dimensionId); if(unclassified)params.set('unclassified','1'); if(spendingOnly)params.set('spending_only','1'); if(linkLabel)params.set('label',linkLabel);
         history.replaceState(null,'',location.pathname+'?'+params.toString());
+        renderFilterContext(params);
         const submit=byId('search-submit'); submit.disabled=true; submit.querySelector('span').textContent='Searching…'; setText('search-status','Looking across every transaction field…');
         byId('results-grid').className='transaction-table transaction-loading';
         try {
             const response=await fetch('../php_backend/public/search_transactions.php?'+params.toString());
             const payload=await response.json().catch(()=>({})); if(!response.ok) throw new Error(payload.error||'Search could not be completed.');
             const rows=Array.isArray(payload.results)?payload.results:[];
-            byId('results-grid').className='transaction-table'; renderSummary(rows,linkLabel||queryLabel(term,min,max)); renderTable(rows); renderChart(rows); setText('search-status',rows.length+' result'+(rows.length===1?'':'s')+' found');
+            const comparison=Array.isArray(payload.comparison_results)?payload.comparison_results:null;
+            const tableRows=renderComparison(rows,comparison,params);
+            byId('results-grid').className='transaction-table'; renderSummary(rows,linkLabel||queryLabel(term,min,max)); renderTable(tableRows); renderChart(rows); setText('search-status',tableRows.length+' result'+(tableRows.length===1?'':'s')+' found');
         } catch (failure) {
             byId('results-grid').className='transaction-table'; error.textContent=failure.message||'Search could not be completed.'; error.hidden=false; setText('search-status','Search failed');
             byId('results-grid').replaceChildren(emptyState('Search unavailable', 'Please try again in a moment.', 'fa-triangle-exclamation'));
         } finally { submit.disabled=false; submit.querySelector('span').textContent='Search transactions'; }
     }
     byId('search-form').addEventListener('submit', function(event){event.preventDefault();runSearch();});
-    byId('search-clear').addEventListener('click', function(){ byId('search-form').reset(); history.replaceState(null,'',location.pathname); resetSummary(); setText('search-status',''); setText('search-results-copy','Your result set will appear here, ready to sort and inspect.'); if(resultTable){resultTable.destroy();resultTable=null;} byId('results-grid').replaceChildren(emptyState('Start with a search', 'Use a name, note, category, tag or amount range to investigate activity.', 'fa-magnifying-glass')); const chart=Highcharts.charts.find(item=>item&&item.renderTo.id==='results-chart'); if(chart)chart.destroy(); byId('results-chart').replaceChildren(emptyState('Waiting for a result set', 'Matched outgoings will form a time-based spending pattern here.', 'fa-chart-line')); byId('term').focus(); });
+    byId('search-clear').addEventListener('click', function(){ byId('search-form').reset(); history.replaceState(null,'',location.pathname); resetSummary(); byId('search-filter-context').hidden=true; byId('search-comparison').hidden=true; setText('search-status',''); setText('search-results-copy','Your result set will appear here, ready to sort and inspect.'); if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false; byId('results-grid').replaceChildren(emptyState('Start with a search', 'Use a name, note, category, tag or amount range to investigate activity.', 'fa-magnifying-glass')); const chart=Highcharts.charts.find(item=>item&&item.renderTo.id==='results-chart'); if(chart)chart.destroy(); byId('results-chart').replaceChildren(emptyState('Waiting for a result set', 'Matched outgoings will form a time-based spending pattern here.', 'fa-chart-line')); byId('term').focus(); });
 
     window.updatePageHeader(transactionSearchMain,{actions:headerActions()});
     resetSummary();

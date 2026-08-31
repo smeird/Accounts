@@ -64,19 +64,22 @@
     }
 
     function loadHighcharts() {
-        if (window.Highcharts) return Promise.resolve(window.Highcharts);
+        if (window.Highcharts && window.Highcharts.AccessibilityComponent) return Promise.resolve(window.Highcharts);
         if (highchartsPromise) return highchartsPromise;
-        highchartsPromise = new Promise((resolve, reject) => {
+        const loadScript = source => new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'https://code.highcharts.com/highcharts.js';
+            script.src = source;
             script.async = true;
-            script.onload = () => {
-                if (window.applyChartTheme) window.applyChartTheme();
-                resolve(window.Highcharts);
-            };
+            script.onload = resolve;
             script.onerror = () => reject(new Error('The spending chart library could not be loaded.'));
             document.head.appendChild(script);
         });
+        highchartsPromise = (window.Highcharts ? Promise.resolve() : loadScript('https://code.highcharts.com/highcharts.js'))
+            .then(() => loadScript('https://code.highcharts.com/modules/accessibility.js'))
+            .then(() => {
+                if (window.applyChartTheme) window.applyChartTheme();
+                return window.Highcharts;
+            });
         return highchartsPromise;
     }
 
@@ -192,6 +195,24 @@
         const daysInMonth = new Date(year, month, 0).getDate();
         const burnRate = (outgoings - income) / daysInMonth;
         document.getElementById('days-negative').textContent = burnRate > 0 && totalBalance > 0 ? integer.format(Math.floor(totalBalance / burnRate)) : 'N/A';
+        const range=TransactionDrilldown.monthRange(year,month);
+        const base=TransactionDrilldown.financial({...range,label:`${longMonth.format(new Date(year,month-1,1))} ${year}`});
+        TransactionDrilldown.linkify('income-total',{...base,direction:'income',label:`Monthly income · ${longMonth.format(new Date(year,month-1,1))} ${year}`},currency.format(income));
+        TransactionDrilldown.linkify('outgoings-total',{...base,direction:'spending',label:`Monthly outgoings · ${longMonth.format(new Date(year,month-1,1))} ${year}`},currency.format(outgoings));
+        TransactionDrilldown.linkify('delta-total',{...base,label:`Monthly net movement · ${longMonth.format(new Date(year,month-1,1))} ${year}`},currency.format(delta));
+        TransactionDrilldown.linkify('savings-rate',{...base,label:`Savings-rate contributors · ${longMonth.format(new Date(year,month-1,1))} ${year}`},`${(income>0?delta/income*100:0).toFixed(1)}%`);
+        if(categories.length){const largest=categories[0][0],sample=data.find(row=>(row.category_name||'Uncategorised')===largest);TransactionDrilldown.linkify('largest-category',{...base,direction:'spending',dimension:'category',dimension_id:sample&&sample.category_id,unclassified:!sample||!sample.category_id,label:`${largest} spending · ${longMonth.format(new Date(year,month-1,1))} ${year}`},largest);}
+        const recurringIds=data.filter(row=>!isTransfer(row)&&row.amount<0&&recurringSet.has(row.description.toLowerCase())).map(row=>row.id);
+        const oneOffIds=data.filter(row=>!isTransfer(row)&&row.amount<0&&!recurringSet.has(row.description.toLowerCase())).map(row=>row.id);
+        const ratio=document.getElementById('recurring-ratio');ratio.replaceChildren();
+        const evidenceLine=(label,value,percent,ids)=>{const link=document.createElement('a');link.className='transaction-drilldown-link';link.href=TransactionDrilldown.url({transaction_ids:ids,transfer_scope:'exclude',ignored_scope:'exclude',label:`${label} spending · ${longMonth.format(new Date(year,month-1,1))} ${year}`});link.textContent=`${label}: ${currency.format(value)} (${percent.toFixed(1)}%)`;link.setAttribute('aria-label',`View ${label.toLowerCase()} transactions`);return link;};
+        if(recurringIds.length&&recurringIds.length<=250)ratio.appendChild(evidenceLine('Recurring',recurringTotal,recurringPercent,recurringIds));else ratio.append(document.createTextNode(`Recurring: ${currency.format(recurringTotal)} (${recurringPercent.toFixed(1)}%)`));
+        ratio.appendChild(document.createElement('br'));
+        if(oneOffIds.length&&oneOffIds.length<=250)ratio.appendChild(evidenceLine('One-off',oneOffTotal,oneOffPercent,oneOffIds));else ratio.append(document.createTextNode(`One-off: ${currency.format(oneOffTotal)} (${oneOffPercent.toFixed(1)}%)`));
+        const average=document.getElementById('avg-transaction');average.replaceChildren();
+        const incomeAverage=document.createElement('a');incomeAverage.className='transaction-drilldown-link';incomeAverage.href=TransactionDrilldown.url({...base,direction:'income',label:'Transactions behind average income size'});incomeAverage.textContent=`Income: ${currency.format(incomeCount?income/incomeCount:0)}`;
+        const expenseAverage=document.createElement('a');expenseAverage.className='transaction-drilldown-link';expenseAverage.href=TransactionDrilldown.url({...base,direction:'spending',label:'Transactions behind average expense size'});expenseAverage.textContent=`Expenses: ${currency.format(expenseCount?outgoings/expenseCount:0)}`;
+        average.append(incomeAverage,document.createElement('br'),expenseAverage);
         if (window.Highcharts) renderChart(spending, previousSpending);
         return { spending, previousSpending };
     }
@@ -201,10 +222,14 @@
         return cell;
     }
 
-    function classificationPill(kind, value, missingLabel, iconName) {
+    function classificationPill(kind, value, missingLabel, iconName, dimensionId) {
         const present = Boolean(value);
-        const pill = element(present ? 'a' : 'span', `statement-pill statement-pill--${kind}${present ? '' : ' is-missing'}`);
-        if (present) pill.href = `search.html?value=${encodeURIComponent(value)}`;
+        const drillable = present && kind !== 'transfer' && Number(dimensionId) > 0;
+        const pill = element(drillable ? 'a' : 'span', `statement-pill statement-pill--${kind}${present ? '' : ' is-missing'}`);
+        if (drillable) {
+            const range=TransactionDrilldown.monthRange(Number(yearSelect.value),Number(monthSelect.value));
+            pill.href=TransactionDrilldown.url(TransactionDrilldown.financial({...range,dimension:kind,dimension_id:dimensionId,ignored_scope:value==='IGNORE'?'only':'exclude',label:`${value} ${kind} transactions`}));
+        }
         pill.setAttribute('aria-label', `${kind}: ${present ? value : missingLabel}`);
         const icon = element('i', `fas ${iconName}`);
         icon.setAttribute('aria-hidden', 'true');
@@ -263,9 +288,9 @@
         const pills = element('div', 'statement-pills');
         if (isTransfer(transaction)) pills.appendChild(classificationPill('transfer', 'Transfer', 'Transfer', 'fa-right-left'));
         pills.append(
-            classificationPill('segment', transaction.segment_name, 'Unsegmented', 'fa-chart-pie'),
-            classificationPill('category', transaction.category_name, 'Uncategorised', 'fa-folder'),
-            classificationPill('tag', transaction.tag_name, 'Untagged', 'fa-tag'),
+            classificationPill('segment', transaction.segment_name, 'Unsegmented', 'fa-chart-pie', transaction.segment_id),
+            classificationPill('category', transaction.category_name, 'Uncategorised', 'fa-folder', transaction.category_id),
+            classificationPill('tag', transaction.tag_name, 'Untagged', 'fa-tag', transaction.tag_id),
             groupEditor(transaction)
         );
         cell.appendChild(pills);
@@ -462,8 +487,9 @@
             chart:{ type:'pie', height:420, backgroundColor:'transparent' },
             title:{ text:null },
             credits:{ enabled:false },
+            accessibility:{ enabled:true, description:'Monthly spending by category. Select a slice to view its contributing transactions.' },
             legend:{ enabled:true, align:'right', verticalAlign:'middle', layout:'vertical', itemMarginBottom:6, itemStyle:{ color:'#475569', fontSize:'10px', fontWeight:'700' } },
-            plotOptions:{ pie:{ innerSize:'64%', borderWidth:3, borderColor:'rgba(255,255,255,.9)', cursor:'pointer', dataLabels:{ enabled:false }, showInLegend:true, point:{ events:{ click:function () { setFilter('category', this.name, true); } } } } },
+            plotOptions:{ pie:{ innerSize:'64%', borderWidth:3, borderColor:'rgba(255,255,255,.9)', cursor:'pointer', dataLabels:{ enabled:false }, showInLegend:true, point:{ events:{ click:function () { const sample=state.transactions.find(row=>(row.category_name||'Uncategorised')===this.name);const range=TransactionDrilldown.monthRange(Number(yearSelect.value),Number(monthSelect.value));window.location.href=TransactionDrilldown.url(TransactionDrilldown.financial({...range,direction:'spending',dimension:'category',dimension_id:sample&&sample.category_id,unclassified:!sample||!sample.category_id,label:`${this.name} spending`})); } } } } },
             tooltip:{ formatter:function () {
                 const sign = this.point.change >= 0 ? '+' : '−';
                 return `<b>${escapeMarkup(this.point.name)}</b><br>Spend: ${currency.format(this.y)}<br>Month change: ${sign}${currency.format(Math.abs(this.point.change))}<br>Share: ${Highcharts.numberFormat(this.percentage, 1)}%`;

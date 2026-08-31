@@ -36,7 +36,7 @@
         yearSelect.value = years.includes(requested) ? String(requested) : String(years[0]);
     }
 
-    function renderChart(months) {
+    function renderChart(months, year) {
         Highcharts.chart('yearly-trend-chart', {
             chart: { type: 'areaspline', backgroundColor: 'transparent', spacing: [8, 4, 4, 4] },
             title: { text: null }, credits: { enabled: false },
@@ -44,47 +44,49 @@
             yAxis: { title: { text: null }, gridLineColor: 'rgba(148,163,184,.16)', labels: { formatter: function () { return '£' + Highcharts.numberFormat(this.value / 1000, 0) + 'k'; }, style: { color: '#64748b', fontSize: '10px' } } },
             legend: { align: 'right', verticalAlign: 'top', symbolRadius: 6, itemStyle: { color: '#475569', fontSize: '10px', fontWeight: '700' } },
             tooltip: { shared: true, valuePrefix: '£', valueDecimals: 0 },
-            plotOptions: { series: { marker: { enabled: false }, lineWidth: 2.5 }, areaspline: { fillOpacity: .09 } },
+            plotOptions: { series: { cursor:'pointer',marker: { enabled: false }, lineWidth: 2.5,point:{events:{click:function(){window.location.href=this.options.drilldown;}}} }, areaspline: { fillOpacity: .09 } },
             colors: ['#14b8a6', '#8b5cf6'],
-            series: [{ name: 'Income', data: months.map(month => month.income) }, { name: 'Spending', data: months.map(month => month.spending) }],
-            accessibility: { enabled: false }
+            series: [{ name: 'Income', data: months.map(month => ({y:month.income,drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.monthRange(year,month.month),direction:'income',label:`${month.label} ${year} income`}))})) }, { name: 'Spending', data: months.map(month => ({y:month.spending,drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.monthRange(year,month.month),direction:'spending',label:`${month.label} ${year} spending`}))})) }],
+            accessibility: { enabled: true, description: 'Monthly income, spending and net cash-flow chart. Select a point to view its contributing transactions.' }
         });
     }
 
-    function renderMonths(months) {
+    function renderMonths(months, year) {
         const host = document.getElementById('yearly-month-strip'); clear(host);
         months.forEach(month => {
-            const item = document.createElement('div');
+            const item = document.createElement(month.income || month.spending ? 'a' : 'div');
             item.className = 'yearly-month' + (month.cashflow < 0 ? ' is-negative' : '') + (!month.income && !month.spending ? ' is-empty' : '');
+            if(item.tagName==='A'){item.href=TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.monthRange(year,month.month),label:`${month.label} ${year} net movement`}));item.setAttribute('aria-label',`View transactions for ${month.label} ${year}`);}
             const label = document.createElement('span'); label.textContent = month.label;
             const value = document.createElement('strong'); value.textContent = money(month.cashflow);
             item.append(label, value); host.appendChild(item);
         });
     }
 
-    function renderQuarters(quarters) {
+    function renderQuarters(quarters, year) {
         const host = document.getElementById('yearly-quarters'); clear(host);
         const maxActivity = Math.max(...quarters.map(q => Math.max(q.income, q.spending)), 1);
         quarters.forEach(quarter => {
+            const startMonth=(quarter.quarter-1)*3+1,start=TransactionDrilldown.monthRange(year,startMonth).start,end=TransactionDrilldown.monthRange(year,startMonth+2).end;
             const item = document.createElement('article'); item.className = 'yearly-quarter';
             const top = document.createElement('div'); top.className = 'yearly-quarter__top';
             const label = document.createElement('span'); label.textContent = quarter.label;
-            const net = document.createElement('strong'); net.textContent = money(quarter.cashflow); if (quarter.cashflow < 0) net.className = 'is-negative';
+            const net = document.createElement('strong');const netLink=document.createElement('a');netLink.className='transaction-drilldown-link';netLink.href=TransactionDrilldown.url(TransactionDrilldown.financial({start,end,label:`${quarter.label} ${year} net movement`}));netLink.textContent=money(quarter.cashflow);net.appendChild(netLink); if (quarter.cashflow < 0) net.className = 'is-negative';
             top.append(label, net);
             const bar = document.createElement('div'); bar.className = 'yearly-quarter__bar';
             const fill = document.createElement('span'); fill.style.width = `${Math.max(4, Math.max(quarter.income, quarter.spending) / maxActivity * 100)}%`; bar.appendChild(fill);
             const details = document.createElement('div'); details.className = 'yearly-quarter__details';
-            const income = document.createElement('span'); income.textContent = `${money(quarter.income)} in`;
-            const spending = document.createElement('span'); spending.textContent = `${money(quarter.spending)} out`;
+            const income = document.createElement('a');income.className='transaction-drilldown-link';income.href=TransactionDrilldown.url(TransactionDrilldown.financial({start,end,direction:'income',label:`${quarter.label} ${year} income`})); income.textContent = `${money(quarter.income)} in`;
+            const spending = document.createElement('a');spending.className='transaction-drilldown-link';spending.href=TransactionDrilldown.url(TransactionDrilldown.financial({start,end,direction:'spending',label:`${quarter.label} ${year} spending`})); spending.textContent = `${money(quarter.spending)} out`;
             details.append(income, spending); item.append(top, bar, details); host.appendChild(item);
         });
     }
 
-    function renderCategories(categories) {
+    function renderCategories(categories, year) {
         const host = document.getElementById('yearly-categories'); clear(host);
         if (!categories.length) { const empty = document.createElement('div'); empty.className = 'yearly-empty'; empty.textContent = 'No spending categories recorded for this year.'; host.appendChild(empty); return; }
         categories.forEach((category, index) => {
-            const item = document.createElement('a'); item.className = 'yearly-category'; item.href = `search.html?value=${encodeURIComponent(category.name)}`;
+            const item = document.createElement('a'); item.className = 'yearly-category'; item.href = TransactionDrilldown.url(TransactionDrilldown.financial({...TransactionDrilldown.yearRange(year),direction:'spending',dimension:'category',dimension_id:category.id,unclassified:category.id===null,label:`${category.name} spending · ${year}`}));
             const rank = document.createElement('span'); rank.className = 'yearly-category__rank'; rank.textContent = String(index + 1).padStart(2, '0');
             const body = document.createElement('div'); body.className = 'yearly-category__body';
             const line = document.createElement('div'); line.className = 'yearly-category__line';
@@ -119,7 +121,15 @@
         text('yearly-income', money(metrics.income)); text('yearly-spending', money(metrics.spending)); text('yearly-positive-months', String(positiveMonths)); text('yearly-months-note', `of ${metrics.active_months || 12} active months`);
         document.getElementById('yearly-trends-link').href = `financial_trends.html?period=year&year=${encodeURIComponent(data.year)}&dimension=category&compare=previous_year`;
         setChange('yearly-income-change', data.comparison.income, true); setChange('yearly-spending-change', data.comparison.spending, false);
-        renderChart(data.months); renderMonths(data.months); renderQuarters(data.quarters); renderCategories(data.top_categories); renderInsights(data.insights);
+        const range=TransactionDrilldown.yearRange(data.year),base=TransactionDrilldown.financial(range);
+        TransactionDrilldown.linkify('yearly-hero-title',{...base,label:`Net cash flow · ${data.year}`},money(metrics.cashflow));
+        TransactionDrilldown.linkify('yearly-rate',{...base,label:`Savings-rate contributors · ${data.year}`},`${metrics.savings_rate.toFixed(1)}%`);
+        TransactionDrilldown.linkify('yearly-income',{...base,direction:'income',label:`Income · ${data.year}`},money(metrics.income));
+        TransactionDrilldown.linkify('yearly-spending',{...base,direction:'spending',label:`Spending · ${data.year}`},money(metrics.spending));
+        const compareEnd=TransactionDrilldown.monthRange(data.year-1,data.comparison.through_month).end;
+        TransactionDrilldown.linkify('yearly-income-change',{...base,direction:'income',compare_start:`${data.year-1}-01-01`,compare_end:compareEnd,label:'Income change versus prior year'},document.getElementById('yearly-income-change').textContent);
+        TransactionDrilldown.linkify('yearly-spending-change',{...base,direction:'spending',compare_start:`${data.year-1}-01-01`,compare_end:compareEnd,label:'Spending change versus prior year'},document.getElementById('yearly-spending-change').textContent);
+        renderChart(data.months,data.year); renderMonths(data.months,data.year); renderQuarters(data.quarters,data.year); renderCategories(data.top_categories,data.year); renderInsights(data.insights);
     }
 
     async function load() {

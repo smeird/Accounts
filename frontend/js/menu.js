@@ -66,6 +66,14 @@ const attachSidebarSearchHandler = (root = document) => {
     document.head.appendChild(heroDensityLink);
   }
 
+  if (!document.getElementById('transaction-drilldowns-css')) {
+    const drilldownLink = document.createElement('link');
+    drilldownLink.id = 'transaction-drilldowns-css';
+    drilldownLink.rel = 'stylesheet';
+    drilldownLink.href = resolveFrontendAsset('drilldowns.css?v=20260831');
+    document.head.appendChild(drilldownLink);
+  }
+
   const hasSpecialistPageDesign = document.body.matches([
     '.landing-page',
     '.instant-page',

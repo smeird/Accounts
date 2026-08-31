@@ -36,9 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
           : '—';
       }
       if (elements.transactions) {
-        elements.transactions.textContent = typeof data.transactions === 'number'
-          ? formatter.format(data.transactions)
-          : '—';
+        const value = typeof data.transactions === 'number' ? formatter.format(data.transactions) : '—';
+        if (typeof data.transactions === 'number' && window.TransactionDrilldown) {
+          TransactionDrilldown.linkify(elements.transactions, { all:true, transfer_scope:'include', ignored_scope:'include', label:'All recorded transactions' }, value, 'View all recorded transactions');
+        } else elements.transactions.textContent = value;
       }
       if (elements.tags) {
         elements.tags.textContent = typeof data.tags === 'number'

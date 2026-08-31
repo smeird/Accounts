@@ -105,6 +105,11 @@
         setText('instant-spending-change', spendingChange.text);
         applyTone(byId('instant-income-change'), incomeChange.tone);
         applyTone(byId('instant-spending-change'), spendingChange.tone);
+        const base = TransactionDrilldown.financial({ start:data.period.start, end:data.period.end });
+        TransactionDrilldown.linkify('instant-income', Object.assign({}, base, { direction:'income', label:`Income · ${data.period.label}` }), money.format(data.metrics.income));
+        TransactionDrilldown.linkify('instant-spending', Object.assign({}, base, { direction:'spending', label:`Spending · ${data.period.label}` }), money.format(data.metrics.spending));
+        TransactionDrilldown.linkify('instant-cashflow', Object.assign({}, base, { label:`Net cash flow · ${data.period.label}` }), money.format(data.metrics.cashflow));
+        if (rate !== null) TransactionDrilldown.linkify('instant-savings-rate', Object.assign({}, base, { label:`Savings-rate contributors · ${data.period.label}` }), Math.round(rate)+'%');
 
         const progress = Math.max(0, Math.min(100, data.period.progress || 0));
         setText('instant-month-progress', Math.round(progress) + '%');
@@ -131,7 +136,7 @@
             },
             title: { text: null },
             credits: { enabled: false },
-            accessibility: { enabled: false },
+            accessibility: { enabled: true, description: 'Six-month income, spending and net cash-flow chart. Select a point to view its contributing transactions.' },
             xAxis: {
                 categories: rows.map(row => row.label),
                 lineColor: 'rgba(148, 163, 184, 0.24)',
@@ -162,6 +167,7 @@
                 borderRadius: 10
             },
             plotOptions: {
+                series:{cursor:'pointer',point:{events:{click:function(){if(this.options.drilldown)window.location.href=this.options.drilldown;}}}},
                 areaspline: {
                     lineWidth: 2.5,
                     marker: { enabled: false, symbol: 'circle', radius: 3 },
@@ -173,12 +179,12 @@
                 {
                     name: 'Income',
                     color: '#10b981',
-                    data: rows.map(row => Number(row.income) || 0)
+                    data: rows.map(row => { const range=TransactionDrilldown.monthRange(...row.key.split('-').map(Number)); return {y:Number(row.income)||0,drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({...range,direction:'income',label:`Income · ${row.label}`}))}; })
                 },
                 {
                     name: 'Spending',
                     color: brand,
-                    data: rows.map(row => Number(row.spending) || 0)
+                    data: rows.map(row => { const range=TransactionDrilldown.monthRange(...row.key.split('-').map(Number)); return {y:Number(row.spending)||0,drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({...range,direction:'spending',label:`Spending · ${row.label}`}))}; })
                 }
             ]
         });
@@ -238,7 +244,7 @@
         const maximum = Math.max.apply(null, items.map(item => Number(item.amount) || 0));
         items.forEach((item, index) => {
             const link = document.createElement('a');
-            link.href = 'search.html?value=' + encodeURIComponent(item.name);
+            link.href = TransactionDrilldown.url(TransactionDrilldown.financial({ start:currentSnapshot.period.start, end:currentSnapshot.period.end, direction:'spending', dimension:'category', dimension_id:item.id, unclassified:item.id===null, label:`${item.name} spending · ${currentSnapshot.period.label}` }));
             link.className = 'instant-ranked-item';
 
             const rank = document.createElement('span');
@@ -274,6 +280,7 @@
         const overallUsed = Math.max(0, Math.min(100, budget.used || 0));
         byId('instant-budget-progress').style.width = overallUsed + '%';
         byId('instant-budget-progress').className = budget.used > 100 ? 'is-over' : (budget.used >= 85 ? 'is-watch' : '');
+        if (budget.count) TransactionDrilldown.linkify('instant-budget-spent', TransactionDrilldown.financial({start:currentSnapshot.period.start,end:currentSnapshot.period.end,direction:'spending',dimension_ids:budget.category_ids||budget.items.map(item=>item.category_id),dimension:'category',label:`Budgeted-category spending · ${currentSnapshot.period.label}`}), money.format(budget.spent));
 
         const container = byId('instant-budgets');
         container.replaceChildren();
@@ -283,14 +290,13 @@
         }
 
         budget.items.forEach(item => {
-            const row = document.createElement('a');
-            row.href = 'budgets.html';
+            const row = document.createElement('div');
             row.className = 'instant-budget-row';
             const label = document.createElement('span');
             const name = document.createElement('strong');
             name.textContent = item.category;
             const detail = document.createElement('small');
-            detail.textContent = money.format(item.spent) + ' of ' + money.format(item.amount);
+            const spentLink=document.createElement('a');spentLink.className='transaction-drilldown-link';spentLink.href=TransactionDrilldown.url(TransactionDrilldown.financial({start:currentSnapshot.period.start,end:currentSnapshot.period.end,direction:'spending',dimension:'category',dimension_id:item.category_id,label:`${item.category} budget spending`}));spentLink.textContent=money.format(item.spent);spentLink.setAttribute('aria-label',`View transactions contributing to ${item.category} budget spending`);detail.append(spentLink,document.createTextNode(' of '+money.format(item.amount)));
             label.append(name, detail);
             const badge = document.createElement('span');
             badge.className = 'instant-budget-badge instant-budget-badge--' + item.status;
@@ -379,6 +385,7 @@
     }
 
     function render(data) {
+        currentSnapshot=data;
         renderHeadline(data);
         renderTrend(data.trend || []);
         renderAttention(data.attention || []);
@@ -388,6 +395,7 @@
         renderRecent(data.recent || []);
         setText('instant-refreshed', 'Updated ' + new Date(data.period.generated_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
     }
+    let currentSnapshot=null;
 
     async function loadSnapshot() {
         const refresh = byId('instant-refresh');

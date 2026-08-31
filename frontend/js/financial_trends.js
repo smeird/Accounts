@@ -171,12 +171,18 @@
         setText('trends-income-change', changeCopy(changes.income, 'income', !!data.comparison));
         setText('trends-spending-change', changeCopy(changes.spending, 'spending', !!data.comparison));
         setText('trends-rate-change', changeCopy(changes.savings_rate, 'savings_rate', !!data.comparison));
+        const base=TransactionDrilldown.financial({start:data.period.start,end:data.period.end});
+        TransactionDrilldown.linkify('trends-cashflow',{...base,label:`Net cash flow · ${range.label}`},money(metrics.cashflow));
+        TransactionDrilldown.linkify('trends-income',{...base,direction:'income',label:`Income · ${range.label}`},money(metrics.income));
+        TransactionDrilldown.linkify('trends-spending',{...base,direction:'spending',label:`Spending · ${range.label}`},money(metrics.spending));
+        TransactionDrilldown.linkify('trends-rate',{...base,label:`Savings-rate contributors · ${range.label}`},`${Number(metrics.savings_rate).toFixed(1)}%`);
+        if(data.comparison){const compare={compare_start:data.comparison.start,compare_end:data.comparison.end};[['trends-cashflow-change','Net cash-flow change','all'],['trends-income-change','Income change','income'],['trends-spending-change','Spending change','spending'],['trends-rate-change','Savings-rate change','all']].forEach(([id,label,direction])=>TransactionDrilldown.linkify(id,{...base,...compare,direction,label},byId(id).textContent));}
     }
 
     function commonChartOptions() {
         return {
             chart: { backgroundColor: 'transparent', spacing: [10, 8, 8, 8], animation: false },
-            title: { text: null }, credits: { enabled: false }, accessibility: { enabled: false },
+            title: { text: null }, credits: { enabled: false }, accessibility: { enabled: true, description: 'Interactive financial evidence chart. Select a point to view its contributing transactions.' },
             xAxis: { lineColor: '#e2e8f0', tickColor: '#e2e8f0', labels: { style: { color: '#64748b', fontSize: '10px' } } },
             yAxis: { title: { text: null }, gridLineColor: 'rgba(148,163,184,.16)', labels: { formatter: function () { return '£' + Highcharts.numberFormat(this.value, 0); }, style: { color: '#64748b', fontSize: '10px' } } },
             tooltip: { shared: true, valuePrefix: '£', valueDecimals: 2, borderRadius: 10 },
@@ -206,31 +212,34 @@
             ...options,
             chart: { ...options.chart, zoomType: 'x' },
             xAxis: { ...options.xAxis, categories: data.series.map(row => row.label), tickLength: 0 },
-            plotOptions: { column: { borderWidth: 0, borderRadius: 4, groupPadding: .13, pointPadding: .06 }, line: { lineWidth: 2.5, marker: { enabled: false } } },
+            plotOptions: { series:{cursor:'pointer',point:{events:{click:function(){window.location.href=this.options.drilldown;}}}},column: { borderWidth: 0, borderRadius: 4, groupPadding: .13, pointPadding: .06 }, line: { lineWidth: 2.5, marker: { enabled: false } } },
             series: [
-                { type: 'column', name: 'Income', color: '#14b8a6', data: data.series.map(row => Number(row.income)) },
-                { type: 'column', name: 'Spending', color: '#7c3aed', data: data.series.map(row => Number(row.spending)) },
-                { type: 'line', name: 'Net cash flow', color: '#334155', dashStyle: 'ShortDash', data: data.series.map(row => Number(row.cashflow)) }
+                { type: 'column', name: 'Income', color: '#14b8a6', data: data.series.map(row => ({y:Number(row.income),drilldown:bucketLink(row,data,'income')})) },
+                { type: 'column', name: 'Spending', color: '#7c3aed', data: data.series.map(row => ({y:Number(row.spending),drilldown:bucketLink(row,data,'spending')})) },
+                { type: 'line', name: 'Net cash flow', color: '#334155', dashStyle: 'ShortDash', data: data.series.map(row => ({y:Number(row.cashflow),drilldown:bucketLink(row,data,'all')})) }
             ]
         });
         setText('trends-grain', `${titleCase(data.period.grain)} view`);
     }
 
     function topBreakdown(data, count) { return data.breakdown.filter(row => Number(row.amount) > 0).slice(0, count); }
+    function bucketRange(row,data){if(data.period.grain==='day')return{start:row.key,end:row.key};if(data.period.grain==='month'){const [year,month]=row.key.split('-').map(Number);return TransactionDrilldown.monthRange(year,month);}return TransactionDrilldown.yearRange(Number(row.key));}
+    function bucketLink(row,data,direction){return TransactionDrilldown.url(TransactionDrilldown.financial({...bucketRange(row,data),direction,label:`${row.label} ${direction==='all'?'net movement':direction}`}));}
+    function rowOptions(row,data,comparison){const options=TransactionDrilldown.financial({start:comparison?data.comparison.start:data.period.start,end:comparison?data.comparison.end:data.period.end,direction:'spending',dimension:data.dimension,dimension_id:row.id,unclassified:row.unclassified,label:`${row.name} spending${comparison?' · comparison':''}`});if(comparison===null&&data.comparison){options.compare_start=data.comparison.start;options.compare_end=data.comparison.end;}return options;}
 
     function renderDriversChart(data) {
         const rows = topBreakdown(data, 8);
         if (!rows.length) { emptyChart('trends-drivers-chart', 'No spending drivers', 'There is no expense activity to rank for this period.'); return; }
         const options = commonChartOptions();
-        const series = [{ name: 'Selected period', color: '#7c3aed', data: rows.map(row => Number(row.amount)) }];
-        if (data.comparison) series.push({ name: 'Comparison', color: '#c4b5fd', data: rows.map(row => Number(row.comparison_amount)) });
+        const series = [{ name: 'Selected period', color: '#7c3aed', data: rows.map(row => ({y:Number(row.amount),drilldown:TransactionDrilldown.url(rowOptions(row,data,false))})) }];
+        if (data.comparison) series.push({ name: 'Comparison', color: '#c4b5fd', data: rows.map(row => ({y:Number(row.comparison_amount),drilldown:TransactionDrilldown.url(rowOptions(row,data,true))})) });
         Highcharts.chart('trends-drivers-chart', {
             ...options,
             chart: { ...options.chart, type: 'bar', height: Math.max(360, rows.length * 46 + 90) },
             xAxis: { ...options.xAxis, categories: rows.map(row => row.name), tickLength: 0 },
             legend: { ...options.legend, enabled: !!data.comparison },
             tooltip: { ...options.tooltip, shared: true },
-            plotOptions: { bar: { borderWidth: 0, borderRadius: 5, groupPadding: .12, dataLabels: { enabled: false } } },
+            plotOptions: { series:{cursor:'pointer',point:{events:{click:function(){window.location.href=this.options.drilldown;}}}},bar: { borderWidth: 0, borderRadius: 5, groupPadding: .12, dataLabels: { enabled: false } } },
             series
         });
     }
@@ -246,8 +255,8 @@
             xAxis: { ...options.xAxis, categories: rows.map(row => row.name), tickLength: 0 },
             legend: { enabled: false },
             tooltip: { pointFormatter: function () { return `<b>${this.y >= 0 ? '+' : '−'}£${Highcharts.numberFormat(Math.abs(this.y), 2)}</b> versus comparison`; } },
-            plotOptions: { bar: { borderWidth: 0, borderRadius: 5, dataLabels: { enabled: true, formatter: function () { return `${this.y >= 0 ? '+' : '−'}£${Highcharts.numberFormat(Math.abs(this.y), 0)}`; }, style: { color: '#475569', fontSize: '10px', textOutline: 'none' } } } },
-            series: [{ name: 'Spending change', data: rows.map(row => ({ y: Number(row.change), color: Number(row.change) >= 0 ? '#7c3aed' : '#14b8a6' })) }]
+            plotOptions: { series:{cursor:'pointer',point:{events:{click:function(){window.location.href=this.options.drilldown;}}}},bar: { borderWidth: 0, borderRadius: 5, dataLabels: { enabled: true, formatter: function () { return `${this.y >= 0 ? '+' : '−'}£${Highcharts.numberFormat(Math.abs(this.y), 0)}`; }, style: { color: '#475569', fontSize: '10px', textOutline: 'none' } } } },
+            series: [{ name: 'Spending change', data: rows.map(row => ({ y: Number(row.change), color: Number(row.change) >= 0 ? '#7c3aed' : '#14b8a6',drilldown:TransactionDrilldown.url(rowOptions(row,data,null)) })) }]
         });
     }
 
@@ -262,13 +271,12 @@
             : `${money(Number(data.metrics.spending) - Number(coverage.amount))} of spending is not yet explained by a ${label}.`);
         byId('trends-coverage-bar').style.width = `${Math.max(0, Math.min(100, percentage))}%`;
         byId('trends-coverage-link').href = coverageLinks[dimension];
+        const classifiedIds=data.breakdown.filter(row=>!row.unclassified&&row.id).map(row=>row.id);
+        if(classifiedIds.length)TransactionDrilldown.linkify('trends-coverage-title',TransactionDrilldown.financial({start:data.period.start,end:data.period.end,direction:'spending',dimension,dimension_ids:classifiedIds,label:`Classified ${label} spending`}),`${percentage.toFixed(1)}% of spending has a ${label}`);
     }
 
     function buildSearchLink(row, data) {
-        const query = new URLSearchParams({ label: row.name, start: data.period.start, end: data.period.end, dimension: data.dimension, spending_only: '1' });
-        if (row.unclassified) query.set('unclassified', '1');
-        else { query.set('dimension_id', String(row.id)); query.set('value', row.name); }
-        return `search.html?${query.toString()}`;
+        return TransactionDrilldown.url(rowOptions(row,data,false));
     }
 
     function renderTableRows(data) {
@@ -281,10 +289,10 @@
             const nameWrap = document.createElement('span'); nameWrap.className = 'trends-table-name';
             const dot = document.createElement('span'); dot.className = 'trends-table-dot'; dot.setAttribute('aria-hidden', 'true');
             const name = document.createElement('span'); name.textContent = row.name; nameWrap.append(dot, name); nameCell.appendChild(nameWrap);
-            const amount = document.createElement('td'); amount.dataset.label = 'Spending'; amount.textContent = preciseMoney(row.amount);
+            const amount = document.createElement('td'); amount.dataset.label = 'Spending';const amountLink=document.createElement('a');amountLink.className='transaction-drilldown-link';amountLink.href=buildSearchLink(row,data);amountLink.textContent=preciseMoney(row.amount);amount.appendChild(amountLink);
             const share = document.createElement('td'); share.dataset.label = 'Share'; share.textContent = `${Number(row.share).toFixed(1)}%`;
-            const change = document.createElement('td'); change.dataset.label = 'Change'; change.className = `trends-table-change ${Number(row.change) > 0 ? 'is-more' : Number(row.change) < 0 ? 'is-less' : ''}`; change.textContent = data.comparison ? `${Number(row.change) > 0 ? '+' : Number(row.change) < 0 ? '−' : ''}${preciseMoney(Math.abs(Number(row.change)))}` : '—';
-            const count = document.createElement('td'); count.dataset.label = 'Transactions'; count.textContent = Number(row.transactions).toLocaleString('en-GB');
+            const change = document.createElement('td'); change.dataset.label = 'Change'; change.className = `trends-table-change ${Number(row.change) > 0 ? 'is-more' : Number(row.change) < 0 ? 'is-less' : ''}`;if(data.comparison){const link=document.createElement('a');link.className='transaction-drilldown-link';link.href=TransactionDrilldown.url(rowOptions(row,data,null));link.textContent=`${Number(row.change)>0?'+':Number(row.change)<0?'−':''}${preciseMoney(Math.abs(Number(row.change)))}`;change.appendChild(link);}else change.textContent='—';
+            const count = document.createElement('td'); count.dataset.label = 'Transactions';const countLink=document.createElement('a');countLink.className='transaction-drilldown-link';countLink.href=buildSearchLink(row,data);countLink.textContent=Number(row.transactions).toLocaleString('en-GB');count.appendChild(countLink);
             const openCell = document.createElement('td'); const open = document.createElement('a'); open.className = 'trends-table-open'; open.href = buildSearchLink(row, data); open.setAttribute('aria-label', `Open transactions for ${row.name}`); const icon = document.createElement('i'); icon.className = 'fas fa-arrow-right'; icon.setAttribute('aria-hidden', 'true'); open.appendChild(icon); openCell.appendChild(open);
             tr.append(nameCell, amount, share, change, count, openCell); body.appendChild(tr);
         });

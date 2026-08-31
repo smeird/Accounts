@@ -33,7 +33,7 @@
     function commonOptions() {
         return {
             chart: { backgroundColor: 'transparent', animation: false, spacing: [8, 8, 8, 8] },
-            title: { text: null }, credits: { enabled: false }, accessibility: { enabled: false },
+            title: { text: null }, credits: { enabled: false }, accessibility: { enabled: true, description: 'Interactive spending chart. Select a point to view its contributing transactions.' },
             xAxis: { lineColor: '#e2e8f0', tickColor: '#e2e8f0', labels: { style: { color: '#64748b', fontSize: '10px' } } },
             yAxis: { min: 0, title: { text: null }, gridLineColor: 'rgba(148,163,184,.16)', labels: { formatter: function () { return '£' + Highcharts.numberFormat(this.value, 0); }, style: { color: '#64748b', fontSize: '10px' } } },
             legend: { align: 'right', verticalAlign: 'top', itemStyle: { color: '#475569', fontSize: '10px', fontWeight: '700' } },
@@ -60,6 +60,14 @@
         byId('burn-range').textContent = `${dateLabel.format(range.start)} to ${dateLabel.format(range.end)} · ${data.period.months} month${data.period.months === 1 ? '' : 's'}`;
         byId('burn-peak').textContent = formatMoney(metrics.peak_day.amount);
         byId('burn-peak-date').textContent = metrics.peak_day.date ? dateLabel.format(new Date(`${metrics.peak_day.date}T12:00:00`)) : 'No expenditure in this period';
+        const base=TransactionDrilldown.financial({start:data.period.start,end:data.period.end,direction:'spending'});
+        const latest=data.months.length?TransactionDrilldown.monthRange(...data.months[data.months.length-1].key.split('-').map(Number)):base;
+        TransactionDrilldown.linkify('burn-latest',{...base,...latest,label:'Latest monthly daily-burn contributors'},preciseMoney.format(metrics.latest_daily_burn));
+        TransactionDrilldown.linkify('burn-average',{...base,label:'Historical daily-burn contributors'},formatDaily(metrics.average_daily_burn));
+        TransactionDrilldown.linkify('burn-monthly',{...base,label:'Monthly-equivalent contributors'},formatMoney(metrics.monthly_equivalent));
+        TransactionDrilldown.linkify('burn-total',{...base,label:'Observed expenditure'},formatMoney(metrics.total_spending));
+        TransactionDrilldown.linkify('burn-transactions',{...base,label:'Observed outgoing transactions'},`${Number(metrics.transaction_count).toLocaleString('en-GB')} outgoing transactions`);
+        if(metrics.peak_day.date){TransactionDrilldown.linkify('burn-peak',{...base,start:metrics.peak_day.date,end:metrics.peak_day.date,label:`Peak-day spending · ${metrics.peak_day.date}`},formatMoney(metrics.peak_day.amount));}
     }
 
     function renderSegmentChart(data) {
@@ -68,7 +76,8 @@
             type: 'area', name: segment.name, color: palette[index % palette.length],
             data: data.months.map(month => {
                 const item = month.segments.find(row => row.id === segment.id && row.name === segment.name);
-                return item ? Number(item.daily_burn) : 0;
+                const range=TransactionDrilldown.monthRange(...month.key.split('-').map(Number));
+                return {y:item?Number(item.daily_burn):0,drilldown:segmentSearchLink(segment,{period:range})};
             })
         })).filter(item => item.data.some(value => value > 0));
         const options = commonOptions();
@@ -76,7 +85,7 @@
             ...options,
             chart: { ...options.chart, type: 'area' },
             xAxis: { ...options.xAxis, categories: data.months.map(month => month.label), tickLength: 0 },
-            plotOptions: { area: { stacking: 'normal', lineWidth: 1.5, fillOpacity: .68, marker: { enabled: false } } },
+            plotOptions: { series:{cursor:'pointer',point:{events:{click:function(){window.location.href=this.options.drilldown;}}}},area: { stacking: 'normal', lineWidth: 1.5, fillOpacity: .68, marker: { enabled: false } } },
             series
         });
     }
@@ -90,19 +99,16 @@
             xAxis: { type: 'datetime', lineColor: '#e2e8f0' },
             legend: { ...options.legend, enabled: true },
             tooltip: { shared: true, xDateFormat: '%e %b %Y', valuePrefix: '£', valueDecimals: 2 },
-            plotOptions: { column: { borderWidth: 0, pointPadding: .04, groupPadding: .03 }, line: { marker: { enabled: false }, lineWidth: 2.5 } },
+            plotOptions: { series:{cursor:'pointer',point:{events:{click:function(){window.location.href=this.options.drilldown;}}}},column: { borderWidth: 0, pointPadding: .04, groupPadding: .03 }, line: { marker: { enabled: false }, lineWidth: 2.5 } },
             series: [
-                { type: 'column', name: 'Actual spending', color: 'rgba(249,115,22,.45)', data: data.daily.map(day => [Date.parse(`${day.date}T12:00:00`), Number(day.actual_spending)]) },
-                { type: 'line', name: '14-day average', color: '#db2777', data: data.daily.map(day => [Date.parse(`${day.date}T12:00:00`), Number(day.rolling_average)]) }
+                { type: 'column', name: 'Actual spending', color: 'rgba(249,115,22,.45)', data: data.daily.map(day => ({x:Date.parse(`${day.date}T12:00:00`),y:Number(day.actual_spending),drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({start:day.date,end:day.date,direction:'spending',label:`Actual spending · ${day.date}`}))})) },
+                { type: 'line', name: '14-day average', color: '#db2777', data: data.daily.map((day,index) => ({x:Date.parse(`${day.date}T12:00:00`),y:Number(day.rolling_average),drilldown:TransactionDrilldown.url(TransactionDrilldown.financial({start:data.daily[Math.max(0,index-13)].date,end:day.date,direction:'spending',label:`14-day spending window ending ${day.date}`}))})) }
             ]
         });
     }
 
     function segmentSearchLink(segment, data) {
-        const params = new URLSearchParams({ label: segment.name, start: data.period.start, end: data.period.end, dimension: 'segment', spending_only: '1' });
-        if (segment.unsegmented) params.set('unclassified', '1');
-        else { params.set('dimension_id', String(segment.id)); params.set('value', segment.name); }
-        return `search.html?${params.toString()}`;
+        return TransactionDrilldown.url(TransactionDrilldown.financial({label:`${segment.name} spending`,start:data.period.start,end:data.period.end,direction:'spending',dimension:'segment',dimension_id:segment.unsegmented?undefined:segment.id,unclassified:!!segment.unsegmented}));
     }
 
     function renderSegments(data) {
@@ -116,10 +122,10 @@
             const text = document.createElement('span'); text.textContent = segment.name; name.appendChild(text);
             const bar = document.createElement('div'); bar.className = 'burn-segment-bar'; const fill = document.createElement('span'); fill.style.width = `${Number(segment.average_daily_burn) / maximum * 100}%`; bar.appendChild(fill);
             const values = [
-                ['Latest', formatDaily(segment.latest_daily_burn)],
-                ['Average', formatDaily(segment.average_daily_burn)],
-                ['Share', `${Number(segment.share).toFixed(1)}%`]
-            ].map(([label, value]) => { const cell = document.createElement('div'); cell.className = 'burn-segment-value'; const caption = document.createElement('span'); caption.textContent = label; const strong = document.createElement('strong'); strong.textContent = value; cell.append(caption, strong); return cell; });
+                ['Latest', formatDaily(segment.latest_daily_burn),data.months.length?{period:TransactionDrilldown.monthRange(...data.months[data.months.length-1].key.split('-').map(Number))}:data],
+                ['Average', formatDaily(segment.average_daily_burn),data],
+                ['Share', `${Number(segment.share).toFixed(1)}%`,data]
+            ].map(([label, value,scope]) => { const cell = document.createElement('div'); cell.className = 'burn-segment-value'; const caption = document.createElement('span'); caption.textContent = label; const strong = document.createElement('strong');const link=document.createElement('a');link.className='transaction-drilldown-link';link.href=segmentSearchLink(segment,scope);link.textContent=value;link.setAttribute('aria-label',`View ${segment.name} transactions behind ${label.toLowerCase()}`);strong.appendChild(link); cell.append(caption, strong); return cell; });
             const open = document.createElement('a'); open.className = 'burn-segment-open'; open.href = segmentSearchLink(segment, data); open.setAttribute('aria-label', `Open ${segment.name} expenditure`); open.innerHTML = '<i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>';
             row.append(name, bar, ...values, open); host.appendChild(row);
         });

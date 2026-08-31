@@ -89,6 +89,8 @@
         text(options.signalId, options.archived ? String(totals.count) : String(totals.critical));
         text(options.signalLabelId, options.archived ? 'parked projects' : 'critical now');
         text(options.countId, String(totals.count)); text(options.plannedId, money(totals.planned)); text(options.spentId, money(totals.spent)); text(options.priorityId, String(totals.doNext));
+        const groupIds=projects.map(project=>Number(project.group_id)).filter(id=>id>0);
+        if(groupIds.length&&totals.spent>0)TransactionDrilldown.linkify(options.spentId,{direction:'spending',transfer_scope:'exclude',ignored_scope:'include',dimension:'group',dimension_ids:groupIds,label:options.archived?'Historic project spending':'Project spending to date'},money(totals.spent));
         return totals;
     }
 

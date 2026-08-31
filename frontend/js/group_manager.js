@@ -117,7 +117,7 @@
         document.getElementById('selected-group-description').textContent = group.description || 'No description added.';
         status.textContent = statusLabel;
         status.className = `group-status-badge${active ? '' : ' is-inactive'}`;
-        document.getElementById('summary-transactions').textContent = count.toLocaleString('en-GB');
+        TransactionDrilldown.linkify('summary-transactions',{dimension:'group',dimension_id:group.id,direction:'all',transfer_scope:'include',ignored_scope:'include',label:`Transactions linked to ${group.name}`},count.toLocaleString('en-GB'),`View ${count} transactions linked to ${group.name}`);
         document.getElementById('summary-status').textContent = statusLabel;
         toggle.textContent = active ? 'Deactivate' : 'Activate';
         toggle.className = `group-status-button${active ? '' : ' is-inactive'}`;

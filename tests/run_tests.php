@@ -100,6 +100,8 @@ assertEqual('Affinity Water', $affinityPatterns[0]['description'] ?? null, 'Recu
 assertEqual(12, $affinityPatterns[0]['occurrences'] ?? null, 'Recurring analysis reports every utility occurrence in the year');
 assertEqual('Monthly · first Tuesday', $affinityPatterns[0]['schedule'] ?? null, 'Recurring analysis recognises a weekday-based monthly schedule');
 assertEqual(12, count($affinityPatterns[0]['descriptions'] ?? []), 'Recurring analysis retains raw descriptions for monthly-statement matching');
+assertEqual(range(1, 12), $affinityPatterns[0]['transaction_ids'] ?? [], 'Recurring analysis exposes its exact transaction evidence');
+assertEqual(12, $affinityPatterns[0]['latest_transaction_id'] ?? null, 'Recurring quick totals expose the latest observed transaction');
 
 $irregularRows = [];
 foreach (['2025-09-01', '2025-10-17', '2025-11-09', '2026-01-25', '2026-03-13', '2026-04-29', '2026-06-05', '2026-08-21'] as $index => $date) {
@@ -995,6 +997,43 @@ $trendDrilldown = Transaction::search('Home', null, null, '2026-08-01', '2026-08
 assertEqual(1, count($trendDrilldown), 'Financial Trends drill-down links constrain transaction search to the selected period');
 $exactTrendDrilldown = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', 'segment', 10, false, true);
 assertEqual(2, count($exactTrendDrilldown), 'Financial Trends drill-down links use the exact classification and expense-only scope');
+$structuredSpending = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', null, null, false, false, 'spending', 'exclude', 'exclude');
+assertEqual(2, count($structuredSpending), 'Structured drill-down direction and inclusion scopes reproduce ordinary spending');
+$structuredIncome = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', null, null, false, false, 'income', 'exclude', 'exclude');
+assertEqual(2, count($structuredIncome), 'Structured drill-down direction isolates income');
+$structuredTransfers = Transaction::search(null, null, null, '2026-08-01', '2026-08-10', null, null, false, false, 'all', 'only', 'include');
+assertEqual(2, count($structuredTransfers), 'Structured drill-down transfer-only scope returns both sides of a transfer');
+$structuredAccount = Transaction::search(null, null, null, '2026-08-01', '2026-08-10', null, null, false, false, 'all', 'only', 'include', 2);
+assertEqual(1, count($structuredAccount), 'Structured drill-down account scope preserves account evidence');
+$structuredCategories = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', 'category', null, false, false, 'spending', 'exclude', 'exclude', null, [2]);
+assertEqual(2, count($structuredCategories), 'Structured drill-down supports exact multi-ID classifications');
+$structuredGroup = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', 'group', 20, false, false, 'spending', 'exclude', 'exclude');
+assertEqual(2, count($structuredGroup), 'Project-group spending reconciles through the shared structured search');
+$structuredIds = Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], [(int)$structuredSpending[0]['id']]);
+assertEqual(1, count($structuredIds), 'Structured drill-down supports bounded exact transaction evidence');
+$structuredDescription = Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], [], 'August home costs');
+assertEqual(1, count($structuredDescription), 'Structured drill-down supports an exact description');
+$db->exec("INSERT INTO transactions (account_id, date, amount, description, memo) VALUES (1, '2026-08-09', -1, 'Memo evidence test', 'Exact drill-down memo')");
+$memoEvidenceId = (int)$db->lastInsertId();
+$structuredMemo = Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], [], null, 'Exact drill-down memo');
+assertEqual($memoEvidenceId, (int)($structuredMemo[0]['id'] ?? 0), 'Structured drill-down supports an exact memo');
+$db->exec("DELETE FROM transactions WHERE id = $memoEvidenceId");
+$structuredUnclassified = Transaction::search(null, null, null, '2026-08-01', '2026-08-10', 'category', null, true, false, 'spending', 'only', 'include');
+assertEqual(1, count($structuredUnclassified), 'Structured drill-down supports an exact unclassified aggregate');
+$structuredOther = Transaction::search(null, null, null, '2026-07-01', '2026-08-10', 'category', null, false, false, 'spending', 'include', 'include', null, [2], [], null, null, true);
+assertEqual(3, count($structuredOther), 'Structured drill-down can combine member IDs with unclassified transactions for Other aggregates');
+$invalidStructuredDate = false;
+try { Transaction::search(null, null, null, '2026-13-01', '2026-08-10'); } catch (InvalidArgumentException $e) { $invalidStructuredDate = true; }
+assertEqual(true, $invalidStructuredDate, 'Structured drill-down rejects invalid dates');
+$invalidStructuredId = false;
+try { Transaction::search(null, null, null, null, null, 'category', null, false, false, 'all', 'include', 'include', null, ['not-an-id']); } catch (InvalidArgumentException $e) { $invalidStructuredId = true; }
+assertEqual(true, $invalidStructuredId, 'Structured drill-down rejects invalid classification IDs');
+$tooManyStructuredIds = false;
+try { Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], range(1, 251)); } catch (InvalidArgumentException $e) { $tooManyStructuredIds = true; }
+assertEqual(true, $tooManyStructuredIds, 'Structured drill-down bounds exact transaction evidence');
+$invalidStructuredScope = false;
+try { Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'sometimes', 'exclude'); } catch (InvalidArgumentException $e) { $invalidStructuredScope = true; }
+assertEqual(true, $invalidStructuredScope, 'Structured drill-down rejects unsupported inclusion scopes');
 
 // --- Calendar-normalised Daily Burn dashboard ---
 $dailyBurn = DailyBurn::getSnapshot('2026-07-01', '2026-08-10');
@@ -1016,6 +1055,10 @@ foreach (['2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '202
 $db->exec('INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES ' . implode(',', $forecastHistoryRows));
 $ignoreTagId = Tag::getIgnoreId();
 $db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES (1, '2026-08-05', -9999, 'Ignored outlier', 2, $ignoreTagId)");
+$ignoredOnlyEvidence = Transaction::search(null, null, null, '2026-08-05', '2026-08-05', null, null, false, false, 'spending', 'exclude', 'only');
+assertEqual(1, count($ignoredOnlyEvidence), 'Structured drill-down can isolate IGNORE-tagged evidence');
+$ignoredExcludedEvidence = Transaction::search(null, null, null, '2026-08-05', '2026-08-05', null, null, false, false, 'spending', 'exclude', 'exclude');
+assertEqual(0, count($ignoredExcludedEvidence), 'Structured drill-down excludes IGNORE-tagged evidence when requested');
 $forecast = ForecastDashboard::getSnapshot(new DateTimeImmutable('2026-08-15T12:00:00+01:00'));
 assertEqual(true, (bool)$forecast['has_data'], 'Forecast reports usable transaction history');
 assertEqual(12, count($forecast['forecast']), 'Forecast returns twelve planning periods');
