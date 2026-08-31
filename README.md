@@ -86,17 +86,56 @@ Frontend pages live in `frontend/`. Authenticated JSON endpoints live in `php_ba
 
 ## Installation
 
-### Quick deployment
+### Simple Raspberry Pi installation
 
-On a fresh 64-bit Raspberry Pi OS Bookworm or Trixie installation, first point a public DNS name at the Pi and forward TCP ports 80 and 443 to it. Then run this from an SSH or local terminal:
+Use a fresh Raspberry Pi running **64-bit Raspberry Pi OS Bookworm or Trixie**. The installer creates a new Accounts installation; it does not overwrite an existing one.
+
+#### 1. Prepare the Pi and your network
+
+Before running the installer:
+
+1. Give the Pi a stable local IP address and make sure SSH works.
+2. Create a public DNS name, such as `accounts.example.com`, pointing to your internet connection.
+3. Forward TCP ports **80** and **443** from the router to the Pi.
+4. Confirm that at least 2 GB is free under `/var`:
+
+   ```bash
+   df -h /var
+   ```
+
+5. Do not create `/var/www/accounts` or an `accounts` database—the installer creates both.
+
+#### 2. Run the installer
+
+Connect to the Pi using SSH, then run:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | sudo bash
 ```
 
-The interactive installer securely asks for the domain, Let's Encrypt email and first administrator account. It installs and configures Apache, MariaDB, PHP, HTTPS certificate renewal, the firewall, fail2ban and automatic security updates. It deliberately stops if `/var/www/accounts` or an `accounts` database already exists, and it never serves the application over plain HTTP if certificate validation fails.
+The installer asks for:
 
-DNS and router configuration remain external prerequisites. The application also needs outbound internet access for its hosted frontend libraries, update checks and optional OpenAI features. This installer creates a clean database; restore an existing Accounts backup afterward through **System → Backup & Restore**.
+- the public DNS name;
+- an email address for the HTTPS certificate;
+- the first administrator username;
+- a password of at least 12 characters;
+- confirmation that DNS and port forwarding are ready.
+
+It then installs and configures Apache, MariaDB, PHP, HTTPS and certificate renewal, the firewall, fail2ban, and automatic security updates. This can take several minutes, particularly while Raspberry Pi OS packages are updated.
+
+#### 3. Sign in and check the installation
+
+When installation finishes, it prints the secure address and installed code version. Open the displayed `https://` address and sign in with the administrator details you entered.
+
+After signing in:
+
+1. Open **System → Database Health** and confirm the database is current.
+2. Open **System → Backup & Restore**, create a backup, and store it away from the Pi.
+3. If moving from an older Accounts installation, restore its backup through **System → Backup & Restore**.
+
+If installation stops, correct the reported problem and run the same command again. Detailed output is stored in `/var/log/accounts-installer.log`. DNS and router configuration remain external prerequisites, and the Pi needs outbound internet access for installation, update checks, hosted interface libraries, and optional OpenAI features. The installer will not expose the application over ordinary HTTP if HTTPS certificate validation fails.
+
+For troubleshooting and a detailed description of the safety checks, see [Setup](wiki/Setup.md#raspberry-pi-production-installation).
 
 ### Manual setup
 
