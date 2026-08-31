@@ -122,7 +122,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         </div>
                         <div class="login-benefit">
                             <dt class="login-benefit-icon login-benefit-icon--emerald"><i class="fa-solid fa-lock" aria-hidden="true"></i></dt>
-                            <dd><strong>Private by design</strong><span>Secure accounts with optional two-factor authentication.</span></dd>
+                            <dd><strong>Private by design</strong><span>Secure accounts with passkeys or optional two-factor authentication.</span></dd>
                         </div>
                     </dl>
                 </section>
@@ -141,7 +141,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         </div>
                     </div>
                     <p class="login-instruction">
-                        <?= $needsToken ? 'Enter the 6-digit code from your authenticator app to complete sign in.' : 'Use your account credentials to access the ' . htmlspecialchars($siteName) . ' workspace.' ?>
+                        <?= $needsToken ? 'Enter the 6-digit code from your authenticator app, or use a registered passkey.' : 'Use your password or a registered passkey to access the ' . htmlspecialchars($siteName) . ' workspace.' ?>
                     </p>
                     <?php if ($error): ?>
                         <p class="login-error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><?= htmlspecialchars($error) ?></p>
@@ -170,6 +170,11 @@ $needsToken = isset($_SESSION['pending_user_id']);
                             <button type="submit" aria-label="Log in" class="brand-action-btn login-submit">Open dashboard <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                         </form>
                     <?php endif; ?>
+                    <div class="login-passkey" id="passkey-login">
+                        <div class="login-divider"><span>or</span></div>
+                        <button id="passkey-login-button" type="button" class="login-passkey-button" aria-label="Sign in with a passkey"><i class="fa-solid fa-fingerprint" aria-hidden="true"></i> Sign in with a passkey</button>
+                        <p id="passkey-login-status" class="login-passkey-status" role="status" aria-live="polite">Use Face ID, Touch ID, your device PIN, or a security key.</p>
+                    </div>
                     <p class="login-trust"><i class="fa-solid fa-lock" aria-hidden="true"></i> Secure session · Private financial workspace</p>
                 </section>
             </div>
@@ -181,6 +186,8 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
     <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
+    <script src="frontend/js/webauthn_client.js?v=20260831-passkeys"></script>
+    <script src="frontend/js/passkey_login.js?v=20260831-passkeys"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($headingFont) ?>,

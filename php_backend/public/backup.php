@@ -36,13 +36,19 @@ try {
     $data = [];
     $data['_meta'] = [
         'format' => 'newaccounts-backup',
-        'version' => 5,
+        'version' => 6,
         'created_at' => gmdate('c'),
         'parts' => array_values($parts),
     ];
     // Always include users and account details
     $data['users'] = $getAll('SELECT id, username, password FROM users ORDER BY id');
     $data['totp_secrets'] = $getAll('SELECT username, secret, created_at FROM totp_secrets ORDER BY username');
+    try {
+        $data['passkeys'] = $getAll('SELECT id, user_id, credential_id, credential_id_hash, user_handle, public_key, sign_count, transports, label, backup_eligible, backed_up, created_at, last_used_at FROM passkeys ORDER BY id');
+    } catch (PDOException $e) {
+        // Keep backups usable immediately after deployment, before Database Health
+        // or the migration has created the optional passkey table.
+    }
     $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date, closed, closed_at FROM accounts ORDER BY id');
     if (in_array('settings', $parts)) {
         $data['settings'] = $getAll('SELECT name, value FROM settings ORDER BY name');

@@ -1,10 +1,14 @@
 // Provides a help overlay describing the purpose of the current page.
+(function () {
+if (window.pageHelpInitialised) return;
+window.pageHelpInitialised = true;
+
 const init = () => {
   const page = location.pathname.split('/').pop();
   const helpTexts = {
 
-    'index.php': `Use this page to sign in to the finance manager. Begin by typing your username and password into the boxes provided and then press the login button. If you are new or cannot remember your details, ask the person who set up the system to help you get access. Once signed in you will be taken to the main dashboard where your information is stored.`,
-    'users.php': `Manage user accounts here so that each person has their own login. You can add new accounts for family members, reset passwords when someone forgets them and remove access that is no longer needed. Keeping accounts separate makes it easier to see who made changes and keeps your data safer.`,
+    'index.php': `Use this page to sign in to the finance manager. Choose a registered passkey for Face ID, Touch ID, your device PIN or a security key, or enter your username and password. Password accounts with authenticator verification will still ask for their six-digit code. Once signed in you will be taken to the main dashboard.`,
+    'users.php': `Manage user accounts and sign-in methods here. Add a passkey for a quick phishing-resistant login, name each passkey so you recognise it, and remove devices you no longer use. Password and authenticator-app access remain available as recovery methods. You can also add separate accounts or change the current password.`,
     'settings.php': `Shape the workspace from one place. Appearance controls set the default surfaces, density, corners, backdrop, page-header size, top colour-bar thickness and motion across signed-in pages; typography controls change headings, body copy, tables and charts. You can also configure AI behaviour, log retention and automatic logout. The sidebar Professional theme switch can still override the saved surface style on an individual device.`,
     'logout.php': `This page confirms you have been signed out. Use the button to return to the login screen when you are ready to sign in again.`,
     'index.html': `The home page is the starting point for exploring your finances. It shows a summary of the system and provides links to every feature. Use the menu on the left to open dashboards, run reports or adjust settings. Spend a moment getting familiar with these links before diving into the details.`,
@@ -89,3 +93,4 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+}());

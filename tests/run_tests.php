@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../php_backend/models/User.php';
+require_once __DIR__ . '/../php_backend/models/Passkey.php';
 require_once __DIR__ . '/../php_backend/models/Tag.php';
 require_once __DIR__ . '/../php_backend/models/Category.php';
 require_once __DIR__ . '/../php_backend/models/CategoryTag.php';
@@ -41,6 +42,7 @@ $db = Database::getConnection();
 
 // Create minimal schema used by the models under test.
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT);');
+$db->exec("CREATE TABLE passkeys (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, credential_id TEXT NOT NULL, credential_id_hash TEXT NOT NULL UNIQUE, user_handle TEXT NOT NULL, public_key TEXT NOT NULL, sign_count INTEGER NOT NULL DEFAULT 0, transports TEXT, label TEXT NOT NULL DEFAULT 'Passkey', backup_eligible INTEGER NOT NULL DEFAULT 0, backed_up INTEGER NOT NULL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_used_at DATETIME, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);");
 $db->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sort_code TEXT, account_number TEXT, ledger_balance REAL DEFAULT 0, ledger_balance_date TEXT, closed INTEGER NOT NULL DEFAULT 0, closed_at TEXT);');
 $db->exec("CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, name_normalized TEXT UNIQUE, keyword TEXT, description TEXT, origin TEXT NOT NULL DEFAULT 'legacy', status TEXT NOT NULL DEFAULT 'active', merged_into_tag_id INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);");
 $db->exec("CREATE TABLE tag_aliases (id INTEGER PRIMARY KEY AUTOINCREMENT, tag_id INTEGER, alias TEXT, alias_normalized TEXT, match_type TEXT, direction TEXT NOT NULL DEFAULT 'any', active TINYINT DEFAULT 1, origin TEXT NOT NULL DEFAULT 'legacy', confidence REAL, support_count INTEGER NOT NULL DEFAULT 0, last_matched_at DATETIME, created_at DATETIME, updated_at DATETIME, UNIQUE(alias_normalized, direction));");
@@ -237,6 +239,94 @@ assertEqual(null, $wrong, 'Password verification fails for wrong password');
 User::updatePassword(1, 'newpass');
 $updated = User::verify('alice', 'newpass', $reason);
 assertEqual(1, $updated, 'Updated password verifies');
+
+// Passkeys bind a discoverable credential to this relying party and origin,
+// require user verification, and verify the authenticator's ES256 assertion.
+function testCborLength(int $major, int $length): string {
+    if ($length < 24) return chr(($major << 5) | $length);
+    if ($length < 256) return chr(($major << 5) | 24) . chr($length);
+    if ($length < 65536) return chr(($major << 5) | 25) . pack('n', $length);
+    return chr(($major << 5) | 26) . pack('N', $length);
+}
+function testCborText(string $value): string { return testCborLength(3, strlen($value)) . $value; }
+function testCborBytes(string $value): string { return testCborLength(2, strlen($value)) . $value; }
+
+$passkeyPrivate = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
+$passkeyDetails = openssl_pkey_get_details($passkeyPrivate);
+$passkeyX = $passkeyDetails['ec']['x'];
+$passkeyY = $passkeyDetails['ec']['y'];
+$passkeyCose = chr(0xa5)
+    . chr(0x01) . chr(0x02)
+    . chr(0x03) . chr(0x26)
+    . chr(0x20) . chr(0x01)
+    . chr(0x21) . testCborBytes($passkeyX)
+    . chr(0x22) . testCborBytes($passkeyY);
+$passkeyChallenge = WebAuthn::base64urlEncode(random_bytes(32));
+$passkeyCredentialRaw = random_bytes(32);
+$passkeyCredentialId = WebAuthn::base64urlEncode($passkeyCredentialRaw);
+$passkeyHandle = WebAuthn::base64urlEncode(random_bytes(32));
+$passkeyExpected = ['challenge' => $passkeyChallenge, 'origin' => 'https://test.local', 'rp_id' => 'test.local'];
+$passkeyClientData = json_encode(['type' => 'webauthn.create', 'challenge' => $passkeyChallenge, 'origin' => 'https://test.local', 'crossOrigin' => false]);
+$passkeyRegistrationAuthData = hash('sha256', 'test.local', true)
+    . chr(0x5d) . pack('N', 0) . str_repeat("\0", 16)
+    . pack('n', strlen($passkeyCredentialRaw)) . $passkeyCredentialRaw . $passkeyCose;
+$passkeyAttestation = chr(0xa3)
+    . testCborText('fmt') . testCborText('none')
+    . testCborText('attStmt') . chr(0xa0)
+    . testCborText('authData') . testCborBytes($passkeyRegistrationAuthData);
+$passkeyRegistrationPayload = [
+    'id' => $passkeyCredentialId,
+    'rawId' => $passkeyCredentialId,
+    'type' => 'public-key',
+    'response' => [
+        'clientDataJSON' => WebAuthn::base64urlEncode($passkeyClientData),
+        'attestationObject' => WebAuthn::base64urlEncode($passkeyAttestation),
+        'transports' => ['internal'],
+    ],
+];
+$passkeyVerifiedRegistration = WebAuthn::verifyRegistration($passkeyRegistrationPayload, $passkeyExpected);
+assertEqual($passkeyCredentialId, $passkeyVerifiedRegistration['credential_id'], 'Passkey registration retains the authenticator credential ID');
+assertEqual(1, $passkeyVerifiedRegistration['backup_eligible'], 'Passkey registration records sync eligibility');
+assertEqual(1, $passkeyVerifiedRegistration['backed_up'], 'Passkey registration records current sync state');
+
+$passkeyAuthChallenge = WebAuthn::base64urlEncode(random_bytes(32));
+$passkeyAuthExpected = ['challenge' => $passkeyAuthChallenge, 'origin' => 'https://test.local', 'rp_id' => 'test.local'];
+$passkeyAuthClientData = json_encode(['type' => 'webauthn.get', 'challenge' => $passkeyAuthChallenge, 'origin' => 'https://test.local', 'crossOrigin' => false]);
+$passkeyAssertionData = hash('sha256', 'test.local', true) . chr(0x1d) . pack('N', 1);
+openssl_sign($passkeyAssertionData . hash('sha256', $passkeyAuthClientData, true), $passkeySignature, $passkeyPrivate, OPENSSL_ALGO_SHA256);
+$passkeyAuthPayload = [
+    'id' => $passkeyCredentialId,
+    'rawId' => $passkeyCredentialId,
+    'type' => 'public-key',
+    'response' => [
+        'clientDataJSON' => WebAuthn::base64urlEncode($passkeyAuthClientData),
+        'authenticatorData' => WebAuthn::base64urlEncode($passkeyAssertionData),
+        'signature' => WebAuthn::base64urlEncode($passkeySignature),
+        'userHandle' => $passkeyHandle,
+    ],
+];
+$passkeyCredential = array_merge($passkeyVerifiedRegistration, ['user_handle' => $passkeyHandle]);
+$passkeyVerifiedAuthentication = WebAuthn::verifyAuthentication($passkeyAuthPayload, $passkeyAuthExpected, $passkeyCredential);
+assertEqual(1, $passkeyVerifiedAuthentication['sign_count'], 'Passkey authentication verifies the signed assertion counter');
+$passkeyReplayBlocked = false;
+try {
+    WebAuthn::verifyAuthentication($passkeyAuthPayload, $passkeyAuthExpected, array_merge($passkeyCredential, ['sign_count' => 1]));
+} catch (RuntimeException $e) {
+    $passkeyReplayBlocked = true;
+}
+assertEqual(true, $passkeyReplayBlocked, 'Passkey authentication rejects a non-advancing signature counter');
+$passkeyWrongOriginBlocked = false;
+try {
+    WebAuthn::verifyAuthentication($passkeyAuthPayload, array_merge($passkeyAuthExpected, ['origin' => 'https://wrong.test']), $passkeyCredential);
+} catch (RuntimeException $e) {
+    $passkeyWrongOriginBlocked = true;
+}
+assertEqual(true, $passkeyWrongOriginBlocked, 'Passkey authentication rejects a mismatched origin');
+
+$storedPasskeyId = Passkey::create($userId, $passkeyHandle, $passkeyVerifiedRegistration, $passkeyRegistrationPayload, 'Test Mac');
+assertEqual('Test Mac', Passkey::allForUser($userId)[0]['label'] ?? null, 'Passkey management lists the named credential');
+assertEqual($userId, (int)(Passkey::findByCredentialId($passkeyCredentialId)['user_id'] ?? 0), 'Passkey lookup resolves the owning user without a username');
+assertEqual(true, Passkey::recordUse($storedPasskeyId, 0, 1, 1), 'Passkey usage updates its audit and signature state');
 
 // --- Tag tests ---
 $tagId = Tag::create('Food', 'supermarket', 'Groceries');
@@ -535,7 +625,7 @@ assertEqual(1, count($memoFiltered), 'Transaction::filter filters by memo');
 // --- Recurring income/outgoing detection ---
 $db->exec('DELETE FROM transactions');
 
-$now = time();
+$now = strtotime(date('Y-m-01'));
 $u1 = date('Y-m-15', strtotime('-3 months', $now));
 $u2 = date('Y-m-15', strtotime('-2 months', $now));
 $u3 = date('Y-m-15', strtotime('-1 month', $now));
@@ -1042,6 +1132,8 @@ assertEqual(0, (int)$healthySchemaAudit['summary']['issues'], 'Canonical schema 
 assertEqual(['date'], $healthySchemaSnapshot['tables']['transactions']['indexes']['idx_transactions_date']['columns'] ?? null, 'Database Health includes the statement date index');
 assertEqual(['created_at'], $healthySchemaSnapshot['tables']['logs']['indexes']['idx_logs_created_at']['columns'] ?? null, 'Database Health includes the log date index');
 assertEqual(true, isset($healthySchemaSnapshot['tables']['accounts']['columns']['closed'], $healthySchemaSnapshot['tables']['accounts']['columns']['closed_at']), 'Database Health includes closed-account lifecycle fields');
+assertEqual(['credential_id_hash'], $healthySchemaSnapshot['tables']['passkeys']['indexes']['credential_id_hash']['columns'] ?? null, 'Database Health includes unique passkey credential lookup');
+assertEqual('CASCADE', $healthySchemaSnapshot['tables']['passkeys']['foreign_keys'][0]['delete_rule'] ?? null, 'Database Health links passkeys safely to users');
 
 $equivalentSchemaSnapshot = $healthySchemaSnapshot;
 foreach ($equivalentSchemaSnapshot['tables'] as &$equivalentTable) {
@@ -1533,6 +1625,10 @@ preg_match('/<form[^>]+id="login-form"[^>]*>(.*?)<\/form>/s', $loginMarkup, $cre
 $credentialFormMarkup = $credentialFormMatch[0] ?? '';
 assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="username"') !== false, 'Login username retains username AutoFill');
 assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="current-password"') !== false, 'Login password retains password AutoFill');
+assertEqual(true, strpos($loginMarkup, 'id="passkey-login-button"') !== false, 'Login page offers passkey authentication alongside the password flow');
+assertEqual(true, strpos($loginMarkup, 'passkey_login.js') !== false, 'Login page loads the shared WebAuthn client flow');
+$userManagementMarkup = (string)file_get_contents(__DIR__ . '/../users.php');
+assertEqual(true, strpos($userManagementMarkup, 'id="passkey-manager"') !== false, 'User Management provides passkey enrolment and removal');
 
 $navigationMarkup = (string)file_get_contents(__DIR__ . '/../frontend/menu.php');
 preg_match_all('/href="([a-z0-9_\-]+\.html)"/i', $navigationMarkup, $navigationMatches);
@@ -1560,10 +1656,11 @@ $backupJson = $backupSignature === false ? false : gzdecode(substr($backupArchiv
 $backupPayload = json_decode($backupJson, true);
 assertEqual(null, $backupPayload['error'] ?? null, 'Backup generation completes without a database error');
 assertEqual('newaccounts-backup', $backupPayload['_meta']['format'] ?? null, 'Backup includes a format manifest');
-assertEqual(5, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(6, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
 assertEqual(true, array_key_exists('direction', $backupPayload['tag_aliases'][0] ?? []), 'Backup preserves direction-aware tag rules');
 assertEqual(true, array_key_exists('cutover_summary', $backupPayload['tag_migration_runs'][0] ?? []), 'Backup preserves taxonomy cutover audit fields');
 assertEqual(1, count($backupPayload['totp_secrets'] ?? []), 'Backup includes two-factor authentication state');
+assertEqual(1, count($backupPayload['passkeys'] ?? []), 'Backup includes passkey public credentials');
 assertEqual(true, count($backupPayload['saved_reports'] ?? []) >= 1, 'Backup includes saved reports');
 assertEqual(true, count($backupPayload['tag_migration_runs'] ?? []) >= 1, 'Backup includes tag rebuild safety runs');
 assertEqual(true, count($backupPayload['transaction_classification_snapshots'] ?? []) >= 1, 'Backup includes immutable classification snapshots');
@@ -1572,6 +1669,7 @@ assertEqual(true, count($backupPayload['tag_taxonomy_patterns'] ?? []) >= 1, 'Ba
 assertEqual(true, count($backupPayload['transaction_tag_proposals'] ?? []) >= 1, 'Backup includes staged transaction assignments');
 
 $db->exec('DELETE FROM totp_secrets');
+$db->exec('DELETE FROM passkeys');
 $db->exec('DELETE FROM saved_reports');
 $backupFile = tempnam(sys_get_temp_dir(), 'accounts-backup-');
 file_put_contents($backupFile, $backupArchive);
@@ -1582,6 +1680,7 @@ $restoreMessage = ob_get_clean();
 $db = Database::getConnection();
 assertEqual('Restore complete.', $restoreMessage, 'A complete backup restores successfully');
 assertEqual('TEST-TOTP-SECRET', $db->query("SELECT secret FROM totp_secrets WHERE username='alice'")->fetchColumn(), 'Restore preserves two-factor authentication state');
+assertEqual('Test Mac', $db->query("SELECT label FROM passkeys WHERE user_id=1")->fetchColumn(), 'Restore preserves passkey credentials');
 assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Restore preserves saved reports');
 assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM tag_migration_runs')->fetchColumn() >= 1, 'Restore preserves tag rebuild safety history');
 assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM tag_taxonomy_proposals')->fetchColumn() >= 1, 'Restore preserves reviewed taxonomy proposals');

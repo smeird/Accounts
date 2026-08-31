@@ -25,6 +25,17 @@ class User {
         return $row ?: null;
     }
 
+    /**
+     * Look up a user record by its internal ID.
+     */
+    public static function findById(int $id): ?array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare('SELECT `id`, `username`, `password` FROM `users` WHERE `id` = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
 
     /**
      * Verify a username and password, returning the user ID or null on failure.

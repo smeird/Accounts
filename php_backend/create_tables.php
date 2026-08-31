@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS tag_taxonomy_proposals;
 DROP TABLE IF EXISTS transaction_classification_snapshots;
 DROP TABLE IF EXISTS tag_migration_runs;
 DROP TABLE IF EXISTS saved_reports;
+DROP TABLE IF EXISTS passkeys;
 DROP TABLE IF EXISTS totp_secrets;
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS users;
@@ -40,6 +41,24 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS passkeys (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    credential_id TEXT NOT NULL,
+    credential_id_hash CHAR(64) NOT NULL UNIQUE,
+    user_handle VARCHAR(86) NOT NULL,
+    public_key TEXT NOT NULL,
+    sign_count BIGINT NOT NULL DEFAULT 0,
+    transports VARCHAR(255) DEFAULT NULL,
+    label VARCHAR(100) NOT NULL DEFAULT 'Passkey',
+    backup_eligible TINYINT(1) NOT NULL DEFAULT 0,
+    backed_up TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP NULL DEFAULT NULL,
+    KEY idx_passkeys_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS totp_secrets (

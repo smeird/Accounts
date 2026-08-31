@@ -55,7 +55,7 @@ Cleanup does not delete tags, aliases, category links, or transactions. It does 
 
 The action hashes every transaction classification and fingerprints the complete ledger before and after the write. It records the exact prior and resulting state of every retired tag and disabled alias inside the existing cutover audit. The ordinary **Rollback cutover** action restores the cleanup catalogue state first and reverses the original cutover while that broader rollback remains valid. If routine classification work has already made the full rollback unavailable, the page reports that separately without disabling the independent catalogue cleanup.
 
-Full backups use format version 5 and preserve the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
+Full backups use format version 6 and preserve passkey public credentials alongside the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
 
 ## Acceptance thresholds
 

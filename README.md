@@ -40,8 +40,8 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 
 ### Administration
 
-- Users, passwords and TOTP two-factor authentication.
-- Backup and restore for accounts, transactions, classifications, taxonomy staging, projects, budgets and settings.
+- Users, passwords, discoverable passkeys and TOTP two-factor authentication. Passkeys support Face ID, Touch ID, device PINs and compatible security keys without sending a private key to the server.
+- Backup and restore for accounts, public passkey credentials, transactions, classifications, taxonomy staging, projects, budgets and settings.
 - Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
 - The three-phase taxonomy rebuild creates an immutable classification snapshot, stages and reviews a compact AI-assisted vocabulary, then applies it through an atomic, financially reconciled cutover with an audited rollback path.
 - Automation Centre, logs, duplicate checks and configurable branding, expanded accent palettes, grouped typography choices, surfaces, spacing, corners, backdrop strength, header scale, animated accent-bar thickness and motion.
@@ -108,6 +108,12 @@ curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | ba
    php php_backend/migrations/20260814_transaction_identity.php
    ```
 
+   Existing installations adding passkeys must also run **System → Database Health** or:
+
+   ```bash
+   php php_backend/migrations/20260831_passkeys.php
+   ```
+
 5. Serve the repository and sign in through `index.php`:
 
    ```bash
@@ -167,6 +173,6 @@ Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff -
 
 ## Backups and deployment safety
 
-Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and JSON extracts or a complete Excel financial workbook. The Excel export includes a period summary, pivot-style analysis and a filterable transaction ledger; internal transfers and ignored rows remain visible but are excluded from analytical totals. Full backups include tag-rebuild runs and their immutable classification snapshots. Treat these files as sensitive financial data.
+Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and JSON extracts or a complete Excel financial workbook. The Excel export includes a period summary, pivot-style analysis and a filterable transaction ledger; internal transfers and ignored rows remain visible but are excluded from analytical totals. Full backups include passkey public credentials, tag-rebuild runs and their immutable classification snapshots. Treat these files as sensitive financial data.
 
-Keep credentials and API tokens outside the repository, serve production over HTTPS, allow the included `.htaccess` cache policy, and deploy from `main`. Do not use `--allow-unrelated-histories` on a production checkout; preserve configuration/uploads and use a clean clone if the server directory does not share this repository’s history.
+Keep credentials and API tokens outside the repository, serve production over HTTPS (required by browsers for passkeys outside localhost), allow the included `.htaccess` cache policy, and deploy from `main`. `PASSKEY_ORIGIN` and `PASSKEY_RP_ID` may be set when a reverse proxy means PHP cannot infer the public HTTPS origin and hostname. Do not use `--allow-unrelated-histories` on a production checkout; preserve configuration/uploads and use a clean clone if the server directory does not share this repository’s history.

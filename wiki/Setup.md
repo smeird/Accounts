@@ -17,6 +17,7 @@ Accounts reads:
 - `DB_USER`
 - `DB_PASS`
 - optional `DB_DSN` for tests or a custom PDO connection
+- optional `PASSKEY_ORIGIN` and `PASSKEY_RP_ID` when the public HTTPS origin cannot be inferred behind a reverse proxy
 
 For Apache, keep credentials outside the repository:
 
@@ -34,6 +35,8 @@ For Apache, keep credentials outside the repository:
     SetEnv DB_NAME accounts
     SetEnv DB_USER accounts_user
     SetEnv DB_PASS replace_this
+    SetEnv PASSKEY_ORIGIN https://accounts.example.test
+    SetEnv PASSKEY_RP_ID accounts.example.test
 </VirtualHost>
 ```
 
@@ -58,6 +61,16 @@ Open `http://localhost:8000/` and create/sign in with the initial user flow prov
 4. Open **System → Database Health** and review the audit.
 5. Apply only the safe structural repairs you understand, including the tag migration run, snapshot, taxonomy proposal, pattern and transaction-staging tables before using **System → Tag Rebuild Safety** or **System → Taxonomy Studio**.
 6. Reload Apache/PHP as required and verify the production site.
+
+### Passkey migration
+
+Passkeys require HTTPS in production and the `passkeys` table. Database Health can create the missing structure, or run:
+
+```bash
+php php_backend/migrations/20260831_passkeys.php
+```
+
+Afterward, sign in with the existing password, open **System → Users**, and add the first passkey. Keep password access available as a recovery route.
 
 Do not use `git pull --allow-unrelated-histories` to repair a deployment directory. If the directory is not descended from this repository, preserve its configuration and uploads, then deploy a clean clone.
 

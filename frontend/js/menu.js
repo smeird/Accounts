@@ -408,7 +408,7 @@ const attachSidebarSearchHandler = (root = document) => {
             .then(r => (r.ok ? r.json() : Promise.reject()))
             .then(u => {
               userEl.textContent = u.username || 'Guest';
-              if (u.has2fa && iconEl) {
+              if ((u.has2fa || u.hasPasskey) && iconEl) {
                 iconEl.classList.remove('fa-user');
                 iconEl.classList.add('fa-user-shield');
               }

@@ -74,6 +74,14 @@
 .login-submit { display:flex; width:100%; min-height:3rem; align-items:center; justify-content:center; gap:.55rem; margin-top:.12rem; border:0; border-radius:.82rem; background:linear-gradient(90deg,var(--login-brand,#4f46e5),#06b6d4); font-size:.8rem; font-weight:850; box-shadow:0 16px 28px -20px color-mix(in srgb,var(--login-brand,#4f46e5) 72%,transparent); transition:transform 150ms ease,box-shadow 150ms ease,filter 150ms ease; }
 .login-submit:hover,.login-submit:focus-visible { transform:translateY(-1px); background:linear-gradient(90deg,var(--login-brand-dark,#4338ca),#0891b2); box-shadow:0 19px 32px -20px color-mix(in srgb,var(--login-brand,#4f46e5) 78%,transparent); outline:none; }
 .login-submit i { font-size:.66rem; }
+.login-passkey { display:grid; gap:.62rem; margin-top:.85rem; }
+.login-divider { display:flex; align-items:center; gap:.65rem; color:#94a3b8; font-size:.62rem; font-weight:750; text-transform:uppercase; }
+.login-divider::before,.login-divider::after { flex:1; height:1px; background:#e2e8f0; content:""; }
+.login-passkey-button { display:flex; width:100%; min-height:3rem; align-items:center; justify-content:center; gap:.55rem; border:1px solid #cbd5e1; border-radius:.82rem; color:#334155; background:rgba(255,255,255,.88); font:inherit; font-size:.78rem; font-weight:850; cursor:pointer; transition:border-color 150ms ease,background 150ms ease,transform 150ms ease; }
+.login-passkey-button:hover,.login-passkey-button:focus-visible { border-color:var(--login-brand,#4f46e5); color:var(--login-brand-dark,#4338ca); background:#fff; outline:none; transform:translateY(-1px); }
+.login-passkey-button:disabled { cursor:wait; opacity:.62; transform:none; }
+.login-passkey-button i { color:var(--login-brand,#4f46e5); font-size:.85rem; }
+.login-passkey-status { min-height:1rem; margin:0; color:#64748b; font-size:.63rem; line-height:1.4; text-align:center; }
 .login-trust { display:flex; align-items:center; justify-content:center; gap:.4rem; margin:1rem 0 0; color:#94a3b8; font-size:.63rem; font-weight:720; }
 .login-trust i { color:#10b981; font-size:.58rem; }
 
@@ -98,5 +106,5 @@
 }
 
 @media(prefers-reduced-motion:reduce) {
-    .login-input-wrap input,.login-submit { transition:none; }
+    .login-input-wrap input,.login-submit,.login-passkey-button { transition:none; }
 }

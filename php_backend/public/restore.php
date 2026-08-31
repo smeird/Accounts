@@ -87,7 +87,7 @@ try {
     }
     if (isset($data['_meta'])) {
         if (($data['_meta']['format'] ?? '') !== 'newaccounts-backup'
-            || (int)($data['_meta']['version'] ?? 0) > 5) {
+            || (int)($data['_meta']['version'] ?? 0) > 6) {
             throw new InvalidArgumentException('Unsupported backup format or version.');
         }
         foreach (($data['_meta']['counts'] ?? []) as $section => $expected) {
@@ -122,6 +122,7 @@ try {
     if (isset($data['segments'])) $db->exec('DELETE FROM segments');
     if (isset($data['groups'])) $db->exec('DELETE FROM transaction_groups');
     if (isset($data['settings'])) $db->exec('DELETE FROM settings');
+    if (isset($data['passkeys'])) $db->exec('DELETE FROM passkeys');
     if (isset($data['totp_secrets'])) $db->exec('DELETE FROM totp_secrets');
     if (isset($data['accounts'])) $db->exec('DELETE FROM accounts');
     if (isset($data['users'])) $db->exec('DELETE FROM users');
@@ -130,6 +131,31 @@ try {
         $stmtUser = $db->prepare('INSERT INTO users (id, username, password) VALUES (:id, :username, :password)');
         foreach ($data['users'] as $row) {
             $stmtUser->execute(['id' => $row['id'], 'username' => $row['username'], 'password' => $row['password']]);
+        }
+    }
+
+    if (isset($data['passkeys'])) {
+        $stmtPasskey = $db->prepare('INSERT INTO passkeys (id, user_id, credential_id, credential_id_hash, user_handle, public_key, sign_count, transports, label, backup_eligible, backed_up, created_at, last_used_at) VALUES (:id, :user_id, :credential_id, :credential_id_hash, :user_handle, :public_key, :sign_count, :transports, :label, :backup_eligible, :backed_up, :created_at, :last_used_at)');
+        foreach ($data['passkeys'] as $row) {
+            $credentialId = (string)($row['credential_id'] ?? '');
+            if ($credentialId === '' || empty($row['user_id']) || empty($row['user_handle']) || empty($row['public_key'])) {
+                throw new InvalidArgumentException('Invalid passkey backup row.');
+            }
+            $stmtPasskey->execute([
+                'id' => $row['id'],
+                'user_id' => $row['user_id'],
+                'credential_id' => $credentialId,
+                'credential_id_hash' => hash('sha256', $credentialId),
+                'user_handle' => $row['user_handle'],
+                'public_key' => $row['public_key'],
+                'sign_count' => max(0, (int)($row['sign_count'] ?? 0)),
+                'transports' => $row['transports'] ?? null,
+                'label' => substr(trim((string)($row['label'] ?? 'Passkey')), 0, 100) ?: 'Passkey',
+                'backup_eligible' => !empty($row['backup_eligible']) ? 1 : 0,
+                'backed_up' => !empty($row['backed_up']) ? 1 : 0,
+                'created_at' => $row['created_at'] ?? null,
+                'last_used_at' => $row['last_used_at'] ?? null,
+            ]);
         }
     }
 

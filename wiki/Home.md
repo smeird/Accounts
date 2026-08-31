@@ -18,6 +18,8 @@ Accounts is a self-hosted financial workspace for importing bank statements, mai
 - **Organise:** tags, aliases, categories, segments and groups.
 - **System:** automation, exports, backups, health checks, settings, users and logs.
 
+User access supports passwords with optional authenticator-app verification and discoverable passkeys managed from **System → Users**.
+
 ## Important analytical behaviour
 
 - Transfers and `IGNORE`-tagged transactions do not inflate income or expenditure.

@@ -15,7 +15,9 @@ This document describes the current functional baseline. New work should preserv
 
 ## Authentication and administration
 
-- Authenticate with username/password and optional TOTP.
+- Authenticate with username/password and optional TOTP, or with a registered discoverable passkey that requires device-level user verification.
+- Allow each signed-in user to register, name, review and remove multiple passkeys while retaining password login as recovery.
+- Bind passkey ceremonies to one-time server challenges, the exact public origin and relying-party ID; store only public credentials and audit their use.
 - Manage users and passwords without exposing stored credentials.
 - Configure session timeout, branding, colour scheme, typography and AI settings.
 - Keep OpenAI tokens server-side and expose only configured/not-configured state.
@@ -90,7 +92,7 @@ This document describes the current functional baseline. New work should preserv
 - Run tagging, category and segment refreshes in the recommended order or individually.
 - Keep assignment clearing separate and explicitly confirmed without deleting rules.
 - Detect potential duplicates and support reviewed cleanup.
-- Back up and restore selected business-data sections.
+- Back up and restore selected business-data sections and passkey public credentials.
 - Audit schema tables, columns, indexes, keys and relationships against `SchemaCatalog.php`.
 - Permit only catalogue-generated schema repairs; never generate record-changing repair SQL.
 

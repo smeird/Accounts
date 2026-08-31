@@ -1,0 +1,22 @@
+.passkey-card { display:grid; gap:.85rem; padding:1rem; }
+.passkey-intro { margin:0; color:#64748b; font-size:.78rem; line-height:1.55; }
+.passkey-support { display:flex; align-items:center; gap:.42rem; margin:0; color:#475569; font-size:.7rem; }
+.passkey-support::before { width:.48rem; height:.48rem; flex:0 0 auto; border-radius:50%; background:#10b981; content:""; box-shadow:0 0 0 .2rem rgba(16,185,129,.1); }
+.passkey-add { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.65rem; align-items:end; }
+.passkey-add label { display:grid; gap:.35rem; color:#334155; font-size:.7rem; font-weight:800; }
+.passkey-add input { min-height:2.75rem; }
+.passkey-add button { min-height:2.75rem; }
+.passkey-list { display:grid; gap:.55rem; }
+.passkey-empty { margin:0; padding:.78rem; border:1px dashed #cbd5e1; border-radius:.75rem; color:#64748b; background:#f8fafc; font-size:.72rem; line-height:1.5; }
+.passkey-row { display:grid; grid-template-columns:2.3rem minmax(0,1fr) auto; align-items:center; gap:.7rem; padding:.72rem; border:1px solid #dbe3ef; border-radius:.78rem; background:#fff; }
+.passkey-row__icon { display:grid; width:2.3rem; height:2.3rem; place-items:center; border-radius:.65rem; color:var(--site-brand,#4f46e5); background:#eef2ff; }
+.passkey-row strong,.passkey-row span { display:block; }
+.passkey-row strong { color:#1e293b; font-size:.75rem; }
+.passkey-row div > span { margin-top:.16rem; color:#64748b; font-size:.62rem; font-weight:400; line-height:1.4; }
+.passkey-remove { display:inline-flex; min-height:2.35rem; align-items:center; gap:.35rem; padding:.45rem .62rem; border:1px solid #fecdd3; border-radius:.65rem; color:#be123c; background:#fff1f2; font-size:.65rem; font-weight:800; }
+
+@media(max-width:640px) {
+  .passkey-add { grid-template-columns:1fr; }
+  .passkey-row { grid-template-columns:2.3rem minmax(0,1fr); }
+  .passkey-remove { grid-column:1/-1; justify-content:center; }
+}

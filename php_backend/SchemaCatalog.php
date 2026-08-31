@@ -10,6 +10,26 @@ class SchemaCatalog {
             ], ['id'], [
                 'username' => self::index(['username'], true),
             ]),
+            'passkeys' => self::table([
+                'id' => self::column('BIGINT AUTO_INCREMENT', 'bigint', false, false, null, 'auto_increment'),
+                'user_id' => self::column('INT NOT NULL', 'int', false, false),
+                'credential_id' => self::column('TEXT NOT NULL', 'text', false, false),
+                'credential_id_hash' => self::column('CHAR(64) NOT NULL', 'char', false, false, 64),
+                'user_handle' => self::column('VARCHAR(86) NOT NULL', 'varchar', false, false, 86),
+                'public_key' => self::column('TEXT NOT NULL', 'text', false, false),
+                'sign_count' => self::column('BIGINT NOT NULL DEFAULT 0', 'bigint', false, true),
+                'transports' => self::column('VARCHAR(255) DEFAULT NULL', 'varchar', true, true, 255),
+                'label' => self::column("VARCHAR(100) NOT NULL DEFAULT 'Passkey'", 'varchar', false, true, 100),
+                'backup_eligible' => self::column('TINYINT(1) NOT NULL DEFAULT 0', 'tinyint', false, true),
+                'backed_up' => self::column('TINYINT(1) NOT NULL DEFAULT 0', 'tinyint', false, true),
+                'created_at' => self::column('TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'timestamp', null, true),
+                'last_used_at' => self::column('TIMESTAMP NULL DEFAULT NULL', 'timestamp', true, true),
+            ], ['id'], [
+                'credential_id_hash' => self::index(['credential_id_hash'], true),
+                'idx_passkeys_user' => self::index(['user_id']),
+            ], [
+                'fk_passkeys_user' => self::foreignKey(['user_id'], 'users', ['id'], 'CASCADE'),
+            ]),
             'totp_secrets' => self::table([
                 'username' => self::column('VARCHAR(100) NOT NULL', 'varchar', false, false, 100),
                 'secret' => self::column('VARCHAR(64) NOT NULL', 'varchar', false, false, 64),

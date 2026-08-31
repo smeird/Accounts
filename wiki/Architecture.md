@@ -16,6 +16,12 @@ flowchart TB
     AIFlow --> Domain
 ```
 
+## Authentication
+
+Password login retains optional TOTP verification. Passkey login is a separate WebAuthn ceremony using a discoverable ES256 credential: the browser selects the account, performs local user verification, and returns a signed assertion. The server consumes a one-time challenge, verifies the exact origin and relying-party hash, checks user-presence/user-verification flags, validates the signature and advances the authenticator counter before creating the normal application session. Only the credential ID, public key and audit metadata are stored; private keys remain with the authenticator or password manager.
+
+Passkey registration requires an existing authenticated session. Users may keep several named credentials and remove their own credentials from User Management. A passkey completes authentication directly and does not trigger TOTP again; password plus TOTP remains the recovery path.
+
 ## Repository layout
 
 | Path | Responsibility |
@@ -95,7 +101,7 @@ Use native semantic tables for compact read-only content. Use the pinned Tabulat
 
 ## Schema evolution
 
-Update `SchemaCatalog.php` whenever the managed application schema changes. Database Health may apply only catalogue-generated structural repairs. Data transformations remain explicit migrations and must not be hidden inside schema-health actions.
+Update `SchemaCatalog.php` whenever the managed application schema changes. Database Health may apply only catalogue-generated structural repairs. Data transformations remain explicit migrations and must not be hidden inside schema-health actions. The `passkeys` table stores public WebAuthn material and is included in backup format version 6.
 
 ### Tag-taxonomy rebuild safety boundary
 

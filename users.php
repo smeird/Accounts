@@ -1,5 +1,5 @@
 <?php
-// Simple user management page to add users, change passwords, and manage 2FA.
+// User management page for passwords, passkeys, and authenticator-app 2FA.
 require_once __DIR__ . '/php_backend/auth.php';
 require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/Totp.php';
@@ -82,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css">
     <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260825-ipad-safe-area">
+    <link rel="stylesheet" href="frontend/users.css?v=20260831-passkeys">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
       <!-- Font Awesome icons loaded via frontend/js/menu.js -->
@@ -101,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div>
                 <h1 class="text-2xl font-semibold text-indigo-700 page-title">User Management</h1>
                 <span class="page-breadcrumb">System / Users</span>
-                <p class="page-subtitle">Add new users, update your password, or manage two-factor authentication from this page.</p>
+                <p class="page-subtitle">Add users, update your password, and manage passkeys or authenticator-app verification.</p>
             </div>
         </header>
         <div class="cards cards-solid border border-gray-400 admin-card user-admin-card">
@@ -125,6 +126,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="block">New Password: <input type="password" name="password" class="border p-2 rounded w-full" data-help="Enter your new password"></label>
             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Update Password</button>
         </form></section>
+
+        <section class="admin-form-section" id="passkey-manager"><h2 class="text-xl font-semibold mb-2">Passkeys</h2>
+        <p class="passkey-intro">Passkeys replace typing your username, password, and authenticator code. Your device verifies you with Face ID, Touch ID, a device PIN, or a compatible security key.</p>
+        <div class="cards cards-solid cards-tight passkey-card mb-6">
+            <p id="passkey-support" class="passkey-support">Checking this browser…</p>
+            <div class="passkey-add">
+                <label for="passkey-label">Passkey name<input id="passkey-label" type="text" maxlength="100" placeholder="For example, Dominic’s MacBook" autocomplete="off" data-help="Use a name that helps you recognise this device or password manager"></label>
+                <button id="add-passkey" type="button" class="bg-indigo-600 text-white px-4 py-2 rounded" aria-label="Add a passkey"><i class="fas fa-fingerprint" aria-hidden="true"></i> Add passkey</button>
+            </div>
+            <div id="passkey-list" class="passkey-list" aria-live="polite"><p class="passkey-empty">Loading passkeys…</p></div>
+        </div>
+        </section>
 
         <section class="admin-form-section"><h2 class="text-xl font-semibold mb-2">Two-factor authentication</h2>
         <p class="mb-4"><?= $has2fa ? '2FA is enabled for your account.' : '2FA is not enabled. Generate a secret to enable it.' ?></p>
@@ -157,6 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
     <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
+    <script src="frontend/js/webauthn_client.js?v=20260831-passkeys"></script>
+    <script src="frontend/js/passkeys.js?v=20260831-passkeys"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($brand['heading_font']) ?>,
