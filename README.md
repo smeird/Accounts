@@ -40,7 +40,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 
 ### Administration
 
-- Users, passwords, discoverable passkeys and TOTP two-factor authentication. Passkeys support Face ID, Touch ID, device PINs and compatible security keys without sending a private key to the server.
+- Passkey-first sign-in with conditional browser discovery, plus passwords and TOTP as fallbacks. Passkeys support Face ID, Touch ID, device PINs and compatible security keys without sending a private key to the server.
 - Backup and restore for accounts, public passkey credentials, transactions, classifications, taxonomy staging, projects, budgets and settings.
 - Database Health compares the installation with the canonical schema and offers review-first, schema-only repairs.
 - The three-phase taxonomy rebuild creates an immutable classification snapshot, stages and reviews a compact AI-assisted vocabulary, then applies it through an atomic, financially reconciled cutover with an audited rollback path.

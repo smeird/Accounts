@@ -22,6 +22,8 @@ Password login retains optional TOTP verification. Passkey login is a separate W
 
 Passkey registration requires an existing authenticated session. Users may keep several named credentials and remove their own credentials from User Management. A passkey completes authentication directly and does not trigger TOTP again; password plus TOTP remains the recovery path.
 
+The login page uses conditional WebAuthn mediation where the browser supports it. The browser may offer a matching discoverable credential through the username field and completes login immediately after local verification; the application never enumerates or learns about credentials that the browser has not selected. The explicit passkey button remains available where conditional mediation is unavailable or dismissed.
+
 ## Repository layout
 
 | Path | Responsibility |

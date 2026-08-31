@@ -71,6 +71,7 @@
   }
 
   function friendlyError(error) {
+    if (error && error.name === 'AbortError') return '';
     if (error && error.name === 'NotAllowedError') return 'Passkey sign-in was cancelled or timed out.';
     if (error && error.name === 'InvalidStateError') return 'That passkey is already registered.';
     if (error && error.name === 'NotSupportedError') return 'This browser or device cannot create the requested passkey.';
@@ -79,6 +80,15 @@
 
   window.WebAuthnClient = {
     supported: () => !!(window.PublicKeyCredential && navigator.credentials),
+    conditionalMediationAvailable: async () => {
+      if (!window.PublicKeyCredential
+        || typeof window.PublicKeyCredential.isConditionalMediationAvailable !== 'function') return false;
+      try {
+        return await window.PublicKeyCredential.isConditionalMediationAvailable();
+      } catch (error) {
+        return false;
+      }
+    },
     creationOptions,
     requestOptions,
     registrationPayload,

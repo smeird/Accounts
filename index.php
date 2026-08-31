@@ -141,10 +141,17 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         </div>
                     </div>
                     <p class="login-instruction">
-                        <?= $needsToken ? 'Enter the 6-digit code from your authenticator app, or use a registered passkey.' : 'Use your password or a registered passkey to access the ' . htmlspecialchars($siteName) . ' workspace.' ?>
+                        <?= $needsToken ? 'Enter the 6-digit code from your authenticator app, or use a registered passkey.' : 'If this device has your passkey, choose it when offered. Otherwise, use your password.' ?>
                     </p>
                     <?php if ($error): ?>
                         <p class="login-error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><?= htmlspecialchars($error) ?></p>
+                    <?php endif; ?>
+                    <?php if (!$needsToken): ?>
+                        <div class="login-passkey login-passkey--primary" id="passkey-login">
+                            <button id="passkey-login-button" type="button" class="login-passkey-button" aria-label="Continue with a passkey"><i class="fa-solid fa-fingerprint" aria-hidden="true"></i> Continue with passkey</button>
+                            <p id="passkey-login-status" class="login-passkey-status" role="status" aria-live="polite">Checking this device for passkeys…</p>
+                            <div class="login-divider"><span>or use password</span></div>
+                        </div>
                     <?php endif; ?>
                     <?php if ($needsToken): ?>
                         <form method="post" class="login-form" id="token-form" autocomplete="on">
@@ -159,7 +166,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         <form method="post" class="login-form" id="login-form" autocomplete="on">
                             <label class="login-field" for="login-username">Username
                                 <span class="login-input-wrap"><i class="fa-solid fa-user" aria-hidden="true"></i>
-                                    <input id="login-username" type="text" name="username" autocomplete="username" autofocus required data-help="Enter your username">
+                                    <input id="login-username" type="text" name="username" autocomplete="username webauthn" autofocus required data-help="Enter your username or choose a saved passkey">
                                 </span>
                             </label>
                             <label class="login-field" for="login-password">Password
@@ -170,11 +177,13 @@ $needsToken = isset($_SESSION['pending_user_id']);
                             <button type="submit" aria-label="Log in" class="brand-action-btn login-submit">Open dashboard <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                         </form>
                     <?php endif; ?>
-                    <div class="login-passkey" id="passkey-login">
-                        <div class="login-divider"><span>or</span></div>
-                        <button id="passkey-login-button" type="button" class="login-passkey-button" aria-label="Sign in with a passkey"><i class="fa-solid fa-fingerprint" aria-hidden="true"></i> Sign in with a passkey</button>
-                        <p id="passkey-login-status" class="login-passkey-status" role="status" aria-live="polite">Use Face ID, Touch ID, your device PIN, or a security key.</p>
-                    </div>
+                    <?php if ($needsToken): ?>
+                        <div class="login-passkey" id="passkey-login">
+                            <div class="login-divider"><span>or</span></div>
+                            <button id="passkey-login-button" type="button" class="login-passkey-button" aria-label="Sign in with a passkey"><i class="fa-solid fa-fingerprint" aria-hidden="true"></i> Sign in with a passkey</button>
+                            <p id="passkey-login-status" class="login-passkey-status" role="status" aria-live="polite">Use Face ID, Touch ID, your device PIN, or a security key.</p>
+                        </div>
+                    <?php endif; ?>
                     <p class="login-trust"><i class="fa-solid fa-lock" aria-hidden="true"></i> Secure session · Private financial workspace</p>
                 </section>
             </div>
@@ -186,8 +195,8 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <script src="frontend/js/aria_tooltips.js"></script>
     <script src="frontend/js/tooltips.js"></script>
     <script src="frontend/js/fonts.js?v=20260829-expanded-fonts"></script>
-    <script src="frontend/js/webauthn_client.js?v=20260831-passkeys"></script>
-    <script src="frontend/js/passkey_login.js?v=20260831-passkeys"></script>
+    <script src="frontend/js/webauthn_client.js?v=20260831-passkey-first"></script>
+    <script src="frontend/js/passkey_login.js?v=20260831-passkey-first"></script>
     <script>
       applyFonts({
         heading_font: <?= json_encode($headingFont) ?>,

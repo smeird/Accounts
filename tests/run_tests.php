@@ -1623,10 +1623,11 @@ assertEqual(false, strpos($tokenFormMarkup, 'autofocus') !== false, 'Login verif
 assertEqual(false, strpos($tokenFormMarkup, 'current-password') !== false, 'Login verification form contains no password AutoFill signal');
 preg_match('/<form[^>]+id="login-form"[^>]*>(.*?)<\/form>/s', $loginMarkup, $credentialFormMatch);
 $credentialFormMarkup = $credentialFormMatch[0] ?? '';
-assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="username"') !== false, 'Login username retains username AutoFill');
+assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="username webauthn"') !== false, 'Login username combines username and conditional passkey AutoFill');
 assertEqual(true, strpos($credentialFormMarkup, 'autocomplete="current-password"') !== false, 'Login password retains password AutoFill');
 assertEqual(true, strpos($loginMarkup, 'id="passkey-login-button"') !== false, 'Login page offers passkey authentication alongside the password flow');
 assertEqual(true, strpos($loginMarkup, 'passkey_login.js') !== false, 'Login page loads the shared WebAuthn client flow');
+assertEqual(true, strpos((string)file_get_contents(__DIR__ . '/../frontend/js/passkey_login.js'), "mediation = 'conditional'") !== false, 'Login starts conditional passkey discovery without exposing credential identity');
 $userManagementMarkup = (string)file_get_contents(__DIR__ . '/../users.php');
 assertEqual(true, strpos($userManagementMarkup, 'id="passkey-manager"') !== false, 'User Management provides passkey enrolment and removal');
 
