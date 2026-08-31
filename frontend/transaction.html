@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="transactions_workspace.css">
-    <link rel="stylesheet" href="transaction_detail.css?v=20260824-tag-picker">
+    <link rel="stylesheet" href="transaction_detail.css?v=20260831-classification-fill">
 </head>
 <body class="ops-body transaction-page transaction-detail-page">
 <div class="flex min-h-screen">
@@ -85,9 +85,10 @@
                     </div>
                     <label class="transaction-field" for="tag"><span>Or create a new tag <small>Only used when no tag is selected</small></span><input type="text" id="tag" placeholder="Enter a new tag name" autocomplete="off" data-help="Only fill this in when you need to create a brand new tag"></label>
                     <label class="transaction-field" for="category"><span>Category <small>Grouped by segment</small></span><select id="category" data-help="Assign a category"><option value="">No category</option></select></label>
+                    <div class="transaction-field"><span>Segment <small>Set by the category</small></span><div id="segment-preview" class="transaction-derived-value" role="status" aria-live="polite">No segment</div></div>
                     <label class="transaction-field" for="group"><span>Group <small>Optional reporting group</small></span><select id="group" data-help="Assign a group"><option value="">No group</option></select></label>
                 </div>
-                <div class="transaction-editor__note"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>Choosing or creating a tag may also improve matching for similar transactions on this account.</span></div>
+                <div class="transaction-editor__note"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>Choosing an existing tag fills its linked category and segment. Saving may also improve matching for similar transactions on this account.</span></div>
                 <div class="transaction-actions transaction-editor__actions">
                     <button id="save-transaction" type="submit" class="transaction-button transaction-button--primary" aria-label="Save transaction classification"><i class="fas fa-check" aria-hidden="true"></i><span>Save changes</span></button>
                     <button id="mark-transfer" type="button" class="transaction-button transaction-button--secondary" aria-label="Mark transaction as transfer"><i class="fas fa-right-left" aria-hidden="true"></i><span>Mark as transfer</span></button>
@@ -106,7 +107,7 @@
 </script>
 <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
-<script src="js/transaction_detail.js?v=20260824-tag-picker"></script>
+<script src="js/transaction_detail.js?v=20260831-classification-fill"></script>
 <script src="js/overlay.js"></script>
 </body>
 </html>

@@ -49,6 +49,7 @@
 .transaction-tag-picker__field i { flex:0 0 auto; color:#94a3b8; font-size:.7rem; }
 .transaction-field .transaction-tag-picker__input { min-width:0; min-height:0; width:100%; padding:.65rem 0; border:0; border-radius:0; background:transparent; box-shadow:none; outline:0; }
 .transaction-field .transaction-tag-picker__input:focus { border:0; box-shadow:none; }
+.transaction-derived-value { display:flex; min-height:2.75rem; align-items:center; padding:.65rem .75rem; border:1px solid #dbe3ef; border-radius:.78rem; color:#0e7490; background:linear-gradient(120deg,#f8fafc,#ecfeff); font-size:.78rem; font-weight:700; }
 .transaction-tag-picker__status { min-height:1.15rem; margin-top:.3rem; color:#64748b; font-size:.58rem; font-weight:500; line-height:1.35; }
 .transaction-tag-picker__status.is-selected { color:#047857; font-weight:700; }
 .transaction-tag-picker__status.is-error { color:#b91c1c; }
@@ -58,7 +59,7 @@
 .transaction-tag-picker__option { display:flex; align-items:center; justify-content:space-between; gap:.7rem; color:#334155; background:transparent; cursor:pointer; }
 .transaction-tag-picker__option:hover,.transaction-tag-picker__option[aria-selected="true"] { color:#3730a3; background:linear-gradient(120deg,#eef2ff,#ecfeff); }
 .transaction-tag-picker__option-name { overflow:hidden; font-size:.72rem; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
-.transaction-tag-picker__option-id { flex:0 0 auto; color:#94a3b8; font-size:.58rem; font-weight:500; }
+.transaction-tag-picker__option-id { flex:0 1 55%; overflow:hidden; color:#64748b; font-size:.58rem; font-weight:500; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
 .transaction-tag-picker__empty { color:#64748b; background:#f8fafc; font-size:.68rem; font-weight:500; }
 .transaction-editor__note { display:flex; gap:.65rem; margin-top:1rem; padding:.78rem; border-radius:.85rem; color:#475569; background:linear-gradient(135deg,#f5f3ff,#ecfeff); font-size:.61rem; line-height:1.45; }
 .transaction-editor__note i { margin-top:.1rem; color:#06b6d4; }

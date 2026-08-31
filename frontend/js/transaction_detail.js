@@ -121,6 +121,12 @@
         status.classList.toggle('is-error',tone==='error');
     }
 
+    function updateSegmentPreview() {
+        const category=byId('category');
+        const option=category.options[category.selectedIndex];
+        setText('segment-preview',option&&option.value?(option.dataset.segmentName||'No segment'):'No segment');
+    }
+
     function selectExistingTag(tag) {
         window.clearTimeout(tagSearchTimer);
         if(tagSearchController)tagSearchController.abort();
@@ -131,7 +137,13 @@
         byId('tag').value='';
         byId('tag-results').replaceChildren();
         setTagPickerOpen(false);
-        setTagSearchStatus('Selected existing tag: '+selectedTag.name,'selected');
+        const hasClassification=Object.prototype.hasOwnProperty.call(tag,'category_id');
+        if(hasClassification){
+            byId('category').value=tag.category_id===null?'':String(tag.category_id);
+            updateSegmentPreview();
+        }
+        const classification=hasClassification?(tag.category_name?' · '+tag.category_name+' / '+(tag.segment_name||'No segment'):' · No linked category'):'';
+        setTagSearchStatus('Selected existing tag: '+selectedTag.name+classification,'selected');
     }
 
     function clearExistingTagSelection(clearSearch) {
@@ -165,7 +177,7 @@
             const option=document.createElement('button'),name=document.createElement('span'),identifier=document.createElement('span');
             option.type='button'; option.id='transaction-tag-option-'+tag.id; option.className='transaction-tag-picker__option'; option.setAttribute('role','option'); option.setAttribute('aria-selected','false');
             name.className='transaction-tag-picker__option-name'; name.textContent=tag.name;
-            identifier.className='transaction-tag-picker__option-id'; identifier.textContent='#'+tag.id;
+            identifier.className='transaction-tag-picker__option-id'; identifier.textContent=tag.category_name?tag.category_name+' · '+(tag.segment_name||'No segment'):'No linked category';
             option.append(name,identifier); option.addEventListener('click',()=>selectExistingTag(tag)); results.appendChild(option);
         });
         setTagPickerOpen(true);
@@ -178,7 +190,7 @@
         if(tagSearchController)tagSearchController.abort();
         tagSearchController=new AbortController();
         const sequence=++tagSearchSequence;
-        const params=new URLSearchParams({options:'1',q:query,limit:'20'});
+        const params=new URLSearchParams({options:'1',classification:'1',q:query,limit:'20'});
         setTagSearchStatus('Searching existing tags…');
         try{const data=await requestJson('../php_backend/public/tags.php?'+params.toString(),{signal:tagSearchController.signal});if(sequence!==tagSearchSequence)return;renderTagResults(data,query);}
         catch(error){if(error.name==='AbortError')return;byId('tag-results').replaceChildren();setTagPickerOpen(false);setTagSearchStatus(error.message||'Existing tags could not be loaded.','error');}
@@ -211,7 +223,9 @@
         const categorySelect=byId('category'), groupSelect=byId('group');
         configureTagPicker(tx);
         const segments={};
-        categories.forEach(category=>{const segment=category.segment_name||'Unassigned';if(!segments[segment]){const group=document.createElement('optgroup');group.label=segment;segments[segment]=group;categorySelect.appendChild(group);}const option=document.createElement('option');option.value=String(category.id);option.textContent=category.name;option.selected=String(category.id)===String(tx.category_id);segments[segment].appendChild(option);});
+        categories.forEach(category=>{const segment=category.segment_name||'Unassigned';if(!segments[segment]){const group=document.createElement('optgroup');group.label=segment;segments[segment]=group;categorySelect.appendChild(group);}const option=document.createElement('option');option.value=String(category.id);option.textContent=category.name;option.dataset.segmentName=category.segment_name||'No segment';option.dataset.segmentId=category.segment_id===null?'':String(category.segment_id);option.selected=String(category.id)===String(tx.category_id);segments[segment].appendChild(option);});
+        categorySelect.addEventListener('change',updateSegmentPreview);
+        updateSegmentPreview();
         groups.forEach(group=>{if(group.active||String(group.id)===String(tx.group_id))addOption(groupSelect,group.id,group.name,String(group.id)===String(tx.group_id),!group.active&&String(group.id)!==String(tx.group_id));});
         const newGroup=addOption(groupSelect,'__new','Add a new group…',false,false);
         groupSelect.addEventListener('change',async function(){
