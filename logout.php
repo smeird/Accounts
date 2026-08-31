@@ -37,8 +37,9 @@ $brandColorDark = $brand['brand_color_dark'];
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Logged Out</title>
+    <title>Signed Out · <?= htmlspecialchars($siteName) ?></title>
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {};
@@ -46,28 +47,30 @@ $brandColorDark = $brand['brand_color_dark'];
 
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+<body class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 text-slate-100">
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
         <div class="absolute -top-32 -left-24 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-400/40 via-teal-400/30 to-transparent blur-3xl"></div>
         <div class="absolute bottom-[-5rem] left-1/2 h-72 w-[32rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-white/20 via-white/10 to-transparent blur-[120px]"></div>
         <div class="absolute top-1/2 right-[-6rem] h-96 w-96 -translate-y-1/2 rounded-full bg-gradient-to-tr from-sky-400/30 via-indigo-400/20 to-transparent blur-3xl"></div>
     </div>
-    <div class="relative z-10 w-full max-w-md px-6">
-        <div class="relative overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-8 text-center shadow-[0_35px_60px_-15px_rgba(15,23,42,0.9)] backdrop-blur-2xl">
+    <main class="relative z-10 w-full max-w-md sm:px-4">
+        <section aria-labelledby="logout-heading" class="relative overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-6 text-center shadow-[0_35px_60px_-15px_rgba(15,23,42,0.9)] backdrop-blur-2xl sm:p-8">
             <div class="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-white/20 via-transparent to-white/5"></div>
             <div class="absolute inset-[1px] -z-10 rounded-[1.45rem] border border-white/10"></div>
             <div class="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/70">
                 <span>Session</span>
-                <span>Ended</span>
+                <span class="inline-flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-300" aria-hidden="true"></i> Ended</span>
             </div>
-            <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/30 bg-white/10 shadow-inner">
+            <div class="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/30 bg-white/10 shadow-inner">
                 <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" class="h-12 w-12" />
+                <span class="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border-4 border-slate-800 bg-emerald-400 text-sm text-slate-950 shadow-lg" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
             </div>
-            <h1 class="mb-3 text-3xl font-semibold text-white">You've signed out</h1>
+            <h1 id="logout-heading" class="mb-3 text-3xl font-semibold text-white">You've signed out</h1>
             <p class="mb-6 text-sm text-white/80">Your <?= htmlspecialchars($siteName) ?> session has closed securely. You can return to the login screen whenever you're ready.</p>
-            <a href="index.php" aria-label="Return to the login page" class="logout-return inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5">Return to Login</a>
-        </div>
-    </div>
+            <a href="index.php" aria-label="Return to the login page" class="logout-return inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-base font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.45)] transition duration-150 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"><span>Return to Login</span><i class="fa-solid fa-arrow-right text-sm" aria-hidden="true"></i></a>
+            <p class="mt-5 flex items-center justify-center gap-2 text-xs text-white/60"><i class="fa-solid fa-shield-halved text-emerald-300" aria-hidden="true"></i> Your private data remains protected.</p>
+        </section>
+    </main>
     <script src="frontend/js/page_help.js"></script>
     <script src="frontend/js/overlay.js"></script>
     <script src="frontend/js/aria_tooltips.js"></script>
