@@ -184,8 +184,8 @@ assertEqual('standard', $defaultAppearance['motion_preference'], 'Appearance def
 assertEqual('medium', $defaultAppearance['accent_bar_size'], 'Appearance defaults to a medium top accent bar');
 assertEqual('medium', $defaultAppearance['page_header_size'], 'Appearance defaults to medium page headers');
 assertEqual('#4f46e5', $defaultAppearance['brand_color'], 'Appearance exposes the default accent colour');
-assertEqual(true, count(Setting::colorPalettes()) >= 20, 'Appearance offers an expanded curated colour palette');
-assertEqual(true, isset(Setting::colorPalettes()['aurora'], Setting::colorPalettes()['graphite']), 'Appearance includes multitone and neutral palette choices');
+assertEqual(true, count(Setting::colorPalettes()) >= 35, 'Appearance offers an expanded curated colour palette');
+assertEqual(true, isset(Setting::colorPalettes()['aurora'], Setting::colorPalettes()['graphite'], Setting::colorPalettes()['sage'], Setting::colorPalettes()['copper'], Setting::colorPalettes()['nordic']), 'Appearance includes multitone, neutral, natural and warm palette choices');
 assertEqual(true, isset(Setting::fontOptions()['Atkinson Hyperlegible'], Setting::fontOptions()['Lexend'], Setting::fontOptions()['Space Grotesk'], Setting::fontOptions()['Lora']), 'Typography offers additional accessible, modern and editorial fonts');
 Setting::set('surface_style', 'paper');
 Setting::set('interface_density', 'compact');
