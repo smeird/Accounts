@@ -1,96 +1,42 @@
 <?php
-// Runs 'git pull' to update the application to the latest version.
+// Authenticated, allowlisted application update status and fast-forward action.
 require_once __DIR__ . '/../auth.php';
 require_api_auth();
 require_once __DIR__ . '/../models/Log.php';
-header('Content-Type: application/json');
-// Determine the repository root. Start from the web server's document root if
-// available, but walk up the directory tree until a `.git` folder is found so
-// Git commands always run from the actual repository root.
-$rootDir = realpath($_SERVER['DOCUMENT_ROOT'] ?? __DIR__);
-if ($rootDir === false) {
-    $rootDir = dirname(__DIR__, 2);
-}
+require_once __DIR__ . '/../services/ApplicationUpdateService.php';
 
-// Traverse upwards to locate the git repository
-$repoDir = $rootDir;
-while ($repoDir !== '/' && !is_dir($repoDir . '/.git')) {
-    $parent = dirname($repoDir);
-    if ($parent === $repoDir) {
-        break;
+header('Content-Type: application/json; charset=utf-8');
+$method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+$service = new ApplicationUpdateService(dirname(__DIR__, 2));
+
+try {
+    if ($method === 'GET') {
+        echo json_encode($service->status(true), JSON_UNESCAPED_SLASHES);
+        exit;
     }
-    $repoDir = $parent;
+    if ($method !== 'POST') {
+        http_response_code(405);
+        header('Allow: GET, POST');
+        echo json_encode(['status' => 'error', 'message' => 'Use GET to check or POST to install an update.']);
+        exit;
+    }
+    $payload = json_decode((string)file_get_contents('php://input'), true);
+    if (!is_array($payload) || ($payload['action'] ?? '') !== 'update' || ($payload['confirm'] ?? '') !== 'INSTALL_UPDATE') {
+        http_response_code(422);
+        echo json_encode(['status' => 'error', 'message' => 'Explicit application update confirmation is required.']);
+        exit;
+    }
+    $result = $service->update();
+    Log::write(
+        $result['status'] === 'success'
+            ? 'Application updated from ' . ($result['from'] ?? '?') . ' to ' . ($result['to'] ?? '?')
+            : 'Application update refused or failed: ' . ($result['message'] ?? 'Unknown error'),
+        $result['status'] === 'success' ? 'INFO' : 'ERROR'
+    );
+    if ($result['status'] !== 'success') http_response_code(409);
+    echo json_encode($result, JSON_UNESCAPED_SLASHES);
+} catch (Throwable $error) {
+    Log::write('Application update failed: ' . $error->getMessage(), 'ERROR');
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'The application update could not be completed.', 'detail' => $error->getMessage()], JSON_UNESCAPED_SLASHES);
 }
-
-if (!is_dir($repoDir . '/.git')) {
-
-    Log::write('Git repository not found starting at ' . $rootDir, 'ERROR');
-    echo json_encode([
-        'success' => false,
-        'output' => 'Git repository not found',
-        'cwd' => $rootDir,
-
-    ]);
-    exit;
-}
-
-$rootDir = $repoDir;
-
-
-// Git expects a HOME environment variable even when no global configuration is
-// required. Point it at a temporary directory so `git config --global` has a
-// safe place to write to and doesn't pollute the repository.
-$homeDir = sys_get_temp_dir();
-putenv('HOME=' . $homeDir);
-$_SERVER['HOME'] = $homeDir;
-
-// Mark the repository as a safe directory if it has not already been whitelisted
-// to avoid "dubious ownership" errors when running commands.
-$safeCheck = [];
-$safeStatus = 0;
-exec('git config --global --get safe.directory ' . escapeshellarg($rootDir) . ' 2>&1', $safeCheck, $safeStatus);
-if ($safeStatus !== 0) {
-    exec('git config --global --add safe.directory ' . escapeshellarg($rootDir) . ' 2>&1');
-}
-
-$output = [];
-$returnVar = 0;
-
-// Prepare a git command rooted at the repository.
-$gitCmd = 'git -C ' . escapeshellarg($rootDir);
-
-// Ensure a remote is configured before attempting to pull.
-$remoteList = [];
-$remoteStatus = 0;
-exec($gitCmd . ' remote 2>&1', $remoteList, $remoteStatus);
-$remoteOutput = trim(implode("\n", $remoteList));
-if ($remoteStatus !== 0) {
-
-    Log::write('Git remote check failed in ' . $rootDir . ': ' . $remoteOutput, 'ERROR');
-    echo json_encode([
-        'success' => false,
-        'output' => $remoteOutput,
-        'cwd' => $rootDir,
-
-    ]);
-    exit;
-}
-if ($remoteOutput === '') {
-
-    Log::write('No git remote configured in ' . $rootDir, 'ERROR');
-
-    echo json_encode([
-        'success' => false,
-        'output' => 'No git remote configured',
-        'cwd' => $rootDir,
-    ]);
-    exit;
-}
-exec($gitCmd . ' pull 2>&1', $output, $returnVar);
-Log::write('git pull run in ' . $rootDir . ': ' . trim(implode("\n", $output)), $returnVar === 0 ? 'INFO' : 'ERROR');
-
-echo json_encode([
-    'success' => $returnVar === 0,
-    'output' => trim(implode("\n", $output)),
-    'cwd' => $rootDir,
-]);

@@ -557,6 +557,13 @@ const attachSidebarSearchHandler = (root = document) => {
                   text += ` (${behind} behind)`;
                 }
                 el.textContent = text;
+                if (Number(behind) > 0) {
+                  el.classList.add('has-update');
+                  el.title = 'Application update available';
+                } else {
+                  el.classList.remove('has-update');
+                  el.removeAttribute('title');
+                }
               });
             })
             .catch(() => {

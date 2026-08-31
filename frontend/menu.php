@@ -67,6 +67,7 @@
       <li><a href="export.html"><i class="fas fa-file-export"></i> Export Data</a></li>
       <li><a href="dedupe.html"><i class="fas fa-clone"></i> Duplicate Check</a></li>
       <li><a href="backup.html"><i class="fas fa-database"></i> Backup &amp; Restore</a></li>
+      <li><a href="application_updates.html"><i class="fas fa-cloud-arrow-down"></i> Application Updates</a></li>
       <li><a href="database_health.html"><i class="fas fa-heart-pulse"></i> Database Health</a></li>
       <li><a href="logs.html"><i class="fas fa-scroll"></i> System Log</a></li>
       <li><a href="../settings.php"><i class="fas fa-sliders"></i> Settings</a></li>

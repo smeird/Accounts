@@ -76,6 +76,7 @@
 .site-menu-brand > div { min-width:0; gap:.16rem; }
 .site-menu #site-title { overflow:hidden; color:var(--menu-brand-dark)!important; font-size:.93rem!important; font-weight:850!important; letter-spacing:-.035em; line-height:1.15; text-overflow:ellipsis; white-space:nowrap; }
 .site-menu #release-number { align-self:flex-start; margin:0!important; padding:.12rem .38rem!important; border:1px solid rgba(99,102,241,.1); border-radius:999px!important; color:#64748b!important; background:rgba(238,242,255,.76)!important; font-size:.55rem!important; font-weight:750; }
+.site-menu #release-number.has-update{border-color:rgba(217,119,6,.22)!important;color:#9a5b0b!important;background:#fff4dc!important}
 
 .site-menu-close { display:none; }
 

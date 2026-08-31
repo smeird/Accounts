@@ -35,6 +35,7 @@ require_once __DIR__ . '/../php_backend/services/TaggingWorkspaceService.php';
 require_once __DIR__ . '/../php_backend/services/TaggingFreshStartService.php';
 require_once __DIR__ . '/../php_backend/services/FinancialWorkbookExportService.php';
 require_once __DIR__ . '/../php_backend/services/RecurringPatternDetector.php';
+require_once __DIR__ . '/../php_backend/services/ApplicationUpdateService.php';
 
 // Use an in-memory SQLite database for tests.
 putenv('DB_DSN=sqlite::memory:');
@@ -74,6 +75,50 @@ function assertEqual($expected, $actual, string $message) {
         $results[] = "FAIL: $message (expected " . var_export($expected, true) . ", got " . var_export($actual, true) . ")";
     }
 }
+
+// Application updates are limited to clean, fast-forward-only deployments.
+$updateHead = 'abc1234';
+$updateBehind = 2;
+$updateCommands = [];
+$updateRunner = function (array $arguments) use (&$updateHead, &$updateBehind, &$updateCommands): array {
+    $updateCommands[] = $arguments;
+    $command = implode(' ', $arguments);
+    if ($command === '--version') return ['ok' => true, 'code' => 0, 'output' => 'git version 2.40.0'];
+    if ($command === 'rev-parse --is-inside-work-tree') return ['ok' => true, 'code' => 0, 'output' => 'true'];
+    if ($command === 'symbolic-ref --quiet --short HEAD') return ['ok' => true, 'code' => 0, 'output' => 'main'];
+    if ($command === 'status --porcelain --untracked-files=normal') return ['ok' => true, 'code' => 0, 'output' => ''];
+    if ($command === 'remote get-url origin') return ['ok' => true, 'code' => 0, 'output' => 'https://example.invalid/accounts.git'];
+    if ($command === 'fetch --prune origin main') return ['ok' => true, 'code' => 0, 'output' => ''];
+    if ($command === 'rev-parse --verify refs/remotes/origin/main') return ['ok' => true, 'code' => 0, 'output' => 'def567890'];
+    if ($command === 'rev-list --left-right --count HEAD...refs/remotes/origin/main') return ['ok' => true, 'code' => 0, 'output' => "0\t" . $updateBehind];
+    if ($command === 'rev-parse --short=7 HEAD') return ['ok' => true, 'code' => 0, 'output' => $updateHead];
+    if ($command === 'rev-parse --short=7 refs/remotes/origin/main') return ['ok' => true, 'code' => 0, 'output' => 'def5678'];
+    if ($command === 'log -1 --format=%cI HEAD') return ['ok' => true, 'code' => 0, 'output' => '2026-08-31T12:00:00+00:00'];
+    if ($command === 'merge --ff-only refs/remotes/origin/main') {
+        $updateHead = 'def5678';
+        $updateBehind = 0;
+        return ['ok' => true, 'code' => 0, 'output' => 'Fast-forward'];
+    }
+    if (strpos($command, 'diff --name-only ') === 0) return ['ok' => true, 'code' => 0, 'output' => "frontend/a.js\nphp_backend/a.php"];
+    return ['ok' => false, 'code' => 1, 'output' => 'Unexpected test command: ' . $command];
+};
+$updateService = new ApplicationUpdateService(dirname(__DIR__), $updateRunner);
+$availableUpdate = $updateService->status(true);
+assertEqual('update_available', $availableUpdate['state'] ?? null, 'Application Updates detects commits available on the matching origin branch');
+assertEqual(true, $availableUpdate['can_update'] ?? null, 'Application Updates enables only a clean fast-forward');
+$installedUpdate = $updateService->update();
+assertEqual('success', $installedUpdate['status'] ?? null, 'Application Updates installs an eligible fast-forward');
+assertEqual('def5678', $installedUpdate['to'] ?? null, 'Application Updates reports the installed commit');
+assertEqual(2, $installedUpdate['changed_files'] ?? null, 'Application Updates reports the changed file count');
+assertEqual(true, in_array(['merge', '--ff-only', 'refs/remotes/origin/main'], $updateCommands, true), 'Application Updates invokes only a fast-forward merge');
+
+$dirtyRunner = function (array $arguments) use ($updateRunner): array {
+    if (implode(' ', $arguments) === 'status --porcelain --untracked-files=normal') return ['ok' => true, 'code' => 0, 'output' => ' M frontend/index.html'];
+    return $updateRunner($arguments);
+};
+$dirtyUpdate = (new ApplicationUpdateService(dirname(__DIR__), $dirtyRunner))->status(true);
+assertEqual('blocked', $dirtyUpdate['state'] ?? null, 'Application Updates blocks a dirty working tree');
+assertEqual(false, $dirtyUpdate['can_update'] ?? null, 'Application Updates never overwrites local file changes');
 
 // Recurring bills are merchant/cadence patterns, not exact description/day
 // duplicates. A first-Tuesday utility with changing bank references must be one
@@ -1678,6 +1723,14 @@ $userManagementMarkup = (string)file_get_contents(__DIR__ . '/../users.php');
 assertEqual(true, strpos($userManagementMarkup, 'id="passkey-manager"') !== false, 'User Management provides passkey enrolment and removal');
 
 $navigationMarkup = (string)file_get_contents(__DIR__ . '/../frontend/menu.php');
+assertEqual(true, strpos($navigationMarkup, 'application_updates.html') !== false, 'System navigation exposes Application Updates');
+$applicationUpdateMarkup = (string)file_get_contents(__DIR__ . '/../frontend/application_updates.html');
+$applicationUpdateScript = (string)file_get_contents(__DIR__ . '/../frontend/js/application_updates.js');
+$applicationUpdateEndpoint = (string)file_get_contents(__DIR__ . '/../php_backend/public/git_pull.php');
+assertEqual(true, strpos($applicationUpdateMarkup, 'http-equiv="Cache-Control"') !== false, 'Application Updates page prevents stale deployment controls');
+assertEqual(true, strpos($applicationUpdateScript, "confirm: 'INSTALL_UPDATE'") !== false, 'Application Updates requires explicit browser confirmation');
+assertEqual(true, strpos($applicationUpdateEndpoint, 'require_api_auth()') !== false, 'Application Updates endpoint requires an authenticated session');
+assertEqual(false, strpos($applicationUpdateEndpoint, "\$_POST['command']") !== false, 'Application Updates endpoint accepts no browser-supplied command');
 preg_match_all('/href="([a-z0-9_\-]+\.html)"/i', $navigationMarkup, $navigationMatches);
 $navigationPagesMissingModernHeader = [];
 foreach (array_unique($navigationMatches[1] ?? []) as $navigationPage) {
