@@ -1727,10 +1727,18 @@ assertEqual(true, strpos($navigationMarkup, 'application_updates.html') !== fals
 $applicationUpdateMarkup = (string)file_get_contents(__DIR__ . '/../frontend/application_updates.html');
 $applicationUpdateScript = (string)file_get_contents(__DIR__ . '/../frontend/js/application_updates.js');
 $applicationUpdateEndpoint = (string)file_get_contents(__DIR__ . '/../php_backend/public/git_pull.php');
+$applicationUpdateService = (string)file_get_contents(__DIR__ . '/../php_backend/services/ApplicationUpdateService.php');
+$applicationUpdateHelper = (string)file_get_contents(__DIR__ . '/../scripts/accounts-application-git');
+$applicationUpdateInstaller = (string)file_get_contents(__DIR__ . '/../scripts/install-application-update-helper.sh');
 assertEqual(true, strpos($applicationUpdateMarkup, 'http-equiv="Cache-Control"') !== false, 'Application Updates page prevents stale deployment controls');
 assertEqual(true, strpos($applicationUpdateScript, "confirm: 'INSTALL_UPDATE'") !== false, 'Application Updates requires explicit browser confirmation');
 assertEqual(true, strpos($applicationUpdateEndpoint, 'require_api_auth()') !== false, 'Application Updates endpoint requires an authenticated session');
 assertEqual(false, strpos($applicationUpdateEndpoint, "\$_POST['command']") !== false, 'Application Updates endpoint accepts no browser-supplied command');
+assertEqual(true, strpos($applicationUpdateService, "sudo -n") !== false, 'Application Updates uses the protected system helper when installed');
+assertEqual(true, strpos($applicationUpdateHelper, 'Git operation is not permitted') !== false, 'Application update helper rejects commands outside its allowlist');
+assertEqual(true, strpos($applicationUpdateHelper, '$1 == "merge"') !== false && strpos($applicationUpdateHelper, '$2 == "--ff-only"') !== false, 'Application update helper permits only fast-forward installation');
+assertEqual(false, strpos($applicationUpdateHelper, 'reset --hard') !== false, 'Application update helper cannot reset the deployment');
+assertEqual(true, strpos($applicationUpdateInstaller, 'visudo -cf') !== false, 'Application update helper installer validates its narrow sudoers rule');
 preg_match_all('/href="([a-z0-9_\-]+\.html)"/i', $navigationMarkup, $navigationMatches);
 $navigationPagesMissingModernHeader = [];
 foreach (array_unique($navigationMatches[1] ?? []) as $navigationPage) {

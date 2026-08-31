@@ -88,13 +88,19 @@ Frontend pages live in `frontend/`. Authenticated JSON endpoints live in `php_ba
 
 ### Quick deployment
 
+On a fresh 64-bit Raspberry Pi OS Bookworm or Trixie installation, first point a public DNS name at the Pi and forward TCP ports 80 and 443 to it. Then run this from an SSH or local terminal:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | sudo bash
 ```
+
+The interactive installer securely asks for the domain, Let's Encrypt email and first administrator account. It installs and configures Apache, MariaDB, PHP, HTTPS certificate renewal, the firewall, fail2ban and automatic security updates. It deliberately stops if `/var/www/accounts` or an `accounts` database already exists, and it never serves the application over plain HTTP if certificate validation fails.
+
+DNS and router configuration remain external prerequisites. The application also needs outbound internet access for its hosted frontend libraries, update checks and optional OpenAI features. This installer creates a clean database; restore an existing Accounts backup afterward through **System → Backup & Restore**.
 
 ### Manual setup
 
-1. Install PHP, PDO MySQL and MySQL.
+1. Install PHP, PDO MySQL and MySQL. Production installs also require PHP cURL, mbstring, ZIP, XML, OpenSSL, JSON and session support.
 2. Provide `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASS` to PHP. Apache deployments can use `SetEnv` in the virtual host.
 3. Create or update the schema:
 
@@ -123,6 +129,14 @@ curl -fsSL https://raw.githubusercontent.com/smeird/Accounts/main/deploy.sh | ba
    Open `http://localhost:8000/`.
 
 After upgrades, open **System → Database Health**. It identifies missing tables, columns, indexes and relationships without modifying transaction records. See [Setup](wiki/Setup.md) for Apache and environment details.
+
+Existing private-repository deployments can enable **System → Application Updates** without exposing a deployment SSH key to Apache. Install the root-owned, allowlisted helper once, naming the checkout and the Linux user that already has read access to GitHub:
+
+```bash
+sudo bash scripts/install-application-update-helper.sh /var/www/newaccounts ubuntu
+```
+
+The helper grants `www-data` only the fixed Git status, fetch and clean fast-forward operations used by the application. It refuses arbitrary commands, other repositories, other remotes, branch changes, dirty worktrees and non-fast-forward updates. Re-run the installer after a release changes either helper script, because the installed root-owned copy is deliberately not self-modifying.
 
 The original AI-assisted taxonomy rebuild used **Tag Rebuild Safety**, **Taxonomy Studio** and **Taxonomy Cutover** to create an immutable baseline, stage and review a compact vocabulary, apply classifications atomically, and retire the legacy catalogue without changing financial data. That rebuild is now complete. Its pages and stored evidence remain available for recovery and audit, while normal work happens in **Organise → Tagging → Rebuild history**. See [Tag Taxonomy Rebuild](wiki/TagTaxonomyRebuild.md).
 
@@ -167,6 +181,13 @@ Run frontend regressions with:
 
 ```bash
 for test_file in frontend/js/*.test.js; do node "$test_file"; done
+```
+
+Validate the Raspberry Pi installer with:
+
+```bash
+bash tests/deploy_installer_test.sh
+shellcheck deploy.sh
 ```
 
 Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff --check`, and browser verification at desktop and mobile widths.

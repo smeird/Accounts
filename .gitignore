@@ -6,3 +6,6 @@ node_modules/
 
 # Mac
 .DS_Store
+
+# Runtime report uploads must not dirty production checkouts or block updates.
+php_backend/uploads/

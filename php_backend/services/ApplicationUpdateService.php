@@ -8,6 +8,7 @@
  * detached, diverged, or locally-ahead states.
  */
 class ApplicationUpdateService {
+    private const PRIVILEGED_HELPER = '/usr/local/sbin/accounts-application-git';
     private $repository;
     private $runner;
 
@@ -106,7 +107,7 @@ class ApplicationUpdateService {
     }
 
     public function update(): array {
-        $lock = @fopen(sys_get_temp_dir() . '/accounts-application-update.lock', 'c');
+        $lock = @fopen(sys_get_temp_dir() . '/accounts-application-update-' . sha1($this->repository) . '.lock', 'c');
         if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
             if (is_resource($lock)) fclose($lock);
             return ['status' => 'error', 'message' => 'Another application update is already running.'];
@@ -152,9 +153,13 @@ class ApplicationUpdateService {
     private function run(array $arguments): array {
         if ($this->runner !== null) return call_user_func($this->runner, $arguments);
         $parts = array_map('escapeshellarg', $arguments);
-        $command = 'GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND=' . escapeshellarg('ssh -o BatchMode=yes')
-            . ' git -c safe.directory=' . escapeshellarg($this->repository)
-            . ' -C ' . escapeshellarg($this->repository) . ' ' . implode(' ', $parts);
+        if (is_executable(self::PRIVILEGED_HELPER)) {
+            $command = 'sudo -n ' . escapeshellarg(self::PRIVILEGED_HELPER) . ' ' . implode(' ', $parts);
+        } else {
+            $command = 'GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND=' . escapeshellarg('ssh -o BatchMode=yes')
+                . ' git -c safe.directory=' . escapeshellarg($this->repository)
+                . ' -C ' . escapeshellarg($this->repository) . ' ' . implode(' ', $parts);
+        }
         $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
         $process = @proc_open($command, $descriptors, $pipes, $this->repository);
         if (!is_resource($process)) return ['ok' => false, 'code' => 127, 'output' => 'Unable to start Git.'];
