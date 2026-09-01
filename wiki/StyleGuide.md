@@ -42,7 +42,7 @@ The default view must answer the page’s main question before the user interact
 
 ## 3. Surfaces and spacing
 
-- Installation appearance settings provide the default accent palette, typography, surface style, desktop density, corner shape, backdrop strength, page-header size, primary top-accent thickness and motion level. Implement shared components so they continue to respond to the variables and classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
+- Installation appearance settings provide the default accent palette, typography, surface style, desktop density, corner shape, backdrop strength, page-header size (small through extra large), primary top-accent thickness and motion level. Implement shared components so they continue to respond to the variables and classes applied by `frontend/js/menu.js` and `frontend/css/interface-preferences.css`.
 - The top-accent setting applies to the shared page header, sidebar and primary dashboard heroes. New specialist heroes should use the shared `--ui-accent-bar-height` treatment or be added to the central selector.
 - Primary top accents reveal rapidly from left to right when a page loads. Honour both the saved reduced-motion setting and the browser's reduced-motion preference; small section markers should remain static.
 - Dashboard heroes are compact financial briefs rather than splash screens. Preserve the headline, explanation, secondary signal and supporting metrics, but use the available width to keep them together and avoid decorative minimum heights. Shared density rules belong in `frontend/css/hero-density.css`.

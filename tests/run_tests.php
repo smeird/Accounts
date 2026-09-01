@@ -193,7 +193,7 @@ Setting::set('corner_style', 'balanced');
 Setting::set('backdrop_strength', 'vivid');
 Setting::set('motion_preference', 'reduced');
 Setting::set('accent_bar_size', 'hairline');
-Setting::set('page_header_size', 'small');
+Setting::set('page_header_size', 'extra-large');
 Setting::set('color_scheme', 'aurora');
 Setting::set('font_heading', 'Lexend');
 Setting::set('font_body', 'Atkinson Hyperlegible');
@@ -204,7 +204,7 @@ assertEqual('balanced', $customAppearance['corner_style'], 'Appearance returns t
 assertEqual('vivid', $customAppearance['backdrop_strength'], 'Appearance returns the saved backdrop strength');
 assertEqual('reduced', $customAppearance['motion_preference'], 'Appearance returns the saved motion preference');
 assertEqual('hairline', $customAppearance['accent_bar_size'], 'Appearance returns the saved hairline top accent bar size');
-assertEqual('small', $customAppearance['page_header_size'], 'Appearance returns the saved page header size');
+assertEqual('extra-large', $customAppearance['page_header_size'], 'Appearance returns the saved extra-large page header size');
 assertEqual('aurora', $customAppearance['color_scheme'], 'Appearance returns an expanded palette choice');
 assertEqual('#7c3aed', $customAppearance['brand_color'], 'Appearance resolves the selected palette primary colour');
 assertEqual('#0f766e', $customAppearance['brand_color_dark'], 'Appearance resolves the selected palette secondary colour');
@@ -1689,6 +1689,7 @@ assertEqual(true, strpos($fontScript, "'Atkinson Hyperlegible': '400;700'") !== 
 assertEqual(false, strpos($settingsMarkup, 'fontChoices.forEach') !== false, 'Settings page no longer downloads every available web font');
 $preferenceStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/interface-preferences.css');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-bar-hairline') !== false, 'Appearance styles include the hairline top accent option');
+assertEqual(true, strpos($preferenceStyles, 'ui-page-header-extra-large') !== false, 'Appearance styles include the extra-large page header option');
 assertEqual(true, strpos($preferenceStyles, 'ui-accent-reveal') !== false, 'Primary top accents use the shared reveal animation');
 $heroDensityScript = (string)file_get_contents(__DIR__ . '/../frontend/js/menu.js');
 $heroDensityStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/hero-density.css');

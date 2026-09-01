@@ -80,6 +80,8 @@
 .settings-preview.is-header-small .settings-preview__header strong { font-size:.59rem; }
 .settings-preview.is-header-large .settings-preview__header { padding-block:.82rem; }
 .settings-preview.is-header-large .settings-preview__header strong { font-size:.8rem; }
+.settings-preview.is-header-extra-large .settings-preview__header { padding-block:.92rem; }
+.settings-preview.is-header-extra-large .settings-preview__header strong { font-size:.94rem; }
 .settings-preview__header small { margin-top:.1rem; color:var(--settings-muted); font-size:.53rem; }
 .settings-preview__metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; }
 .settings-preview__metrics article { padding:.65rem; }

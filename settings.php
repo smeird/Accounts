@@ -91,6 +91,7 @@ $pageHeaderSizeOptions = [
     'small' => ['Small', 'A quieter, more compact treatment'],
     'medium' => ['Medium', 'The balanced site default'],
     'large' => ['Large', 'A stronger, more prominent treatment'],
+    'extra-large' => ['Extra large', 'Maximum title emphasis on larger screens'],
 ];
 $colorOptions = Setting::colorPalettes();
 
@@ -380,6 +381,7 @@ $colorHex = $selectedPalette['primary'];
         appearancePreview.classList.toggle('is-accent-large', accentBar === 'large');
         appearancePreview.classList.toggle('is-header-small', pageHeader === 'small');
         appearancePreview.classList.toggle('is-header-large', pageHeader === 'large');
+        appearancePreview.classList.toggle('is-header-extra-large', pageHeader === 'extra-large');
         appearancePreview.style.setProperty('--site-brand', accent);
         appearancePreview.style.setProperty('--site-brand-secondary', accentDark);
         previewCanvas.style.background = `linear-gradient(145deg,rgba(${rgb},${alpha}),rgba(${darkRgb},${alpha * .55}),rgba(255,255,255,.98) 76%)`;

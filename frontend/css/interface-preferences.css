@@ -62,6 +62,8 @@ body.ui-page-header-medium .page-header { padding-block:.82rem!important; }
 body.ui-page-header-medium .page-header .page-title { font-size:clamp(1.35rem,2.2vw,1.75rem)!important; }
 body.ui-page-header-large .page-header { padding-block:1.15rem!important; }
 body.ui-page-header-large .page-header .page-title { font-size:clamp(1.65rem,2.8vw,2.2rem)!important; }
+body.ui-page-header-extra-large .page-header { padding-block:1.3rem!important; }
+body.ui-page-header-extra-large .page-header .page-title { font-size:clamp(2rem,3.6vw,2.8rem)!important; line-height:1.02!important; }
 
 @media (max-width: 767px) {
   body.ui-page-header-small .page-header { padding-block:.58rem!important; }
@@ -70,6 +72,8 @@ body.ui-page-header-large .page-header .page-title { font-size:clamp(1.65rem,2.8
   body.ui-page-header-medium .page-header .page-title { font-size:1.3rem!important; }
   body.ui-page-header-large .page-header { padding-block:.92rem!important; }
   body.ui-page-header-large .page-header .page-title { font-size:1.55rem!important; }
+  body.ui-page-header-extra-large .page-header { padding-block:1rem!important; }
+  body.ui-page-header-extra-large .page-header .page-title { font-size:1.75rem!important; line-height:1.08!important; }
 }
 
 body.ui-motion-reduced *,

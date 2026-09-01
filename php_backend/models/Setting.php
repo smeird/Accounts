@@ -88,7 +88,7 @@ class Setting {
             'backdrop_strength' => self::choice($settings, 'backdrop_strength', ['calm', 'balanced', 'vivid'], self::DEFAULT_BACKDROP_STRENGTH),
             'motion_preference' => self::choice($settings, 'motion_preference', ['standard', 'reduced'], self::DEFAULT_MOTION_PREFERENCE),
             'accent_bar_size' => self::choice($settings, 'accent_bar_size', ['hairline', 'small', 'medium', 'large'], self::DEFAULT_ACCENT_BAR_SIZE),
-            'page_header_size' => self::choice($settings, 'page_header_size', ['small', 'medium', 'large'], self::DEFAULT_PAGE_HEADER_SIZE),
+            'page_header_size' => self::choice($settings, 'page_header_size', ['small', 'medium', 'large', 'extra-large'], self::DEFAULT_PAGE_HEADER_SIZE),
         ];
     }
 

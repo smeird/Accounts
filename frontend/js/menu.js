@@ -119,16 +119,15 @@ const attachSidebarSearchHandler = (root = document) => {
     const motion = preferences.motion_preference === 'reduced' ? 'reduced' : 'standard';
     const accentBar = ['hairline', 'small', 'medium', 'large'].includes(preferences.accent_bar_size)
       ? preferences.accent_bar_size : 'medium';
-    const pageHeader = ['small', 'medium', 'large'].includes(preferences.page_header_size)
+    const pageHeader = ['small', 'medium', 'large', 'extra-large'].includes(preferences.page_header_size)
       ? preferences.page_header_size : 'medium';
     backdropStrength = ['calm', 'balanced', 'vivid'].includes(preferences.backdrop_strength)
       ? preferences.backdrop_strength : 'balanced';
 
     ['compact', 'comfortable', 'roomy'].forEach(value => document.body.classList.remove(`ui-density-${value}`));
     ['soft', 'balanced', 'square'].forEach(value => document.body.classList.remove(`ui-corners-${value}`));
-    ['hairline', 'small', 'medium', 'large'].forEach(value => {
-      document.body.classList.remove(`ui-accent-bar-${value}`, `ui-page-header-${value}`);
-    });
+    ['hairline', 'small', 'medium', 'large'].forEach(value => document.body.classList.remove(`ui-accent-bar-${value}`));
+    ['small', 'medium', 'large', 'extra-large'].forEach(value => document.body.classList.remove(`ui-page-header-${value}`));
     document.body.classList.remove('ui-motion-reduced');
     document.body.classList.add(
       `ui-density-${density}`,
