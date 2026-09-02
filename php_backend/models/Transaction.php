@@ -144,7 +144,7 @@ class Transaction {
         // can have the same merchant, amount, and date.
         if ($bank_ofx_id !== null) {
             $dupCheck = $db->prepare(
-                'SELECT id, date, amount, description, IFNULL(memo, "") AS memo '
+                "SELECT id, date, amount, description, COALESCE(memo, '') AS memo "
                 . 'FROM `transactions` WHERE `account_id` = :account AND `bank_ofx_id` = :boid LIMIT 1'
             );
             $dupCheck->execute([
@@ -985,7 +985,7 @@ class Transaction {
         if ($value !== null && $value !== '') {
             $conditions[] = '(t.`description` LIKE :val'
                 . ' OR t.`memo` LIKE :val'
-                . ' OR t.`date` LIKE :val'
+                . ' OR CAST(t.`date` AS TEXT) LIKE :val'
                 . ' OR t.`ofx_id` LIKE :val'
                 . ' OR c.`name` LIKE :val'
                 . ' OR s.`name` LIKE :val'

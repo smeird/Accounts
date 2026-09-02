@@ -523,7 +523,7 @@ class TagTaxonomyDiscoveryService {
     private function requireLockedStagingRun(int $runId): array {
         if (!$this->db->inTransaction()) throw new RuntimeException('A staging lock requires an active database transaction.');
         if ($runId <= 0) throw new InvalidArgumentException('Choose a valid baseline snapshot.');
-        $lockSuffix = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+        $lockSuffix = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? '' : ' FOR UPDATE';
         $stmt = $this->db->prepare('SELECT * FROM tag_migration_runs WHERE id = :id LIMIT 1' . $lockSuffix);
         $stmt->execute(['id' => $runId]);
         $run = $stmt->fetch(PDO::FETCH_ASSOC);

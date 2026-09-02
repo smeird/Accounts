@@ -108,7 +108,7 @@ class SchemaHealthService {
             }
 
             $actualTable = $actualTables[$tableName];
-            if (($snapshot['driver'] ?? 'mysql') === 'mysql') {
+            if (($snapshot['driver'] ?? 'pgsql') === 'mysql') {
                 $checks++;
                 $engine = strtoupper((string)($actualTable['engine'] ?? ''));
                 if ($engine !== '' && $engine !== 'INNODB') {
@@ -274,7 +274,7 @@ class SchemaHealthService {
                     $reason,
                     'Remove obsolete index ' . $indexName,
                     true,
-                    'ALTER TABLE `' . $tableName . '` DROP INDEX `' . $indexName . '`'
+                    'DROP INDEX IF EXISTS "' . str_replace('"', '""', $indexName) . '"'
                 );
             }
         }
@@ -314,7 +314,7 @@ class SchemaHealthService {
             foreach ($table['columns'] as $columnName => $column) {
                 $columns[$columnName] = [
                     'data_type' => $column['type'],
-                    'column_type' => $column['column_type'] ?: $column['type'],
+                    'column_type' => null,
                     'nullable' => $column['nullable'] === null ? true : $column['nullable'],
                     'length' => $column['length'],
                     'precision' => $column['precision'],
@@ -335,14 +335,14 @@ class SchemaHealthService {
                 $foreignKeys[] = $foreignKey;
             }
             $tables[$tableName] = [
-                'engine' => 'InnoDB',
+                'engine' => null,
                 'columns' => $columns,
                 'indexes' => $indexes,
                 'foreign_keys' => $foreignKeys,
             ];
         }
         return [
-            'driver' => 'mysql',
+            'driver' => 'pgsql',
             'database' => 'test',
             'server_version' => 'test',
             'tables' => $tables,
@@ -355,11 +355,11 @@ class SchemaHealthService {
             return call_user_func($this->snapshotProvider);
         }
         $driver = (string)$this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if ($driver !== 'mysql') {
-            throw new RuntimeException('Database Health currently supports MySQL databases only.');
+        if ($driver !== 'pgsql') {
+            throw new RuntimeException('Database Health requires PostgreSQL.');
         }
 
-        $databaseName = (string)$this->db->query('SELECT DATABASE()')->fetchColumn();
+        $databaseName = (string)$this->db->query('SELECT CURRENT_DATABASE()')->fetchColumn();
         $snapshot = [
             'driver' => $driver,
             'database' => $databaseName,
@@ -368,12 +368,12 @@ class SchemaHealthService {
         ];
 
         $tableRows = $this->db->query(
-            "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES "
-            . "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'"
+            "SELECT table_name FROM information_schema.tables "
+            . "WHERE table_schema = CURRENT_SCHEMA() AND table_type = 'BASE TABLE'"
         )->fetchAll(PDO::FETCH_ASSOC);
         foreach ($tableRows as $row) {
-            $snapshot['tables'][$row['TABLE_NAME']] = [
-                'engine' => $row['ENGINE'],
+            $snapshot['tables'][$row['table_name']] = [
+                'engine' => null,
                 'columns' => [],
                 'indexes' => [],
                 'foreign_keys' => [],
@@ -381,75 +381,69 @@ class SchemaHealthService {
         }
 
         $columnRows = $this->db->query(
-            'SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, '
-            . 'CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, EXTRA '
-            . 'FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() '
-            . 'ORDER BY TABLE_NAME, ORDINAL_POSITION'
+            'SELECT table_name, column_name, data_type, udt_name, is_nullable, '
+            . 'character_maximum_length, numeric_precision, numeric_scale, is_identity '
+            . 'FROM information_schema.columns WHERE table_schema = CURRENT_SCHEMA() '
+            . 'ORDER BY table_name, ordinal_position'
         )->fetchAll(PDO::FETCH_ASSOC);
         foreach ($columnRows as $row) {
-            if (!isset($snapshot['tables'][$row['TABLE_NAME']])) {
+            if (!isset($snapshot['tables'][$row['table_name']])) {
                 continue;
             }
-            $snapshot['tables'][$row['TABLE_NAME']]['columns'][$row['COLUMN_NAME']] = [
-                'data_type' => strtolower((string)$row['DATA_TYPE']),
-                'column_type' => strtolower((string)$row['COLUMN_TYPE']),
-                'nullable' => strtoupper((string)$row['IS_NULLABLE']) === 'YES',
-                'length' => $row['CHARACTER_MAXIMUM_LENGTH'] === null ? null : (int)$row['CHARACTER_MAXIMUM_LENGTH'],
-                'precision' => $row['NUMERIC_PRECISION'] === null ? null : (int)$row['NUMERIC_PRECISION'],
-                'scale' => $row['NUMERIC_SCALE'] === null ? null : (int)$row['NUMERIC_SCALE'],
-                'extra' => (string)$row['EXTRA'],
+            $snapshot['tables'][$row['table_name']]['columns'][$row['column_name']] = [
+                'data_type' => strtolower((string)$row['data_type']),
+                'column_type' => strtolower((string)$row['udt_name']),
+                'nullable' => strtoupper((string)$row['is_nullable']) === 'YES',
+                'length' => $row['character_maximum_length'] === null ? null : (int)$row['character_maximum_length'],
+                'precision' => $row['numeric_precision'] === null ? null : (int)$row['numeric_precision'],
+                'scale' => $row['numeric_scale'] === null ? null : (int)$row['numeric_scale'],
+                'extra' => strtoupper((string)$row['is_identity']) === 'YES' ? 'identity' : '',
             ];
         }
 
         $indexRows = $this->db->query(
-            'SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE, COLUMN_NAME, SEQ_IN_INDEX '
-            . 'FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() '
-            . 'ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX'
+            "SELECT tbl.relname AS table_name, idx.relname AS index_name, ind.indisunique AS is_unique, "
+            . "ind.indisprimary AS is_primary, STRING_AGG(att.attname, ',' ORDER BY ord.ordinality) AS columns_csv "
+            . 'FROM pg_index ind JOIN pg_class idx ON idx.oid = ind.indexrelid '
+            . 'JOIN pg_class tbl ON tbl.oid = ind.indrelid JOIN pg_namespace ns ON ns.oid = tbl.relnamespace '
+            . 'JOIN LATERAL UNNEST(ind.indkey) WITH ORDINALITY ord(attnum, ordinality) ON TRUE '
+            . 'JOIN pg_attribute att ON att.attrelid = tbl.oid AND att.attnum = ord.attnum '
+            . "WHERE ns.nspname = CURRENT_SCHEMA() GROUP BY tbl.relname, idx.relname, ind.indisunique, ind.indisprimary"
         )->fetchAll(PDO::FETCH_ASSOC);
         foreach ($indexRows as $row) {
-            if (!isset($snapshot['tables'][$row['TABLE_NAME']])) {
+            if (!isset($snapshot['tables'][$row['table_name']])) {
                 continue;
             }
-            if (!isset($snapshot['tables'][$row['TABLE_NAME']]['indexes'][$row['INDEX_NAME']])) {
-                $snapshot['tables'][$row['TABLE_NAME']]['indexes'][$row['INDEX_NAME']] = [
-                    'unique' => (int)$row['NON_UNIQUE'] === 0,
-                    'columns' => [],
-                ];
-            }
-            $snapshot['tables'][$row['TABLE_NAME']]['indexes'][$row['INDEX_NAME']]['columns'][] = $row['COLUMN_NAME'];
+            $name = self::databaseBoolean($row['is_primary']) ? 'PRIMARY' : $row['index_name'];
+            $snapshot['tables'][$row['table_name']]['indexes'][$name] = [
+                'unique' => self::databaseBoolean($row['is_unique']),
+                'columns' => $row['columns_csv'] === '' ? [] : explode(',', $row['columns_csv']),
+            ];
         }
 
         $foreignKeyRows = $this->db->query(
-            'SELECT kcu.TABLE_NAME, kcu.CONSTRAINT_NAME, kcu.COLUMN_NAME, '
-            . 'kcu.REFERENCED_TABLE_NAME, kcu.REFERENCED_COLUMN_NAME, kcu.ORDINAL_POSITION, '
-            . 'rc.DELETE_RULE FROM information_schema.KEY_COLUMN_USAGE kcu '
-            . 'JOIN information_schema.REFERENTIAL_CONSTRAINTS rc '
-            . 'ON rc.CONSTRAINT_SCHEMA = kcu.CONSTRAINT_SCHEMA '
-            . 'AND rc.TABLE_NAME = kcu.TABLE_NAME AND rc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME '
-            . 'WHERE kcu.CONSTRAINT_SCHEMA = DATABASE() AND kcu.REFERENCED_TABLE_NAME IS NOT NULL '
-            . 'ORDER BY kcu.TABLE_NAME, kcu.CONSTRAINT_NAME, kcu.ORDINAL_POSITION'
+            "SELECT src.relname AS table_name, con.conname AS constraint_name, dst.relname AS referenced_table_name, "
+            . "STRING_AGG(sa.attname, ',' ORDER BY ord.ordinality) AS columns_csv, "
+            . "STRING_AGG(da.attname, ',' ORDER BY ord.ordinality) AS referenced_columns_csv, "
+            . "CASE con.confdeltype WHEN 'c' THEN 'CASCADE' WHEN 'n' THEN 'SET NULL' WHEN 'd' THEN 'SET DEFAULT' "
+            . "WHEN 'r' THEN 'RESTRICT' ELSE 'NO ACTION' END AS delete_rule "
+            . 'FROM pg_constraint con JOIN pg_class src ON src.oid = con.conrelid JOIN pg_class dst ON dst.oid = con.confrelid '
+            . 'JOIN pg_namespace ns ON ns.oid = src.relnamespace '
+            . 'JOIN LATERAL UNNEST(con.conkey, con.confkey) WITH ORDINALITY ord(srcnum, dstnum, ordinality) ON TRUE '
+            . 'JOIN pg_attribute sa ON sa.attrelid = src.oid AND sa.attnum = ord.srcnum '
+            . 'JOIN pg_attribute da ON da.attrelid = dst.oid AND da.attnum = ord.dstnum '
+            . "WHERE con.contype = 'f' AND ns.nspname = CURRENT_SCHEMA() "
+            . 'GROUP BY src.relname, con.conname, dst.relname, con.confdeltype'
         )->fetchAll(PDO::FETCH_ASSOC);
-        $groupedForeignKeys = [];
         foreach ($foreignKeyRows as $row) {
-            $key = $row['TABLE_NAME'] . ':' . $row['CONSTRAINT_NAME'];
-            if (!isset($groupedForeignKeys[$key])) {
-                $groupedForeignKeys[$key] = [
-                    'table' => $row['TABLE_NAME'],
-                    'name' => $row['CONSTRAINT_NAME'],
-                    'columns' => [],
-                    'referenced_table' => $row['REFERENCED_TABLE_NAME'],
-                    'referenced_columns' => [],
-                    'delete_rule' => strtoupper((string)$row['DELETE_RULE']),
+            if (isset($snapshot['tables'][$row['table_name']])) {
+                $snapshot['tables'][$row['table_name']]['foreign_keys'][] = [
+                    'name' => $row['constraint_name'],
+                    'columns' => explode(',', $row['columns_csv']),
+                    'referenced_table' => $row['referenced_table_name'],
+                    'referenced_columns' => explode(',', $row['referenced_columns_csv']),
+                    'delete_rule' => strtoupper((string)$row['delete_rule']),
                 ];
-            }
-            $groupedForeignKeys[$key]['columns'][] = $row['COLUMN_NAME'];
-            $groupedForeignKeys[$key]['referenced_columns'][] = $row['REFERENCED_COLUMN_NAME'];
-        }
-        foreach ($groupedForeignKeys as $foreignKey) {
-            $tableName = $foreignKey['table'];
-            unset($foreignKey['table']);
-            if (isset($snapshot['tables'][$tableName])) {
-                $snapshot['tables'][$tableName]['foreign_keys'][] = $foreignKey;
             }
         }
         return $snapshot;
@@ -470,7 +464,7 @@ class SchemaHealthService {
     /** @return array<int,string> */
     private static function columnDifferences(array $expected, array $actual): array {
         $differences = [];
-        if (strtolower((string)($actual['data_type'] ?? '')) !== strtolower((string)$expected['type'])) {
+        if (self::normaliseType($actual['data_type'] ?? '') !== self::normaliseType($expected['type'])) {
             $differences[] = 'expected type ' . $expected['type'] . ', found ' . ($actual['data_type'] ?? 'unknown');
         }
         if ($expected['length'] !== null && (int)($actual['length'] ?? 0) !== (int)$expected['length']) {
@@ -494,6 +488,20 @@ class SchemaHealthService {
             $differences[] = 'expected column type ' . $expected['column_type'];
         }
         return $differences;
+    }
+
+    private static function normaliseType($type): string {
+        $type = strtolower(trim((string)$type));
+        $aliases = [
+            'int' => 'integer', 'tinyint' => 'smallint', 'decimal' => 'numeric',
+            'varchar' => 'character varying', 'char' => 'character', 'longtext' => 'text',
+            'enum' => 'character varying', 'timestamp' => 'timestamp without time zone',
+        ];
+        return $aliases[$type] ?? $type;
+    }
+
+    private static function databaseBoolean($value): bool {
+        return $value === true || $value === 1 || $value === '1' || $value === 't' || $value === 'true';
     }
 
     private static function dependenciesRepairable(array $columns, array $missingColumns): bool {

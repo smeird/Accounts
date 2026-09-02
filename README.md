@@ -1,6 +1,6 @@
 # Accounts
 
-Accounts is a self-hosted personal finance workspace built with PHP, MySQL and a responsive HTML/JavaScript frontend. It imports bank activity from OFX/QFX statements, organises transactions through reusable tags and classifications, and turns the ledger into practical dashboards for balances, spending, budgets, forecasts and longer-term decisions.
+Accounts is a self-hosted personal finance workspace built with PHP 8.5, PostgreSQL and a responsive HTML/JavaScript frontend. It imports bank activity from OFX/QFX statements, organises transactions through reusable tags and classifications, and turns the ledger into practical dashboards for balances, spending, budgets, forecasts and longer-term decisions.
 
 The interface is organised around six tasks: **Overview**, **Transactions**, **Insights**, **Planning**, **Organise** and **System**. See the [project wiki](wiki/Home.md) for development documentation and the [visual style guide](wiki/StyleGuide.md) for UI conventions.
 
@@ -64,7 +64,7 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 flowchart LR
     Browser[Responsive frontend] -->|Authenticated JSON requests| API[PHP public endpoints]
     API --> Models[Domain and dashboard models]
-    Models --> DB[(MySQL)]
+    Models --> DB[(PostgreSQL)]
     Import[OFX/QFX importer] --> Models
     AI[OpenAI Responses API] --> Models
     Models --> API
@@ -75,7 +75,7 @@ Frontend pages live in `frontend/`. Authenticated JSON endpoints live in `php_ba
 
 ## Technology
 
-- PHP 7.0+, PDO and MySQL
+- PHP 8.5+, PDO and PostgreSQL
 - SQLite in-memory for automated tests
 - HTML, CSS and vanilla JavaScript
 - Highcharts for interactive charts
@@ -121,7 +121,7 @@ The installer asks for:
 - a password of at least 12 characters;
 - confirmation that DNS and port forwarding are ready.
 
-It then installs and configures Apache, MariaDB, PHP, HTTPS and certificate renewal, the firewall, fail2ban, and automatic security updates. This can take several minutes, particularly while Raspberry Pi OS packages are updated.
+It then installs and configures Apache, PostgreSQL, PHP 8.5, HTTPS and certificate renewal, the firewall, fail2ban, and automatic security updates. This can take several minutes, particularly while Raspberry Pi OS packages are updated.
 
 #### 3. Sign in and check the installation
 
@@ -139,27 +139,15 @@ For troubleshooting and a detailed description of the safety checks, see [Setup]
 
 ### Manual setup
 
-1. Install PHP, PDO MySQL and MySQL. Production installs also require PHP cURL, mbstring, ZIP, XML, OpenSSL, JSON and session support.
-2. Provide `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASS` to PHP. Apache deployments can use `SetEnv` in the virtual host.
+1. Install PHP 8.5, PDO PostgreSQL and PostgreSQL. Production installs also require PHP cURL, mbstring, ZIP, XML, OpenSSL, JSON and session support.
+2. Provide `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` and optionally `DB_SSLMODE` to PHP. Apache deployments can use `SetEnv` in the virtual host.
 3. Create or update the schema:
 
    ```bash
    php php_backend/create_tables.php
    ```
 
-4. Installations predating the transaction-identity update must run once:
-
-   ```bash
-   php php_backend/migrations/20260814_transaction_identity.php
-   ```
-
-   Existing installations adding passkeys must also run **System → Database Health** or:
-
-   ```bash
-   php php_backend/migrations/20260831_passkeys.php
-   ```
-
-5. Serve the repository and sign in through `index.php`:
+4. Serve the repository and sign in through `index.php`:
 
    ```bash
    php -S localhost:8000
@@ -168,6 +156,8 @@ For troubleshooting and a detailed description of the safety checks, see [Setup]
    Open `http://localhost:8000/`.
 
 After upgrades, open **System → Database Health**. It identifies missing tables, columns, indexes and relationships without modifying transaction records. See [Setup](wiki/Setup.md) for Apache and environment details.
+
+Existing MySQL installations require a one-time logical migration; do not point PostgreSQL at the old files or run the clean-schema command against the existing database. Export a complete application backup first, then follow [Migrating from MySQL](wiki/Setup.md#migrating-an-existing-mysql-installation).
 
 Existing private-repository deployments can enable **System → Application Updates** without exposing a deployment SSH key to Apache. Install the root-owned, allowlisted helper once, naming the checkout and the Linux user that already has read access to GitHub:
 

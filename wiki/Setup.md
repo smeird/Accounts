@@ -2,9 +2,9 @@
 
 ## Requirements
 
-- PHP 7.0 or later
-- PDO MySQL extension
-- MySQL
+- PHP 8.5 or later
+- PDO PostgreSQL extension
+- PostgreSQL
 - Apache for production (the PHP development server is sufficient locally)
 - Node.js for frontend syntax/regression tests
 
@@ -15,7 +15,7 @@ The supported one-command production target is a fresh 64-bit Raspberry Pi OS Bo
 1. Create a public DNS record for the application hostname pointing to the internet connection used by the Pi.
 2. Forward inbound TCP ports 80 and 443 to the Pi. Keep working SSH access available.
 3. Confirm the Pi has outbound HTTPS access and at least 2 GiB free under `/var`.
-4. Do not pre-create `/var/www/accounts` or a MariaDB database named `accounts`.
+4. Do not pre-create `/var/www/accounts` or a PostgreSQL database named `accounts`.
 
 Run from an interactive SSH or local terminal:
 
@@ -41,7 +41,7 @@ Useful diagnostics are:
 
 ```bash
 sudo apache2ctl configtest
-sudo systemctl status apache2 mariadb fail2ban
+sudo systemctl status apache2 postgresql fail2ban
 sudo ufw status
 sudo certbot renew --dry-run
 sudo -u www-data git -C /var/www/accounts status --short
@@ -52,9 +52,11 @@ sudo -u www-data git -C /var/www/accounts status --short
 Accounts reads:
 
 - `DB_HOST`
+- `DB_PORT` (normally `5432`)
 - `DB_NAME`
 - `DB_USER`
 - `DB_PASS`
+- `DB_SSLMODE` (defaults to `prefer`)
 - optional `DB_DSN` for tests or a custom PDO connection
 - optional `PASSKEY_ORIGIN` and `PASSKEY_RP_ID` when the public HTTPS origin cannot be inferred behind a reverse proxy
 
@@ -71,15 +73,45 @@ For Apache, keep credentials outside the repository:
     </Directory>
 
     SetEnv DB_HOST localhost
+    SetEnv DB_PORT 5432
     SetEnv DB_NAME accounts
     SetEnv DB_USER accounts_user
     SetEnv DB_PASS replace_this
+    SetEnv DB_SSLMODE prefer
     SetEnv PASSKEY_ORIGIN https://accounts.example.test
     SetEnv PASSKEY_RP_ID accounts.example.test
 </VirtualHost>
 ```
 
 Apache `SetEnv` values exist inside web requests but are not automatically present in an interactive shell. If a CLI migration needs them, export the same values securely for that command or run the equivalent reviewed SQL through the database client.
+
+## Migrating an existing MySQL installation
+
+This is a logical migration: the application reads the old MySQL records into its versioned backup format and restores them into a newly created PostgreSQL schema. Keep the MySQL database unchanged until the final verification and retain a separate copy of the backup.
+
+1. Before updating the old application, create a complete backup from **System → Backup & Restore** and take the site out of use so no later transactions are missed.
+2. Install PHP 8.5 with `pdo_mysql` temporarily for reading the source, `pdo_pgsql` for the destination, and PostgreSQL. Create an empty PostgreSQL database owned by the application user.
+3. With the updated code checked out, export directly from MySQL if a fresh backup is needed. Supply the real credentials without saving them in the repository:
+
+   ```bash
+   DB_DSN='mysql:host=localhost;dbname=old_accounts;charset=utf8mb4' \
+   DB_USER='old_user' DB_PASS='old_password' \
+   php8.5 php_backend/public/backup.php > /safe/path/accounts-mysql-final.json.gz
+   ```
+
+4. Point the shell at the empty PostgreSQL database, create its schema, and restore the logical backup:
+
+   ```bash
+   export DB_HOST=localhost DB_PORT=5432 DB_NAME=accounts DB_USER=accounts_app
+   export DB_PASS='new_postgresql_password' DB_SSLMODE=prefer
+   unset DB_DSN
+   php8.5 php_backend/create_tables.php
+   php8.5 php_backend/public/restore.php /safe/path/accounts-mysql-final.json.gz
+   ```
+
+5. Put the same PostgreSQL values in the root-owned Apache environment configuration, reload Apache, then sign in. Check **Database Health**, account totals, transaction count, transfer exclusions, tags/categories/segments, projects, budgets and passkeys before retiring MySQL.
+
+`php_backend/create_tables.php` is deliberately destructive and is only for a new, empty destination. Never run it against a database containing the sole copy of production data.
 
 ## Initial installation
 
@@ -101,15 +133,9 @@ Open `http://localhost:8000/` and create/sign in with the initial user flow prov
 5. Apply only the safe structural repairs you understand, including the tag migration run, snapshot, taxonomy proposal, pattern and transaction-staging tables before using **System → Tag Rebuild Safety** or **System → Taxonomy Studio**.
 6. Reload Apache/PHP as required and verify the production site.
 
-### Passkey migration
+### Passkeys after migration
 
-Passkeys require HTTPS in production and the `passkeys` table. Database Health can create the missing structure, or run:
-
-```bash
-php php_backend/migrations/20260831_passkeys.php
-```
-
-Afterward, sign in with the existing password, open **System → Users**, and add the first passkey. Keep password access available as a recovery route.
+Passkeys require HTTPS in production and are included in a complete logical backup. After migration, verify an existing passkey and keep password access available as a recovery route.
 
 Do not use `git pull --allow-unrelated-histories` to repair a deployment directory. If the directory is not descended from this repository, preserve its configuration and uploads, then deploy a clean clone.
 

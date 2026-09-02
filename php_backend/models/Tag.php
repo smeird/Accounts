@@ -203,7 +203,7 @@ class Tag {
     }
 
     private static function lockActiveTag(PDO $db, int $id): array {
-        $suffix = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+        $suffix = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? '' : ' FOR UPDATE';
         $stmt = $db->prepare("SELECT id, name, name_normalized, origin, status FROM tags WHERE id = :id AND status = 'active'" . $suffix);
         $stmt->execute(['id' => $id]);
         $tag = $stmt->fetch(PDO::FETCH_ASSOC);

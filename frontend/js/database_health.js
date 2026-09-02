@@ -146,7 +146,7 @@ function initDatabaseHealth() {
             : 'Review the findings below. Safe catalogue repairs are selected; anything that could affect stored values remains manual.';
 
         meta.replaceChildren();
-        [audit.database.name && `Database ${audit.database.name}`, audit.database.server_version && `MySQL ${audit.database.server_version}`, audit.checked_at && `Checked ${new Date(audit.checked_at).toLocaleString()}`]
+        [audit.database.name && `Database ${audit.database.name}`, audit.database.server_version && `PostgreSQL ${audit.database.server_version}`, audit.checked_at && `Checked ${new Date(audit.checked_at).toLocaleString()}`]
             .filter(Boolean)
             .forEach(value => {
                 const pill = document.createElement('span');
@@ -210,7 +210,7 @@ function initDatabaseHealth() {
     function openConfirmation() {
         const count = selectedRepairIds().length;
         if (!count) return;
-        dialogMessage.textContent = `${count} selected schema repair${count === 1 ? '' : 's'} will be applied. MySQL may briefly lock an affected table while its structure changes.`;
+        dialogMessage.textContent = `${count} selected schema repair${count === 1 ? '' : 's'} will be applied. PostgreSQL may briefly lock an affected table while its structure changes.`;
         if (typeof dialog.showModal === 'function') dialog.showModal();
         else dialog.setAttribute('open', '');
     }

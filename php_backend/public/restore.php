@@ -3,8 +3,23 @@
 // Restores users, accounts, settings, segments, categories, tags (including tag aliases), groups,
 // transactions, budgets, and projects from an uploaded gzipped JSON backup.
 
-require_once __DIR__ . '/../auth.php';
-require_api_auth();
+$cliRestore = PHP_SAPI === 'cli' && !isset($_FILES['backup_file']);
+if ($cliRestore) {
+    $backupPath = $argv[1] ?? '';
+    if ($backupPath === '' || !is_file($backupPath) || !is_readable($backupPath)) {
+        fwrite(STDERR, "Usage: php8.5 php_backend/public/restore.php /absolute/path/to/accounts-backup.json.gz\n");
+        exit(2);
+    }
+    $_FILES['backup_file'] = [
+        'error' => UPLOAD_ERR_OK,
+        'tmp_name' => $backupPath,
+        'name' => basename($backupPath),
+        'size' => filesize($backupPath),
+    ];
+} else {
+    require_once __DIR__ . '/../auth.php';
+    require_api_auth();
+}
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Tag.php';
@@ -512,6 +527,14 @@ try {
             throw new RuntimeException('Restore integrity check failed for ' . $label . '.');
         }
     }
+    if ($driver === 'pgsql') {
+        foreach (['users', 'passkeys', 'saved_reports', 'accounts', 'segments', 'categories', 'tags', 'tag_aliases',
+                  'transaction_groups', 'projects', 'budgets', 'transactions', 'tag_migration_runs',
+                  'tag_taxonomy_proposals', 'tag_taxonomy_patterns', 'logs'] as $table) {
+            $db->exec('SELECT setval(pg_get_serial_sequence(\'' . $table . '\', \'id\'), '
+                . 'COALESCE(MAX(id), 1), MAX(id) IS NOT NULL) FROM "' . $table . '"');
+        }
+    }
     $db->commit();
     if ($foreignKeysDisabled) {
         $db->exec('SET FOREIGN_KEY_CHECKS=1');
@@ -530,5 +553,6 @@ try {
     if (!headers_sent()) http_response_code(500);
     $msg = 'Error: ' . $e->getMessage();
     Log::write($msg, 'ERROR');
-    echo $msg;
+    echo $msg . ($cliRestore ? PHP_EOL : '');
+    if ($cliRestore) exit(1);
 }

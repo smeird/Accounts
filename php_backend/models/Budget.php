@@ -10,9 +10,7 @@ class Budget {
      */
     public static function set(int $categoryId, int $month, int $year, float $amount): array {
         $db = Database::getConnection();
-        $upsert = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
-            ? 'ON CONFLICT(category_id, month, year) DO UPDATE SET amount = excluded.amount'
-            : 'ON DUPLICATE KEY UPDATE amount = VALUES(amount)';
+        $upsert = 'ON CONFLICT(category_id, month, year) DO UPDATE SET amount = excluded.amount';
         $stmt = $db->prepare('INSERT INTO budgets (category_id, month, year, amount) VALUES (:cid, :month, :year, :amount) ' . $upsert);
         $stmt->execute([
             'cid' => $categoryId,

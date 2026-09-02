@@ -1128,7 +1128,7 @@ class TagTaxonomyCutoverService {
     /** @return array<string,mixed> */
     private function lockRun(int $runId): array {
         $sql = 'SELECT * FROM tag_migration_runs WHERE id = :id';
-        if ((string)$this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') $sql .= ' FOR UPDATE';
+        if ((string)$this->db->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'sqlite') $sql .= ' FOR UPDATE';
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['id' => $runId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

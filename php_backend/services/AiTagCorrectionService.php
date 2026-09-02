@@ -178,10 +178,6 @@ class AiTagCorrectionService {
                 $clauses[] = "LOWER(COALESCE(description, '') || ' ' || COALESCE(memo, '')) LIKE ? ESCAPE '!'";
                 $params[] = '%' . self::escapeLike(self::normalise($term)) . '%';
             }
-            // MySQL uses CONCAT while SQLite uses ||.
-            if ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
-                $clauses = array_fill(0, count($terms), "LOWER(CONCAT(COALESCE(description, ''), ' ', COALESCE(memo, ''))) LIKE ? ESCAPE '!'");
-            }
             $sql .= ' AND (' . implode(' OR ', $clauses) . ')';
         }
         $sql .= ' ORDER BY id ASC';

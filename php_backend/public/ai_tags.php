@@ -342,10 +342,10 @@ foreach ($suggestions as $s) {
     }
 
     if ($catId !== null) {
-        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL AND transfer_id IS NULL');
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo IS NOT DISTINCT FROM :memo AND tag_id IS NULL AND transfer_id IS NULL');
         $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
     } else {
-        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo <=> :memo AND tag_id IS NULL AND transfer_id IS NULL');
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo IS NOT DISTINCT FROM :memo AND tag_id IS NULL AND transfer_id IS NULL');
         $upd->execute(['tag' => $tagId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
     }
     $processed += $upd->rowCount();

@@ -1,6 +1,6 @@
 # Architecture
 
-Accounts uses a server-rendered authentication shell, static application pages and authenticated PHP JSON endpoints backed by MySQL. Business and dashboard calculations live in models/services rather than being recomputed independently in the browser.
+Accounts uses a server-rendered authentication shell, static application pages and authenticated PHP JSON endpoints backed by PostgreSQL. Business and dashboard calculations live in models/services rather than being recomputed independently in the browser.
 
 ```mermaid
 flowchart TB
@@ -9,7 +9,7 @@ flowchart TB
     Page --> Menu[Shared menu, theme, typography and help]
     Page --> API[Authenticated JSON endpoint]
     API --> Domain[Domain/dashboard model]
-    Domain --> DB[(MySQL ledger)]
+    Domain --> DB[(PostgreSQL ledger)]
     OFX[OFX/QFX files] --> Import[OfxImportService]
     Import --> Domain
     AI[OpenAI Responses API] --> AIFlow[Tag/category/budget/report workflows]

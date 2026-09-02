@@ -46,8 +46,9 @@ cleanup_on_error() {
         rmdir "$INSTALL_DIR" >/dev/null 2>&1
         INSTALL_MOVED=0
     fi
-    if (( DB_CREATED == 1 )) && command -v mariadb >/dev/null 2>&1; then
-        mariadb --protocol=socket -e "DROP DATABASE IF EXISTS \`${DB_NAME}\`; DROP USER IF EXISTS '${DB_USER}'@'localhost'; FLUSH PRIVILEGES;" >/dev/null 2>&1
+    if (( DB_CREATED == 1 )) && command -v psql >/dev/null 2>&1; then
+        runuser -u postgres -- dropdb --if-exists "$DB_NAME" >/dev/null 2>&1
+        runuser -u postgres -- dropuser --if-exists "$DB_USER" >/dev/null 2>&1
     fi
     if [[ -n "$STAGING_DIR" && -d "$STAGING_DIR" && "$STAGING_DIR" == /var/www/.accounts-install.* ]]; then
         find "$STAGING_DIR" -mindepth 1 -delete >/dev/null 2>&1
@@ -207,13 +208,21 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update >>"$LOG_FILE" 2>&1
 apt-get -y full-upgrade >>"$LOG_FILE" 2>&1
 apt-get install -y \
-    apache2 mariadb-server git curl ca-certificates openssl certbot \
+    lsb-release ca-certificates curl >>"$LOG_FILE" 2>&1
+curl -fsSLo /tmp/debsuryorg-archive-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
+dpkg -i /tmp/debsuryorg-archive-keyring.deb >>"$LOG_FILE" 2>&1
+rm -f /tmp/debsuryorg-archive-keyring.deb
+write_file /etc/apt/sources.list.d/php.list 0644 \
+    "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ ${CODENAME} main"
+apt-get update >>"$LOG_FILE" 2>&1
+apt-get install -y \
+    apache2 postgresql postgresql-client git curl ca-certificates openssl certbot \
     ufw fail2ban unattended-upgrades \
-    libapache2-mod-php php-cli php-common php-mysql php-curl php-mbstring php-zip php-xml \
+    libapache2-mod-php8.5 php8.5-cli php8.5-common php8.5-pgsql php8.5-curl php8.5-mbstring php8.5-zip php8.5-xml \
     >>"$LOG_FILE" 2>&1
 
 CURRENT_PHASE="host security"
-systemctl enable --now mariadb apache2 fail2ban >/dev/null
+systemctl enable --now postgresql apache2 fail2ban >/dev/null
 a2enmod env headers expires rewrite ssl >/dev/null
 SSH_PORT=$( { command -v sshd >/dev/null 2>&1 && sshd -T 2>/dev/null || true; } | awk '$1 == "port" { print $2; exit }')
 SSH_PORT=${SSH_PORT:-22}
@@ -226,10 +235,6 @@ ufw --force enable >>"$LOG_FILE"
 write_file /etc/fail2ban/jail.d/accounts-ssh.local 0644 "[sshd]
 enabled = true"
 systemctl restart fail2ban
-write_file /etc/mysql/mariadb.conf.d/60-accounts.cnf 0644 '[mysqld]
-bind-address = 127.0.0.1
-skip-name-resolve'
-systemctl restart mariadb
 write_file /etc/apt/apt.conf.d/52accounts-unattended-upgrades 0644 'APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";'
 write_file /etc/apache2/conf-available/accounts-hardening.conf 0644 'ServerTokens Prod
@@ -263,22 +268,17 @@ write_file /etc/letsencrypt/renewal-hooks/deploy/reload-accounts-apache 0755 '#!
 systemctl reload apache2'
 
 CURRENT_PHASE="database provisioning"
-if mariadb --protocol=socket -NBe "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${DB_NAME}'" | grep -qx "$DB_NAME"; then
+if runuser -u postgres -- psql -Atqc "SELECT datname FROM pg_database WHERE datname='${DB_NAME}'" | grep -qx "$DB_NAME"; then
     fail "Database '$DB_NAME' already exists. It has not been modified."
 fi
+if runuser -u postgres -- psql -Atqc "SELECT rolname FROM pg_roles WHERE rolname='${DB_USER}'" | grep -qx "$DB_USER"; then
+    fail "Database role '$DB_USER' already exists. It has not been modified."
+fi
 DB_PASS=$(openssl rand -hex 24)
-HOST_SQL=$(hostname | tr -cd 'A-Za-z0-9_.-')
+runuser -u postgres -- psql -v ON_ERROR_STOP=1 \
+    -c "CREATE ROLE ${DB_USER} LOGIN PASSWORD '${DB_PASS}'" >>"$LOG_FILE" 2>&1
 DB_CREATED=1
-mariadb --protocol=socket <<SQL
-DROP USER IF EXISTS ''@'localhost';
-DROP USER IF EXISTS ''@'${HOST_SQL}';
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db = 'test' OR Db LIKE 'test\\_%';
-CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
-GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
-FLUSH PRIVILEGES;
-SQL
+runuser -u postgres -- createdb --owner="$DB_USER" "$DB_NAME" >>"$LOG_FILE" 2>&1
 
 CURRENT_PHASE="application checkout"
 STAGING_DIR=$(mktemp -d /var/www/.accounts-install.XXXXXX)
@@ -286,18 +286,20 @@ chown www-data:www-data "$STAGING_DIR"
 runuser -u www-data -- git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" "$STAGING_DIR" >>"$LOG_FILE" 2>&1
 [[ ! -e "$STAGING_DIR/.env" ]] || fail "The repository unexpectedly contains a .env file."
 write_file "$ENV_CONF" 0640 "SetEnv DB_HOST localhost
+SetEnv DB_PORT 5432
 SetEnv DB_NAME ${DB_NAME}
 SetEnv DB_USER ${DB_USER}
 SetEnv DB_PASS ${DB_PASS}
+SetEnv DB_SSLMODE prefer
 SetEnv PASSKEY_ORIGIN https://${DOMAIN}
 SetEnv PASSKEY_RP_ID ${DOMAIN}"
 chgrp www-data "$ENV_CONF"
 a2enconf accounts-env >/dev/null
 
-export DB_HOST=localhost DB_NAME DB_USER DB_PASS
-php "$STAGING_DIR/php_backend/create_tables.php" >>"$LOG_FILE" 2>&1
+export DB_HOST=localhost DB_PORT=5432 DB_NAME DB_USER DB_PASS DB_SSLMODE=prefer
+php8.5 "$STAGING_DIR/php_backend/create_tables.php" >>"$LOG_FILE" 2>&1
 export ADMIN_USER ADMIN_PASS
-php -r 'require $argv[1]; User::create(getenv("ADMIN_USER"), getenv("ADMIN_PASS"));' \
+php8.5 -r 'require $argv[1]; User::create(getenv("ADMIN_USER"), getenv("ADMIN_PASS"));' \
     "$STAGING_DIR/php_backend/models/User.php" >>"$LOG_FILE" 2>&1
 unset ADMIN_PASS
 install -d -o www-data -g www-data -m 0750 "$STAGING_DIR/php_backend/uploads"
@@ -357,10 +359,12 @@ apache2ctl configtest >>"$LOG_FILE" 2>&1
 systemctl reload apache2
 
 CURRENT_PHASE="installation verification"
-for module in pdo_mysql curl mbstring zip xml openssl json session; do
-    php -m | grep -Eiq "^${module}$" || fail "Required PHP module is missing: $module"
+[[ $(php8.5 -r 'echo PHP_VERSION_ID;') -ge 80500 ]] || fail "PHP 8.5 is not active."
+for module in pdo_pgsql curl mbstring zip xml openssl json session; do
+    php8.5 -m | grep -Eiq "^${module}$" || fail "Required PHP module is missing: $module"
 done
-mariadb --protocol=socket -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" -NBe "SELECT 1 FROM users WHERE username='${ADMIN_USER}' LIMIT 1" | grep -qx 1 \
+PGPASSWORD="$DB_PASS" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -Atqc \
+    "SELECT 1 FROM users WHERE username='${ADMIN_USER}' LIMIT 1" | grep -qx 1 \
     || fail "The initial user or database connection could not be verified."
 runuser -u www-data -- git -c safe.directory="$INSTALL_DIR" -C "$INSTALL_DIR" fetch --prune origin "$REPO_BRANCH" >>"$LOG_FILE" 2>&1
 [[ -z $(runuser -u www-data -- git -c safe.directory="$INSTALL_DIR" -C "$INSTALL_DIR" status --porcelain --untracked-files=normal) ]] \
@@ -374,7 +378,7 @@ grep -Eiq '^location: https://' <<<"$HTTP_HEADERS" || fail "HTTP is not redirect
 API_STATUS=$(curl -sS -o /dev/null -w '%{http_code}' --resolve "${DOMAIN}:443:127.0.0.1" "https://${DOMAIN}/php_backend/public/current_user.php")
 [[ "$API_STATUS" == "401" ]] || fail "The unauthenticated API check returned HTTP $API_STATUS instead of 401."
 certbot renew --dry-run >>"$LOG_FILE" 2>&1 || fail "Certificate renewal dry-run failed."
-systemctl is-active --quiet apache2 mariadb fail2ban || fail "One or more required services are not active."
+systemctl is-active --quiet apache2 postgresql fail2ban || fail "One or more required services are not active."
 ufw status | grep -q 'Status: active' || fail "UFW is not active."
 
 COMMIT=$(runuser -u www-data -- git -C "$INSTALL_DIR" rev-parse --short=7 HEAD)

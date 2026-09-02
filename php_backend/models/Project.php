@@ -21,7 +21,7 @@ class Project {
 
     /**
      * HTML number inputs submit an empty string when an optional field is left
-     * blank. Strict MySQL rejects that value for DECIMAL and INT columns, so
+     * blank. PostgreSQL rejects that value for DECIMAL and INT columns, so
      * store a genuine SQL NULL instead.
      */
     private static function nullableNumber(array $data, string $key, bool $integer = false) {

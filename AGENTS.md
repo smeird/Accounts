@@ -19,8 +19,8 @@
 - Projects board page presents each active project as an individual card with key details and actions.
 - Projects board cards display post-description details in a compact table with a smaller font to minimise card size.
 ## Environment
-- Target PHP version: 7.0 and above.
-- Ensure MySQL is available and configure credentials using the environment variables `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASS`.
+- Target PHP version: 8.5 and above.
+- PostgreSQL is the only supported production database. Configure it with `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, and optional `DB_SSLMODE`; `DB_DSN=sqlite::memory:` remains test-only.
 - Create database tables with `php php_backend/create_tables.php` and optionally insert a sample account with `php php_backend/public/index.php`.
 - Serve the project locally with `php -S localhost:8000` and open `frontend/index.html` in your browser.
 
@@ -130,3 +130,4 @@
 - Raspberry Pi production installs use the interactive root-run `deploy.sh` on 64-bit Raspberry Pi OS Bookworm or Trixie. Keep generated database/passkey settings outside the checkout in the root-owned Apache environment configuration, keep runtime uploads ignored, expose the app only after successful HTTPS provisioning, and preserve `www-data` ownership needed by the guarded in-app updater.
 - Keep the README Raspberry Pi installation guide short and task-led: prepare DNS/ports, run the single installer command, answer its prompts, then sign in, check Database Health, and create an off-device backup. Put lower-level diagnostics and recovery details in `wiki/Setup.md`.
 - The curated appearance catalogue includes cool, neutral, natural, warm and multitone accent palettes. Add colours only through `Setting::colorPalettes()` with stable keys, descriptive labels and sufficiently deep primary/secondary values that remain legible for white button text in Glass and Paper views.
+- PostgreSQL is the production data authority and PHP 8.5 is the minimum runtime. Keep schema creation and Database Health driven by `SchemaCatalog`, preserve PostgreSQL identity sequences during logical restores, and migrate legacy MySQL installations only through the versioned application backup format; never attempt an in-place data-directory conversion.

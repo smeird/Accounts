@@ -3,8 +3,11 @@
 // segments, transactions, budgets, projects, and settings via the `parts`
 // query parameter. User and account information is always included so a full
 // backup can be restored.
-require_once __DIR__ . '/../auth.php';
-require_api_auth();
+$cliBackup = PHP_SAPI === 'cli';
+if (!$cliBackup) {
+    require_once __DIR__ . '/../auth.php';
+    require_api_auth();
+}
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
 
@@ -13,17 +16,17 @@ require_once __DIR__ . '/../models/Log.php';
 // Allow optionally including projects in the backup
 // Settings may also be backed up and restored
 $allParts = ['categories','tags','groups','transactions','budgets','segments','projects','settings','reports','tag_migrations'];
-$parts = isset($_GET['parts']) && $_GET['parts'] !== ''
+$parts = !$cliBackup && isset($_GET['parts']) && $_GET['parts'] !== ''
     ? array_intersect($allParts, explode(',', $_GET['parts']))
     : $allParts;
 $partSlug = preg_replace('/[^A-Za-z0-9_-]/', '_', implode('-', $parts));
 
 // Send a gzipped JSON file with a descriptive filename
-if (!headers_sent()) header('Content-Type: application/gzip');
+if (!$cliBackup && !headers_sent()) header('Content-Type: application/gzip');
 $host = $_SERVER['HTTP_HOST'] ?? 'backup';
 $host = preg_replace('/[^A-Za-z0-9_-]/', '_', $host);
 $filename = $host . '-' . date('Y-m-d') . '-' . $partSlug . '.json.gz';
-if (!headers_sent()) header('Content-Disposition: attachment; filename="' . $filename . '"');
+if (!$cliBackup && !headers_sent()) header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 try {
     $db = Database::getConnection();
@@ -115,6 +118,10 @@ try {
     echo $gz;
 } catch (Exception $e) {
     Log::write('Backup error: ' . $e->getMessage(), 'ERROR');
+    if ($cliBackup) {
+        fwrite(STDERR, 'Backup error: ' . $e->getMessage() . PHP_EOL);
+        exit(1);
+    }
     http_response_code(500);
     echo gzencode(json_encode(['error' => $e->getMessage()]));
 }

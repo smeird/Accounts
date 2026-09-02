@@ -24,7 +24,9 @@ class Log {
         $db = Database::getConnection();
         $sql = 'SELECT id, level, message, created_at FROM logs';
         if ($days !== null) {
-            $sql .= ' WHERE created_at >= (NOW() - INTERVAL ' . (int)$days . ' DAY)';
+            $sql .= $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+                ? " WHERE created_at >= DATETIME('now', '-" . (int)$days . " days')"
+                : " WHERE created_at >= (CURRENT_TIMESTAMP - INTERVAL '" . (int)$days . " days')";
         }
         $sql .= ' ORDER BY created_at DESC';
         if ($limit !== null) {
@@ -40,7 +42,10 @@ class Log {
     public static function prune(int $days): bool {
         try {
             $db = Database::getConnection();
-            $db->exec('DELETE FROM logs WHERE created_at < (NOW() - INTERVAL ' . (int)$days . ' DAY)');
+            $sql = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+                ? "DELETE FROM logs WHERE created_at < DATETIME('now', '-" . (int)$days . " days')"
+                : "DELETE FROM logs WHERE created_at < (CURRENT_TIMESTAMP - INTERVAL '" . (int)$days . " days')";
+            $db->exec($sql);
             return true;
         } catch (Throwable $e) {
             error_log('Log prune failed: ' . $e->getMessage());

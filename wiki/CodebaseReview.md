@@ -14,7 +14,7 @@ The review is static (code and docs inspection) and avoids any checks that requi
 
 ## High-level assessment
 
-The project has a clear and pragmatic architecture for a PHP 7+ application:
+The project has a clear and pragmatic architecture for a PHP 8.5 application:
 
 - A broad set of focused backend endpoints in `php_backend/public/` enables feature-level iteration.
 - Domain/model classes under `php_backend/models/` keep data access concerns in one place.
