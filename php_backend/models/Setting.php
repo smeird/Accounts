@@ -30,7 +30,8 @@ class Setting {
      */
     public static function set(string $name, string $value): void {
         $db = Database::getConnection();
-        $sql = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $sql = $driver === 'sqlite' || $driver === 'pgsql'
             ? 'INSERT INTO `settings` (`name`, `value`) VALUES (:name, :value)
                 ON CONFLICT(`name`) DO UPDATE SET `value` = excluded.`value`'
             : 'INSERT INTO `settings` (`name`, `value`) VALUES (:name, :value)

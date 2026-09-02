@@ -512,6 +512,11 @@ try {
             throw new RuntimeException('Restore integrity check failed for ' . $label . '.');
         }
     }
+    if ($driver === 'pgsql') {
+        foreach (['users', 'passkeys', 'saved_reports', 'accounts', 'segments', 'categories', 'budgets', 'projects', 'tags', 'tag_aliases', 'transaction_groups', 'transactions', 'tag_migration_runs', 'tag_taxonomy_proposals', 'tag_taxonomy_patterns', 'logs'] as $table) {
+            $db->exec("SELECT setval(pg_get_serial_sequence('{$table}', 'id'), COALESCE((SELECT MAX(id) FROM \"{$table}\"), 1), true)");
+        }
+    }
     $db->commit();
     if ($foreignKeysDisabled) {
         $db->exec('SET FOREIGN_KEY_CHECKS=1');
