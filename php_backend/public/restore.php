@@ -367,10 +367,18 @@ try {
 
     if (isset($data['category_tags'])) {
         $stmtCT = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
+        $seenCategoryTags = [];
         foreach ($data['category_tags'] as $row) {
+            $categoryId = (int)$row['category_id'];
+            $tagId = (int)($tagIdMap[(int)$row['tag_id']] ?? $row['tag_id']);
+            $key = $categoryId . ':' . $tagId;
+            // Older MySQL installations could contain duplicate link rows.
+            // A relationship is set-like, so retain one canonical link on restore.
+            if (isset($seenCategoryTags[$key])) continue;
+            $seenCategoryTags[$key] = true;
             $stmtCT->execute([
-                'category_id' => $row['category_id'],
-                'tag_id' => $tagIdMap[(int)$row['tag_id']] ?? $row['tag_id']
+                'category_id' => $categoryId,
+                'tag_id' => $tagId
             ]);
         }
     }
