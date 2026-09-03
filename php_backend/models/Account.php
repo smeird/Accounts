@@ -24,7 +24,7 @@ class Account {
              . 'CASE WHEN a.`closed` = 1 THEN 0 ELSE COALESCE(a.`ledger_balance`, 0) END AS `balance`, '
              . 'a.`closed`, a.`closed_at`, '
              . 'MAX(t.`date`) AS `last_transaction`, '
-             . 'CASE WHEN a.`sort_code` IS NULL OR a.`sort_code` = "" THEN 1 ELSE 0 END AS `is_credit_card` '
+             . "CASE WHEN a.`sort_code` IS NULL OR a.`sort_code` = '' THEN 1 ELSE 0 END AS `is_credit_card` "
              . 'FROM `accounts` a '
              . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
              . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
