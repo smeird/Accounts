@@ -381,7 +381,13 @@ try {
     }
 
     if (isset($data['category_tags'])) {
-        $stmtCT = $db->prepare('INSERT INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)');
+        // Legacy backups can contain differently numbered tags that resolve to
+        // one canonical tag during import. Keep the one meaningful category
+        // link when that normalisation makes two rows identical.
+        $categoryTagSql = $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+            ? 'INSERT OR IGNORE INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id)'
+            : 'INSERT INTO category_tags (category_id, tag_id) VALUES (:category_id, :tag_id) ON CONFLICT (category_id, tag_id) DO NOTHING';
+        $stmtCT = $db->prepare($categoryTagSql);
         foreach ($data['category_tags'] as $row) {
             $stmtCT->execute([
                 'category_id' => $row['category_id'],
