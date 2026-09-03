@@ -561,7 +561,7 @@ class Tag {
      */
     public static function setKeywordIfMissing(int $tagId, string $keyword): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id AND (`keyword` IS NULL OR `keyword` = "")');
+        $stmt = $db->prepare("UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id AND (`keyword` IS NULL OR `keyword` = '')");
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
         self::clearMatchCaches();
     }
@@ -581,7 +581,7 @@ class Tag {
      */
     public static function setDescriptionIfMissing(int $tagId, string $description): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `description` = :descr WHERE `id` = :id AND (`description` IS NULL OR `description` = "")');
+        $stmt = $db->prepare("UPDATE `tags` SET `description` = :descr WHERE `id` = :id AND (`description` IS NULL OR `description` = '')");
         $stmt->execute(['descr' => $description, 'id' => $tagId]);
     }
 
