@@ -46,7 +46,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const themeLink = document.createElement('link');
     themeLink.id = 'theme-professional-css';
     themeLink.rel = 'stylesheet';
-    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20260824-paper-density');
+    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20260905-paper-edition');
     document.head.appendChild(themeLink);
   }
 
