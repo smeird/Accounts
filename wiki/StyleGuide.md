@@ -116,6 +116,8 @@ In Professional view, desktop tables use the compact density defined by `fronten
 
 Professional/Paper view uses a continuous document surface. Content sections are transparent against the sheet and separated primarily by horizontal rules; primary heroes flatten into report sections, tables use square ruled ledger edges, and desktop controls become denser. Inputs, buttons, warnings and the sidebar retain boundaries where they support interaction or orientation. Mobile keeps normal touch heights even though its surfaces remain flat.
 
+Paper's typographic hierarchy is editorial: a strong document title above an ink rule, medium-weight section headings, regular-weight large financial figures with tabular numerals, quiet 12px captions, and smaller regular supporting text. Monthly Statement's multiline summaries remain 14px. Use the configured font families, accent weight and header-size options; do not impose a special Paper font. Flatten nested metric surfaces and remove secondary decorative accent slivers, but retain primary top accents, semantic classification colours, visible focus outlines and mobile touch spacing. Keep all Paper changes scoped to `body.theme-professional` in `frontend/css/theme-professional.css`; Glass must remain unchanged.
+
 ## 8. Charts and metrics
 
 - Use the simplest chart that answers the question.

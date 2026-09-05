@@ -1715,6 +1715,12 @@ $paperStyles = (string)file_get_contents(__DIR__ . '/../frontend/css/theme-profe
 assertEqual(true, strpos($paperStyles, '--paper-canvas') !== false, 'Paper view defines its own document canvas');
 assertEqual(true, strpos($paperStyles, 'border-top:1px solid var(--paper-rule)') !== false, 'Paper sections use horizontal rules instead of card outlines');
 assertEqual(true, strpos($paperStyles, 'background:transparent!important') !== false, 'Paper content surfaces flatten into the shared sheet');
+assertEqual(true, strpos($paperStyles, 'body.theme-professional .ops-main .page-header .page-title') !== false, 'Paper display typography is scoped to its theme');
+assertEqual(true, strpos($paperStyles, '--paper-title-size') !== false, 'Paper titles retain a configurable responsive scale');
+assertEqual(true, strpos($paperStyles, 'font-weight:var(--accent-font-weight,400)') !== false, 'Paper financial values use a lighter hierarchy while honouring chosen weights');
+assertEqual(true, strpos($paperStyles, 'p:is(#recurring-ratio,#avg-transaction)') !== false, 'Paper retains a readable separate scale for multiline statement values');
+assertEqual(true, strpos($paperStyles, 'lining-nums tabular-nums') !== false, 'Paper display amounts use aligned numerals');
+assertEqual(true, strpos($heroDensityScript, '20260905-paper-edition') !== false, 'Updated Paper styles have a fresh asset version');
 $trendStyles = (string)file_get_contents(__DIR__ . '/../frontend/financial_trends.css');
 assertEqual(true, strpos($trendStyles, '.trends-controls::before { inset:0 0 auto; width:100%') !== false, 'Trends period controls use a full-width top accent');
 

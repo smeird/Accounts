@@ -35,15 +35,15 @@ body.theme-professional.ops-body {
 .theme-professional .ops-btn-primary,
 .theme-professional button.bg-indigo-600,
 .theme-professional a.bg-indigo-600 {
-  background-color: #4f46e5 !important;
-  border-color: #4f46e5 !important;
+  background-color: var(--brand-color-600, #4f46e5) !important;
+  border-color: var(--brand-color-600, #4f46e5) !important;
 }
 
 .theme-professional .ops-btn-primary:hover,
 .theme-professional button.bg-indigo-600:hover,
 .theme-professional a.bg-indigo-600:hover {
-  background-color: #4338ca !important;
-  border-color: #4338ca !important;
+  background-color: var(--brand-color-700, #4338ca) !important;
+  border-color: var(--brand-color-700, #4338ca) !important;
 }
 
 .theme-professional .text-indigo-700,
@@ -530,4 +530,287 @@ body.theme-professional .site-menu .site-menu-link.is-active {
   body.theme-professional .ops-main > * + * { margin-top:.85rem!important; }
   body.theme-professional .page-header { padding-left:3.35rem!important; }
   body.theme-professional .site-menu { padding-inline:.78rem!important; }
+}
+
+/* Paper edition: hierarchy comes from ink, type and spacing, not elevation.
+ * Keep these overrides scoped; configured families and accent weights remain
+ * owned by fonts.js. Explicit component hooks avoid altering chart geometry,
+ * classification colours, dialog backdrops or the app's scrolling shell.
+ */
+body.theme-professional {
+  --paper-sheet:#fffefa;
+  --paper-canvas:#f4f2ed;
+  --paper-ink:#292923;
+  --paper-muted:#66675e;
+  --paper-rule:#deded4;
+  --paper-rule-strong:#aaa99c;
+  --type-table-secondary-color:#727469;
+  --paper-title-size:clamp(1.8rem,2.6vw,2.35rem);
+}
+
+body.theme-professional.ui-page-header-small { --paper-title-size:1.55rem; }
+body.theme-professional.ui-page-header-large { --paper-title-size:clamp(2rem,3vw,2.65rem); }
+body.theme-professional.ui-page-header-extra-large { --paper-title-size:clamp(2.2rem,3.5vw,3rem); }
+
+body.theme-professional .ops-main .page-header {
+  padding-block:1rem!important;
+  margin-bottom:1.15rem;
+  border-bottom:2px solid var(--paper-ink)!important;
+}
+body.theme-professional .ops-main .page-header .page-title {
+  font-size:var(--paper-title-size)!important;
+  font-weight:var(--accent-font-weight,700)!important;
+  line-height:1.12!important;
+  letter-spacing:-.045em;
+  text-wrap:balance;
+}
+body.theme-professional .ops-main .page-header .page-subtitle {
+  max-width:72ch;
+  margin-top:.45rem;
+  color:var(--paper-muted)!important;
+  font-size:.875rem;
+  font-weight:400;
+  line-height:1.6;
+}
+body.theme-professional .page-breadcrumb {
+  margin-top:.4rem;
+  font-weight:400;
+  letter-spacing:.06em;
+}
+body.theme-professional .ops-main :is(h2,h3) {
+  color:var(--paper-ink);
+  font-weight:600;
+  line-height:1.3;
+  letter-spacing:-.025em;
+}
+body.theme-professional .ops-main h2 { font-size:1.25rem; }
+body.theme-professional .ops-main h3 { font-size:1rem; }
+
+/* Captions are quiet, spaced labels. Values have their own display scale. */
+body.theme-professional .ops-main :is(
+  [class$="-kicker"],[class$="-eyebrow"],[class$="-section-label"],
+  [class$="__eyebrow"],.account-summary-label,.site-metric-label,
+  .instant-metric p,.trends-metric-card p,.recurring-metric>div>span,
+  .budget-summary-grid p,.yearly-metrics p,.transaction-hero__metrics p
+) {
+  color:var(--paper-muted)!important;
+  font-size:.75rem!important;
+  font-weight:500!important;
+  letter-spacing:.075em;
+  line-height:1.5;
+  text-transform:uppercase;
+}
+body.theme-professional .ops-main :is(
+  .account-summary-value,.site-metric-value,.instant-metric strong,
+  .trends-metric-card strong,.recurring-metric strong,.pivot-metric strong,
+  .process-metric strong,.budget-summary-grid strong,.yearly-metrics strong,
+  .transaction-hero__metrics strong,.forecast-metrics strong,.burn-metrics strong
+) {
+  font-size:clamp(1.65rem,2.2vw,2rem)!important;
+  font-weight:var(--accent-font-weight,400)!important;
+  line-height:1.2;
+  letter-spacing:-.035em;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+body.theme-professional .ops-main :is(
+  .instant-balance,.transaction-hero__value,.project-hero__value,
+  .budget-remaining,.yearly-cashflow,.forecast-position,.trends-primary-card>strong,.burn-hero>strong
+) {
+  color:var(--paper-ink)!important;
+  font-size:clamp(2rem,3.5vw,3rem)!important;
+  font-weight:var(--accent-font-weight,400)!important;
+  line-height:1.15;
+  letter-spacing:-.045em;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+body.theme-professional .ops-main :is(
+  .account-summary-helper,.instant-metric>div>span,.instant-metric>span,
+  .trends-metric-card small,.recurring-metric small,.pivot-metric small,
+  .instant-message,.instant-period,.yearly-message,.forecast-message,
+  .transaction-hero__message,.budget-hero-message,.project-hero__message
+) { color:var(--paper-muted); font-weight:400; line-height:1.55; }
+
+/* Remove the remaining nested glass surfaces, including their gradients. */
+body.theme-professional .ops-main :is(
+  .cards,.site-card,.instant-card,.transaction-card,.budget-card,.project-card,
+  .yearly-card,.forecast-card,.recurring-panel,.pivot-panel,.process-panel,
+  .settings-section,.utility-panel,.trends-card,.trends-coverage,
+  .account-summary-card,.instant-metrics,.instant-metric,.recurring-metric,
+  .pivot-metric,.process-metric,.budget-summary-grid,.yearly-metrics,
+  .transaction-hero__metrics,.recurring-method,.process-guide,
+  .transaction-natural,.transaction-receipt,.budget-row,.project-tile
+) {
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+}
+body.theme-professional .ops-main :is(
+  .account-summary-card,.instant-metric,.recurring-metric,.pivot-metric,
+  .process-metric,.trends-metric-card
+) {
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule)!important;
+  padding:1rem .75rem!important;
+  align-items:flex-start;
+}
+body.theme-professional .ops-main :is(.cards,.site-card,.instant-card,.transaction-card,.budget-card,.project-card,.settings-section,.utility-panel) {
+  padding-top:1.15rem;
+  padding-bottom:1.15rem;
+}
+/* Decorative slivers on secondary sections compete with the document rules.
+ * Primary hero/page accents retain the user's selected colour and thickness. */
+body.theme-professional .ops-main :is(.cards,.site-card,.instant-card,.transaction-card,.budget-card,.project-card,.trends-card,.trends-coverage,.settings-section)::before { display:none!important; }
+body.theme-professional .ops-main .account-summary-card::before { display:none!important; }
+body.theme-professional .ops-main .account-summary-label { padding-left:0; }
+body.theme-professional .ops-main .account-summary-label::before { display:none; }
+
+/* Monthly Statement's paragraph values need to outrank its page-scoped scale. */
+body.theme-professional.monthly-statement-page .statement-summary .cards { text-align:left; }
+body.theme-professional.monthly-statement-page .statement-summary .cards>p:first-child {
+  color:var(--paper-muted)!important;
+  font-size:.75rem!important;
+  font-weight:500!important;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+body.theme-professional.monthly-statement-page .statement-summary .cards>p[id] {
+  color:var(--paper-ink)!important;
+  font-size:1.8rem!important;
+  font-weight:var(--accent-font-weight,400)!important;
+  line-height:1.25!important;
+  font-variant-numeric:tabular-nums;
+}
+body.theme-professional.monthly-statement-page .statement-summary .cards>p:is(#recurring-ratio,#avg-transaction) {
+  font-size:.875rem!important;
+  line-height:1.6!important;
+}
+body.theme-professional .ops-main :is(.burn-hero,.burn-metrics>article,.forecast-metrics>article) {
+  color:var(--paper-ink)!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule)!important;
+  border-radius:0!important;
+}
+body.theme-professional .burn-hero__flare { display:none; }
+body.theme-professional .ops-main :is(.burn-hero p,.burn-unit,.forecast-range>span,.forecast-range__values span,.forecast-hero__footer) { color:var(--paper-muted)!important; }
+body.theme-professional .ops-main :is(.forecast-metrics,.burn-metrics) p {
+  font-size:.75rem!important;
+  font-weight:500!important;
+  color:var(--paper-muted)!important;
+}
+body.theme-professional .ops-main :is(.account-search,.statement-search,.modern-table-search) {
+  border-radius:.18rem!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+body.theme-professional .ops-main :is(.recurring-method,.recurring-notes,.recurring-notes li,.burn-explainer__formula) {
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body.theme-professional .ops-main :is(.recurring-method,.recurring-notes) { border:0!important; }
+body.theme-professional .ops-main :is(.recurring-metric,.pivot-metric,.process-metric,.burn-card)::before { display:none!important; }
+body.theme-professional .ops-main #run-analysis {
+  background:var(--brand-color-600,#4f46e5)!important;
+  color:#fff!important;
+  border-radius:.18rem!important;
+  box-shadow:none!important;
+}
+body.theme-professional .ops-main #run-analysis:hover { background:var(--brand-color-700,#4338ca)!important; }
+body.theme-professional .ops-main #statement-sort { border-radius:.18rem!important; }
+body.theme-professional .ops-main :is(.trends-table-wrap,.forecast-range) { border-radius:0!important; background:transparent!important; box-shadow:none!important; }
+body.theme-professional .forecast-confidence { border-radius:.18rem; color:var(--paper-muted)!important; background:transparent; }
+body.theme-professional .forecast-confidence--high { color:#16704b!important; }
+body.theme-professional .forecast-confidence--medium { color:#865b16!important; }
+body.theme-professional .forecast-confidence--low { color:#aa3545!important; }
+body.theme-professional .ops-main :is(.budget-primary-button,.category-primary-button,.segment-primary-button,.group-primary-button,.process-primary-action,.export-primary-action,.tagging-primary) {
+  background:var(--brand-color-600,#4f46e5)!important;
+  color:#fff!important;
+}
+body.theme-professional .ops-main :is(.budget-primary-button,.category-primary-button,.segment-primary-button,.group-primary-button,.process-primary-action,.export-primary-action,.tagging-primary):hover { background:var(--brand-color-700,#4338ca)!important; }
+body.theme-professional .ops-main :is(.budget-pulse,.project-pulse,.landing-live) { color:#16704b!important; }
+body.theme-professional .ops-main :is(.budget-hero__topline,.project-hero__topline,.budget-used-block>span) { color:var(--paper-muted)!important; }
+body.theme-professional .ops-main :is(.instant-card,.transaction-card,.budget-card,.project-card,.project-tile,.account-summary-card):hover { transform:none; }
+body.theme-professional .ops-main :is(.instant-score__ring,.instant-score__centre) {
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body.theme-professional .instant-score__ring { border:1px solid var(--paper-rule-strong); }
+body.theme-professional .instant-score__centre :is(span,small) { color:var(--paper-ink)!important; }
+body.theme-professional .instant-score>p { color:var(--paper-muted)!important; }
+body.theme-professional .instant-live { color:#16704b!important; font-weight:500; }
+body.theme-professional .instant-live>span { box-shadow:none; }
+body.theme-professional .ops-main .instant-metrics { border:0!important; border-top:1px solid var(--paper-rule)!important; }
+body.theme-professional .ops-main .burn-hero { min-height:0!important; }
+body.theme-professional .ops-main :is(
+  .instant-metric__icon,.recurring-metric__icon,.pivot-metric__icon,
+  .trends-metric-icon,.budget-summary-icon,.account-summary-icon,.burn-metric-icon,.forecast-metric-icon,.recurring-method__icon
+) {
+  width:1.5rem!important;
+  height:1.5rem!important;
+  flex-basis:1.5rem;
+  border:0!important;
+  border-radius:0!important;
+  color:var(--paper-muted)!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body.theme-professional .ops-main :is(.instant-pace,.trends-change,.trends-chip,.recurring-method__badge) {
+  border:0!important;
+  border-radius:0!important;
+  padding-inline:0;
+  color:var(--paper-muted);
+  background:transparent!important;
+  font-weight:400;
+}
+
+/* Dark semantic inks stay legible on the light sheet. */
+body.theme-professional .ops-main :is(.instant-tone--positive,.yearly-tone--positive) { color:#16704b!important; }
+body.theme-professional .ops-main :is(.instant-tone--negative,.yearly-tone--negative) { color:#aa3545!important; }
+body.theme-professional .ops-main :is(.instant-tone--warning,.yearly-tone--warning) { color:#865b16!important; }
+
+body.theme-professional .ops-main :is(.statement-description,.account-name,.modern-table-primary) { font-weight:600; }
+body.theme-professional .ops-main :is(.statement-amount,.account-balance-value,.account-identifier-number) { font-variant-numeric:tabular-nums; letter-spacing:-.015em; }
+body.theme-professional .ops-main :is(.statement-table,.account-table,.trends-table) th,
+body.theme-professional .tabulator .tabulator-col-title {
+  color:var(--paper-muted);
+  font-weight:500;
+  letter-spacing:.05em;
+  background:transparent;
+}
+body.theme-professional .ops-main :is(.statement-pill,.modern-table-pill,.transaction-meta-chip,.project-chip) {
+  border-radius:.2rem!important;
+  box-shadow:none!important;
+  font-weight:500;
+}
+body.theme-professional :is(button,a,input,select,textarea,[tabindex]):focus-visible {
+  outline:2px solid var(--brand-color-600,#4f46e5)!important;
+  outline-offset:3px;
+}
+body.theme-professional .site-menu .site-menu-link { font-weight:400!important; }
+body.theme-professional .site-menu .site-menu-link.is-active {
+  border-left:2px solid var(--paper-ink);
+  font-weight:600!important;
+  background:#eeede6!important;
+}
+body.theme-professional .site-menu-group-toggle {
+  color:var(--paper-muted);
+  font-weight:500;
+  letter-spacing:.12em;
+}
+
+@media (min-width:768px) {
+  body.theme-professional .ops-main { padding:1.25rem clamp(1.25rem,2.5vw,2.5rem)!important; }
+  body.theme-professional .ops-main > * + * { margin-top:1.15rem!important; }
+  body.theme-professional :is(.instant-detail-grid,.instant-lead-grid,.trends-analysis-grid,.budget-layout,.project-grid) { gap:1.35rem!important; }
+}
+@media (max-width:767px) {
+  body.theme-professional { --paper-title-size:1.65rem; }
+  body.theme-professional.ui-page-header-small { --paper-title-size:1.3rem; }
+  body.theme-professional.ui-page-header-large { --paper-title-size:1.85rem; }
+  body.theme-professional.ui-page-header-extra-large { --paper-title-size:2rem; }
+  body.theme-professional .ops-main .page-header { padding-block:.9rem!important; }
+  body.theme-professional .ops-main :is(.instant-balance,.transaction-hero__value,.budget-remaining,.yearly-cashflow,.forecast-position) { font-size:2.2rem!important; }
 }
