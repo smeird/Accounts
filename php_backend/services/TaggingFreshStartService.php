@@ -145,20 +145,11 @@ class TaggingFreshStartService {
     }
 
     private function clearSnapshotClassifications(int $runId): int {
-        if ($this->driver() === 'mysql') {
-            $stmt = $this->db->prepare(
-                'UPDATE transactions t INNER JOIN transaction_classification_snapshots s ON s.transaction_id = t.id '
-                . 'SET t.tag_id = NULL, t.category_id = NULL, t.segment_id = NULL '
-                . 'WHERE s.run_id = :run_id AND s.eligible = 1 '
-                . 'AND (t.tag_id IS NOT NULL OR t.category_id IS NOT NULL OR t.segment_id IS NOT NULL)'
-            );
-        } else {
-            $stmt = $this->db->prepare(
-                'UPDATE transactions SET tag_id = NULL, category_id = NULL, segment_id = NULL '
-                . 'WHERE id IN (SELECT transaction_id FROM transaction_classification_snapshots WHERE run_id = :run_id AND eligible = 1) '
-                . 'AND (tag_id IS NOT NULL OR category_id IS NOT NULL OR segment_id IS NOT NULL)'
-            );
-        }
+        $stmt = $this->db->prepare(
+            'UPDATE transactions SET tag_id = NULL, category_id = NULL, segment_id = NULL '
+            . 'WHERE id IN (SELECT transaction_id FROM transaction_classification_snapshots WHERE run_id = :run_id AND eligible = 1) '
+            . 'AND (tag_id IS NOT NULL OR category_id IS NOT NULL OR segment_id IS NOT NULL)'
+        );
         $stmt->execute(['run_id' => $runId]);
         return $stmt->rowCount();
     }
@@ -226,8 +217,5 @@ class TaggingFreshStartService {
         return (int)$left === (int)$right;
     }
 
-    private function driver(): string {
-        return (string)$this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-    }
 }
 ?>

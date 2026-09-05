@@ -6,10 +6,8 @@ class ApplicationPDO extends PDO {
             return $sql;
         }
 
-        // Most application SQL is portable apart from historical MySQL identifier
-        // quoting and a small set of date helpers. Keeping this translation here
-        // makes old migrations/backups readable while production remains native
-        // PostgreSQL underneath.
+        // Normalise the remaining legacy query syntax at the PostgreSQL
+        // boundary while application queries are progressively simplified.
         $sql = str_replace('`', '"', $sql);
         $sql = preg_replace('/\bLIKE\b/i', 'ILIKE', $sql);
         $sql = preg_replace('/\bIFNULL\s*\(/i', 'COALESCE(', $sql);

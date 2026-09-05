@@ -25,7 +25,6 @@ require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Tag.php';
 
 $db = null;
-$foreignKeysDisabled = false;
 
 try {
     if (!isset($_FILES['backup_file'])) {
@@ -114,10 +113,6 @@ try {
 
     $db = Database::getConnection();
     $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-    if ($driver === 'mysql') {
-        $db->exec('SET FOREIGN_KEY_CHECKS=0');
-        $foreignKeysDisabled = true;
-    }
     $db->beginTransaction();
     if ($driver === 'sqlite') $db->exec('PRAGMA defer_foreign_keys = ON');
     if (isset($data['transaction_tag_proposals']) || isset($data['tag_migration_runs'])) $db->exec('DELETE FROM transaction_tag_proposals');
@@ -542,18 +537,11 @@ try {
         }
     }
     $db->commit();
-    if ($foreignKeysDisabled) {
-        $db->exec('SET FOREIGN_KEY_CHECKS=1');
-        $foreignKeysDisabled = false;
-    }
     Log::write('Restore completed for parts: ' . implode(',', array_keys($data)));
     echo 'Restore complete.';
 } catch (Exception $e) {
     if ($db instanceof PDO && $db->inTransaction()) {
         $db->rollBack();
-    }
-    if ($foreignKeysDisabled && $db instanceof PDO) {
-        $db->exec('SET FOREIGN_KEY_CHECKS=1');
     }
     Log::write('Restore error: ' . $e->getMessage(), 'ERROR');
     if (!headers_sent()) http_response_code(500);

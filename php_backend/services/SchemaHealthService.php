@@ -108,25 +108,6 @@ class SchemaHealthService {
             }
 
             $actualTable = $actualTables[$tableName];
-            if (($snapshot['driver'] ?? 'pgsql') === 'mysql') {
-                $checks++;
-                $engine = strtoupper((string)($actualTable['engine'] ?? ''));
-                if ($engine !== '' && $engine !== 'INNODB') {
-                    $issues[] = self::issue(
-                        'engine:' . $tableName,
-                        'engine',
-                        $tableName,
-                        $tableName,
-                        'warning',
-                        'Table engine is ' . $engine . '; InnoDB is expected for reliable constraints.',
-                        'Review table engine for ' . $tableName,
-                        false,
-                        null,
-                        'Changing a storage engine rebuilds the table and is intentionally left for manual review.'
-                    );
-                }
-            }
-
             $actualColumns = isset($actualTable['columns']) ? $actualTable['columns'] : [];
             $missingColumns = [];
             foreach ($expectedTable['columns'] as $columnName => $expectedColumn) {

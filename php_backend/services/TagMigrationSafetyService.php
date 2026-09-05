@@ -229,26 +229,14 @@ class TagMigrationSafetyService {
 
         $this->db->beginTransaction();
         try {
-            $driver = (string)$this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-            if ($driver === 'mysql') {
-                $stmt = $this->db->prepare(
-                    'UPDATE transactions t INNER JOIN transaction_classification_snapshots s ON s.transaction_id = t.id '
-                    . 'SET t.tag_id = s.tag_id, t.category_id = s.category_id, t.segment_id = s.segment_id '
-                    . 'WHERE s.run_id = :run_id'
-                );
-            } else {
-                $stmt = $this->db->prepare(
-                    'UPDATE transactions SET '
-                    . 'tag_id = (SELECT s.tag_id FROM transaction_classification_snapshots s WHERE s.run_id = :tag_run AND s.transaction_id = transactions.id), '
-                    . 'category_id = (SELECT s.category_id FROM transaction_classification_snapshots s WHERE s.run_id = :category_run AND s.transaction_id = transactions.id), '
-                    . 'segment_id = (SELECT s.segment_id FROM transaction_classification_snapshots s WHERE s.run_id = :segment_run AND s.transaction_id = transactions.id) '
-                    . 'WHERE EXISTS (SELECT 1 FROM transaction_classification_snapshots s WHERE s.run_id = :exists_run AND s.transaction_id = transactions.id)'
-                );
-            }
-            $params = $driver === 'mysql'
-                ? ['run_id' => $runId]
-                : ['tag_run' => $runId, 'category_run' => $runId, 'segment_run' => $runId, 'exists_run' => $runId];
-            $stmt->execute($params);
+            $stmt = $this->db->prepare(
+                'UPDATE transactions SET '
+                . 'tag_id = (SELECT s.tag_id FROM transaction_classification_snapshots s WHERE s.run_id = :tag_run AND s.transaction_id = transactions.id), '
+                . 'category_id = (SELECT s.category_id FROM transaction_classification_snapshots s WHERE s.run_id = :category_run AND s.transaction_id = transactions.id), '
+                . 'segment_id = (SELECT s.segment_id FROM transaction_classification_snapshots s WHERE s.run_id = :segment_run AND s.transaction_id = transactions.id) '
+                . 'WHERE EXISTS (SELECT 1 FROM transaction_classification_snapshots s WHERE s.run_id = :exists_run AND s.transaction_id = transactions.id)'
+            );
+            $stmt->execute(['tag_run' => $runId, 'category_run' => $runId, 'segment_run' => $runId, 'exists_run' => $runId]);
 
             $updateRun = $this->db->prepare(
                 "UPDATE tag_migration_runs SET status = 'rolled_back', rolled_back_at = CURRENT_TIMESTAMP WHERE id = :id"

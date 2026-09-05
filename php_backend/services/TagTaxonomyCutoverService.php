@@ -951,28 +951,15 @@ class TagTaxonomyCutoverService {
             foreach ($proposal['transaction_ids'] ?? [] as $transactionId) $transactionIds[(int)$transactionId] = true;
         }
         $transactionIds = array_keys($transactionIds);
-        $driver = (string)$this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if ($driver === 'mysql') {
-            foreach (array_chunk($transactionIds, 500) as $chunk) {
-                if (!$chunk) continue;
-                $marks = implode(',', array_fill(0, count($chunk), '?'));
-                $stmt = $this->db->prepare(
-                    'UPDATE transactions t INNER JOIN transaction_classification_snapshots s ON s.transaction_id = t.id '
-                    . "SET t.tag_id = s.tag_id, t.category_id = s.category_id, t.segment_id = s.segment_id WHERE s.run_id = ? AND t.id IN ($marks)"
-                );
-                $stmt->execute(array_merge([$runId], $chunk));
-            }
-        } else {
-            $read = $this->db->prepare(
-                'SELECT tag_id, category_id, segment_id FROM transaction_classification_snapshots WHERE run_id = ? AND transaction_id = ?'
-            );
-            $update = $this->db->prepare('UPDATE transactions SET tag_id = ?, category_id = ?, segment_id = ? WHERE id = ?');
-            foreach ($transactionIds as $transactionId) {
-                $read->execute([$runId, $transactionId]);
-                $row = $read->fetch(PDO::FETCH_ASSOC);
-                if (!$row) throw new RuntimeException('An audited snapshot classification is missing.');
-                $update->execute([$row['tag_id'], $row['category_id'], $row['segment_id'], $transactionId]);
-            }
+        $read = $this->db->prepare(
+            'SELECT tag_id, category_id, segment_id FROM transaction_classification_snapshots WHERE run_id = ? AND transaction_id = ?'
+        );
+        $update = $this->db->prepare('UPDATE transactions SET tag_id = ?, category_id = ?, segment_id = ? WHERE id = ?');
+        foreach ($transactionIds as $transactionId) {
+            $read->execute([$runId, $transactionId]);
+            $row = $read->fetch(PDO::FETCH_ASSOC);
+            if (!$row) throw new RuntimeException('An audited snapshot classification is missing.');
+            $update->execute([$row['tag_id'], $row['category_id'], $row['segment_id'], $transactionId]);
         }
     }
 

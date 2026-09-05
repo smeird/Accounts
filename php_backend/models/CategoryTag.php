@@ -179,21 +179,11 @@ class CategoryTag {
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
-        if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
-            $sql = 'UPDATE transactions t '
-                 . 'LEFT JOIN category_tags ct ON t.tag_id = ct.tag_id '
-                 . 'SET t.category_id = ct.category_id '
-                 . 'WHERE t.account_id = :acc '
-                 . 'AND t.tag_id IS NOT NULL '
-                 . 'AND t.transfer_id IS NULL '
-                 . 'AND NOT (t.category_id <=> ct.category_id)';
-        } else {
-            $categoryLookup = '(SELECT ct.category_id FROM category_tags ct '
-                . 'WHERE ct.tag_id = transactions.tag_id ORDER BY ct.category_id LIMIT 1)';
-            $sql = 'UPDATE transactions SET category_id = ' . $categoryLookup . ' '
-                 . 'WHERE account_id = :acc AND tag_id IS NOT NULL AND transfer_id IS NULL '
-                 . 'AND COALESCE(category_id, -1) != COALESCE(' . $categoryLookup . ', -1)';
-        }
+        $categoryLookup = '(SELECT ct.category_id FROM category_tags ct '
+            . 'WHERE ct.tag_id = transactions.tag_id ORDER BY ct.category_id LIMIT 1)';
+        $sql = 'UPDATE transactions SET category_id = ' . $categoryLookup . ' '
+             . 'WHERE account_id = :acc AND tag_id IS NOT NULL AND transfer_id IS NULL '
+             . 'AND COALESCE(category_id, -1) != COALESCE(' . $categoryLookup . ', -1)';
         $stmt = $db->prepare($sql);
         $stmt->execute(['acc' => $accountId]);
         return $stmt->rowCount();
