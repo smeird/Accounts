@@ -8,7 +8,7 @@
     color: var(--transaction-ink);
 }
 
-.transaction-main { width: 100%; max-width: 100rem; margin-inline: auto; }
+.transaction-main { width: 100%; max-width: none; margin-inline: auto; }
 .transaction-main > * + * { margin-top: 1.25rem; }
 .transaction-page .page-header { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:.8rem; padding:.78rem 1.05rem; border-radius:1rem; }
 .transaction-page .page-title { font-size:clamp(1.35rem,2.2vw,1.75rem)!important; letter-spacing:-.035em; }
