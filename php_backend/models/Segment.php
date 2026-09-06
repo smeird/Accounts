@@ -176,10 +176,10 @@ class Segment {
      */
     public static function applyToTransactions(): int {
         $db = Database::getConnection();
-        $sql = 'UPDATE transactions t '
-             . 'JOIN categories c ON t.category_id = c.id '
-             . 'SET t.segment_id = c.segment_id '
-             . 'WHERE c.segment_id IS NOT NULL '
+        $sql = 'UPDATE transactions AS t '
+             . 'SET segment_id = c.segment_id '
+             . 'FROM categories AS c '
+             . 'WHERE t.category_id = c.id AND c.segment_id IS NOT NULL '
              . 'AND (t.segment_id IS NULL OR t.segment_id != c.segment_id)';
         $stmt = $db->prepare($sql);
         $stmt->execute();

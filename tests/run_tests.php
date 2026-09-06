@@ -655,6 +655,13 @@ $bulkSegmentCount = $db->query("SELECT COUNT(*) FROM categories WHERE id IN ($ca
 assertEqual(2, (int)$bulkSegmentCount, 'Bulk segment assignment links every selected category');
 $bulkTransactionCount = $db->query("SELECT COUNT(*) FROM transactions WHERE category_id IN ($catId, $catId2) AND segment_id = $segId")->fetchColumn();
 assertEqual(2, (int)$bulkTransactionCount, 'Bulk segment assignment propagates to matching transactions');
+$db->beginTransaction();
+$db->exec("UPDATE transactions SET segment_id = NULL WHERE category_id = $catId");
+$db->exec("UPDATE transactions SET segment_id = 999999 WHERE category_id = $catId2");
+assertEqual(2, Segment::applyToTransactions(), 'Segment refresh fills missing and corrects stale assignments using UPDATE FROM');
+assertEqual(2, (int)$db->query("SELECT COUNT(*) FROM transactions WHERE category_id IN ($catId, $catId2) AND segment_id = $segId")->fetchColumn(), 'Segment refresh uses the current category mapping');
+assertEqual(0, Segment::applyToTransactions(), 'Segment refresh leaves matching assignments unchanged on repeat runs');
+$db->rollBack();
 $multi = Transaction::filter([$catId, $catId2]);
 assertEqual(2, count($multi), 'Transaction::filter supports multiple categories');
 
