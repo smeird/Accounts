@@ -33,7 +33,8 @@ class CategoryTag {
         }
 
         $db = Database::getConnection();
-        $db->beginTransaction();
+        $ownsTransaction = !$db->inTransaction();
+        if ($ownsTransaction) $db->beginTransaction();
         try {
             if ($categoryId !== null) {
                 $categoryCheck = $db->prepare('SELECT "id" FROM "categories" WHERE "id" = :id LIMIT 1');
@@ -83,15 +84,15 @@ class CategoryTag {
                 ];
             }
 
-            $db->commit();
+            if ($ownsTransaction) $db->commit();
             return [
                 'tag_ids' => $tagIds,
                 'category_id' => $categoryId,
                 'updated_transactions' => $updatedTransactions,
                 'assignments' => $assignments,
             ];
-        } catch (Exception $e) {
-            if ($db->inTransaction()) {
+        } catch (Throwable $e) {
+            if ($ownsTransaction && $db->inTransaction()) {
                 $db->rollBack();
             }
             throw $e;

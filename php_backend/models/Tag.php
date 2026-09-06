@@ -277,6 +277,13 @@ class Tag {
         }
 
         $db = Database::getConnection();
+        $check = $db->prepare('SELECT name, origin, status FROM "tags" WHERE "id" = :id');
+        $check->execute(['id' => $id]);
+        $tag = $check->fetch(PDO::FETCH_ASSOC);
+        if (!$tag || ($tag['status'] ?? '') !== 'active') {
+            throw new InvalidArgumentException('Only active canonical tags can be updated.');
+        }
+        self::assertMutableTag($tag);
         $stmt = $db->prepare('UPDATE "tags" SET "name" = :name, "name_normalized" = :name_normalized, "keyword" = :keyword, "description" = :description WHERE "id" = :id');
         $result = $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
         self::clearMatchCaches();
@@ -391,9 +398,8 @@ class Tag {
                 return $result;
             }
 
-            $activate = $db->prepare('UPDATE "tag_aliases" SET "active" = 1, "match_type" = :match_type WHERE "id" = :id');
-            $activate->execute(['match_type' => 'contains', 'id' => (int)$existing['id']]);
-            self::clearMatchCaches();
+            // Learning collects evidence only. It must not silently reactivate
+            // or broaden a deliberately configured deterministic rule.
             $result['status'] = 'existing';
             return $result;
         }
@@ -506,6 +512,15 @@ class Tag {
         $stmt->execute(['name' => $normalizedName]);
         $id = $stmt->fetchColumn();
         return $id !== false ? (int)$id : null;
+    }
+
+    /** Return whether an ID is a currently selectable canonical tag. */
+    public static function isActiveId(int $id): bool {
+        if ($id <= 0) return false;
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT 1 FROM tags WHERE id = :id AND status = 'active' LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetchColumn() !== false;
     }
 
     /**
@@ -646,7 +661,9 @@ class Tag {
      */
     public static function remapAllTransactionsToCanonicalTags(bool $applyChanges = false): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT "id", "description", "memo", "amount", "ofx_type", "tag_id" FROM "transactions" WHERE "transfer_id" IS NULL');
+        $ignoreId = self::getIgnoreId();
+        $stmt = $db->prepare('SELECT "id", "description", "memo", "amount", "ofx_type", "tag_id" FROM "transactions" WHERE "transfer_id" IS NULL AND ("tag_id" IS NULL OR "tag_id" != :ignore)');
+        $stmt->execute(['ignore' => $ignoreId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $moves = [];

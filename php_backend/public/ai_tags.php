@@ -34,7 +34,8 @@ if ($processedLocally > 0) {
 // Identify the most common untagged transactions by description and memo
 $limit = (int)(Setting::get('ai_tag_batch_size') ?? 100);
 if ($limit <= 0) $limit = 100;
-$txns = $db->query('SELECT MIN(id) AS id, description, memo, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL AND transfer_id IS NULL GROUP BY description, memo ORDER BY cnt DESC LIMIT ' . $limit)->fetchAll(PDO::FETCH_ASSOC);
+$directionExpression = "CASE WHEN amount < 0 THEN 'outgoing' WHEN amount > 0 THEN 'incoming' ELSE 'any' END";
+$txns = $db->query('SELECT MIN(id) AS id, description, memo, ' . $directionExpression . ' AS direction, ROUND(AVG(amount),2) AS amount, COUNT(*) AS cnt FROM transactions WHERE tag_id IS NULL AND transfer_id IS NULL GROUP BY description, memo, ' . $directionExpression . ' ORDER BY cnt DESC LIMIT ' . $limit)->fetchAll(PDO::FETCH_ASSOC);
 if (!$txns) {
     echo json_encode(['processed' => $processedLocally, 'tokens' => 0]);
     exit;
@@ -305,9 +306,15 @@ foreach ($suggestions as $s) {
     $learned['canonical'] = (string)$tagName;
     $learned['trigger'] = $resolved !== null ? $resolved['source'] : 'new_or_normalized_canonical';
     if ($learned['status'] === 'conflict' && !empty($learned['existing_tag_id'])) {
-        $tagId = (int)$learned['existing_tag_id'];
-        $learned['resolved_to_existing_tag'] = $tagId;
-        Log::write('AI tag alias conflict resolved to existing canonical mapping: ' . json_encode($learned), 'WARNING');
+        $proposalKey = 'alias-conflict:' . (int)$learned['existing_tag_id'] . ':' . Tag::normalizeName((string)$learned['alias']);
+        $reviewRequired[$proposalKey] = [
+            'suggested_tag' => (string)$tagName,
+            'transactions' => (int)($txn['cnt'] ?? 1),
+            'category' => null,
+            'reason' => 'Existing deterministic rule belongs to another tag and requires review.',
+        ];
+        Log::write('AI tag alias conflict held for review: ' . json_encode($learned), 'WARNING');
+        continue;
     } elseif ($learned['status'] === 'overlap') {
         Log::write('AI tag alias overlap held for review: ' . json_encode($learned), 'WARNING');
     } elseif ($learned['status'] === 'created') {
@@ -342,11 +349,11 @@ foreach ($suggestions as $s) {
     }
 
     if ($catId !== null) {
-        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo IS NOT DISTINCT FROM :memo AND tag_id IS NULL AND transfer_id IS NULL');
-        $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag, category_id = :cat WHERE description = :desc AND memo IS NOT DISTINCT FROM :memo AND tag_id IS NULL AND transfer_id IS NULL AND ' . $directionExpression . ' = :direction');
+        $upd->execute(['tag' => $tagId, 'cat' => (int)$catId, 'desc' => $txn['description'], 'memo' => $txn['memo'], 'direction' => $txn['direction']]);
     } else {
-        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo IS NOT DISTINCT FROM :memo AND tag_id IS NULL AND transfer_id IS NULL');
-        $upd->execute(['tag' => $tagId, 'desc' => $txn['description'], 'memo' => $txn['memo']]);
+        $upd = $db->prepare('UPDATE transactions SET tag_id = :tag WHERE description = :desc AND memo IS NOT DISTINCT FROM :memo AND tag_id IS NULL AND transfer_id IS NULL AND ' . $directionExpression . ' = :direction');
+        $upd->execute(['tag' => $tagId, 'desc' => $txn['description'], 'memo' => $txn['memo'], 'direction' => $txn['direction']]);
     }
     $processed += $upd->rowCount();
 }

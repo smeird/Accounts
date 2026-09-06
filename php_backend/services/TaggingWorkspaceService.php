@@ -42,10 +42,18 @@ class TaggingWorkspaceService {
             throw new InvalidArgumentException('That canonical tag already exists. Use the existing tag instead.');
         }
 
-        $existingId = Tag::getIdByName($name);
-        $id = Tag::create($name, null, $description, 'manual');
-        if ($categoryId !== null) CategoryTag::assign($categoryId, $id);
-        return ['id' => $id, 'reactivated' => $existingId !== null];
+        $this->db->beginTransaction();
+        try {
+            $existingId = Tag::getIdByName($name);
+            $id = Tag::create($name, null, $description, 'manual');
+            if ($categoryId !== null) CategoryTag::assign($categoryId, $id);
+            Segment::applyToTransactions();
+            $this->db->commit();
+            return ['id' => $id, 'reactivated' => $existingId !== null];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function updateTag(int $id, string $name, ?string $description, ?int $categoryId): array {
@@ -61,10 +69,17 @@ class TaggingWorkspaceService {
             throw new InvalidArgumentException('Protected system tags cannot be renamed.');
         }
 
-        Tag::update($id, $name, $tag['keyword'] ?? null, $description);
-        $assignment = CategoryTag::assign($categoryId, $id);
-        Segment::applyToTransactions();
-        return ['id' => $id, 'updated_transactions' => (int)$assignment['updated_transactions']];
+        $this->db->beginTransaction();
+        try {
+            Tag::update($id, $name, $tag['keyword'] ?? null, $description);
+            $assignment = CategoryTag::assign($categoryId, $id);
+            Segment::applyToTransactions();
+            $this->db->commit();
+            return ['id' => $id, 'updated_transactions' => (int)$assignment['updated_transactions']];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function retireTag(int $id): array {

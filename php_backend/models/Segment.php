@@ -176,13 +176,16 @@ class Segment {
      */
     public static function applyToTransactions(): int {
         $db = Database::getConnection();
+        $ignoreId = Tag::getIgnoreId();
+        // Reconcile in both directions: removing a category or its segment must
+        // clear the stored segment as well as assigning a new one. Transfers and
+        // IGNORE rows are protected classifications.
         $sql = 'UPDATE transactions AS t '
-             . 'SET segment_id = c.segment_id '
-             . 'FROM categories AS c '
-             . 'WHERE t.category_id = c.id AND c.segment_id IS NOT NULL '
-             . 'AND (t.segment_id IS NULL OR t.segment_id != c.segment_id)';
+             . 'SET segment_id = (SELECT c.segment_id FROM categories c WHERE c.id = t.category_id) '
+             . 'WHERE t.transfer_id IS NULL AND (t.tag_id IS NULL OR t.tag_id != :ignore) '
+             . 'AND t.segment_id IS DISTINCT FROM (SELECT c.segment_id FROM categories c WHERE c.id = t.category_id)';
         $stmt = $db->prepare($sql);
-        $stmt->execute();
+        $stmt->execute(['ignore' => $ignoreId]);
         return $stmt->rowCount();
     }
 

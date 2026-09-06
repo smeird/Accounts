@@ -36,7 +36,7 @@ try {
         throw new InvalidArgumentException('Transaction does not belong to the supplied account');
     }
     if (!$tagId && $tagName) {
-        $existing = Tag::getIdByName($tagName);
+        $existing = Tag::getActiveIdByName($tagName);
         if ($existing === null) {
             $tagId = Tag::create($tagName);
             Log::write("Created tag $tagName");
@@ -44,6 +44,9 @@ try {
             $tagId = $existing;
             Log::write("Reused existing tag $tagName via normalized lookup");
         }
+    }
+    if (!Tag::isActiveId((int)$tagId)) {
+        throw new InvalidArgumentException('Choose an active canonical tag.');
     }
 
     Transaction::setTag((int)$transactionId, (int)$tagId);

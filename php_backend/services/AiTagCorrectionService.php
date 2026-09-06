@@ -128,9 +128,16 @@ class AiTagCorrectionService {
             if (!$targetId) $targetId = Tag::create((string)$plan['target_tag_name']);
             if (in_array($targetId, $sourceIds, true)) throw new RuntimeException('The destination tag now matches a source tag.');
 
-            $idMarks = implode(',', array_fill(0, count($transactionIds), '?'));
+            $target = $this->db->prepare("SELECT id FROM tags WHERE id = ? AND status = 'active'");
+            $target->execute([$targetId]);
+            if (!$target->fetchColumn()) throw new RuntimeException('The correction destination is no longer an active canonical tag.');
             $sourceMarks = implode(',', array_fill(0, count($sourceIds), '?'));
-            $sql = "UPDATE transactions SET tag_id = ? WHERE id IN ($idMarks) AND tag_id IN ($sourceMarks)";
+            $sourceCheck = $this->db->prepare("SELECT COUNT(*) FROM tags WHERE id IN ($sourceMarks) AND (origin = 'system' OR LOWER(TRIM(name)) = 'ignore')");
+            $sourceCheck->execute($sourceIds);
+            if ((int)$sourceCheck->fetchColumn() > 0) throw new RuntimeException('Protected system classifications cannot be corrected in bulk.');
+
+            $idMarks = implode(',', array_fill(0, count($transactionIds), '?'));
+            $sql = "UPDATE transactions SET tag_id = ? WHERE id IN ($idMarks) AND tag_id IN ($sourceMarks) AND transfer_id IS NULL AND tag_id NOT IN (SELECT id FROM tags WHERE LOWER(TRIM(name)) = 'ignore')";
             $stmt = $this->db->prepare($sql);
             $stmt->execute(array_merge([$targetId], $transactionIds, $sourceIds));
             $updated = $stmt->rowCount();
@@ -170,7 +177,7 @@ class AiTagCorrectionService {
 
     private function matchingTransactionIds(array $sourceIds, array $terms): array {
         $marks = implode(',', array_fill(0, count($sourceIds), '?'));
-        $sql = "SELECT id FROM transactions WHERE tag_id IN ($marks)";
+        $sql = "SELECT id FROM transactions WHERE tag_id IN ($marks) AND transfer_id IS NULL AND tag_id NOT IN (SELECT id FROM tags WHERE LOWER(TRIM(name)) = 'ignore')";
         $params = $sourceIds;
         if ($terms) {
             $clauses = [];
@@ -204,7 +211,9 @@ class AiTagCorrectionService {
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $alias) {
             $value = self::normalise((string)$alias['alias_normalized']);
             foreach ($normalisedTerms as $term) {
-                if (strpos($value, $term) !== false || strpos($term, $value) !== false) {
+                // A correction for a merchant phrase must not redirect a broader
+                // rule that would affect unrelated future transactions.
+                if ($value === $term) {
                     $aliasIds[] = (int)$alias['id'];
                     break;
                 }

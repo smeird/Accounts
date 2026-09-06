@@ -1906,6 +1906,71 @@ assertEqual(null, $db->query("SELECT category_id FROM transactions WHERE id=$fre
 CategoryTag::applyToAllTransactions();
 assertEqual(null, $db->query("SELECT category_id FROM transactions WHERE id=$freshTransferTransaction")->fetch(PDO::FETCH_ASSOC)['category_id'], 'Category propagation keeps confirmed transfers protected after AI tagging');
 
+// Tagging safeguards: automatic learning must preserve reviewed rule settings.
+$safeguardTag = Tag::create('Safeguard tag');
+TagAlias::create($safeguardTag, 'safeguard merchant', 'exact', false, 'manual', null, 0, 'outgoing');
+Tag::learnTransactionAlias($safeguardTag, 'SAFEGUARD MERCHANT', null, 'manual', -10.0);
+$safeguardRule = $db->query("SELECT active, match_type FROM tag_aliases WHERE alias_normalized='safeguard merchant' AND tag_id=$safeguardTag")->fetch(PDO::FETCH_ASSOC);
+assertEqual(['active' => 0, 'match_type' => 'exact'], ['active' => (int)$safeguardRule['active'], 'match_type' => $safeguardRule['match_type']], 'Alias learning preserves disabled exact rule settings');
+
+// Segment reconciliation clears stale values but never touches protected transfers.
+$safeguardCategory = Category::create('Safeguard category');
+$safeguardSegment = Segment::create('Safeguard segment');
+Segment::assignCategories($safeguardSegment, [$safeguardCategory]);
+$insertSafeguard = $db->prepare('INSERT INTO transactions (account_id, date, amount, description, category_id, segment_id, tag_id, transfer_id) VALUES (?,?,?,?,?,?,?,?)');
+$insertSafeguard->execute([1, '2026-09-06', -20, 'Segment stale row', null, $safeguardSegment, $safeguardTag, null]);
+$staleSegmentTransaction = (int)$db->lastInsertId();
+$insertSafeguard->execute([1, '2026-09-06', -20, 'Protected segment row', $safeguardCategory, 999999, $safeguardTag, 12345]);
+$protectedSegmentTransaction = (int)$db->lastInsertId();
+Segment::applyToTransactions();
+assertEqual(null, $db->query("SELECT segment_id FROM transactions WHERE id=$staleSegmentTransaction")->fetchColumn(), 'Segment reconciliation clears a stale segment after category removal');
+assertEqual(999999, (int)$db->query("SELECT segment_id FROM transactions WHERE id=$protectedSegmentTransaction")->fetchColumn(), 'Segment reconciliation preserves confirmed transfer segments');
+
+// Workspace catalogue saves are atomic when a category is invalid.
+$workspaceGuardTag = Tag::create('Workspace guard');
+$workspace = new TaggingWorkspaceService($db);
+try {
+    $workspace->updateTag($workspaceGuardTag, 'Workspace guard changed', null, 999999);
+    $workspaceAtomic = false;
+} catch (InvalidArgumentException $e) {
+    $workspaceAtomic = true;
+}
+assertEqual(true, $workspaceAtomic, 'Workspace rejects an invalid category before committing a tag update');
+assertEqual('Workspace guard', $db->query("SELECT name FROM tags WHERE id=$workspaceGuardTag")->fetchColumn(), 'Failed workspace update leaves tag metadata unchanged');
+
+// Legacy remapping must not rewrite protected IGNORE classifications.
+$ignoreGuardTag = Tag::getIgnoreId();
+$insertSafeguard->execute([1, '2026-09-06', -1, 'SAFEGUARD MERCHANT', null, null, $ignoreGuardTag, null]);
+$ignoreGuardTransaction = (int)$db->lastInsertId();
+Tag::remapAllTransactionsToCanonicalTags(true);
+assertEqual($ignoreGuardTag, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$ignoreGuardTransaction")->fetchColumn(), 'Legacy canonical remap preserves IGNORE transactions');
+
+// A stale correction preview cannot target a tag retired after review.
+$correctionSource = Tag::create('Correction safeguard source');
+$correctionTarget = Tag::create('Correction safeguard target');
+$insertSafeguard->execute([1, '2026-09-06', -5, 'Correction safeguard merchant', null, null, $correctionSource, null]);
+$staleCorrectionTransaction = (int)$db->lastInsertId();
+$stalePlan = $correctionService->createPlan('Move correction safeguard merchant to target', ['source_tag_ids' => [$correctionSource], 'target_tag_id' => $correctionTarget, 'match_terms' => ['correction safeguard merchant'], 'confidence' => 0.99], $correctionService->tagContext());
+$db->exec("UPDATE tags SET status='deprecated' WHERE id=$correctionTarget");
+try {
+    $correctionService->applyPlan($stalePlan, false);
+    $staleCorrectionRejected = false;
+} catch (RuntimeException $e) {
+    $staleCorrectionRejected = true;
+}
+assertEqual(true, $staleCorrectionRejected, 'Correction apply rejects a destination retired after preview');
+assertEqual($correctionSource, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$staleCorrectionTransaction")->fetchColumn(), 'Rejected correction leaves the transaction unchanged');
+
+// A narrow correction may move only an equally narrow deterministic rule.
+$broadSource = Tag::create('Broad correction source');
+$broadTarget = Tag::create('Broad correction target');
+TagAlias::create($broadSource, 'amazon', 'contains', true, 'manual', null, 0, 'outgoing');
+$insertSafeguard->execute([1, '2026-09-06', -5, 'AMAZON PRIME', null, null, $broadSource, null]);
+$narrowPlan = $correctionService->createPlan('Move amazon prime to the target', ['source_tag_ids' => [$broadSource], 'target_tag_id' => $broadTarget, 'match_terms' => ['amazon prime'], 'confidence' => 0.99], $correctionService->tagContext());
+$narrowResult = $correctionService->applyPlan($narrowPlan, false);
+assertEqual(0, $narrowResult['moved_aliases'], 'Narrow correction does not redirect a broader future rule');
+assertEqual($broadSource, (int)$db->query("SELECT tag_id FROM tag_aliases WHERE alias_normalized='amazon' AND direction='outgoing'")->fetchColumn(), 'Broad rule remains with its original canonical tag');
+
 // Output results and set exit code
 $failed = false;
 foreach ($results as $line) {

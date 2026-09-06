@@ -13,29 +13,8 @@ if ($method === 'POST') {
     $action = $data['action'] ?? null;
 
     if ($action === 'remap_aliases') {
-        $dryRun = !isset($data['dry_run']) || (bool)$data['dry_run'];
-
-        try {
-            $remap = Tag::remapAllTransactionsToCanonicalTags(!$dryRun);
-            $categorised = 0;
-            if (!$dryRun) {
-                $categorised = CategoryTag::applyToAllTransactions();
-                Log::write('Remapped ' . $remap['updated'] . ' transactions to canonical tags; categorised ' . $categorised . ' transactions');
-            } else {
-                Log::write('Dry-run canonical tag remap evaluated ' . count($remap['moves']) . ' transition groups');
-            }
-
-            echo json_encode([
-                'dry_run' => $dryRun,
-                'updated' => $remap['updated'],
-                'moves' => $remap['moves'],
-                'categorised' => $categorised,
-            ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            Log::write('Tag remap error: ' . $e->getMessage(), 'ERROR');
-            echo json_encode(['error' => 'Server error']);
-        }
+        http_response_code(410);
+        echo json_encode(['error' => 'Bulk remapping has moved to the reviewed tagging workflow.']);
         exit;
     }
 
