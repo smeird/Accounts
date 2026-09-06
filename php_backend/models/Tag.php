@@ -55,7 +55,7 @@ class Tag {
         }
 
         $db = Database::getConnection();
-        $stmt = $db->prepare('INSERT INTO `tags` (`name`, `name_normalized`, `keyword`, `description`, `origin`, `status`) VALUES (:name, :name_normalized, :keyword, :description, :origin, :status)');
+        $stmt = $db->prepare('INSERT INTO "tags" ("name", "name_normalized", "keyword", "description", "origin", "status") VALUES (:name, :name_normalized, :keyword, :description, :origin, :status)');
         try {
             $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description, 'origin' => $origin, 'status' => 'active']);
         } catch (PDOException $e) {
@@ -90,7 +90,7 @@ class Tag {
      */
     public static function all(): array {
         $db = Database::getConnection();
-        $stmt = $db->query("SELECT `id`, `name`, `keyword`, `description` FROM `tags` WHERE `status` = 'active' ORDER BY `name` ASC, `id` ASC");
+        $stmt = $db->query("SELECT \"id\", \"name\", \"keyword\", \"description\" FROM \"tags\" WHERE \"status\" = 'active' ORDER BY \"name\" ASC, \"id\" ASC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -233,17 +233,17 @@ class Tag {
         $queryEmpty = $query === '' ? 1 : 0;
 
         $select = $includeClassification
-            ? 't.`id`, t.`name`, ct.`category_id`, c.`name` AS `category_name`, c.`segment_id`, s.`name` AS `segment_name` '
-            : 't.`id`, t.`name` ';
+            ? 't."id", t."name", ct."category_id", c."name" AS "category_name", c."segment_id", s."name" AS "segment_name" '
+            : 't."id", t."name" ';
         $joins = $includeClassification
-            ? 'LEFT JOIN (SELECT `tag_id`, MIN(`category_id`) AS `category_id` FROM `category_tags` GROUP BY `tag_id`) ct ON ct.`tag_id` = t.`id` '
-                . 'LEFT JOIN `categories` c ON c.`id` = ct.`category_id` '
-                . 'LEFT JOIN `segments` s ON s.`id` = c.`segment_id` '
+            ? 'LEFT JOIN (SELECT "tag_id", MIN("category_id") AS "category_id" FROM "category_tags" GROUP BY "tag_id") ct ON ct."tag_id" = t."id" '
+                . 'LEFT JOIN "categories" c ON c."id" = ct."category_id" '
+                . 'LEFT JOIN "segments" s ON s."id" = c."segment_id" '
             : '';
-        $sql = 'SELECT ' . $select . 'FROM `tags` t ' . $joins
-             . "WHERE t.`status` = 'active' AND (:query_empty = 1 OR t.`name` LIKE :contains ESCAPE '!') "
-             . 'ORDER BY CASE WHEN :prefix_empty = 0 AND t.`name` LIKE :prefix ESCAPE \'!\' THEN 0 ELSE 1 END, '
-             . 't.`name` ASC, t.`id` ASC LIMIT :result_limit';
+        $sql = 'SELECT ' . $select . 'FROM "tags" t ' . $joins
+             . "WHERE t.\"status\" = 'active' AND (:query_empty = 1 OR t.\"name\" LIKE :contains ESCAPE '!') "
+             . 'ORDER BY CASE WHEN :prefix_empty = 0 AND t."name" LIKE :prefix ESCAPE \'!\' THEN 0 ELSE 1 END, '
+             . 't."name" ASC, t."id" ASC LIMIT :result_limit';
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':query_empty', $queryEmpty, PDO::PARAM_INT);
         $stmt->bindValue(':contains', '%' . $escaped . '%', PDO::PARAM_STR);
@@ -277,7 +277,7 @@ class Tag {
         }
 
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `name` = :name, `name_normalized` = :name_normalized, `keyword` = :keyword, `description` = :description WHERE `id` = :id');
+        $stmt = $db->prepare('UPDATE "tags" SET "name" = :name, "name_normalized" = :name_normalized, "keyword" = :keyword, "description" = :description WHERE "id" = :id');
         $result = $stmt->execute(['name' => $name, 'name_normalized' => $normalizedName, 'keyword' => $keyword, 'description' => $description, 'id' => $id]);
         self::clearMatchCaches();
         return $result;
@@ -289,15 +289,15 @@ class Tag {
     public static function delete(int $id): bool {
         $db = Database::getConnection();
         // remove any relationships to categories
-        $stmt = $db->prepare('DELETE FROM `category_tags` WHERE `tag_id` = :id');
+        $stmt = $db->prepare('DELETE FROM "category_tags" WHERE "tag_id" = :id');
         $stmt->execute(['id' => $id]);
 
         // clear references from transactions
-        $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = NULL WHERE `tag_id` = :id');
+        $stmt = $db->prepare('UPDATE "transactions" SET "tag_id" = NULL WHERE "tag_id" = :id');
         $stmt->execute(['id' => $id]);
 
         // delete the tag itself
-        $stmt = $db->prepare('DELETE FROM `tags` WHERE `id` = :id');
+        $stmt = $db->prepare('DELETE FROM "tags" WHERE "id" = :id');
         $result = $stmt->execute(['id' => $id]);
         self::clearMatchCaches();
         return $result;
@@ -309,7 +309,7 @@ class Tag {
      */
     public static function clearFromTransactions(): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `transactions` SET `tag_id` = NULL WHERE `tag_id` IS NOT NULL');
+        $stmt = $db->prepare('UPDATE "transactions" SET "tag_id" = NULL WHERE "tag_id" IS NOT NULL');
         $stmt->execute();
         return $stmt->rowCount();
     }
@@ -346,7 +346,7 @@ class Tag {
 
         if (self::$keywordCache === null) {
             $db = Database::getConnection();
-            $stmt = $db->query("SELECT `id`, `keyword` FROM `tags` WHERE `status` = 'active' AND `keyword` IS NOT NULL AND `keyword` != ''");
+            $stmt = $db->query("SELECT \"id\", \"keyword\" FROM \"tags\" WHERE \"status\" = 'active' AND \"keyword\" IS NOT NULL AND \"keyword\" != ''");
             self::$keywordCache = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         foreach (self::$keywordCache as $row) {
@@ -380,7 +380,7 @@ class Tag {
         $db = Database::getConnection();
         $normalized = TagAlias::normalizeAlias($alias);
         $direction = $amount === null || abs($amount) < 0.00001 ? 'any' : ($amount < 0 ? 'outgoing' : 'incoming');
-        $stmt = $db->prepare('SELECT `id`, `tag_id` FROM `tag_aliases` WHERE `alias_normalized` = :alias AND `direction` = :direction LIMIT 1');
+        $stmt = $db->prepare('SELECT "id", "tag_id" FROM "tag_aliases" WHERE "alias_normalized" = :alias AND "direction" = :direction LIMIT 1');
         $stmt->execute(['alias' => $normalized, 'direction' => $direction]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($existing) {
@@ -391,7 +391,7 @@ class Tag {
                 return $result;
             }
 
-            $activate = $db->prepare('UPDATE `tag_aliases` SET `active` = 1, `match_type` = :match_type WHERE `id` = :id');
+            $activate = $db->prepare('UPDATE "tag_aliases" SET "active" = 1, "match_type" = :match_type WHERE "id" = :id');
             $activate->execute(['match_type' => 'contains', 'id' => (int)$existing['id']]);
             self::clearMatchCaches();
             $result['status'] = 'existing';
@@ -513,7 +513,7 @@ class Tag {
      */
     public static function getIdByNormalizedName(string $normalizedName): ?int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id` FROM `tags` WHERE `name_normalized` = :name_normalized LIMIT 1');
+        $stmt = $db->prepare('SELECT "id" FROM "tags" WHERE "name_normalized" = :name_normalized LIMIT 1');
         $stmt->execute(['name_normalized' => $normalizedName]);
         $id = $stmt->fetchColumn();
         return $id !== false ? (int)$id : null;
@@ -561,7 +561,7 @@ class Tag {
      */
     public static function setKeywordIfMissing(int $tagId, string $keyword): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare("UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id AND (`keyword` IS NULL OR `keyword` = '')");
+        $stmt = $db->prepare("UPDATE \"tags\" SET \"keyword\" = :kw WHERE \"id\" = :id AND (\"keyword\" IS NULL OR \"keyword\" = '')");
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
         self::clearMatchCaches();
     }
@@ -571,7 +571,7 @@ class Tag {
      */
     public static function setKeyword(int $tagId, string $keyword): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `keyword` = :kw WHERE `id` = :id');
+        $stmt = $db->prepare('UPDATE "tags" SET "keyword" = :kw WHERE "id" = :id');
         $stmt->execute(['kw' => $keyword, 'id' => $tagId]);
         self::clearMatchCaches();
     }
@@ -581,7 +581,7 @@ class Tag {
      */
     public static function setDescriptionIfMissing(int $tagId, string $description): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare("UPDATE `tags` SET `description` = :descr WHERE `id` = :id AND (`description` IS NULL OR `description` = '')");
+        $stmt = $db->prepare("UPDATE \"tags\" SET \"description\" = :descr WHERE \"id\" = :id AND (\"description\" IS NULL OR \"description\" = '')");
         $stmt->execute(['descr' => $description, 'id' => $tagId]);
     }
 
@@ -590,7 +590,7 @@ class Tag {
      */
     public static function setDescription(int $tagId, string $description): void {
         $db = Database::getConnection();
-        $stmt = $db->prepare('UPDATE `tags` SET `description` = :descr WHERE `id` = :id');
+        $stmt = $db->prepare('UPDATE "tags" SET "description" = :descr WHERE "id" = :id');
         $stmt->execute(['descr' => $description, 'id' => $tagId]);
     }
 
@@ -600,9 +600,9 @@ class Tag {
      */
     public static function applyToAccountTransactions(int $accountId): int {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `description`, `memo`, `amount`, `ofx_type` FROM `transactions` WHERE `account_id` = :acc AND `tag_id` IS NULL AND `transfer_id` IS NULL');
+        $stmt = $db->prepare('SELECT "id", "description", "memo", "amount", "ofx_type" FROM "transactions" WHERE "account_id" = :acc AND "tag_id" IS NULL AND "transfer_id" IS NULL');
         $stmt->execute(['acc' => $accountId]);
-        $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
+        $upd = $db->prepare('UPDATE "transactions" SET "tag_id" = :tag WHERE "id" = :id');
         $updated = 0;
         $aliasMatches = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $tx) {
@@ -630,7 +630,7 @@ class Tag {
      */
     public static function applyToAllTransactions(): int {
         $db = Database::getConnection();
-        $accountIds = $db->query('SELECT DISTINCT `account_id` FROM `transactions`')->fetchAll(PDO::FETCH_COLUMN);
+        $accountIds = $db->query('SELECT DISTINCT "account_id" FROM "transactions"')->fetchAll(PDO::FETCH_COLUMN);
         $total = 0;
         foreach ($accountIds as $accId) {
             $total += self::applyToAccountTransactions((int)$accId);
@@ -646,7 +646,7 @@ class Tag {
      */
     public static function remapAllTransactionsToCanonicalTags(bool $applyChanges = false): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `description`, `memo`, `amount`, `ofx_type`, `tag_id` FROM `transactions` WHERE `transfer_id` IS NULL');
+        $stmt = $db->query('SELECT "id", "description", "memo", "amount", "ofx_type", "tag_id" FROM "transactions" WHERE "transfer_id" IS NULL');
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $moves = [];
@@ -684,7 +684,7 @@ class Tag {
             $moves[$key]['count']++;
 
             if ($applyChanges) {
-                $upd = $db->prepare('UPDATE `transactions` SET `tag_id` = :tag WHERE `id` = :id');
+                $upd = $db->prepare('UPDATE "transactions" SET "tag_id" = :tag WHERE "id" = :id');
                 $upd->execute(['tag' => $newTagId, 'id' => (int)$tx['id']]);
                 $updated += $upd->rowCount();
             }
@@ -700,7 +700,7 @@ class Tag {
      */
     private static function getTagNamesById(): array {
         $db = Database::getConnection();
-        $stmt = $db->query('SELECT `id`, `name` FROM `tags`');
+        $stmt = $db->query('SELECT "id", "name" FROM "tags"');
         $names = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $names[(int)$row['id']] = $row['name'];

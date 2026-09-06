@@ -41,10 +41,10 @@ class TagMigrationSafetyService {
 
     public function schemaReady(): bool {
         try {
-            $this->db->query('SELECT `id`, `snapshot_hash` FROM `tag_migration_runs` WHERE 1 = 0');
-            $this->db->query('SELECT `run_id`, `transaction_id` FROM `transaction_classification_snapshots` WHERE 1 = 0');
-            $this->db->query('SELECT `origin`, `status`, `merged_into_tag_id` FROM `tags` WHERE 1 = 0');
-            $this->db->query('SELECT `origin`, `confidence`, `support_count`, `last_matched_at` FROM `tag_aliases` WHERE 1 = 0');
+            $this->db->query('SELECT "id", "snapshot_hash" FROM "tag_migration_runs" WHERE 1 = 0');
+            $this->db->query('SELECT "run_id", "transaction_id" FROM "transaction_classification_snapshots" WHERE 1 = 0');
+            $this->db->query('SELECT "origin", "status", "merged_into_tag_id" FROM "tags" WHERE 1 = 0');
+            $this->db->query('SELECT "origin", "confidence", "support_count", "last_matched_at" FROM "tag_aliases" WHERE 1 = 0');
             return true;
         } catch (Throwable $e) {
             return false;

@@ -19,17 +19,17 @@ class DailyBurn {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
-            'SELECT t.`id`, t.`date`, ABS(t.`amount`) AS expense, '
-            . 'cs.`id` AS segment_id, '
-            . 'COALESCE(cs.`name`, \'Unsegmented\') AS segment_name '
-            . 'FROM `transactions` t '
-            . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `segments` cs ON cs.`id` = c.`segment_id` '
-            . 'WHERE t.`date` >= :start AND t.`date` <= :end '
-            . 'AND t.`amount` < 0 '
-            . 'AND t.`transfer_id` IS NULL '
-            . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
-            . 'ORDER BY t.`date`, t.`id`'
+            'SELECT t."id", t."date", ABS(t."amount") AS expense, '
+            . 'cs."id" AS segment_id, '
+            . 'COALESCE(cs."name", \'Unsegmented\') AS segment_name '
+            . 'FROM "transactions" t '
+            . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+            . 'LEFT JOIN "segments" cs ON cs."id" = c."segment_id" '
+            . 'WHERE t."date" >= :start AND t."date" <= :end '
+            . 'AND t."amount" < 0 '
+            . 'AND t."transfer_id" IS NULL '
+            . 'AND (t."tag_id" IS NULL OR t."tag_id" != :ignore) '
+            . 'ORDER BY t."date", t."id"'
         );
         $stmt->execute(['start' => $start, 'end' => $end, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

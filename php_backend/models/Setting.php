@@ -19,7 +19,7 @@ class Setting {
      */
     public static function get(string $name): ?string {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `value` FROM `settings` WHERE `name` = :name LIMIT 1');
+        $stmt = $db->prepare('SELECT "value" FROM "settings" WHERE "name" = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
         $val = $stmt->fetchColumn();
         return $val !== false ? $val : null;
@@ -30,8 +30,8 @@ class Setting {
      */
     public static function set(string $name, string $value): void {
         $db = Database::getConnection();
-        $sql = 'INSERT INTO `settings` (`name`, `value`) VALUES (:name, :value)
-                ON CONFLICT(`name`) DO UPDATE SET `value` = excluded.`value`';
+        $sql = 'INSERT INTO "settings" ("name", "value") VALUES (:name, :value)
+                ON CONFLICT("name") DO UPDATE SET "value" = excluded."value"';
         $stmt = $db->prepare($sql);
         $stmt->execute(['name' => $name, 'value' => $value]);
     }
@@ -191,7 +191,7 @@ class Setting {
     /** @return array<string,string> */
     private static function all(): array {
         $db = Database::getConnection();
-        $rows = $db->query('SELECT `name`, `value` FROM `settings`')->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $db->query('SELECT "name", "value" FROM "settings"')->fetchAll(PDO::FETCH_ASSOC);
         $settings = [];
         foreach ($rows as $row) {
             $settings[(string)$row['name']] = (string)$row['value'];

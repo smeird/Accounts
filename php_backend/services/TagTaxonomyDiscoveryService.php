@@ -17,10 +17,10 @@ class TagTaxonomyDiscoveryService {
 
     public function schemaReady(): bool {
         try {
-            $this->db->query('SELECT `discovery_started_at`, `ready_at` FROM `tag_migration_runs` WHERE 1 = 0');
-            $this->db->query('SELECT `id`, `canonical_name`, `status` FROM `tag_taxonomy_proposals` WHERE 1 = 0');
-            $this->db->query('SELECT `id`, `signature`, `proposal_id` FROM `tag_taxonomy_patterns` WHERE 1 = 0');
-            $this->db->query('SELECT `run_id`, `transaction_id`, `pattern_id` FROM `transaction_tag_proposals` WHERE 1 = 0');
+            $this->db->query('SELECT "discovery_started_at", "ready_at" FROM "tag_migration_runs" WHERE 1 = 0');
+            $this->db->query('SELECT "id", "canonical_name", "status" FROM "tag_taxonomy_proposals" WHERE 1 = 0');
+            $this->db->query('SELECT "id", "signature", "proposal_id" FROM "tag_taxonomy_patterns" WHERE 1 = 0');
+            $this->db->query('SELECT "run_id", "transaction_id", "pattern_id" FROM "transaction_tag_proposals" WHERE 1 = 0');
             return true;
         } catch (Throwable $e) {
             return false;

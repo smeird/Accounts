@@ -57,10 +57,10 @@ try {
         ];
     }
 
-    $stmt = $db->prepare('SELECT category_id, YEAR(`date`) as yr, MONTH(`date`) as mo, '
+    $stmt = $db->prepare('SELECT category_id, EXTRACT(YEAR FROM "date") as yr, EXTRACT(MONTH FROM "date") as mo, '
         . 'SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END) as spent '
         . 'FROM transactions '
-        . 'WHERE `date` >= :start AND `date` < :end '
+        . 'WHERE "date" >= :start AND "date" < :end '
         . 'AND transfer_id IS NULL '
         . 'AND (tag_id IS NULL OR tag_id != :ignore) '
         . 'GROUP BY category_id, yr, mo');

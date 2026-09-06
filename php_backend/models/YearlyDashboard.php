@@ -29,13 +29,13 @@ class YearlyDashboard {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
-            'SELECT t.`date`, t.`amount`, c.`id` AS category_id, COALESCE(c.`name`, \'Uncategorised\') AS category '
-            . 'FROM `transactions` t '
-            . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'WHERE t.`date` >= :start AND t.`date` < :end '
-            . 'AND t.`transfer_id` IS NULL '
-            . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
-            . 'ORDER BY t.`date` ASC'
+            'SELECT t."date", t."amount", c."id" AS category_id, COALESCE(c."name", \'Uncategorised\') AS category '
+            . 'FROM "transactions" t '
+            . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+            . 'WHERE t."date" >= :start AND t."date" < :end '
+            . 'AND t."transfer_id" IS NULL '
+            . 'AND (t."tag_id" IS NULL OR t."tag_id" != :ignore) '
+            . 'ORDER BY t."date" ASC'
         );
         $stmt->execute(['start' => $start, 'end' => $end, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

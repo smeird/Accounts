@@ -9,7 +9,7 @@ class User {
     public static function create(string $username, string $password): int {
         $db = Database::getConnection();
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $db->prepare('INSERT INTO `users` (`username`, `password`) VALUES (:username, :password)');
+        $stmt = $db->prepare('INSERT INTO "users" ("username", "password") VALUES (:username, :password)');
         $stmt->execute(['username' => $username, 'password' => $hash]);
         return (int)$db->lastInsertId();
     }
@@ -19,7 +19,7 @@ class User {
      */
     public static function findByUsername(string $username): ?array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `username`, `password` FROM `users` WHERE `username` = :username');
+        $stmt = $db->prepare('SELECT "id", "username", "password" FROM "users" WHERE "username" = :username');
         $stmt->execute(['username' => $username]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
@@ -30,7 +30,7 @@ class User {
      */
     public static function findById(int $id): ?array {
         $db = Database::getConnection();
-        $stmt = $db->prepare('SELECT `id`, `username`, `password` FROM `users` WHERE `id` = :id');
+        $stmt = $db->prepare('SELECT "id", "username", "password" FROM "users" WHERE "id" = :id');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
@@ -60,7 +60,7 @@ class User {
     public static function updatePassword(int $id, string $password): bool {
         $db = Database::getConnection();
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $db->prepare('UPDATE `users` SET `password` = :password WHERE `id` = :id');
+        $stmt = $db->prepare('UPDATE "users" SET "password" = :password WHERE "id" = :id');
         return $stmt->execute(['password' => $hash, 'id' => $id]);
     }
 }

@@ -36,7 +36,7 @@ class CategoryTag {
         $db->beginTransaction();
         try {
             if ($categoryId !== null) {
-                $categoryCheck = $db->prepare('SELECT `id` FROM `categories` WHERE `id` = :id LIMIT 1');
+                $categoryCheck = $db->prepare('SELECT "id" FROM "categories" WHERE "id" = :id LIMIT 1');
                 $categoryCheck->execute(['id' => $categoryId]);
                 if (!$categoryCheck->fetchColumn()) {
                     throw new InvalidArgumentException('Category not found');
@@ -44,7 +44,7 @@ class CategoryTag {
             }
 
             $placeholders = implode(',', array_fill(0, count($tagIds), '?'));
-            $tagCheck = $db->prepare("SELECT `id` FROM `tags` WHERE `status` = 'active' AND `id` IN ($placeholders)");
+            $tagCheck = $db->prepare("SELECT \"id\" FROM \"tags\" WHERE \"status\" = 'active' AND \"id\" IN ($placeholders)");
             $tagCheck->execute($tagIds);
             $existingTagIds = array_map('intval', $tagCheck->fetchAll(PDO::FETCH_COLUMN));
             sort($existingTagIds);
@@ -54,24 +54,24 @@ class CategoryTag {
                 throw new InvalidArgumentException('One or more tags were not found');
             }
 
-            $current = $db->prepare("SELECT `tag_id`, `category_id` FROM `category_tags` WHERE `tag_id` IN ($placeholders)");
+            $current = $db->prepare("SELECT \"tag_id\", \"category_id\" FROM \"category_tags\" WHERE \"tag_id\" IN ($placeholders)");
             $current->execute($tagIds);
             $previousByTag = [];
             foreach ($current->fetchAll(PDO::FETCH_ASSOC) as $row) {
                 $previousByTag[(int)$row['tag_id']] = (int)$row['category_id'];
             }
 
-            $remove = $db->prepare("DELETE FROM `category_tags` WHERE `tag_id` IN ($placeholders)");
+            $remove = $db->prepare("DELETE FROM \"category_tags\" WHERE \"tag_id\" IN ($placeholders)");
             $remove->execute($tagIds);
 
             if ($categoryId !== null) {
-                $insert = $db->prepare('INSERT INTO `category_tags` (`category_id`, `tag_id`) VALUES (:category, :tag)');
+                $insert = $db->prepare('INSERT INTO "category_tags" ("category_id", "tag_id") VALUES (:category, :tag)');
                 foreach ($tagIds as $tagId) {
                     $insert->execute(['category' => $categoryId, 'tag' => $tagId]);
                 }
             }
 
-            $update = $db->prepare("UPDATE `transactions` SET `category_id` = ? WHERE `tag_id` IN ($placeholders) AND `transfer_id` IS NULL");
+            $update = $db->prepare("UPDATE \"transactions\" SET \"category_id\" = ? WHERE \"tag_id\" IN ($placeholders) AND \"transfer_id\" IS NULL");
             $update->execute(array_merge([$categoryId], $tagIds));
             $updatedTransactions = $update->rowCount();
 
@@ -195,7 +195,7 @@ class CategoryTag {
      */
     public static function applyToAllTransactions(): int {
         $db = Database::getConnection();
-        $accountIds = $db->query('SELECT DISTINCT `account_id` FROM `transactions`')->fetchAll(PDO::FETCH_COLUMN);
+        $accountIds = $db->query('SELECT DISTINCT "account_id" FROM "transactions"')->fetchAll(PDO::FETCH_COLUMN);
         $total = 0;
         foreach ($accountIds as $accId) {
             $total += self::applyToAccountTransactions((int)$accId);

@@ -2,22 +2,6 @@
 // Provides a shared PDO connection to the application's PostgreSQL database.
 class ApplicationPDO extends PDO {
     public static function normaliseSql(string $sql, string $driver): string {
-        if ($driver !== 'pgsql') {
-            return $sql;
-        }
-
-        // Normalise the remaining legacy query syntax at the PostgreSQL
-        // boundary while application queries are progressively simplified.
-        $sql = str_replace('`', '"', $sql);
-        $sql = preg_replace('/\bLIKE\b/i', 'ILIKE', $sql);
-        $sql = preg_replace('/\bIFNULL\s*\(/i', 'COALESCE(', $sql);
-        $sql = preg_replace('/\bYEAR\s*\(([^()]+)\)/i', 'EXTRACT(YEAR FROM $1)', $sql);
-        $sql = preg_replace('/\bMONTH\s*\(([^()]+)\)/i', 'EXTRACT(MONTH FROM $1)', $sql);
-        $sql = preg_replace('/DATE_SUB\s*\(\s*CURDATE\s*\(\s*\)\s*,\s*INTERVAL\s+(\d+)\s+MONTH\s*\)/i', "(CURRENT_DATE - INTERVAL '$1 months')", $sql);
-        $sql = preg_replace('/\bCURDATE\s*\(\s*\)/i', 'CURRENT_DATE', $sql);
-        $sql = preg_replace('/ABS\s*\(\s*DATEDIFF\s*\(([^,]+),\s*([^\)]+)\)\s*\)/i', 'ABS(($1)::date - ($2)::date)', $sql);
-        $sql = preg_replace('/GROUP_CONCAT\s*\(\s*([^\)]+)\s*\)/i', "STRING_AGG(CAST($1 AS TEXT), ',')", $sql);
-        $sql = preg_replace('/([\w\."()]+)\s*<=>\s*(:\w+)/', '$1 IS NOT DISTINCT FROM $2', $sql);
         return $sql;
     }
 

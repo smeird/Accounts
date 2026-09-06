@@ -16,9 +16,9 @@ class Stats {
         ];
 
         $queries = [
-            'accounts' => 'SELECT COUNT(*) FROM `accounts`',
-            'transactions' => 'SELECT COUNT(*) FROM `transactions`',
-            'tags' => 'SELECT COUNT(*) FROM `tags`',
+            'accounts' => 'SELECT COUNT(*) FROM "accounts"',
+            'transactions' => 'SELECT COUNT(*) FROM "transactions"',
+            'tags' => 'SELECT COUNT(*) FROM "tags"',
         ];
 
         foreach ($queries as $key => $sql) {

@@ -30,20 +30,20 @@ class FinancialTrends {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
-            'SELECT t.`id`, t.`date`, t.`amount`, '
-            . 'c.`id` AS category_id, c.`name` AS category_name, '
-            . 's.`id` AS segment_id, s.`name` AS segment_name, '
-            . 'g.`id` AS group_id, g.`name` AS group_name, '
-            . 'tg.`id` AS tag_id, tg.`name` AS tag_name '
-            . 'FROM `transactions` t '
-            . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `segments` s ON s.`id` = c.`segment_id` '
-            . 'LEFT JOIN `transaction_groups` g ON g.`id` = t.`group_id` '
-            . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-            . 'WHERE t.`date` >= :start AND t.`date` <= :end '
-            . 'AND t.`transfer_id` IS NULL '
-            . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
-            . 'ORDER BY t.`date`, t.`id`'
+            'SELECT t."id", t."date", t."amount", '
+            . 'c."id" AS category_id, c."name" AS category_name, '
+            . 's."id" AS segment_id, s."name" AS segment_name, '
+            . 'g."id" AS group_id, g."name" AS group_name, '
+            . 'tg."id" AS tag_id, tg."name" AS tag_name '
+            . 'FROM "transactions" t '
+            . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+            . 'LEFT JOIN "segments" s ON s."id" = c."segment_id" '
+            . 'LEFT JOIN "transaction_groups" g ON g."id" = t."group_id" '
+            . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+            . 'WHERE t."date" >= :start AND t."date" <= :end '
+            . 'AND t."transfer_id" IS NULL '
+            . 'AND (t."tag_id" IS NULL OR t."tag_id" != :ignore) '
+            . 'ORDER BY t."date", t."id"'
         );
         $stmt->execute(['start' => $start, 'end' => $end, 'ignore' => $ignore]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

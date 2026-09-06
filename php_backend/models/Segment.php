@@ -75,7 +75,7 @@ class Segment {
         $db->beginTransaction();
         try {
             if ($segmentId !== null) {
-                $segmentCheck = $db->prepare('SELECT `id` FROM `segments` WHERE `id` = :id LIMIT 1');
+                $segmentCheck = $db->prepare('SELECT "id" FROM "segments" WHERE "id" = :id LIMIT 1');
                 $segmentCheck->execute(['id' => $segmentId]);
                 if (!$segmentCheck->fetchColumn()) {
                     throw new InvalidArgumentException('Segment not found');
@@ -83,7 +83,7 @@ class Segment {
             }
 
             $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
-            $categoryCheck = $db->prepare("SELECT `id`, `segment_id` FROM `categories` WHERE `id` IN ($placeholders)");
+            $categoryCheck = $db->prepare("SELECT \"id\", \"segment_id\" FROM \"categories\" WHERE \"id\" IN ($placeholders)");
             $categoryCheck->execute($categoryIds);
             $previousByCategory = [];
             $existingCategoryIds = [];
@@ -99,10 +99,10 @@ class Segment {
                 throw new InvalidArgumentException('One or more categories were not found');
             }
 
-            $assign = $db->prepare("UPDATE `categories` SET `segment_id` = ? WHERE `id` IN ($placeholders)");
+            $assign = $db->prepare("UPDATE \"categories\" SET \"segment_id\" = ? WHERE \"id\" IN ($placeholders)");
             $assign->execute(array_merge([$segmentId], $categoryIds));
 
-            $updateTransactions = $db->prepare("UPDATE `transactions` SET `segment_id` = ? WHERE `category_id` IN ($placeholders)");
+            $updateTransactions = $db->prepare("UPDATE \"transactions\" SET \"segment_id\" = ? WHERE \"category_id\" IN ($placeholders)");
             $updateTransactions->execute(array_merge([$segmentId], $categoryIds));
             $updatedTransactions = $updateTransactions->rowCount();
 

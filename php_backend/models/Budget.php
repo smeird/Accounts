@@ -46,7 +46,7 @@ class Budget {
         $start = sprintf('%04d-%02d-01', $year, $month);
         $end = (new DateTimeImmutable($start))->modify('+1 month')->format('Y-m-d');
         $spentStmt = $db->prepare('SELECT COALESCE(SUM(amount),0) FROM transactions '
-            . 'WHERE category_id = :cid AND `date` >= :start AND `date` < :end '
+            . 'WHERE category_id = :cid AND "date" >= :start AND "date" < :end '
             . 'AND transfer_id IS NULL AND (tag_id IS NULL OR tag_id != :ignore)');
         foreach ($budgets as &$b) {
             $spentStmt->execute(['cid' => $b['category_id'], 'start' => $start, 'end' => $end, 'ignore' => $ignore]);

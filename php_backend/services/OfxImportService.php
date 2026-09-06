@@ -279,10 +279,10 @@ class OfxImportService {
         $number = (string)$account->number;
         $sortCode = $account->sortCode === null ? null : (string)$account->sortCode;
         if ($sortCode === null) {
-            $stmt = $this->db->prepare('SELECT `id` FROM `accounts` WHERE `account_number` = :number AND `sort_code` IS NULL LIMIT 1');
+            $stmt = $this->db->prepare('SELECT "id" FROM "accounts" WHERE "account_number" = :number AND "sort_code" IS NULL LIMIT 1');
             $stmt->execute(['number' => $number]);
         } else {
-            $stmt = $this->db->prepare('SELECT `id` FROM `accounts` WHERE `account_number` = :number AND `sort_code` = :sort_code LIMIT 1');
+            $stmt = $this->db->prepare('SELECT "id" FROM "accounts" WHERE "account_number" = :number AND "sort_code" = :sort_code LIMIT 1');
             $stmt->execute(['number' => $number, 'sort_code' => $sortCode]);
         }
         $id = $stmt->fetchColumn();
@@ -296,9 +296,9 @@ class OfxImportService {
 
     private function findUniqueMaskedAccount(string $number, ?string $sortCode): ?int {
         if ($sortCode === null) {
-            $stmt = $this->db->query('SELECT `id`, `account_number` FROM `accounts` WHERE `sort_code` IS NULL');
+            $stmt = $this->db->query('SELECT "id", "account_number" FROM "accounts" WHERE "sort_code" IS NULL');
         } else {
-            $stmt = $this->db->prepare('SELECT `id`, `account_number` FROM `accounts` WHERE `sort_code` = :sort_code');
+            $stmt = $this->db->prepare('SELECT "id", "account_number" FROM "accounts" WHERE "sort_code" = :sort_code');
             $stmt->execute(['sort_code' => $sortCode]);
         }
 

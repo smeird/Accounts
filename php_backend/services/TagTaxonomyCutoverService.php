@@ -20,8 +20,8 @@ class TagTaxonomyCutoverService {
 
     public function schemaReady(): bool {
         try {
-            $this->db->query('SELECT `direction` FROM `tag_aliases` WHERE 1 = 0');
-            $this->db->query('SELECT `cutover_summary` FROM `tag_migration_runs` WHERE 1 = 0');
+            $this->db->query('SELECT "direction" FROM "tag_aliases" WHERE 1 = 0');
+            $this->db->query('SELECT "cutover_summary" FROM "tag_migration_runs" WHERE 1 = 0');
             return $this->safety->schemaReady();
         } catch (Throwable $e) {
             return false;

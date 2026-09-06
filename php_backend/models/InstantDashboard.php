@@ -103,7 +103,7 @@ class InstantDashboard {
     }
 
     private static function latestTransactionDate(PDO $db) {
-        $value = $db->query('SELECT MAX(`date`) FROM `transactions`')->fetchColumn();
+        $value = $db->query('SELECT MAX("date") FROM "transactions"')->fetchColumn();
         if (!$value) {
             return null;
         }
@@ -111,16 +111,16 @@ class InstantDashboard {
     }
 
     private static function activityBetween(PDO $db, DateTimeImmutable $start, DateTimeImmutable $end): array {
-        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`category_id`, '
-             . 'a.`name` AS account_name, c.`name` AS category_name, tg.`name` AS tag_name '
-             . 'FROM `transactions` t '
-             . 'LEFT JOIN `accounts` a ON a.`id` = t.`account_id` '
-             . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-             . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-             . 'WHERE t.`date` >= :start AND t.`date` < :end '
-             . 'AND t.`transfer_id` IS NULL '
-             . 'AND (t.`tag_id` IS NULL OR LOWER(COALESCE(tg.`name`, \'\')) != \'ignore\') '
-             . 'ORDER BY t.`date` ASC, t.`id` ASC';
+        $sql = 'SELECT t."id", t."date", t."amount", t."description", t."category_id", '
+             . 'a."name" AS account_name, c."name" AS category_name, tg."name" AS tag_name '
+             . 'FROM "transactions" t '
+             . 'LEFT JOIN "accounts" a ON a."id" = t."account_id" '
+             . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+             . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+             . 'WHERE t."date" >= :start AND t."date" < :end '
+             . 'AND t."transfer_id" IS NULL '
+             . 'AND (t."tag_id" IS NULL OR LOWER(COALESCE(tg."name", \'\')) != \'ignore\') '
+             . 'ORDER BY t."date" ASC, t."id" ASC';
         $stmt = $db->prepare($sql);
         $stmt->execute([
             'start' => $start->format('Y-m-d'),
@@ -193,13 +193,13 @@ class InstantDashboard {
     }
 
     private static function accountSummaries(PDO $db): array {
-        $sql = 'SELECT a.`id`, a.`name`, COALESCE(a.`ledger_balance`, 0) AS balance, '
-             . 'a.`ledger_balance_date`, MAX(t.`date`) AS last_transaction '
-             . 'FROM `accounts` a '
-             . 'LEFT JOIN `transactions` t ON t.`account_id` = a.`id` '
-             . 'WHERE a.`closed` = 0 '
-             . 'GROUP BY a.`id`, a.`name`, a.`ledger_balance`, a.`ledger_balance_date` '
-             . 'ORDER BY balance DESC, a.`name` ASC';
+        $sql = 'SELECT a."id", a."name", COALESCE(a."ledger_balance", 0) AS balance, '
+             . 'a."ledger_balance_date", MAX(t."date") AS last_transaction '
+             . 'FROM "accounts" a '
+             . 'LEFT JOIN "transactions" t ON t."account_id" = a."id" '
+             . 'WHERE a."closed" = 0 '
+             . 'GROUP BY a."id", a."name", a."ledger_balance", a."ledger_balance_date" '
+             . 'ORDER BY balance DESC, a."name" ASC';
         $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
             $row['id'] = (int)$row['id'];
@@ -216,11 +216,11 @@ class InstantDashboard {
         DateTimeImmutable $end
     ): array {
         $stmt = $db->prepare(
-            'SELECT b.`id`, b.`category_id`, b.`amount`, c.`name` AS category '
-            . 'FROM `budgets` b '
-            . 'JOIN `categories` c ON c.`id` = b.`category_id` '
-            . 'WHERE b.`month` = :month AND b.`year` = :year '
-            . 'ORDER BY c.`name` ASC'
+            'SELECT b."id", b."category_id", b."amount", c."name" AS category '
+            . 'FROM "budgets" b '
+            . 'JOIN "categories" c ON c."id" = b."category_id" '
+            . 'WHERE b."month" = :month AND b."year" = :year '
+            . 'ORDER BY c."name" ASC'
         );
         $stmt->execute([
             'month' => (int)$start->format('n'),
@@ -328,15 +328,15 @@ class InstantDashboard {
 
     private static function recentActivity(PDO $db, int $limit): array {
         $limit = max(1, min(20, $limit));
-        $sql = 'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, '
-             . 'a.`name` AS account_name, c.`name` AS category_name, '
-             . 'CASE WHEN t.`transfer_id` IS NULL THEN 0 ELSE 1 END AS is_transfer '
-             . 'FROM `transactions` t '
-             . 'LEFT JOIN `accounts` a ON a.`id` = t.`account_id` '
-             . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-             . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-             . 'WHERE t.`tag_id` IS NULL OR LOWER(COALESCE(tg.`name`, \'\')) != \'ignore\' '
-             . 'ORDER BY t.`date` DESC, t.`id` DESC LIMIT ' . $limit;
+        $sql = 'SELECT t."id", t."date", t."amount", t."description", '
+             . 'a."name" AS account_name, c."name" AS category_name, '
+             . 'CASE WHEN t."transfer_id" IS NULL THEN 0 ELSE 1 END AS is_transfer '
+             . 'FROM "transactions" t '
+             . 'LEFT JOIN "accounts" a ON a."id" = t."account_id" '
+             . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+             . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+             . 'WHERE t."tag_id" IS NULL OR LOWER(COALESCE(tg."name", \'\')) != \'ignore\' '
+             . 'ORDER BY t."date" DESC, t."id" DESC LIMIT ' . $limit;
         $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         foreach ($rows as &$row) {
             $row['id'] = (int)$row['id'];
@@ -348,7 +348,7 @@ class InstantDashboard {
     }
 
     private static function untaggedCount(PDO $db): int {
-        $value = $db->query('SELECT COUNT(*) FROM `transactions` WHERE `tag_id` IS NULL AND `transfer_id` IS NULL')->fetchColumn();
+        $value = $db->query('SELECT COUNT(*) FROM "transactions" WHERE "tag_id" IS NULL AND "transfer_id" IS NULL')->fetchColumn();
         return $value === false ? 0 : (int)$value;
     }
 

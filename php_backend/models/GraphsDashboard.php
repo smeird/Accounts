@@ -61,18 +61,18 @@ class GraphsDashboard {
         $db = Database::getConnection();
         $ignore = Tag::getIgnoreId();
         $stmt = $db->prepare(
-            'SELECT t.`date`, t.`amount`, c.`id` AS category_id, '
-            . 'COALESCE(c.`name`, \'Uncategorised\') AS category, '
-            . 'cs.`id` AS segment_id, COALESCE(cs.`name`, \'Not segmented\') AS segment, '
-            . 'tg.`id` AS tag_id, COALESCE(tg.`name`, \'Untagged\') AS tag '
-            . 'FROM `transactions` t '
-            . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `segments` cs ON cs.`id` = c.`segment_id` '
-            . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-            . 'WHERE t.`date` >= :start AND t.`date` < :end '
-            . 'AND t.`transfer_id` IS NULL '
-            . 'AND (t.`tag_id` IS NULL OR t.`tag_id` != :ignore) '
-            . 'ORDER BY t.`date` ASC, t.`id` ASC'
+            'SELECT t."date", t."amount", c."id" AS category_id, '
+            . 'COALESCE(c."name", \'Uncategorised\') AS category, '
+            . 'cs."id" AS segment_id, COALESCE(cs."name", \'Not segmented\') AS segment, '
+            . 'tg."id" AS tag_id, COALESCE(tg."name", \'Untagged\') AS tag '
+            . 'FROM "transactions" t '
+            . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+            . 'LEFT JOIN "segments" cs ON cs."id" = c."segment_id" '
+            . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+            . 'WHERE t."date" >= :start AND t."date" < :end '
+            . 'AND t."transfer_id" IS NULL '
+            . 'AND (t."tag_id" IS NULL OR t."tag_id" != :ignore) '
+            . 'ORDER BY t."date" ASC, t."id" ASC'
         );
         $stmt->execute([
             'start' => sprintf('%04d-01-01', $year),
@@ -85,8 +85,8 @@ class GraphsDashboard {
     private static function accountPosition(): array {
         $db = Database::getConnection();
         $rows = $db->query(
-            'SELECT `id`, `name`, COALESCE(`ledger_balance`, 0) AS balance, `ledger_balance_date` '
-            . 'FROM `accounts` WHERE `closed` = 0 ORDER BY `name` ASC'
+            'SELECT "id", "name", COALESCE("ledger_balance", 0) AS balance, "ledger_balance_date" '
+            . 'FROM "accounts" WHERE "closed" = 0 ORDER BY "name" ASC'
         )->fetchAll(PDO::FETCH_ASSOC);
         $total = 0.0;
         $asOf = null;

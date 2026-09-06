@@ -29,17 +29,17 @@ class FinancialWorkbookExportService {
     public function build(string $start, string $end): array {
         list($startDate, $endDate) = self::validateRange($start, $end);
         $stmt = $this->db->prepare(
-            'SELECT t.`id`, t.`date`, t.`amount`, t.`description`, t.`memo`, t.`transfer_id`, '
-            . 'a.`name` AS account_name, c.`name` AS category_name, '
-            . 'COALESCE(cs.`name`, ts.`name`) AS segment_name, tg.`name` AS tag_name, g.`name` AS group_name '
-            . 'FROM `transactions` t '
-            . 'LEFT JOIN `accounts` a ON a.`id` = t.`account_id` '
-            . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `segments` cs ON cs.`id` = c.`segment_id` '
-            . 'LEFT JOIN `segments` ts ON ts.`id` = t.`segment_id` '
-            . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-            . 'LEFT JOIN `transaction_groups` g ON g.`id` = t.`group_id` '
-            . 'WHERE t.`date` BETWEEN :start AND :end ORDER BY t.`date`, t.`id`'
+            'SELECT t."id", t."date", t."amount", t."description", t."memo", t."transfer_id", '
+            . 'a."name" AS account_name, c."name" AS category_name, '
+            . 'COALESCE(cs."name", ts."name") AS segment_name, tg."name" AS tag_name, g."name" AS group_name '
+            . 'FROM "transactions" t '
+            . 'LEFT JOIN "accounts" a ON a."id" = t."account_id" '
+            . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+            . 'LEFT JOIN "segments" cs ON cs."id" = c."segment_id" '
+            . 'LEFT JOIN "segments" ts ON ts."id" = t."segment_id" '
+            . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+            . 'LEFT JOIN "transaction_groups" g ON g."id" = t."group_id" '
+            . 'WHERE t."date" BETWEEN :start AND :end ORDER BY t."date", t."id"'
         );
         $stmt->execute(['start' => $start, 'end' => $end]);
 

@@ -13,7 +13,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $ignore = Tag::getIgnoreId();
-        $sql = 'SELECT GROUP_CONCAT(t.id) AS ids, COUNT(*) AS count, a.name AS account, '
+        $sql = "SELECT STRING_AGG(CAST(t.id AS TEXT), ',') AS ids, COUNT(*) AS count, a.name AS account, "
              . 't.date, t.amount, MIN(TRIM(t.description)) AS description '
              . 'FROM transactions t JOIN accounts a ON t.account_id = a.id '
              . 'GROUP BY t.account_id, a.name, t.date, t.amount, UPPER(TRIM(t.description)) '

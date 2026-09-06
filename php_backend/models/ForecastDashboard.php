@@ -98,10 +98,10 @@ class ForecastDashboard {
 
     private static function latestIncludedTransactionDate(PDO $db): ?DateTimeImmutable {
         $value = $db->query(
-            'SELECT MAX(t.`date`) FROM `transactions` t '
-            . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-            . 'WHERE t.`transfer_id` IS NULL '
-            . 'AND (t.`tag_id` IS NULL OR LOWER(COALESCE(tg.`name`, \'\')) != \'ignore\')'
+            'SELECT MAX(t."date") FROM "transactions" t '
+            . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+            . 'WHERE t."transfer_id" IS NULL '
+            . 'AND (t."tag_id" IS NULL OR LOWER(COALESCE(tg."name", \'\')) != \'ignore\')'
         )->fetchColumn();
         return $value ? new DateTimeImmutable((string)$value) : null;
     }
@@ -119,7 +119,7 @@ class ForecastDashboard {
 
     private static function accountPosition(PDO $db): array {
         $rows = $db->query(
-            'SELECT COALESCE(`ledger_balance`, 0) AS balance, `ledger_balance_date` FROM `accounts` WHERE `closed` = 0'
+            'SELECT COALESCE("ledger_balance", 0) AS balance, "ledger_balance_date" FROM "accounts" WHERE "closed" = 0'
         )->fetchAll(PDO::FETCH_ASSOC);
         $total = 0.0;
         $asOf = null;
@@ -134,14 +134,14 @@ class ForecastDashboard {
 
     private static function activityBetween(PDO $db, DateTimeImmutable $start, DateTimeImmutable $end): array {
         $stmt = $db->prepare(
-            'SELECT t.`date`, t.`amount`, COALESCE(c.`name`, \'Uncategorised\') AS category '
-            . 'FROM `transactions` t '
-            . 'LEFT JOIN `categories` c ON c.`id` = t.`category_id` '
-            . 'LEFT JOIN `tags` tg ON tg.`id` = t.`tag_id` '
-            . 'WHERE t.`date` >= :start AND t.`date` < :end '
-            . 'AND t.`transfer_id` IS NULL '
-            . 'AND (t.`tag_id` IS NULL OR LOWER(COALESCE(tg.`name`, \'\')) != \'ignore\') '
-            . 'ORDER BY t.`date` ASC, t.`id` ASC'
+            'SELECT t."date", t."amount", COALESCE(c."name", \'Uncategorised\') AS category '
+            . 'FROM "transactions" t '
+            . 'LEFT JOIN "categories" c ON c."id" = t."category_id" '
+            . 'LEFT JOIN "tags" tg ON tg."id" = t."tag_id" '
+            . 'WHERE t."date" >= :start AND t."date" < :end '
+            . 'AND t."transfer_id" IS NULL '
+            . 'AND (t."tag_id" IS NULL OR LOWER(COALESCE(tg."name", \'\')) != \'ignore\') '
+            . 'ORDER BY t."date" ASC, t."id" ASC'
         );
         $stmt->execute(['start' => $start->format('Y-m-d'), 'end' => $end->format('Y-m-d')]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
