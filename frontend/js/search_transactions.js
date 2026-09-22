@@ -72,7 +72,8 @@
             data:rows, layout:'fitDataStretch', responsiveLayout:'collapse', placeholder:'No matching transactions',
             columns:[
                 { title:'Period', field:'_evidence_period', width:105, visible:hasComparison, responsive:1 },
-                { title:'Date', field:'date', width:112, sorter:'date' },
+                // API dates are YYYY-MM-DD, whose string order is chronological (no Luxon dependency).
+                { title:'Date', field:'date', width:112, sorter:'string' },
                 { title:'Account', field:'account_name', minWidth:130, responsive:3 },
                 { title:'Description', field:'description', minWidth:190, formatter:function(cell){ const row=cell.getRow().getData(); const link=document.createElement('a'); link.href='transaction.html?id='+encodeURIComponent(row.id); link.textContent=cell.getValue() || 'Untitled'; return link; } },
                 { title:'Memo', field:'memo', minWidth:150, responsive:2 },

@@ -134,3 +134,4 @@
 - Paper typography follows an editorial hierarchy: strong document titles, medium section headings, large regular-weight financial figures, quiet captions and lighter supporting text. Honour selected families, accent weights and header sizes; flatten nested metric surfaces and secondary decorative slivers without changing Glass, semantic classification colours, primary accents or mobile touch targets.
 
 - Transaction workspace pages use all available main-panel width rather than a fixed maximum width, retaining their responsive padding and sidebar offset.
+- Find Transactions sorts the API's ISO `YYYY-MM-DD` dates as strings so chronological sorting does not depend on Luxon or locale-specific date parsing.
