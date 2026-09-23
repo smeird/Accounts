@@ -987,14 +987,14 @@ class Transaction {
         $params = [];
 
         if ($value !== null && $value !== '') {
-            $conditions[] = '(t."description" LIKE :val'
-                . ' OR t."memo" LIKE :val'
+            $conditions[] = '(LOWER(t."description") LIKE LOWER(:val)'
+                . ' OR LOWER(t."memo") LIKE LOWER(:val)'
                 . ' OR CAST(t."date" AS TEXT) LIKE :val'
-                . ' OR t."ofx_id" LIKE :val'
-                . ' OR c."name" LIKE :val'
-                . ' OR s."name" LIKE :val'
-                . ' OR tg."name" LIKE :val'
-                . ' OR g."name" LIKE :val)';
+                . ' OR LOWER(t."ofx_id") LIKE LOWER(:val)'
+                . ' OR LOWER(c."name") LIKE LOWER(:val)'
+                . ' OR LOWER(s."name") LIKE LOWER(:val)'
+                . ' OR LOWER(tg."name") LIKE LOWER(:val)'
+                . ' OR LOWER(g."name") LIKE LOWER(:val))';
             $params['val'] = '%' . $value . '%';
 
             if (is_numeric($value)) {

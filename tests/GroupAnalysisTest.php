@@ -49,6 +49,14 @@ try {
     assertEqual(1, count($rows), 'Untagged evidence remains limited to the selected group');
     $rows = Transaction::search('', start: '2026-08-01', end: '2026-08-31', ignoredScope: 'include', groupId: $holiday);
     assertEqual(8, count($rows), 'All group entries includes transfers and IGNORE without other groups');
+    // Make SQLite LIKE case-sensitive to exercise the PostgreSQL search behaviour.
+    $db->exec('PRAGMA case_sensitive_like = ON');
+    $rows = Transaction::search('ANALYSIS HOLIDAY', start: '2026-08-01', end: '2026-08-31', transferScope: 'exclude');
+    assertEqual(5, count($rows), 'Group name search matches partial names regardless of case');
+    TransactionGroup::setActive($holiday, false);
+    $rows = Transaction::search('group ANALYSIS holiday', start: '2026-08-01', end: '2026-08-31', transferScope: 'exclude');
+    assertEqual(5, count($rows), 'Inactive group history remains searchable by name');
+    $db->exec('PRAGMA case_sensitive_like = OFF');
 } finally {
     $db->rollBack();
 }

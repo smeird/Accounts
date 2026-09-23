@@ -137,3 +137,5 @@
 - Find Transactions sorts the API's ISO `YYYY-MM-DD` dates as strings so chronological sorting does not depend on Luxon or locale-specific date parsing.
 
 - Group Analysis is a read-only Insights view with inclusive optional dates, SQL-aggregated tag spending, separate receipts and net cost, visible untagged entries, and transfer/IGNORE exclusions. Transaction evidence combines a standalone group filter with tag filters; the all-entries link includes excluded ledger rows.
+
+- Find Transactions preserves group/tag/date evidence filters and keeps results usable when chart assets fail. Free-text group and classification name searches are case-insensitive on PostgreSQL.

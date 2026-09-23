@@ -125,9 +125,25 @@
         const labels=keys.map(key => group==='month' ? new Date(key+'-02T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : group==='day' ? shortDate.format(dateFor(key)) : key);
         return { label:group.charAt(0).toUpperCase()+group.slice(1), categories:labels, values:keys.map(key=>Number(totals[key].toFixed(2))) };
     }
+    function destroyChart() {
+        const chart = window.Highcharts?.charts.find(item => item && item.renderTo.id === 'results-chart');
+        if (chart) chart.destroy();
+    }
     function renderChart(rows) {
+        // The chart is secondary: unavailable CDN assets must never hide valid evidence.
+        if (!window.Highcharts) {
+            byId('results-chart').replaceChildren(emptyState('Chart unavailable', 'Your matching transactions and totals are still available. Reload to retry the chart.', 'fa-chart-column'));
+            return;
+        }
+        try {
+            renderSpendingChart(rows);
+        } catch (failure) {
+            byId('results-chart').replaceChildren(emptyState('Chart unavailable', 'Your matching transactions and totals remain available.', 'fa-chart-column'));
+        }
+    }
+    function renderSpendingChart(rows) {
         const grouped=groupSpending(rows); setText('search-bucket-label', grouped.label);
-        if (!grouped.values.length) { const chart=Highcharts.charts.find(item=>item&&item.renderTo.id==='results-chart'); if(chart) chart.destroy(); byId('results-chart').replaceChildren(emptyState('No spending to plot', 'The matched transactions contain no non-transfer outgoings.', 'fa-chart-column')); return; }
+        if (!grouped.values.length) { destroyChart(); byId('results-chart').replaceChildren(emptyState('No spending to plot', 'The matched transactions contain no non-transfer outgoings.', 'fa-chart-column')); return; }
         Highcharts.chart('results-chart', {
             chart:{type:'areaspline',backgroundColor:'transparent',spacing:[10,4,2,0],animation:false}, title:{text:null}, credits:{enabled:false}, accessibility:{enabled:true,description:'Spending pattern across the matching transaction evidence.'},
             xAxis:{categories:grouped.categories,lineColor:'rgba(148,163,184,.24)',tickLength:0,labels:{style:{color:'#64748b',fontSize:'10px'}}},
@@ -160,16 +176,17 @@
             const tableRows=renderComparison(rows,comparison,params);
             byId('results-grid').className='transaction-table'; renderSummary(rows,linkLabel||queryLabel(term,min,max)); renderTable(tableRows); renderChart(rows); setText('search-status',tableRows.length+' result'+(tableRows.length===1?'':'s')+' found');
         } catch (failure) {
+            if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false;
             byId('results-grid').className='transaction-table'; error.textContent=failure.message||'Search could not be completed.'; error.hidden=false; setText('search-status','Search failed');
             byId('results-grid').replaceChildren(emptyState('Search unavailable', 'Please try again in a moment.', 'fa-triangle-exclamation'));
         } finally { submit.disabled=false; submit.querySelector('span').textContent='Search transactions'; }
     }
     byId('search-form').addEventListener('submit', function(event){event.preventDefault();runSearch();});
-    byId('search-clear').addEventListener('click', function(){ byId('search-form').reset(); history.replaceState(null,'',location.pathname); resetSummary(); byId('search-filter-context').hidden=true; byId('search-comparison').hidden=true; setText('search-status',''); setText('search-results-copy','Your result set will appear here, ready to sort and inspect.'); if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false; byId('results-grid').replaceChildren(emptyState('Start with a search', 'Use a name, note, category, tag or amount range to investigate activity.', 'fa-magnifying-glass')); const chart=Highcharts.charts.find(item=>item&&item.renderTo.id==='results-chart'); if(chart)chart.destroy(); byId('results-chart').replaceChildren(emptyState('Waiting for a result set', 'Matched outgoings will form a time-based spending pattern here.', 'fa-chart-line')); byId('term').focus(); });
+    byId('search-clear').addEventListener('click', function(){ byId('search-form').reset(); byId('search-error').hidden=true; history.replaceState(null,'',location.pathname); resetSummary(); byId('search-filter-context').hidden=true; byId('search-comparison').hidden=true; setText('search-status',''); setText('search-results-copy','Your result set will appear here, ready to sort and inspect.'); if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false; byId('results-grid').replaceChildren(emptyState('Start with a search', 'Use a name, note, category, tag, group or amount range to investigate activity.', 'fa-magnifying-glass')); destroyChart(); byId('results-chart').replaceChildren(emptyState('Waiting for a result set', 'Matched outgoings will form a time-based spending pattern here.', 'fa-chart-line')); byId('term').focus(); });
 
     window.updatePageHeader(transactionSearchMain,{actions:headerActions()});
     resetSummary();
-    byId('results-grid').replaceChildren(emptyState('Start with a search','Use a name, note, category, tag or amount range to investigate activity.','fa-magnifying-glass'));
+    byId('results-grid').replaceChildren(emptyState('Start with a search','Use a name, note, category, tag, group or amount range to investigate activity.','fa-magnifying-glass'));
     byId('results-chart').replaceChildren(emptyState('Waiting for a result set','Matched outgoings will form a time-based spending pattern here.','fa-chart-line'));
     const initial=new URLSearchParams(location.search); byId('term').value=initial.get('value')||''; byId('min-amount').value=initial.get('min_amount')||''; byId('max-amount').value=initial.get('max_amount')||''; if(initial.toString())runSearch();
 })();
