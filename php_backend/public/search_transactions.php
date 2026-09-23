@@ -21,6 +21,10 @@ $spendingOnly = isset($_GET['spending_only']) && $_GET['spending_only'] === '1';
 $direction = isset($_GET['direction']) && $_GET['direction'] !== '' ? (string)$_GET['direction'] : null;
 $transferScope = isset($_GET['transfer_scope']) ? (string)$_GET['transfer_scope'] : 'include';
 $ignoredScope = isset($_GET['ignored_scope']) ? (string)$_GET['ignored_scope'] : 'exclude';
+$groupId = isset($_GET['group_id']) && $_GET['group_id'] !== '' ? filter_var($_GET['group_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : null;
+if ($groupId === false) {
+    http_response_code(400); echo json_encode(['error' => 'A valid group ID is required']); exit;
+}
 $accountId = isset($_GET['account_id']) && $_GET['account_id'] !== '' ? (int)$_GET['account_id'] : null;
 $dimensionIds = isset($_GET['dimension_ids']) && $_GET['dimension_ids'] !== '' ? explode(',', (string)$_GET['dimension_ids']) : [];
 $transactionIds = isset($_GET['transaction_ids']) && $_GET['transaction_ids'] !== '' ? explode(',', (string)$_GET['transaction_ids']) : [];
@@ -35,7 +39,7 @@ if ($amount !== null) {
 }
 
 if ($value === '' && $min === null && $max === null && $dimension === null && $accountId === null
-    && !$transactionIds && $exactDescription === null && $exactMemo === null && $direction === null
+    && $groupId === null && !$transactionIds && $exactDescription === null && $exactMemo === null && $direction === null
     && $start === null && $end === null && !$all) {
     http_response_code(400);
     echo json_encode(['error' => 'Search value or amount range is required']);
@@ -101,7 +105,7 @@ if (($compareStart === null) !== ($compareEnd === null) || ($compareStart !== nu
 }
 
 try {
-    $search = static function ($rangeStart, $rangeEnd) use ($value, $min, $max, $dimension, $dimensionId, $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope, $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo, $includeUnclassified) {
+    $search = static function ($rangeStart, $rangeEnd) use ($value, $min, $max, $dimension, $dimensionId, $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope, $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo, $includeUnclassified, $groupId) {
         return Transaction::search(
         $value,
         $min !== null ? (float)$min : null,
@@ -120,7 +124,8 @@ try {
         $transactionIds,
         $exactDescription,
         $exactMemo,
-        $includeUnclassified
+        $includeUnclassified,
+        $groupId
         );
     };
     $results = $search($start, $end);

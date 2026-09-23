@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Group Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
+    <link rel="stylesheet" href="group_analysis.css">
+</head>
+<body class="ops-body">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main flex-1 min-w-0">
+        <section class="cards cards-solid opacity-0">
+            <form id="group-filters" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
+                <div><label for="analysis-group">Group</label><select id="analysis-group" required data-help="Choose an active transaction group, such as your holiday."><option value="">Loading groups…</option></select></div>
+                <div><label for="analysis-start">From</label><input id="analysis-start" type="date" data-help="Inclusive first date. Leave blank to include the earliest entries."></div>
+                <div><label for="analysis-end">To</label><input id="analysis-end" type="date" data-help="Inclusive last date. Leave blank to include the latest entries."></div>
+                <div class="flex flex-wrap gap-2"><button type="submit" aria-label="Update group analysis">Update analysis</button><button id="all-dates" type="button" aria-label="Show group across all dates">All dates</button></div>
+            </form>
+            <p class="mt-3 text-sm text-slate-500">Leave dates blank for the full history, including deposits paid before your trip.</p>
+        </section>
+        <p id="analysis-state" role="status" aria-live="polite" class="my-4">Loading groups…</p>
+        <div id="analysis-results" hidden>
+            <section class="cards cards-tight opacity-0" aria-labelledby="group-title">
+                <h2 id="group-title"></h2><p id="group-description" class="text-slate-500"></p><p id="analysis-period" class="text-sm text-slate-500 mt-2"></p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mt-5">
+                    <div><span>Money spent</span><strong id="total-spending" class="group-analysis-value"></strong></div>
+                    <div><span>Money received</span><strong id="total-income" class="group-analysis-value"></strong></div>
+                    <div><span>Net cost</span><strong id="total-net" class="group-analysis-value"></strong><small>Spending less money received</small></div>
+                    <div><span>Transactions analysed</span><strong id="total-count" class="group-analysis-value"></strong></div>
+                </div>
+                <p id="exclusion-note" class="text-sm text-slate-500 mt-4"></p>
+                <a id="all-entries" class="inline-block mt-2" aria-label="View every group transaction in the selected period">View all group entries</a>
+            </section>
+            <section class="cards cards-tight opacity-0" aria-labelledby="spending-title">
+                <h2 id="spending-title">Where the money went</h2><p class="text-sm text-slate-500">Largest spending tags. Select a bar to see its transactions; the table below includes every tag.</p>
+                <div id="group-chart" class="mt-4" aria-label="Spending by tag"></div>
+            </section>
+            <section class="cards cards-tight opacity-0" aria-labelledby="tags-title">
+                <h2 id="tags-title">Tag breakdown</h2><p class="text-sm text-slate-500 mb-4">See spending, money received and share of spending for each tag. Untagged entries remain visible.</p>
+                <div id="group-tags"></div>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="js/page_header.js"></script>
+<script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Group Analysis', breadcrumb: 'Insights', subtitle: 'Understand the full cost of a holiday, event or any transaction group.' });</script>
+<script src="js/menu.js"></script>
+<script src="js/scroll_animations.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+<script src="js/transaction_drilldown.js"></script>
+<script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
+<script src="js/tabulator-tailwind.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="js/group_analysis.js"></script>
+</body>
+</html>

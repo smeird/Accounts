@@ -168,3 +168,7 @@ Before merging a new or redesigned page:
 - [ ] Desktop and mobile browser checks pass without page overflow.
 - [ ] PHP/JavaScript tests, syntax checks and `git diff --check` pass.
 - [ ] Schema changes update `SchemaCatalog.php`; data changes use an explicit migration.
+
+## Group Analysis
+
+Group Analysis in Insights uses shared cards and a compact summary followed by a Highcharts spending chart and a paginated modern tag table. Dates are optional and inclusive; blank dates retain advance deposits and later costs. Money spent and money received stay separate, with net cost defined as spending less receipts. Amount links retain group, tag, dates and inclusion scopes. The all-entries link includes transfers and IGNORE rows for ledger review.

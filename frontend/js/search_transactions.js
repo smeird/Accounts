@@ -7,7 +7,7 @@
     const shortDate = new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'short', year:'numeric' });
     let resultTable = null;
     let resultTableHasComparison = false;
-    const structuredKeys=['start','end','direction','transfer_scope','ignored_scope','dimension','dimension_id','dimension_ids','unclassified','include_unclassified','account_id','transaction_ids','description_exact','memo_exact','compare_start','compare_end','all','label'];
+    const structuredKeys=['start','end','direction','transfer_scope','ignored_scope','dimension','dimension_id','dimension_ids','unclassified','include_unclassified','group_id','account_id','transaction_ids','description_exact','memo_exact','compare_start','compare_end','all','label'];
 
     function byId(id) { return document.getElementById(id); }
     function setText(id, value) { const element = byId(id); if (element) element.textContent = value; }
@@ -107,6 +107,7 @@
         if(params.get('dimension_id'))labels.push(`Exact classification #${params.get('dimension_id')}`);
         if(params.get('dimension_ids'))labels.push(`${params.get('dimension_ids').split(',').filter(Boolean).length} classifications`);
         if(params.get('transaction_ids'))labels.push(`${params.get('transaction_ids').split(',').filter(Boolean).length} exact transactions`);
+        if(params.get('group_id'))labels.push(`Group #${params.get('group_id')}`);
         if(params.get('account_id'))labels.push(`Account #${params.get('account_id')}`);
         if(params.get('transfer_scope'))labels.push(`Transfers ${params.get('transfer_scope')}`);
         if(params.get('ignored_scope'))labels.push(`Excluded items ${params.get('ignored_scope')}`);

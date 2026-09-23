@@ -37,6 +37,7 @@
       <li><a href="yearly_dashboard.html"><i class="fas fa-calendar"></i> Year in Review</a></li>
       <li><a href="recurring_spend.html"><i class="fas fa-rotate"></i> Regular Income &amp; Bills</a></li>
       <li><a href="graphs.html"><i class="fas fa-chart-pie"></i> Financial Picture</a></li>
+      <li><a href="group_analysis.html"><i class="fas fa-suitcase"></i> Group Analysis</a></li>
       <li><a href="pivot.html"><i class="fas fa-table-cells-large"></i> Analysis Matrix</a></li>
       <li><a href="ai_feedback.html"><i class="fas fa-comments-dollar"></i> AI Financial Review</a></li>
     </ul>

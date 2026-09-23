@@ -135,3 +135,5 @@
 
 - Transaction workspace pages use all available main-panel width rather than a fixed maximum width, retaining their responsive padding and sidebar offset.
 - Find Transactions sorts the API's ISO `YYYY-MM-DD` dates as strings so chronological sorting does not depend on Luxon or locale-specific date parsing.
+
+- Group Analysis is a read-only Insights view with inclusive optional dates, SQL-aggregated tag spending, separate receipts and net cost, visible untagged entries, and transfer/IGNORE exclusions. Transaction evidence combines a standalone group filter with tag filters; the all-entries link includes excluded ledger rows.

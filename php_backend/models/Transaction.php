@@ -932,7 +932,8 @@ class Transaction {
         array $transactionIds = [],
         ?string $exactDescription = null,
         ?string $exactMemo = null,
-        bool $includeUnclassified = false
+        bool $includeUnclassified = false,
+        ?int $groupId = null
     ): array {
         $db = Database::getConnection();
 
@@ -952,6 +953,9 @@ class Transaction {
         if (!in_array($transferScope, ['include', 'exclude', 'only'], true)
             || !in_array($ignoredScope, ['include', 'exclude', 'only'], true)) {
             throw new InvalidArgumentException('Unsupported transaction inclusion scope');
+        }
+        if ($groupId !== null && $groupId <= 0) {
+            throw new InvalidArgumentException('A valid group ID is required');
         }
         if ($accountId !== null && $accountId <= 0) {
             throw new InvalidArgumentException('A valid account ID is required');
@@ -1068,6 +1072,10 @@ class Transaction {
             $conditions[] = 't."transfer_id" IS NULL';
         } elseif ($transferScope === 'only') {
             $conditions[] = 't."transfer_id" IS NOT NULL';
+        }
+        if ($groupId !== null) {
+            $conditions[] = 't."group_id" = :group_id';
+            $params['group_id'] = $groupId;
         }
         if ($accountId !== null) {
             $conditions[] = 't."account_id" = :account_id';

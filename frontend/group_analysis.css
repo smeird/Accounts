@@ -1,0 +1,7 @@
+#group-filters label { display: block; margin-bottom: .35rem; }
+#group-filters input, #group-filters select { width: 100%; min-width: 0; }
+.group-analysis-value { display: block; font-size: 1.75rem; margin-top: .35rem; font-variant-numeric: tabular-nums; }
+#analysis-results > section { margin-bottom: 1.25rem; }
+#group-chart { min-height: 100px; }
+
+#analysis-state:empty { display: none; }

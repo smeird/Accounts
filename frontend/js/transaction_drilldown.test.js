@@ -96,3 +96,7 @@ const forecast = fs.readFileSync(path.join(sourceRoot,'forecast_dashboard.js'),'
 assert.doesNotMatch(forecast, /search\.html\?value=/, 'projected forecast categories have no misleading text-search link');
 
 console.log('PASS: transaction drill-down URL generation and page integration');
+
+const grouped = paramsFor(drilldown.financial({ group_id: 7, dimension: 'tag', dimension_id: 9, start: '2026-08-01', end: '2026-08-31' }));
+assert.strictEqual(grouped.get('group_id'), '7');
+assert.strictEqual(grouped.get('dimension_id'), '9');

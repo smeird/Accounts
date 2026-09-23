@@ -4,7 +4,7 @@
     const allowedKeys = [
         'value', 'min_amount', 'max_amount', 'start', 'end', 'direction',
         'transfer_scope', 'ignored_scope', 'dimension', 'dimension_id',
-        'dimension_ids', 'unclassified', 'include_unclassified', 'account_id', 'transaction_ids',
+        'group_id', 'dimension_ids', 'unclassified', 'include_unclassified', 'account_id', 'transaction_ids',
         'description_exact', 'memo_exact', 'compare_start', 'compare_end',
         'all', 'label'
     ];

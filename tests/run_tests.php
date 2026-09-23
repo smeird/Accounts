@@ -1971,6 +1971,8 @@ $narrowResult = $correctionService->applyPlan($narrowPlan, false);
 assertEqual(0, $narrowResult['moved_aliases'], 'Narrow correction does not redirect a broader future rule');
 assertEqual($broadSource, (int)$db->query("SELECT tag_id FROM tag_aliases WHERE alias_normalized='amazon' AND direction='outgoing'")->fetchColumn(), 'Broad rule remains with its original canonical tag');
 
+require __DIR__ . '/GroupAnalysisTest.php';
+
 // Output results and set exit code
 $failed = false;
 foreach ($results as $line) {
