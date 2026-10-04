@@ -358,7 +358,7 @@
     }
 
     function matchesFilter(transaction) {
-        if (state.category !== null) return !isTransfer(transaction) && (transaction.category_name || 'Uncategorised') === state.category;
+        if (state.category !== null) return transaction.amount < 0 && !isTransfer(transaction) && (transaction.category_name || 'Uncategorised') === state.category;
         if (state.filter === 'income') return transaction.amount > 0 && !isTransfer(transaction);
         if (state.filter === 'spending') return transaction.amount < 0 && !isTransfer(transaction);
         if (state.filter === 'needs-classification') return needsClassification(transaction);
@@ -489,7 +489,10 @@
             credits:{ enabled:false },
             accessibility:{ enabled:true, description:'Monthly spending by category. Select a slice to view its contributing transactions.' },
             legend:{ enabled:true, align:'right', verticalAlign:'middle', layout:'vertical', itemMarginBottom:6, itemStyle:{ color:'#475569', fontSize:'10px', fontWeight:'700' } },
-            plotOptions:{ pie:{ innerSize:'64%', borderWidth:3, borderColor:'rgba(255,255,255,.9)', cursor:'pointer', dataLabels:{ enabled:false }, showInLegend:true, point:{ events:{ click:function () { const sample=state.transactions.find(row=>(row.category_name||'Uncategorised')===this.name);const range=TransactionDrilldown.monthRange(Number(yearSelect.value),Number(monthSelect.value));window.location.href=TransactionDrilldown.url(TransactionDrilldown.financial({...range,direction:'spending',dimension:'category',dimension_id:sample&&sample.category_id,unclassified:!sample||!sample.category_id,label:`${this.name} spending`})); } } } } },
+            plotOptions:{ pie:{ innerSize:'64%', borderWidth:3, borderColor:'rgba(255,255,255,.9)', cursor:'pointer', dataLabels:{ enabled:false }, showInLegend:true, point:{ events:{ click:function () {
+                search.value = '';
+                state.query = '';
+                setFilter('spending', this.name, true); } } } } },
             tooltip:{ formatter:function () {
                 const sign = this.point.change >= 0 ? '+' : '−';
                 return `<b>${escapeMarkup(this.point.name)}</b><br>Spend: ${currency.format(this.y)}<br>Month change: ${sign}${currency.format(Math.abs(this.point.change))}<br>Share: ${Highcharts.numberFormat(this.percentage, 1)}%`;

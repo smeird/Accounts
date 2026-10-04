@@ -139,3 +139,5 @@
 - Group Analysis is a read-only Insights view with inclusive optional dates, SQL-aggregated tag spending, separate receipts and net cost, visible untagged entries, and transfer/IGNORE exclusions. Transaction evidence combines a standalone group filter with tag filters; the all-entries link includes excluded ledger rows.
 
 - Find Transactions preserves group/tag/date evidence filters and keeps results usable when chart assets fail. Free-text group and classification name searches are case-insensitive on PostgreSQL.
+
+- Monthly Activity pie slices filter the local ledger to the contributing outgoing, non-transfer transactions for that category, clear the table search, and scroll to the ledger. All activity clears the category filter.
