@@ -75,13 +75,13 @@
                 // API dates are YYYY-MM-DD, whose string order is chronological (no Luxon dependency).
                 { title:'Date', field:'date', width:112, sorter:'string' },
                 { title:'Account', field:'account_name', minWidth:130, responsive:3 },
-                { title:'Description', field:'description', minWidth:190, formatter:function(cell){ const row=cell.getRow().getData(); const link=document.createElement('a'); link.href='transaction.html?id='+encodeURIComponent(row.id); link.textContent=cell.getValue() || 'Untitled'; return link; } },
+                { title:'Description', field:'description', minWidth:190, bottomCalc:function(){ return 'Total matching transactions'; }, formatter:function(cell){ const row=cell.getRow().getData(); const link=document.createElement('a'); link.href='transaction.html?id='+encodeURIComponent(row.id); link.textContent=cell.getValue() || 'Untitled'; return link; } },
                 { title:'Memo', field:'memo', minWidth:150, responsive:2 },
                 { title:'Category', field:'category_name', formatter:badgeFormatter('bg-green-200 text-green-800'), responsive:1 },
                 { title:'Tag', field:'tag_name', formatter:badgeFormatter('bg-indigo-200 text-indigo-800'), responsive:2 },
                 { title:'Group', field:'group_name', formatter:badgeFormatter('bg-purple-200 text-purple-800'), responsive:3 },
                 { title:'Segment', field:'segment_name', formatter:badgeFormatter('bg-yellow-200 text-yellow-800'), responsive:3 },
-                { title:'Amount', field:'amount', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right', sorter:'number', width:120 }
+                { title:'Amount', field:'amount', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right', sorter:'number', width:120, bottomCalc:'sum', bottomCalcParams:{precision:2}, bottomCalcFormatter:'money', bottomCalcFormatterParams:{symbol:'£',precision:2} }
             ]
         });
     }

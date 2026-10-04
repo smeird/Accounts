@@ -141,3 +141,5 @@
 - Find Transactions preserves group/tag/date evidence filters and keeps results usable when chart assets fail. Free-text group and classification name searches are case-insensitive on PostgreSQL.
 
 - Monthly Activity pie slices filter the local ledger to the contributing outgoing, non-transfer transactions for that category, clear the table search, and scroll to the ledger. All activity clears the category filter.
+
+- Find Transactions shows a signed Amount total in the table footer for all matching rows across pages. Table filtering recalculates it; transfer and ignored rows contribute when present in the result set.
