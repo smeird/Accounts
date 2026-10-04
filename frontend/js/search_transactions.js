@@ -60,10 +60,18 @@
         setText('search-results-copy', rows.length === 1 ? 'One transaction matches this investigation.' : rows.length + ' transactions match this investigation. Sort a column or open a transaction for detail.');
         setText('search-hero-message', rows.length ? (net < 0 ? compactMoney.format(Math.abs(net)) + ' more left than arrived across these matches.' : net > 0 ? compactMoney.format(net) + ' more arrived than left across these matches.' : 'Matched inflows and outgoings balance exactly.') : 'No transactions matched this combination. Try widening the amount range or simplifying the search term.');
     }
+    function updateTableTotal() {
+        const footer = byId('search-table-total');
+        footer.hidden = !resultTable;
+        if (!resultTable) return;
+        const rows = resultTable.getData('active');
+        const total = rows.reduce((sum, row) => sum + amount(row.amount), 0);
+        setText('search-table-total-value', money.format(total));
+    }
     function renderTable(rows) {
         const grid = byId('results-grid');
         const hasComparison = rows.some(row=>row._evidence_period);
-        if (!rows.length) { if (resultTable) { resultTable.destroy(); resultTable = null; } resultTableHasComparison=false; grid.replaceChildren(emptyState('No matching transactions', 'Try another term or widen the amount range.', 'fa-magnifying-glass')); return; }
+        if (!rows.length) { if (resultTable) { resultTable.destroy(); resultTable = null; } resultTableHasComparison=false; updateTableTotal(); grid.replaceChildren(emptyState('No matching transactions', 'Try another term or widen the amount range.', 'fa-magnifying-glass')); return; }
         if (resultTable && resultTableHasComparison === hasComparison) { resultTable.setData(rows); return; }
         if (resultTable) resultTable.destroy();
         grid.replaceChildren();
@@ -75,15 +83,16 @@
                 // API dates are YYYY-MM-DD, whose string order is chronological (no Luxon dependency).
                 { title:'Date', field:'date', width:112, sorter:'string' },
                 { title:'Account', field:'account_name', minWidth:130, responsive:3 },
-                { title:'Description', field:'description', minWidth:190, bottomCalc:function(){ return 'Total matching transactions'; }, formatter:function(cell){ const row=cell.getRow().getData(); const link=document.createElement('a'); link.href='transaction.html?id='+encodeURIComponent(row.id); link.textContent=cell.getValue() || 'Untitled'; return link; } },
+                { title:'Description', field:'description', minWidth:190, formatter:function(cell){ const row=cell.getRow().getData(); const link=document.createElement('a'); link.href='transaction.html?id='+encodeURIComponent(row.id); link.textContent=cell.getValue() || 'Untitled'; return link; } },
                 { title:'Memo', field:'memo', minWidth:150, responsive:2 },
                 { title:'Category', field:'category_name', formatter:badgeFormatter('bg-green-200 text-green-800'), responsive:1 },
                 { title:'Tag', field:'tag_name', formatter:badgeFormatter('bg-indigo-200 text-indigo-800'), responsive:2 },
                 { title:'Group', field:'group_name', formatter:badgeFormatter('bg-purple-200 text-purple-800'), responsive:3 },
                 { title:'Segment', field:'segment_name', formatter:badgeFormatter('bg-yellow-200 text-yellow-800'), responsive:3 },
-                { title:'Amount', field:'amount', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right', sorter:'number', width:120, bottomCalc:'sum', bottomCalcParams:{precision:2}, bottomCalcFormatter:'money', bottomCalcFormatterParams:{symbol:'£',precision:2} }
+                { title:'Amount', field:'amount', formatter:'money', formatterParams:{symbol:'£',precision:2}, hozAlign:'right', sorter:'number', width:120 }
             ]
         });
+        ['tableBuilt', 'dataProcessed', 'dataFiltered'].forEach(event => resultTable.on(event, updateTableTotal));
     }
     function netFor(rows){return rows.reduce((sum,row)=>(row.transfer_id===null||typeof row.transfer_id==='undefined')?sum+amount(row.amount):sum,0);}
     function renderComparison(current,comparison,params){
@@ -182,7 +191,7 @@
         } finally { submit.disabled=false; submit.querySelector('span').textContent='Search transactions'; }
     }
     byId('search-form').addEventListener('submit', function(event){event.preventDefault();runSearch();});
-    byId('search-clear').addEventListener('click', function(){ byId('search-form').reset(); byId('search-error').hidden=true; history.replaceState(null,'',location.pathname); resetSummary(); byId('search-filter-context').hidden=true; byId('search-comparison').hidden=true; setText('search-status',''); setText('search-results-copy','Your result set will appear here, ready to sort and inspect.'); if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false; byId('results-grid').replaceChildren(emptyState('Start with a search', 'Use a name, note, category, tag, group or amount range to investigate activity.', 'fa-magnifying-glass')); destroyChart(); byId('results-chart').replaceChildren(emptyState('Waiting for a result set', 'Matched outgoings will form a time-based spending pattern here.', 'fa-chart-line')); byId('term').focus(); });
+    byId('search-clear').addEventListener('click', function(){ byId('search-form').reset(); byId('search-error').hidden=true; history.replaceState(null,'',location.pathname); resetSummary(); byId('search-filter-context').hidden=true; byId('search-comparison').hidden=true; setText('search-status',''); setText('search-results-copy','Your result set will appear here, ready to sort and inspect.'); if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false; updateTableTotal(); byId('results-grid').replaceChildren(emptyState('Start with a search', 'Use a name, note, category, tag, group or amount range to investigate activity.', 'fa-magnifying-glass')); destroyChart(); byId('results-chart').replaceChildren(emptyState('Waiting for a result set', 'Matched outgoings will form a time-based spending pattern here.', 'fa-chart-line')); byId('term').focus(); });
 
     window.updatePageHeader(transactionSearchMain,{actions:headerActions()});
     resetSummary();
