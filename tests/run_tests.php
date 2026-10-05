@@ -1391,6 +1391,34 @@ try {
 }
 assertEqual(true, $unknownTagRejected, 'AI tag correction rejects source tags outside the server allowlist');
 
+// Merchant corrections infer source assignments and include untagged evidence.
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-09-01', -45, 'VIRGIN MEDIA PYMTS 123', null, null, null, $incorrectTagId, null, null]);
+$virginId = (int)$db->lastInsertId();
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-09-02', -46, 'VIRGIN MEDIA PYMTS 456', null, null, null, null, null, null]);
+$virginUntaggedId = (int)$db->lastInsertId();
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-09-03', 10, 'VIRGIN MEDIA PYMTS REFUND', null, null, null, $incorrectTagId, null, null]);
+$virginIncomeId = (int)$db->lastInsertId();
+$virginRule = TagAlias::create($incorrectTagId, 'virgin media pymts', 'contains', true, 'manual', null, 0, 'any');
+$merchantProposal = ['mode'=>'merchant_rule', 'source_tag_ids'=>[], 'target_tag_id'=>null, 'target_tag_name'=>'Broadband costs', 'match_terms'=>['virgin media pymts'], 'direction'=>'outgoing', 'confidence'=>.98];
+$merchantPlan = $correctionService->createPlan('virgin media pymts are broadband costs', $merchantProposal, $correctionService->tagContext());
+assertEqual(2, $merchantPlan['affected_count'], 'Merchant correction includes incorrect and untagged outgoing entries');
+$merchantBefore = $db->query("SELECT * FROM transactions WHERE id=$virginId")->fetch(PDO::FETCH_ASSOC);
+$merchantResult = $correctionService->applyPlan($merchantPlan);
+assertEqual(2, $merchantResult['updated'], 'Merchant correction creates the reviewed tag and runs the new rule');
+$merchantAfter = $db->query("SELECT * FROM transactions WHERE id=$virginId")->fetch(PDO::FETCH_ASSOC);
+unset($merchantBefore['tag_id'], $merchantAfter['tag_id']);
+assertEqual($merchantBefore, $merchantAfter, 'Merchant rule correction preserves financial and non-tag fields');
+assertEqual($merchantResult['target_tag_id'], Tag::findMatch('VIRGIN MEDIA PYMTS 789', -50), 'Replacement merchant rule applies to future outgoing transactions');
+assertEqual($incorrectTagId, (int)$db->query("SELECT tag_id FROM transactions WHERE id=$virginIncomeId")->fetchColumn(), 'Outgoing merchant correction preserves incoming payments');
+$merchantProposal['target_tag_id'] = $mortgageTagId;
+$staleMerchantPlan = $correctionService->createPlan('virgin media pymts are Mortgage', $merchantProposal, $correctionService->tagContext());
+$db->exec("UPDATE transactions SET memo='Changed after preview' WHERE id=$virginId");
+try { $correctionService->applyPlan($staleMerchantPlan); $staleRejected = false; }
+catch (InvalidArgumentException $e) { $staleRejected = true; }
+assertEqual(true, $staleRejected, 'Merchant corrections reject changed preview evidence atomically');
+assertEqual(0, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$virginRule")->fetchColumn(), 'Correction disables the old any-direction merchant rule');
+assertEqual($incorrectTagId, Tag::findMatch('VIRGIN MEDIA PYMTS REFUND', 10), 'Correction retains opposite-direction rule behaviour');
+
 // Tag taxonomy rebuilds must begin with a complete, immutable classification
 // snapshot and must be reversible without touching later transactions.
 $migrationSafety = new TagMigrationSafetyService($db);

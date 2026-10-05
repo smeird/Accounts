@@ -143,3 +143,5 @@
 - Monthly Activity pie slices filter the local ledger to the contributing outgoing, non-transfer transactions for that category, clear the table search, and scroll to the ledger. All activity clears the category filter.
 
 - Find Transactions shows a signed Amount total in a wrapping footer below the table (visible on mobile and independent of fixed column widths) for all matching rows across pages. Table filtering recalculates it; transfer and ignored rows contribute when present in the result set.
+
+- AI Data Fix supports reviewed merchant-rule corrections without a named source tag: resolve or explicitly create the target tag, replace same-phrase/same-direction aliases, preserve broader rules with overlap warnings, and apply to the previewed eligible ledger set atomically. Reject stale transaction/rule evidence; protect transfers, IGNORE and system classifications, and keep non-tag fields unchanged.

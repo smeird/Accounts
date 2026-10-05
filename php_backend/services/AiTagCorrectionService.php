@@ -28,7 +28,8 @@ class AiTagCorrectionService {
     }
 
     public static function buildPrompt(string $problem, array $tags): string {
-        return "A person has described a transaction tagging error. Interpret only a tag correction. "
+        return "For a merchant instruction such as Virgin Media pymts are broadband costs, return mode=merchant_rule, source_tag_ids=[], match_terms=[the literal merchant wording], direction=outgoing (costs/payments), incoming (receipts), or any if unspecified. This mode replaces merchant rules and applies the replacement to matching transactions regardless of their current tag, including untagged rows. Never guess an incorrect source tag. For a whole-tag correction without merchant wording use mode=tag_only. "
+            . "A person has described a transaction tagging error. Interpret only a tag correction. "
             . "Never propose changes to amounts, dates, descriptions, accounts, transfers, categories, segments or groups. "
             . "Choose source_tag_ids only from the supplied tag IDs. A deprecated tag may be a source when historical transactions still use it, but target_tag_id must always be an active tag. Prefer an existing active target_tag_id; if no suitable tag exists, set it to null and supply a short target_tag_name. "
             . "Use match_terms only when the correction applies to transactions whose description or memo contains merchant wording written in the person's problem. Every match term must be a literal phrase from that problem. "
@@ -50,6 +51,7 @@ class AiTagCorrectionService {
                 'status' => (string)($tag['status'] ?? 'active'),
             ];
         }
+        if (($proposal['mode'] ?? '') === 'merchant_rule') return $this->createMerchantPlan($problem, $proposal, $tags);
         $sourceIds = array_values(array_unique(array_filter(array_map('intval', $proposal['source_tag_ids'] ?? []))));
         if (!$sourceIds || array_diff($sourceIds, array_keys($tagMap))) {
             throw new InvalidArgumentException('The AI could not identify a valid existing source tag.');
@@ -118,6 +120,7 @@ class AiTagCorrectionService {
         if ((int)($plan['created_at'] ?? 0) < time() - 900) {
             throw new InvalidArgumentException('This preview has expired. Analyse the problem again.');
         }
+        if (($plan['mode'] ?? '') === 'merchant_rule') return $this->applyMerchantPlan($plan);
         $sourceIds = array_values(array_unique(array_map('intval', $plan['source_tag_ids'] ?? [])));
         $transactionIds = array_values(array_unique(array_map('intval', $plan['transaction_ids'] ?? [])));
         if (!$sourceIds || !$transactionIds) throw new InvalidArgumentException('The saved correction plan is incomplete.');
@@ -224,6 +227,128 @@ class AiTagCorrectionService {
         $move = $this->db->prepare("UPDATE tag_aliases SET tag_id = ? WHERE id IN ($idMarks)");
         $move->execute(array_merge([$targetId], $aliasIds));
         return $move->rowCount();
+    }
+
+    private static function phrase(string $value): string {
+        return trim((string)preg_replace('/\s+/u', ' ', preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower($value))));
+    }
+
+    private function merchantRows(array $terms, string $direction): array {
+        $rows = $this->db->query("SELECT tx.* FROM transactions tx LEFT JOIN tags t ON t.id = tx.tag_id WHERE tx.transfer_id IS NULL AND (t.id IS NULL OR (LOWER(TRIM(t.name)) <> 'ignore' AND t.origin <> 'system')) ORDER BY tx.id")->fetchAll(PDO::FETCH_ASSOC);
+        return array_values(array_filter($rows, static function ($row) use ($terms, $direction) {
+            if ($direction === 'outgoing' && (float)$row['amount'] >= 0) return false;
+            if ($direction === 'incoming' && (float)$row['amount'] <= 0) return false;
+            $text = ' ' . self::phrase(Tag::buildMatchText($row['description'] ?? '', $row['memo'])) . ' ';
+            foreach ($terms as $term) if (str_contains($text, ' ' . self::phrase($term) . ' ')) return true;
+            return false;
+        }));
+    }
+
+    private function merchantRules(array $terms, string $direction): array {
+        $rules = [];
+        foreach (TagAlias::all() as $rule) {
+            if ($rule['direction'] !== 'any' && $direction !== 'any' && $rule['direction'] !== $direction) continue;
+            foreach ($terms as $term) {
+                $a = ' ' . self::phrase($rule['alias']) . ' ';
+                $b = ' ' . self::phrase($term) . ' ';
+                if (str_contains($a, $b) || str_contains($b, $a)) {
+                    $rule['replace'] = self::phrase($rule['alias']) === self::phrase($term) && ($rule['direction'] === $direction || $rule['direction'] === 'any');
+                    $rules[] = $rule; break;
+                }
+            }
+        }
+        return $rules;
+    }
+
+    private function createMerchantPlan(string $problem, array $proposal, array $tags): array {
+        $terms = [];
+        foreach ((array)($proposal['match_terms'] ?? []) as $term) {
+            $term = trim((string)$term);
+            if (mb_strlen($term) < 3 || mb_strlen($term) > 100 || !str_contains(' ' . self::phrase($problem) . ' ', ' ' . self::phrase($term) . ' ')) throw new InvalidArgumentException('Use merchant wording from your description.');
+            $terms[] = $term;
+        }
+        $terms = array_values(array_unique($terms));
+        if (!$terms || count($terms) > 5) throw new InvalidArgumentException('Specify one to five merchant phrases.');
+        $direction = (string)($proposal['direction'] ?? 'any');
+        if (!in_array($direction, ['any', 'outgoing', 'incoming'], true)) throw new InvalidArgumentException('Invalid rule direction.');
+        $confidence = (float)($proposal['confidence'] ?? 0);
+        if ($confidence < .75 || $confidence > 1) throw new InvalidArgumentException('Please describe the correction more specifically.');
+        $targetId = (int)($proposal['target_tag_id'] ?? 0);
+        $name = trim((string)($proposal['target_tag_name'] ?? ''));
+        if ($targetId) {
+            $allowed = array_column($tags, null, 'id');
+            if (!isset($allowed[$targetId]) || $allowed[$targetId]['status'] !== 'active') throw new InvalidArgumentException('Choose an active destination tag.');
+            $name = $allowed[$targetId]['name'];
+        }
+        if ($name === '' || mb_strlen($name) > 100 || strtolower($name) === 'ignore') throw new InvalidArgumentException('Specify a valid destination tag.');
+        $existing = Tag::getIdByNormalizedName(Tag::normalizeName($name));
+        if ($existing) {
+            if (!Tag::isActiveId($existing)) throw new InvalidArgumentException('The destination name belongs to a retired tag. Choose an active tag.');
+            $targetId = $existing;
+        }
+        $rows = $this->merchantRows($terms, $direction);
+        if (count($rows) > 10000) throw new InvalidArgumentException('Narrow this correction to fewer than 10,000 transactions.');
+        $rules = $this->merchantRules($terms, $direction);
+        foreach ($rules as $rule) if ($rule['replace']) {
+            $protected = $this->db->prepare("SELECT id FROM tags WHERE id = ? AND (origin = 'system' OR LOWER(TRIM(name)) = 'ignore')");
+            $protected->execute([$rule['tag_id']]);
+            if ($protected->fetchColumn()) throw new InvalidArgumentException('Protected system rules cannot be replaced.');
+        }
+        $warnings = ['An existing any-direction merchant rule is disabled; its opposite-direction behaviour is retained when needed.', 'Confirmed transfers, IGNORE and system classifications are excluded. Category, segment and group assignments stay unchanged.'];
+        foreach ($rules as $rule) if (!$rule['replace'] && (int)$rule['active'] === 1 && (int)$rule['tag_id'] !== $targetId) $warnings[] = 'Overlapping rule retained: ' . $rule['alias'] . ' → ' . $rule['tag_name'] . '. More specific rules may still take precedence on future imports.';
+        $sources = [];
+        foreach ($rows as $row) if ($row['tag_id']) $sources[(int)$row['tag_id']] = true;
+        $tagMap = array_column($tags, null, 'id');
+        return ['mode'=>'merchant_rule', 'problem'=>$problem, 'summary'=>(string)($proposal['summary'] ?? 'Replace the merchant rule and apply it.'), 'source_tag_ids'=>array_keys($sources), 'source_tags'=>array_map(static fn($id)=>['id'=>$id, 'name'=>$tagMap[$id]['name'] ?? 'Existing tag'], array_keys($sources)), 'target_tag_id'=>$targetId ?: null, 'target_tag_name'=>$name, 'match_terms'=>$terms, 'direction'=>$direction, 'rules'=>$rules, 'transaction_ids'=>array_column($rows, 'id'), 'evidence_hash'=>hash('sha256', json_encode([$rows,$rules])), 'affected_count'=>count($rows), 'samples'=>array_slice($rows,0,12), 'confidence'=>$confidence, 'warnings'=>$warnings, 'created_at'=>time()];
+    }
+
+    private function applyMerchantPlan(array $plan): array {
+        $this->db->beginTransaction();
+        try {
+            // Lock classifications and rules so the reviewed evidence cannot change during application.
+            if ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql') $this->db->exec('LOCK TABLE transactions, tags, tag_aliases IN SHARE ROW EXCLUSIVE MODE');
+            $rows = $this->merchantRows($plan['match_terms'], $plan['direction']);
+            $rules = $this->merchantRules($plan['match_terms'], $plan['direction']);
+            if (!hash_equals($plan['evidence_hash'], hash('sha256', json_encode([$rows,$rules])))) throw new InvalidArgumentException('Transactions or rules changed since preview. Analyse again.');
+            $targetId = (int)$plan['target_tag_id'];
+            if (!$targetId) {
+                $existing = Tag::getIdByNormalizedName(Tag::normalizeName($plan['target_tag_name']));
+                if ($existing && !Tag::isActiveId($existing)) throw new InvalidArgumentException('The destination tag was retired. Analyse again.');
+                $targetId = Tag::create($plan['target_tag_name']);
+            }
+            if (!Tag::isActiveId($targetId)) throw new InvalidArgumentException('The destination tag was retired. Analyse again.');
+            $ruleIds = [];
+            foreach ($rules as $rule) if ($rule['replace']) {
+                // Keep the opposite direction's existing behaviour when splitting an any-direction rule.
+                if ($rule['direction'] === 'any' && $plan['direction'] !== 'any' && (int)$rule['active'] === 1) {
+                    $opposite = $plan['direction'] === 'outgoing' ? 'incoming' : 'outgoing';
+                    $find = $this->db->prepare('SELECT id FROM tag_aliases WHERE alias_normalized = ? AND direction = ?');
+                    $find->execute([TagAlias::normalizeAlias($rule['alias']), $opposite]);
+                    if (!$find->fetchColumn()) TagAlias::create((int)$rule['tag_id'], $rule['alias'], $rule['match_type'], true, 'manual', null, 0, $opposite);
+                }
+                $this->db->prepare('UPDATE tag_aliases SET active = 0 WHERE id = ?')->execute([$rule['id']]);
+            }
+            foreach ($plan['match_terms'] as $term) {
+                $find = $this->db->prepare('SELECT id FROM tag_aliases WHERE alias_normalized = ? AND direction = ?');
+                $find->execute([TagAlias::normalizeAlias($term), $plan['direction']]);
+                $id = $find->fetchColumn();
+                if ($id) TagAlias::update((int)$id, $targetId, $term, 'contains', true, $plan['direction']);
+                else $id = TagAlias::create($targetId, $term, 'contains', true, 'manual', null, 0, $plan['direction']);
+                $ruleIds[] = (int)$id;
+            }
+            $update = $this->db->prepare('UPDATE transactions SET tag_id = ? WHERE id = ?');
+            $updated = 0;
+            foreach ($rows as $row) {
+                if ((int)$row['tag_id'] === $targetId) continue;
+                $update->execute([$targetId,$row['id']]); $updated += $update->rowCount();
+            }
+            TagAlias::recordMatches([$ruleIds[0]=>count($rows)]);
+            $this->db->commit(); Tag::clearMatchCaches();
+            return ['updated'=>$updated, 'skipped'=>0, 'target_tag_id'=>$targetId, 'target_tag_name'=>$plan['target_tag_name'], 'merged_source_tag_ids'=>[], 'rule_ids'=>$ruleIds];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            throw $e;
+        }
     }
 
     private static function normalise(string $value): string {

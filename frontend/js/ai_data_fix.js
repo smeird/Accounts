@@ -7,6 +7,7 @@
     const preview = byId('preview');
     const apply = byId('apply');
     let planId = null;
+    let merchantMode = false;
 
     function status(kind, title, detail) {
         const root = byId('status');
@@ -28,6 +29,12 @@
     function money(value) { return Number(value || 0).toLocaleString('en-GB', {style:'currency', currency:'GBP'}); }
     function render(data) {
         planId = data.plan_id;
+        merchantMode = data.mode === 'merchant_rule';
+        byId('remove-sources').closest('label').hidden = merchantMode;
+        const rulePreview = byId('rule-preview');
+        rulePreview.hidden = !merchantMode;
+        rulePreview.textContent = merchantMode ? `Rule: ${(data.match_terms || []).join(' OR ')} → ${data.target_tag_name} (${data.direction}). Existing same-scope rules will be replaced; broader rules are retained. ` + (data.rules || []).map(rule => `${rule.alias} → ${rule.tag_name} (${rule.direction}): ${rule.replace ? 'replace' : 'retain'}`).join('; ') : '';
+        apply.lastChild.textContent = merchantMode ? ' Replace and run rule' : ' Apply tag correction';
         byId('preview-summary').textContent = data.summary || 'Review this tag correction carefully.';
         byId('source-tags').replaceChildren(...(data.source_tags || []).map(tag => pill(tag.name, false)));
         const target = pill(data.target_tag_name, true);
@@ -74,14 +81,14 @@
     apply.addEventListener('click', async () => {
         if (!planId) return;
         const count = byId('affected-count').textContent;
-        if (!window.confirm(`Apply this tag-only correction to ${count} transactions? This cannot be undone automatically.`)) return;
+        if (!window.confirm(`Apply this correction${merchantMode ? " and replace the merchant rule" : ""} to ${count} transactions? This cannot be undone automatically.`)) return;
         apply.disabled = true;
-        status('loading', 'Applying the confirmed correction…', 'Only the saved transaction tag assignments are being updated.');
+        status('loading', 'Applying the confirmed correction…', 'The reviewed correction is being applied, including any confirmed merchant rule changes.');
         try {
             const data = await request({action:'apply', plan_id:planId, remove_unused_sources:byId('remove-sources').checked});
             planId = null; preview.hidden = true;
             const merged = (data.merged_source_tag_ids || []).length;
-            status('success', 'Tag correction complete', `${Number(data.updated).toLocaleString('en-GB')} transactions now use ${data.target_tag_name}.${data.skipped ? ` ${data.skipped} changed records were safely skipped.` : ''}${merged ? ` ${merged} unused source tag${merged === 1 ? ' was' : 's were'} retained as merged history.` : ''}`);
+            status('success', 'Tag correction complete', `${data.rule_ids ? 'Merchant rule saved and run. ' : ''}${Number(data.updated).toLocaleString('en-GB')} transactions now use ${data.target_tag_name}.${data.skipped ? ` ${data.skipped} changed records were safely skipped.` : ''}${merged ? ` ${merged} unused source tag${merged === 1 ? ' was' : 's were'} retained as merged history.` : ''}`);
             if (window.showMessage) window.showMessage('Tag correction applied');
         } catch (error) { status('error', 'The correction was not applied', error.message); if (window.showMessage) window.showMessage(error.message, 'error'); }
         finally { apply.disabled = false; }

@@ -33,6 +33,7 @@ try {
             $result['target_tag_id'],
             count($result['merged_source_tag_ids'])
         ));
+        if (!empty($result['rule_ids'])) Log::write('AI merchant correction rules saved and run by user ' . (string)($_SESSION['user_id'] ?? 'unknown') . ': ' . json_encode($result['rule_ids']));
         echo json_encode($result);
         exit;
     }
@@ -45,7 +46,6 @@ try {
     $apiKey = Setting::get('openai_api_token');
     if (!$apiKey) throw new InvalidArgumentException('Configure an OpenAI API token before using AI Data Fix.');
     $tags = $service->tagContext();
-    if (!$tags) throw new InvalidArgumentException('Create at least one tag before preparing a correction.');
     $prompt = AiTagCorrectionService::buildPrompt($problem, $tags);
     $temperature = Setting::get('ai_temperature');
     if ($temperature === null || $temperature === '') $temperature = 1;
@@ -92,7 +92,7 @@ try {
     $_SESSION['ai_tag_correction_plans'][$planId] = $plan;
 
     $output = $plan;
-    unset($output['transaction_ids'], $output['created_at'], $output['problem']);
+    unset($output['transaction_ids'], $output['created_at'], $output['problem'], $output['evidence_hash']);
     $output['plan_id'] = $planId;
     $output['tokens'] = (int)($response['usage']['total_tokens'] ?? 0);
     if (Setting::get('ai_debug') === '1') $output['debug'] = ['prompt' => $prompt, 'response' => $content];
