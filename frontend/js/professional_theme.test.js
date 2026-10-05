@@ -11,6 +11,6 @@ assert.match(professionalTheme, /box-shadow:\s*none !important/, 'Professional c
 assert.match(professionalTheme, /@media \(min-width: 768px\)[\s\S]*\.theme-professional \.tabulator \.tabulator-row,[\s\S]*min-height:\s*2\.35rem !important/, 'desktop Professional tables should use compact rows');
 assert.match(professionalTheme, /\.theme-professional table td[\s\S]*padding-top:\s*\.4rem !important/, 'native table cells should use compact vertical padding');
 assert.doesNotMatch(professionalTheme, /@media \(max-width:[^)]+\)[\s\S]*min-height:\s*2\.35rem/, 'compact rows must not replace mobile touch spacing');
-assert.match(menu, /theme-professional\.css\?v=20260824-paper-density/, 'the Professional stylesheet cache key should change with the theme update');
+assert.match(menu, /theme-professional\.css\?v=20260905-paper-edition/, 'the Professional stylesheet cache key should change with the theme update');
 
 console.log('professional theme CSS tests passed');

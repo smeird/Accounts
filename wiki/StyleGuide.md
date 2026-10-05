@@ -28,6 +28,8 @@ window.renderPageHeader(document.querySelector('main.ops-main'), {
 });
 ```
 
+Authenticated workspaces fill the main-panel width beside the sidebar. `frontend/sidebar.css` owns this through `.app-shell-main`; keep page mains, headers and outer content wrappers uncapped, with the existing responsive padding. Maximum widths remain appropriate for readable text, controls, tooltips and dialogs.
+
 Order page content from summary to evidence:
 
 1. Page header

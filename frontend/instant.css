@@ -10,8 +10,8 @@
 
 .instant-main {
     width: 100%;
-    max-width: 100rem;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
 }
 
 .instant-page .page-header {

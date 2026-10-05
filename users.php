@@ -80,8 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
-    <link rel="stylesheet" href="frontend/operational_ui.css">
-    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260825-ipad-safe-area">
+    <link rel="stylesheet" href="frontend/operational_ui.css?v=20261005-full-width">
+    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20261005-full-width">
     <link rel="stylesheet" href="frontend/users.css?v=20260831-passkeys">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="flex min-h-screen">
         <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
         <main class="ops-main flex-1 min-w-0 overflow-x-auto">
-            <section class="max-w-2xl mx-auto admin-shell">
+            <section class="w-full admin-shell">
         <header class="page-header">
             <div>
                 <h1 class="text-2xl font-semibold text-indigo-700 page-title">User Management</h1>

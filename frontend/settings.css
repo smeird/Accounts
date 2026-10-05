@@ -5,8 +5,8 @@
 }
 
 .settings-page .ops-main { overflow-x:clip; }
-.settings-page .page-header { max-width:78rem; margin-inline:auto; }
-.settings-shell { display:grid; width:100%; max-width:78rem; gap:1rem; margin:0 auto; }
+.settings-page .page-header { max-width:none; margin-inline:0; }
+.settings-shell { display:grid; width:100%; max-width:none; gap:1rem; margin:0; }
 .settings-form { display:grid; gap:1rem; padding-bottom:1rem; }
 .settings-saved { display:flex; align-items:center; gap:.55rem; padding:.72rem .85rem; border:1px solid rgba(16,185,129,.22); border-radius:.85rem; color:#047857; background:rgba(236,253,245,.9); font-size:.72rem; font-weight:750; }
 .settings-saved i { color:#10b981; }

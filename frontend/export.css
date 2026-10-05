@@ -1,5 +1,5 @@
 .export-page { --export-ink:#172033; --export-muted:#667085; --export-line:rgba(100,116,139,.2); --export-accent:#6366f1; }
-.export-page .ops-main { max-width:1400px; margin:0 auto; }
+.export-page .ops-main { max-width:none; margin:0; }
 .export-intro { display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:1.35rem 1.5rem; border-radius:22px; color:#fff; background:linear-gradient(125deg,#172033 0%,#29345c 58%,#6366f1 145%); box-shadow:0 18px 42px rgba(30,41,59,.16); }
 .export-intro h2 { margin:.25rem 0 .35rem; color:#fff; font-size:clamp(1.35rem,2vw,1.9rem); font-weight:700; letter-spacing:-.035em; }
 .export-intro p { max-width:760px; color:#dbe3f4; font-size:.86rem; }

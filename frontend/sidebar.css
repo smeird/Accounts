@@ -13,10 +13,23 @@
 }
 
 .app-shell-main {
+    /* The shell owns the usable page width; local designs retain their padding. */
+    box-sizing:border-box;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0;
+    margin-inline:0!important;
     min-height:0;
     overscroll-behavior-y:contain;
     scroll-padding-block-end:max(1.5rem,calc(env(safe-area-inset-bottom) + 1rem));
     -webkit-overflow-scrolling:touch;
+}
+
+@media (min-width:768px) {
+    .app-shell-main {
+        width:calc(100% - 16rem)!important;
+        margin-left:16rem!important;
+    }
 }
 
 @supports (height:100dvh) {

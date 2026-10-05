@@ -7,7 +7,7 @@
     color: var(--forecast-ink);
 }
 
-.forecast-main { width: 100%; max-width: 100rem; margin-inline: auto; }
+.forecast-main { width: 100%; max-width: none; margin-inline: 0; }
 
 .forecast-page .page-header {
     display: grid;

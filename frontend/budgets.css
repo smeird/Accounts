@@ -1,5 +1,5 @@
 .budget-page { --budget-ink:#172033; --budget-muted:#64748b; --budget-line:rgba(148,163,184,.25); --budget-brand:var(--brand-color-600,#4f46e5); --budget-brand-dark:var(--brand-color-700,#4338ca); color:var(--budget-ink); }
-.budget-main { width:100%; max-width:100rem; margin-inline:auto; }
+.budget-main { width:100%; max-width:none; margin-inline:0; }
 .budget-page .page-header { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:1rem; padding:.85rem 1.1rem; border-radius:1rem; }
 .budget-page .page-title { font-size:clamp(1.4rem,2.3vw,1.85rem)!important; letter-spacing:-.035em; }.budget-page .page-subtitle{max-width:48rem;font-size:.76rem;line-height:1.4}
 .budget-header-controls label{display:flex;align-items:center;gap:.6rem;color:var(--budget-muted);font-size:.66rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.budget-header-controls input{padding:.5rem .65rem;border:1px solid var(--budget-line);border-radius:.7rem;color:var(--budget-ink);background:rgba(255,255,255,.75);font-size:.76rem;font-weight:800}

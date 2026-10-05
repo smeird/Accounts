@@ -56,7 +56,7 @@
 }
 
 .page-header-hero {
-    max-width: 72rem;
+    max-width: none;
     margin: 0 auto 1rem;
     padding: 1.5rem;
     border-radius: 1.5rem;

@@ -29,7 +29,7 @@ shellPages.forEach(file => {
 });
 
 assert.match(menuJs, /const main = document\.querySelector\('body > div > main'\);[\s\S]*const content = main\?\.parentElement/, 'shell setup should locate the main panel instead of depending on an existing wrapper utility class');
-assert.match(menuJs, /sidebar\.css\?v=20260825-sitewide-ipad-shell/, 'the site-wide shell stylesheet should have a fresh cache key');
+assert.match(menuJs, /sidebar\.css\?v=20261005-full-width-shell/, 'the site-wide shell stylesheet should have a fresh cache key');
 assert.match(sidebarCss, /\.app-shell-root[\s\S]*overflow:hidden[\s\S]*overscroll-behavior:none/, 'the document should not become a competing touch scroller');
 assert.match(sidebarCss, /@supports \(height:100dvh\)[\s\S]*height:100dvh!important/, 'the shell should follow the usable mobile browser viewport');
 assert.match(sidebarCss, /\.app-shell-main[\s\S]*overscroll-behavior-y:contain[\s\S]*scroll-padding-block-end:max\([^;]*safe-area-inset-bottom/, 'the main panel should contain touch scrolling and preserve bottom reveal space');

@@ -211,9 +211,9 @@ $colorHex = $selectedPalette['primary'];
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="frontend/cards.css">
-    <link rel="stylesheet" href="frontend/operational_ui.css">
-    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20260825-ipad-safe-area">
-    <link rel="stylesheet" href="frontend/settings.css?v=20260829-expanded-branding">
+    <link rel="stylesheet" href="frontend/operational_ui.css?v=20261005-full-width">
+    <link rel="stylesheet" href="frontend/utility_refresh.css?v=20261005-full-width">
+    <link rel="stylesheet" href="frontend/settings.css?v=20261005-full-width">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 </head>
 <body class="ops-body admin-refresh-page settings-page" data-api-base="php_backend/public">

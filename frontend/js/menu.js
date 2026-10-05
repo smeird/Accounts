@@ -37,7 +37,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const sidebarLink = document.createElement('link');
     sidebarLink.id = 'sidebar-css';
     sidebarLink.rel = 'stylesheet';
-    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20260825-sitewide-ipad-shell');
+    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20261005-full-width-shell');
     document.head.appendChild(sidebarLink);
   }
 

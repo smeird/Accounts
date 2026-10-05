@@ -10,7 +10,7 @@
 }
 
 .upload-main { max-width: none; }
-.upload-main > * { max-width: 96rem; margin-right: auto; margin-left: auto; }
+.upload-main > * { max-width: none; margin-right: 0; margin-left: 0; }
 
 .upload-workspace,
 .upload-result {

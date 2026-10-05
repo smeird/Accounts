@@ -13,8 +13,8 @@
 }
 
 .graphs-page .ops-main {
-    max-width: 112rem;
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     overflow-x: hidden;
     overflow-y: auto;
 }

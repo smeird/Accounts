@@ -10,8 +10,8 @@
 
 .landing-main {
     width: 100%;
-    max-width: 96rem;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
 }
 
 .landing-hero,

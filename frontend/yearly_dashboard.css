@@ -7,7 +7,7 @@
     color: var(--year-ink);
 }
 
-.yearly-main { width: 100%; max-width: 100rem; margin-inline: auto; }
+.yearly-main { width: 100%; max-width: none; margin-inline: 0; }
 
 .yearly-page .page-header {
     display: grid;

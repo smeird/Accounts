@@ -1,5 +1,5 @@
 .tagging-page { --tag-ink:#172033; --tag-muted:#667085; --tag-line:rgba(100,116,139,.18); --tag-accent:#6366f1; --tag-soft:#eef2ff; }
-.tagging-page .ops-main { max-width:1500px; margin:0 auto; }
+.tagging-page .ops-main { max-width:none; margin:0; }
 .site-system-page.tagging-page .tagging-hero { display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:1.5rem 1.7rem; margin-bottom:1rem; border:0; border-radius:24px; color:white; background:linear-gradient(125deg,#172033 0%,#29345c 55%,#6366f1 140%); box-shadow:0 20px 45px rgba(30,41,59,.16); }
 .site-system-page.tagging-page .tagging-hero h2 { margin:.25rem 0 .35rem; color:#fff; font-size:clamp(1.45rem,2vw,2.1rem); font-weight:700; letter-spacing:-.035em; }
 .tagging-hero p { max-width:720px; color:#dbe3f4; font-size:.9rem; }
