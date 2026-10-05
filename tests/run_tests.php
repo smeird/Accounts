@@ -1419,6 +1419,37 @@ assertEqual(true, $staleRejected, 'Merchant corrections reject changed preview e
 assertEqual(0, (int)$db->query("SELECT active FROM tag_aliases WHERE id=$virginRule")->fetchColumn(), 'Correction disables the old any-direction merchant rule');
 assertEqual($incorrectTagId, Tag::findMatch('VIRGIN MEDIA PYMTS REFUND', 10), 'Correction retains opposite-direction rule behaviour');
 
+// Category passes advance beyond unknown tags and propagate only new links.
+$db->exec("INSERT INTO categories (name) VALUES ('AI category batch fixture')");
+$categoryFixtureId = (int)$db->lastInsertId();
+$categoryFixtureSegment = Segment::create('AI category segment fixture');
+$db->exec("UPDATE categories SET segment_id=$categoryFixtureSegment WHERE id=$categoryFixtureId");
+$unknownCategoryTag = Tag::create('Unclear category batch fixture');
+$clearCategoryTag = Tag::create('Clear category batch fixture');
+$lateCategoryTag = Tag::create('Later category batch fixture');
+$categoryBatch = AiCategoryTagger::candidateBatch($db, $unknownCategoryTag - 1, $lateCategoryTag, 1);
+assertEqual([$unknownCategoryTag], array_map('intval', array_column($categoryBatch['candidates'], 'id')), 'AI category batch starts with the stable ID cursor');
+assertEqual(true, $categoryBatch['has_more'], 'AI category batch reports later unassigned tags');
+$nextCategoryBatch = AiCategoryTagger::candidateBatch($db, $categoryBatch['next_after_id'], $lateCategoryTag, 1);
+assertEqual([$clearCategoryTag], array_map('intval', array_column($nextCategoryBatch['candidates'], 'id')), 'Unknown category tags do not starve later batches');
+$unknownSuggestion = AiCategoryTagger::validateAssignments(['assignments'=>[['tag_id'=>$unknownCategoryTag, 'category_id'=>null, 'confidence'=>.99, 'reason'=>'Cannot determine purpose']]], [$unknownCategoryTag], [1]);
+assertEqual([], $unknownSuggestion['accepted'], 'AI category assignment keeps unknown tags unassigned even at claimed high confidence');
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-09-05', -17, 'CATEGORY SAMPLE MERCHANT', 'Useful evidence', null, null, $clearCategoryTag, null, null]);
+$categoryEvidenceId = (int)$db->lastInsertId();
+$insertCorrectionTransaction->execute([$correctionAccountId, '2026-09-06', -18, 'CATEGORY TRANSFER', null, null, null, $clearCategoryTag, null, 654321]);
+$categoryProtectedId = (int)$db->lastInsertId();
+$evidenceBatch = AiCategoryTagger::candidateBatch($db, $unknownCategoryTag, $clearCategoryTag, 1);
+assertEqual('CATEGORY SAMPLE MERCHANT', $evidenceBatch['candidates'][0]['examples'][0]['description'], 'AI categories include recent eligible transaction evidence');
+assertEqual(1, count($evidenceBatch['candidates'][0]['examples']), 'AI category examples exclude internal transfers');
+assertEqual(true, str_contains(AiCategoryTagger::buildPrompt([['id'=>1, 'name'=>'Fixture']], $evidenceBatch['candidates']), 'Useful evidence'), 'AI category prompt includes transaction context');
+assertEqual(1, AiCategoryTagger::applyAssignment($db, $clearCategoryTag, $categoryFixtureId), 'AI category assignment propagates to only eligible tagged transactions');
+assertEqual($categoryFixtureId, CategoryTag::getCategoryId($clearCategoryTag), 'AI category assignment saves the new category link');
+assertEqual($categoryFixtureSegment, (int)$db->query("SELECT segment_id FROM transactions WHERE id=$categoryEvidenceId")->fetchColumn(), 'AI category assignment propagates the category-derived segment');
+assertEqual(null, AiCategoryTagger::applyAssignment($db, $clearCategoryTag, $categoryFixtureId), 'AI category assignment preserves links created before application');
+assertEqual(null, $db->query("SELECT category_id FROM transactions WHERE id=$categoryProtectedId")->fetchColumn(), 'AI category assignment leaves transfer classifications untouched');
+assertEqual(null, CategoryTag::getCategoryId($unknownCategoryTag), 'Uncertain tag keeps its category gap');
+assertEqual(null, AiCategoryTagger::applyAssignment($db, $lateCategoryTag, 999999), 'AI category assignment skips a deleted or invalid category');
+
 // Tag taxonomy rebuilds must begin with a complete, immutable classification
 // snapshot and must be reversible without touching later transactions.
 $migrationSafety = new TagMigrationSafetyService($db);

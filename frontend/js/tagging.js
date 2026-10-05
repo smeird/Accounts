@@ -399,14 +399,66 @@
         finally { button.disabled = false; }
     });
 
+    let categoryRunActive = false;
+    let stopCategoryRun = false;
+    const stopCategories = document.getElementById('stop-ai-categories');
+    stopCategories.addEventListener('click', () => {
+        stopCategoryRun = true;
+        stopCategories.disabled = true;
+        stopCategories.textContent = 'Stopping after this batch…';
+    });
+    function renderCategoryResults(totals) {
+        const host = document.getElementById('automation-result');
+        const list = element('div', 'tagging-review-list');
+        totals.assignments.slice(0, 100).forEach(item => {
+            const row = element('div', 'tagging-review-item');
+            const copy = element('div'); copy.append(element('strong', '', `${item.tag} → ${item.category}`), element('small', '', `${Math.round(item.confidence * 100)}% confidence · ${item.reason}`));
+            row.append(copy); list.append(row);
+        });
+        if (totals.assignments.length > 100) list.append(element('p', '', 'Showing the first 100 assignments. All links are available in the tag catalogue.'));
+        if (totals.unresolved.length) {
+            list.append(element('strong', '', 'Left unknown — no category link was created'));
+            totals.unresolved.slice(0, 100).forEach(item => list.append(element('p', '', `${item.tag}: ${item.reason}`)));
+            if (totals.unresolved.length > 100) list.append(element('p', '', 'Showing the first 100 unknown tags. Find remaining category gaps in the catalogue.'));
+        }
+        host.append(list);
+    }
     document.getElementById('run-ai-categories').addEventListener('click', async event => {
-        const button = event.currentTarget; button.disabled = true; showAutomationResult('Category review is running…', 'Existing links will not be changed.');
+        if (categoryRunActive) return;
+        categoryRunActive = true; stopCategoryRun = false;
+        const button = event.currentTarget; button.disabled = true;
+        stopCategories.hidden = false; stopCategories.disabled = false; stopCategories.textContent = 'Stop after current batch';
+        const totals = {reviewed:0, assigned:0, updated:0, tokens:0, assignments:[], unresolved:[]};
+        let afterId = 0, throughId;
+        showAutomationResult('Assigning clear category matches…', 'Working through every unassigned tag once. Uncertain tags stay unassigned; existing links remain untouched.');
         try {
-            const data = await requestJson('../php_backend/public/ai_category_tags.php', { method: 'POST' });
-            showAutomationResult('Category review complete', `${number(data.applied || data.updated || 0)} tag-to-category links applied. ${number(data.skipped || data.rejected || 0)} uncertain suggestions skipped.`);
-            announce('Tag categories reviewed.'); await loadSnapshot(false);
-        } catch (error) { showAutomationResult('Category review could not finish', error.message); announce(error.message, 'error'); }
-        finally { button.disabled = false; }
+            const debugConfig = await requestJson('../php_backend/public/ai_debug.php');
+            do {
+                const data = await requestJson('../php_backend/public/ai_category_tags.php', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({after_id:afterId, through_id:throughId})});
+                totals.reviewed += Number(data.reviewed || 0); totals.assigned += Number(data.assigned || 0);
+                totals.updated += Number(data.updated_transactions || 0); totals.tokens += Number(data.tokens || 0);
+                totals.assignments.push(...(data.assignments || [])); totals.unresolved.push(...(data.unresolved || []));
+                if (debugConfig.debug && data.debug) {
+                    const debug = document.getElementById('category-ai-debug'); debug.hidden = false;
+                    document.getElementById('category-debug-prompt').textContent = data.debug.prompt || '';
+                    document.getElementById('category-debug-response').textContent = data.debug.response || '';
+                } else document.getElementById('category-ai-debug').hidden = true;
+                showAutomationResult('Assigning clear category matches…', `${number(totals.reviewed)} tags checked; ${number(totals.assigned)} linked; ${number(totals.unresolved.length)} left unknown. ${number(data.remaining)} category gaps remain.`);
+                if (!data.has_more || stopCategoryRun) break;
+                if (Number(data.next_after_id) <= afterId) throw new Error('The category batch did not advance. Run again to retry.');
+                afterId = Number(data.next_after_id); throughId = Number(data.through_id);
+            } while (true);
+            showAutomationResult(stopCategoryRun ? 'Category assignment stopped' : 'Category assignment complete', `${number(totals.reviewed)} tags checked. ${number(totals.assigned)} linked to categories; ${number(totals.unresolved.length)} left unknown. ${number(totals.updated)} transaction classifications updated. ${number(totals.tokens)} AI tokens used.`);
+            renderCategoryResults(totals);
+            announce(stopCategoryRun ? 'Stopped after completing the current batch.' : 'Clear category matches assigned.');
+        } catch (error) {
+            showAutomationResult('Category assignment could not finish', `${error.message} ${number(totals.assigned)} links from completed batches were saved; ${number(totals.reviewed)} tags checked. You can run again to check remaining gaps.`);
+            renderCategoryResults(totals); announce(error.message, 'error');
+        } finally {
+            categoryRunActive = false; stopCategories.hidden = true;
+            await loadSnapshot(false).catch(error => announce(error.message, 'error'));
+            button.disabled = !state.snapshot?.automation?.configured;
+        }
     });
 
     function renderFreshStartPreview(preview) {
@@ -496,7 +548,7 @@
         renderFreshStartPreview(state.snapshot.fresh_start || {});
         const configured = state.snapshot.automation && state.snapshot.automation.configured;
         document.getElementById('run-ai-tagging').disabled = !configured;
-        document.getElementById('run-ai-categories').disabled = !configured;
+        document.getElementById('run-ai-categories').disabled = !configured || categoryRunActive;
         if (!configured) showAutomationResult('AI is not configured', 'Add an OpenAI API token in Settings before running smart tagging.');
         if (renderAll !== false && state.activeTab === 'rules') await loadRules();
     }

@@ -47,19 +47,15 @@ try {
         throw new InvalidArgumentException('Create at least one category before categorising tags');
     }
 
-    $limit = (int)(Setting::get('ai_category_tag_batch_size') ?? 100);
-    $limit = max(1, min(250, $limit));
-    $candidates = $db->query(
-        'SELECT t."id", t."name", t."keyword", t."description", COUNT(tx."id") AS transactions '
-        . 'FROM "tags" t '
-        . 'LEFT JOIN "category_tags" ct ON ct."tag_id" = t."id" '
-        . 'LEFT JOIN "transactions" tx ON tx."tag_id" = t."id" '
-        . "WHERE ct.\"tag_id\" IS NULL AND t.\"status\" = 'active' AND LOWER(t.\"name\") != 'ignore' "
-        . 'GROUP BY t."id", t."name", t."keyword", t."description" '
-        . 'ORDER BY transactions DESC, t."name" ASC LIMIT ' . $limit
-    )->fetchAll(PDO::FETCH_ASSOC);
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    if (!is_array($input)) throw new InvalidArgumentException('Send a valid JSON request.');
+    $afterId = max(0, (int)($input['after_id'] ?? 0));
+    $throughId = isset($input['through_id']) ? max(0, (int)$input['through_id']) : (int)$db->query('SELECT COALESCE(MAX(id), 0) FROM tags')->fetchColumn();
+    $limit = max(1, min(250, (int)(Setting::get('ai_category_tag_batch_size') ?? 100)));
+    $batch = AiCategoryTagger::candidateBatch($db, $afterId, $throughId, $limit);
+    $candidates = $batch['candidates'];
     if (empty($candidates)) {
-        echo json_encode(['assigned' => 0, 'updated_transactions' => 0, 'remaining' => 0, 'tokens' => 0, 'assignments' => []]);
+        echo json_encode(['assigned'=>0, 'reviewed'=>0, 'updated_transactions'=>0, 'remaining'=>(int)$db->query("SELECT COUNT(*) FROM tags t LEFT JOIN category_tags ct ON ct.tag_id = t.id WHERE ct.tag_id IS NULL AND t.status = 'active' AND LOWER(TRIM(t.name)) <> 'ignore' AND t.origin <> 'system'")->fetchColumn(), 'tokens'=>0, 'assignments'=>[], 'unresolved'=>[], 'has_more'=>false, 'next_after_id'=>$afterId, 'through_id'=>$throughId]);
         exit;
     }
 
@@ -118,6 +114,7 @@ try {
     }
 
     $applied = [];
+    $updatedTransactions = 0;
     foreach ($validated['accepted'] as $assignment) {
         $tagId = (int)$assignment['tag_id'];
         $categoryId = (int)$assignment['category_id'];
@@ -125,7 +122,9 @@ try {
             continue;
         }
         try {
-            CategoryTag::add($categoryId, $tagId);
+            $updated = AiCategoryTagger::applyAssignment($db, $tagId, $categoryId);
+            if ($updated === null) continue;
+            $updatedTransactions += $updated;
             $applied[] = [
                 'tag_id' => $tagId,
                 'tag' => $tagNames[$tagId] ?? ('Tag ' . $tagId),
@@ -138,16 +137,33 @@ try {
             Log::write('AI category tag assignment skipped: ' . $e->getMessage(), 'WARNING');
         }
     }
-    $updatedTransactions = !empty($applied) ? CategoryTag::applyToAllTransactions() : 0;
     $remaining = (int)$db->query(
         'SELECT COUNT(*) FROM "tags" t LEFT JOIN "category_tags" ct ON ct."tag_id" = t."id" '
-        . "WHERE ct.\"tag_id\" IS NULL AND t.\"status\" = 'active' AND LOWER(t.\"name\") != 'ignore'"
+        . "WHERE ct.\"tag_id\" IS NULL AND t.\"status\" = 'active' AND LOWER(TRIM(t.\"name\")) != 'ignore' AND t.\"origin\" <> 'system'"
     )->fetchColumn();
     $tokens = (int)($response['usage']['total_tokens'] ?? 0);
     Log::write('AI assigned ' . count($applied) . " tags to existing categories using $tokens tokens; updated $updatedTransactions transactions");
 
+    $appliedIds = array_column($applied, 'tag_id');
+    $unresolved = [];
+    foreach ($candidates as $candidate) {
+        $id = (int)$candidate['id'];
+        if (in_array($id, $appliedIds, true) || CategoryTag::getCategoryId($id) !== null) continue;
+        $reason = 'Insufficient evidence for a clear category match.';
+        foreach ((is_array($suggestions['assignments'] ?? null) ? $suggestions['assignments'] : []) as $suggestion) {
+            if (is_array($suggestion) && (int)($suggestion['tag_id'] ?? 0) === $id && !empty($suggestion['reason'])) {
+                $reason = mb_substr((string)$suggestion['reason'], 0, 240); break;
+            }
+        }
+        $unresolved[] = ['tag_id'=>$id, 'tag'=>$candidate['name'], 'reason'=>$reason];
+    }
     $output = [
         'assigned' => count($applied),
+        'reviewed' => count($candidates),
+        'unresolved' => $unresolved,
+        'has_more' => $batch['has_more'],
+        'next_after_id' => $batch['next_after_id'],
+        'through_id' => $throughId,
         'updated_transactions' => $updatedTransactions,
         'remaining' => $remaining,
         'tokens' => $tokens,

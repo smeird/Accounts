@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="site_system.css">
     <link rel="stylesheet" href="utility_refresh.css">
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
-    <link rel="stylesheet" href="tagging.css?v=20260825-fresh-start">
+    <link rel="stylesheet" href="tagging.css?v=20261005-category-batches">
 </head>
 <body class="ops-body tagging-page">
 <div class="flex min-h-screen">
@@ -84,11 +84,12 @@
             </header>
             <div class="tagging-automation-grid">
                 <article><span class="tagging-automation-icon"><i class="fas fa-robot" aria-hidden="true"></i></span><h3>Tag unmatched transactions</h3><p>Apply saved rules first, then ask AI to choose only from your current canonical tags.</p><button id="run-ai-tagging" class="tagging-primary" type="button">Run smart tagging</button></article>
-                <article><span class="tagging-automation-icon"><i class="fas fa-folder-tree" aria-hidden="true"></i></span><h3>Connect tags to categories</h3><p>Assign only unmapped tags when AI is confident. Existing category links remain untouched.</p><button id="run-ai-categories" class="tagging-primary" type="button">Categorise unmapped tags</button></article>
+                <article><span class="tagging-automation-icon"><i class="fas fa-folder-tree" aria-hidden="true"></i></span><h3>Connect tags to categories</h3><p>Check every unassigned tag in batches and automatically link clear matches to existing categories. Transaction examples help the AI decide; unknown tags stay unassigned. Existing links are preserved.</p><button id="run-ai-categories" aria-label="Automatically assign clear category matches to unassigned tags" class="tagging-primary" type="button">Auto-assign clear categories</button><button id="stop-ai-categories" class="tagging-secondary" type="button" aria-label="Stop category assignment after the current batch" hidden>Stop after current batch</button></article>
                 <article><span class="tagging-automation-icon"><i class="fas fa-arrows-rotate" aria-hidden="true"></i></span><h3>Apply saved structure</h3><p>Imports already do this automatically. Use the maintenance centre only after changing many rules.</p><a class="tagging-secondary" href="processes.html">Open maintenance centre</a></article>
                 <article class="tagging-reset-card"><span class="tagging-automation-icon"><i class="fas fa-rotate-left" aria-hidden="true"></i></span><div><span class="tagging-eyebrow">Guarded reset</span><h3>Start tagging again</h3><p>Take a safety snapshot, clear ordinary tag/category/segment assignments, and remove old matching rules. Canonical names, transfers and IGNORE remain protected.</p></div><button id="open-fresh-start" class="tagging-danger" type="button">Start fresh…</button></article>
             </div>
             <div id="automation-result" class="tagging-result" aria-live="polite" hidden></div>
+            <article id="category-ai-debug" class="cards cards-tight" hidden><h3>AI Debug — latest category batch</h3><h4>Submitted prompt</h4><pre id="category-debug-prompt" class="whitespace-pre-wrap max-h-64 overflow-auto"></pre><h4>AI response</h4><pre id="category-debug-response" class="whitespace-pre-wrap max-h-64 overflow-auto"></pre></article>
         </section>
 
         <section class="tagging-panel" data-tagging-panel="history" aria-labelledby="history-title" data-no-card="true" hidden>
@@ -154,6 +155,6 @@
 <script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
 <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script><script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
 <script src="js/transaction_drilldown.js"></script>
-<script src="js/tagging.js?v=20260825-fresh-start"></script>
+<script src="js/tagging.js?v=20261005-category-batches"></script>
 </body>
 </html>
