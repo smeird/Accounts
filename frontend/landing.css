@@ -26,14 +26,6 @@
     -webkit-backdrop-filter: blur(18px);
 }
 
-.landing-hero::before {
-    position: absolute;
-    inset: 0 0 auto;
-    height: 0.3rem;
-    content: "";
-    background: linear-gradient(90deg, var(--landing-brand), #0ea5e9, #14b8a6);
-}
-
 .landing-hero::after {
     position: absolute;
     top: -11rem;

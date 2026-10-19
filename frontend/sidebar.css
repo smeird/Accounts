@@ -58,14 +58,6 @@
     -webkit-backdrop-filter:blur(24px)!important;
 }
 
-.site-menu::before {
-    position:absolute;
-    inset:0 0 auto;
-    height:.22rem;
-    content:"";
-    background:linear-gradient(90deg,var(--menu-brand),#22d3ee,#34d399);
-}
-
 .site-menu-brand {
     position:relative;
     display:flex!important;
@@ -237,7 +229,6 @@
 .site-menu-backdrop[hidden] { display:none; }
 
 .theme-professional .site-menu { background:#fff!important; border-right-color:#e2e8f0!important; box-shadow:4px 0 18px -20px rgba(15,23,42,.6)!important; }
-.theme-professional .site-menu::before { height:.16rem; }
 
 @media(max-width:767px) {
     .site-menu {

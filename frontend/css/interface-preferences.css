@@ -43,12 +43,28 @@ body.ui-accent-bar-small { --ui-accent-bar-height:.12rem; }
 body.ui-accent-bar-medium { --ui-accent-bar-height:.22rem; }
 body.ui-accent-bar-large { --ui-accent-bar-height:.38rem; }
 
-body[class*="ui-accent-bar-"] :where(
-  .site-menu,.page-header,.landing-hero,.instant-hero,.transaction-hero,
-  .budget-hero,.project-hero,.yearly-hero,.forecast-hero,.recurring-hero,
-  .process-hero,.pivot-hero,.database-health-hero,.trends-controls
-)::before {
-  height:var(--ui-accent-bar-height)!important;
+/* The shell selects one primary surface; secondary panels have no accent bars.
+ * Status indicators (for example Database Health) keep their semantic treatment.
+ */
+body .ops-main .page-primary-accent,
+body.theme-professional .ops-main .page-header {
+  position:relative;
+  overflow:hidden;
+}
+
+body .site-menu::before,
+body .ops-main .page-primary-accent::before,
+body.theme-professional .ops-main .page-header::before {
+  content:"";
+  display:block;
+  position:absolute;
+  inset:0 0 auto;
+  width:100%;
+  height:var(--ui-accent-bar-height,.22rem);
+  border:0;
+  border-radius:0;
+  background:var(--ui-accent-fill,linear-gradient(90deg,var(--brand-color-600,#4f46e5),var(--brand-color-700,#4338ca)));
+  pointer-events:none;
   transform:scaleX(0);
   transform-origin:left center;
   animation:ui-accent-reveal 480ms cubic-bezier(.22,1,.36,1) forwards;
@@ -85,10 +101,15 @@ body.ui-motion-reduced *::after {
   animation-iteration-count: 1!important;
 }
 
+body.ui-motion-reduced .site-menu::before,
+body.ui-motion-reduced .ops-main .page-primary-accent::before,
+body.ui-motion-reduced.theme-professional .ops-main .page-header::before {
+  animation:none;
+  transform:none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  body[class*="ui-accent-bar-"] :where(
-    .site-menu,.page-header,.landing-hero,.instant-hero,.transaction-hero,
-    .budget-hero,.project-hero,.yearly-hero,.forecast-hero,.recurring-hero,
-    .process-hero,.pivot-hero,.database-health-hero,.trends-controls
-  )::before { animation:none; transform:none; }
+  body .site-menu::before,
+  body .ops-main .page-primary-accent::before,
+  body.theme-professional .ops-main .page-header::before { animation:none; transform:none; }
 }

@@ -345,30 +345,140 @@ body.theme-professional :is(
   box-shadow:none!important;
 }
 
-/* Controls read like compact document fields rather than soft glass objects. */
-body.theme-professional :is(
-  input:not([type="checkbox"]):not([type="radio"]),
-  select,
-  textarea,
-  .choices__inner,
-  .glass-input,
-  .ops-input,
-  .ops-select
+/* Paper controls share geometry across specialist pages, utilities and dialogs.
+ * Keep this scoped authority stronger than the shared site-system defaults.
+ */
+body.theme-professional {
+  --paper-control-radius:.18rem;
+  --paper-control-border:#b9c2cf;
+  --paper-control-height:2.25rem;
+  --paper-control-padding-block:.375rem;
+  --paper-search-input-height:calc(var(--paper-control-height) - 2px);
+}
+
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]):not(.unstyled),
+  select:not(.unstyled),
+  textarea:not(.unstyled),
+  .choices__inner
 ) {
-  border-color:#b9c2cf!important;
-  border-radius:.18rem!important;
+  box-sizing:border-box;
+  min-height:var(--paper-control-height)!important;
+  padding-block:var(--paper-control-padding-block)!important;
+  border-color:var(--paper-control-border)!important;
+  border-radius:var(--paper-control-radius)!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) textarea:not(.unstyled) { min-height:6rem!important; }
+
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  button,button.project-chip,[role="button"],.site-button,.ops-btn-primary,
+  [class$="-button"],[class*="-button "],.transaction-header-link,
+  .tagging-primary,.tagging-secondary,.modern-table-fix-link
+) {
+  box-sizing:border-box;
+  min-height:var(--paper-control-height)!important;
+  min-width:var(--paper-control-height);
+  padding-block:var(--paper-control-padding-block)!important;
+  border-radius:var(--paper-control-radius)!important;
+  box-shadow:none!important;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) button:hover { transform:none!important; }
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) input[type="file"]::file-selector-button {
+  border-radius:var(--paper-control-radius);
+  box-shadow:none;
+}
+
+body.theme-professional .ops-main :is(#account-sort,#statement-sort) {
+  min-height:var(--paper-control-height)!important;
+  padding-block:var(--paper-control-padding-block)!important;
+}
+
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  .transaction-tag-picker__results,.tagging-picker-results,.choices__list--dropdown
+) {
+  border-color:var(--paper-control-border)!important;
+  border-radius:var(--paper-control-radius)!important;
+  box-shadow:none!important;
+}
+
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  .tagging-tabs,.category-filters,.segment-filters,.group-filters
+) {
+  border-radius:var(--paper-control-radius)!important;
+  box-shadow:none!important;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) .transaction-derived-value {
+  min-height:var(--paper-control-height)!important;
+  padding-block:var(--paper-control-padding-block)!important;
+  border-color:var(--paper-control-border)!important;
+  border-radius:var(--paper-control-radius)!important;
   background:#fff!important;
   box-shadow:none!important;
 }
 
-body.theme-professional :is(
-  .site-button,
-  .ops-btn-primary,
-  [class$="-button"],
-  [class*="-button "]
+/* Composite controls have one outer field edge, never a box inside a box. */
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  .account-search,.statement-search,.modern-table-search,
+  .category-search,.segment-search,.group-search,.tagging-search,
+  .transaction-tag-picker__field,.settings-suffix
 ) {
-  border-radius:.18rem!important;
+  box-sizing:border-box;
+  min-height:var(--paper-control-height)!important;
+  padding-block:0!important;
+  padding-inline:.72rem;
+  border:1px solid var(--paper-control-border)!important;
+  border-radius:var(--paper-control-radius)!important;
+  background:#fff!important;
   box-shadow:none!important;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  #account-search,#statement-search,.modern-table-search-input,
+  .category-search input,.segment-search input,.group-search input,
+  .tagging-search input,.transaction-tag-picker__input,.settings-suffix input,.choices__input
+) {
+  min-width:0;
+  min-height:0!important;
+  height:var(--paper-search-input-height)!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  appearance:none;
+  -webkit-appearance:none;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  .account-search,.statement-search,.modern-table-search,
+  .category-search,.segment-search,.group-search,.tagging-search,
+  .transaction-tag-picker__field,.settings-suffix,.choices
+):focus-within {
+  border-color:var(--brand-color-600,#4f46e5)!important;
+  outline:2px solid var(--brand-color-600,#4f46e5);
+  outline-offset:2px;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+  #account-search,#statement-search,.modern-table-search-input,
+  .category-search input,.segment-search input,.group-search input,
+  .tagging-search input,.transaction-tag-picker__input,.settings-suffix input,.choices__input
+):focus-visible { outline:none!important; }
+
+@media (min-width:768px) {
+  body.theme-professional.ui-density-compact { --paper-control-height:2.125rem; --paper-control-padding-block:.25rem; }
+  body.theme-professional.ui-density-roomy { --paper-control-height:2.75rem; --paper-control-padding-block:.625rem; }
+}
+
+@media (max-width:767px) {
+  body.theme-professional {
+    --paper-control-height:44px;
+    --paper-control-padding-block:.5rem;
+    --paper-search-input-height:44px;
+  }
+  body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+    select,textarea
+  ) { font-size:16px!important; }
 }
 
 body.theme-professional :is(
@@ -504,25 +614,7 @@ body.theme-professional .site-menu .site-menu-link.is-active {
 
   body.theme-professional :is([class$="-grid"],[class*="-grid "]) { gap:.7rem!important; }
 
-  body.theme-professional :is(
-    input:not([type="checkbox"]):not([type="radio"]),
-    select,
-    textarea,
-    .choices__inner,
-    .glass-input,
-    .ops-input,
-    .ops-select
-  ) {
-    min-height:2.25rem!important;
-    padding-top:.42rem!important;
-    padding-bottom:.42rem!important;
-  }
 
-  body.theme-professional :is(.site-button,.ops-btn-primary,[class$="-button"],[class*="-button "]) {
-    min-height:2.15rem!important;
-    padding-top:.4rem!important;
-    padding-bottom:.4rem!important;
-  }
 }
 
 @media (max-width:767px) {
@@ -700,11 +792,7 @@ body.theme-professional .ops-main :is(.forecast-metrics,.burn-metrics) p {
   font-weight:500!important;
   color:var(--paper-muted)!important;
 }
-body.theme-professional .ops-main :is(.account-search,.statement-search,.modern-table-search) {
-  border-radius:.18rem!important;
-  box-shadow:none!important;
-  background:transparent!important;
-}
+
 body.theme-professional .ops-main :is(.recurring-method,.recurring-notes,.recurring-notes li,.burn-explainer__formula) {
   background:transparent!important;
   border-radius:0!important;
@@ -837,3 +925,13 @@ body.theme-professional .site-notification__icon {
 }
 body.theme-professional .site-notification__title { color: var(--paper-ink,#172033); }
 body.theme-professional .site-notification__message { color: var(--paper-muted,#5f6b7c); }
+
+/* Paper keeps its single brand cue on the document title. Section and table
+ * rules remain neutral; the selected Glass hero must not add a second bar.
+ */
+body.theme-professional .ops-main .page-primary-accent:not(.page-header)::before {
+  display:none!important;
+}
+body.theme-professional {
+  --ui-accent-fill:var(--brand-color-600,#4f46e5);
+}

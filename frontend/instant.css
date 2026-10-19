@@ -87,14 +87,6 @@
     box-shadow: 0 32px 75px -42px rgba(15, 23, 42, 0.9);
 }
 
-.instant-hero::before {
-    position: absolute;
-    inset: 0 0 auto;
-    height: 0.25rem;
-    content: "";
-    background: linear-gradient(90deg, var(--instant-brand), #22d3ee, #34d399);
-}
-
 .instant-hero__glow {
     position: absolute;
     top: -12rem;

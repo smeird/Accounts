@@ -40,14 +40,6 @@
     box-shadow: 0 28px 65px -48px rgba(15, 23, 42, .8);
 }
 
-.process-hero::before {
-    position: absolute;
-    inset: 0 0 auto;
-    height: .22rem;
-    content: "";
-    background: linear-gradient(90deg, var(--site-brand, #4f46e5), var(--process-cyan), var(--process-emerald));
-}
-
 .process-hero__copy { position: relative; z-index: 2; max-width: 43rem; }
 .process-hero h2 { margin: .55rem 0 .65rem; color: var(--process-ink); font-size: clamp(1.75rem, 3vw, 2.55rem); font-weight: 880; letter-spacing: -.055em; line-height: 1.02; }
 .site-system-page.processes-page .process-hero p { max-width: 40rem; margin: 0; color: #475569; font-size: .86rem; line-height: 1.6; }

@@ -12,10 +12,6 @@
 .account-dashboard { display:grid; gap:1rem; }
 .account-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.8rem; }
 .account-summary-card { position:relative; overflow:hidden; min-height:7.5rem; padding:1rem; border:1px solid var(--account-line); border-radius:1.1rem; background:rgba(255,255,255,.82); box-shadow:0 18px 36px -32px rgba(15,23,42,.74); }
-.account-summary-card::before { position:absolute; inset:0 0 auto; height:.2rem; content:""; background:linear-gradient(90deg,var(--account-indigo),var(--account-cyan)); }
-.account-summary-card--cyan::before { background:linear-gradient(90deg,#0891b2,#22d3ee); }
-.account-summary-card--emerald::before { background:linear-gradient(90deg,#059669,#34d399); }
-.account-summary-card--rose::before { background:linear-gradient(90deg,#e11d48,#fb7185); }
 .account-summary-card.is-loading { background:linear-gradient(105deg,rgba(255,255,255,.58) 20%,rgba(255,255,255,.92) 38%,rgba(255,255,255,.58) 56%); background-size:220% 100%; animation:account-shimmer 1.25s linear infinite; }
 .account-summary-top { display:flex; align-items:center; gap:.52rem; color:var(--account-muted); }
 .account-summary-icon { display:grid; width:1.72rem; height:1.72rem; place-items:center; border-radius:.55rem; color:var(--account-indigo); background:#eef2ff; font-size:.68rem; }

@@ -85,6 +85,8 @@
 
     const existingHeader = main.querySelector(':scope > ' + HEADER_SELECTOR);
     if (existingHeader) {
+      // The menu refreshes breadcrumbs after choosing the page's accent surface.
+      header.classList.toggle('page-primary-accent', existingHeader.classList.contains('page-primary-accent'));
       existingHeader.replaceWith(header);
     } else {
       main.insertBefore(header, main.firstChild);

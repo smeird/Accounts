@@ -36,14 +36,6 @@
     box-shadow: 0 28px 60px -48px rgba(15, 23, 42, .78);
 }
 
-.recurring-hero::before {
-    position: absolute;
-    inset: 0 0 auto;
-    height: .22rem;
-    content: "";
-    background: linear-gradient(90deg, var(--site-brand, #4f46e5), var(--recurring-cyan), var(--recurring-green));
-}
-
 .recurring-hero h2 { margin: .48rem 0 .55rem; color: var(--recurring-ink); font-size: clamp(1.55rem, 3vw, 2.2rem); font-weight: 880; letter-spacing: -.052em; line-height: 1.05; }
 .site-system-page.recurring-spend-page .recurring-hero__copy > p { max-width: 45rem; margin: 0; color: #475569; font-size: .875rem; line-height: 1.58; }
 .recurring-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin-top: 1.05rem; }
@@ -102,10 +94,6 @@
     box-shadow: 0 22px 42px -38px rgba(15, 23, 42, .78);
     backdrop-filter: blur(14px);
 }
-.recurring-metric::before { position: absolute; inset: 0 0 auto; height: .18rem; content: ""; background: linear-gradient(90deg, var(--site-brand, #4f46e5), var(--recurring-cyan)); }
-.recurring-metric--outgoing::before { background: linear-gradient(90deg, #e11d48, #fb7185); }
-.recurring-metric--income::before { background: linear-gradient(90deg, #059669, #34d399); }
-.recurring-metric--patterns::before { background: linear-gradient(90deg, #7c3aed, #22d3ee); }
 .recurring-metric__icon { display: grid; width: 2.45rem; height: 2.45rem; place-items: center; border-radius: .78rem; color: var(--site-brand-dark, #4338ca); background: #eef2ff; }
 .recurring-metric--outgoing .recurring-metric__icon { color: #be123c; background: #fff1f2; }
 .recurring-metric--income .recurring-metric__icon { color: #047857; background: #ecfdf5; }

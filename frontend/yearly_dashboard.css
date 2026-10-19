@@ -35,7 +35,6 @@
     background: radial-gradient(circle at 85% 18%, rgba(56,189,248,.17), transparent 27%), radial-gradient(circle at 10% 100%, rgba(168,85,247,.2), transparent 35%), linear-gradient(145deg,#0b1220,#151b35 55%,#101a2c);
     box-shadow: 0 30px 70px -42px rgba(15,23,42,.95);
 }
-.yearly-hero::before { position: absolute; inset: 0 0 auto; height: .25rem; content: ""; background: linear-gradient(90deg,#8b5cf6,#38bdf8,#2dd4bf); }
 .yearly-hero__orb { position: absolute; right: -6rem; top: -8rem; width: 24rem; height: 24rem; border: 1px solid rgba(255,255,255,.05); border-radius: 50%; box-shadow: 0 0 0 3rem rgba(255,255,255,.016),0 0 0 7rem rgba(255,255,255,.01); }
 .yearly-hero__topline,.yearly-hero__body,.yearly-metrics { position: relative; z-index: 1; }
 .yearly-hero__topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }

@@ -1788,9 +1788,9 @@ assertEqual(true, strpos($paperStyles, '--paper-title-size') !== false, 'Paper t
 assertEqual(true, strpos($paperStyles, 'font-weight:var(--accent-font-weight,400)') !== false, 'Paper financial values use a lighter hierarchy while honouring chosen weights');
 assertEqual(true, strpos($paperStyles, 'p:is(#recurring-ratio,#avg-transaction)') !== false, 'Paper retains a readable separate scale for multiline statement values');
 assertEqual(true, strpos($paperStyles, 'lining-nums tabular-nums') !== false, 'Paper display amounts use aligned numerals');
-assertEqual(true, strpos($heroDensityScript, '20260905-paper-edition') !== false, 'Updated Paper styles have a fresh asset version');
+assertEqual(true, strpos($heroDensityScript, '20261019-paper-controls') !== false, 'Updated Paper styles have a fresh asset version');
 $trendStyles = (string)file_get_contents(__DIR__ . '/../frontend/financial_trends.css');
-assertEqual(true, strpos($trendStyles, '.trends-controls::before { inset:0 0 auto; width:100%') !== false, 'Trends period controls use a full-width top accent');
+assertEqual(false, strpos($trendStyles, '.trends-controls::before') !== false, 'Trends filters leave the primary accent to the financial brief');
 
 // Keep Safari and iOS Password AutoFill on the correct credential type at
 // each stage of sign-in. In particular, focusing the TOTP field as soon as the

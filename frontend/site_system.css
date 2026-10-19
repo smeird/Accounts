@@ -13,7 +13,6 @@
 .site-system-page .ops-main { width:calc(100% - 16rem); max-width:none; margin-left:16rem; padding:1.35rem; }
 .site-system-page .ops-main>*+* { margin-top:1.15rem; }
 .site-system-page .page-header { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; overflow:hidden; align-items:center; gap:.8rem; padding:.82rem 1.05rem; border:1px solid rgba(255,255,255,.48); border-radius:1.05rem; background:rgba(255,255,255,.68); box-shadow:0 18px 42px -34px rgba(15,23,42,.72); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
-.site-system-page .page-header::before { position:absolute; inset:0 0 auto; height:.22rem; content:""; background:linear-gradient(90deg,var(--site-brand),#22d3ee,#34d399); }
 .site-system-page .page-title { color:var(--site-brand-dark); font-size:clamp(1.35rem,2.2vw,1.75rem)!important; font-weight:820; letter-spacing:-.04em; line-height:1.08; }
 .site-system-page .page-breadcrumb { margin-top:.25rem; color:#475569; font-size:.56rem; font-weight:800; letter-spacing:.11em; }
 .site-system-page .page-subtitle { max-width:54rem; margin-top:.28rem; color:#475569; font-size:.7rem; line-height:1.42; }
@@ -29,13 +28,9 @@
 .site-system-page .site-card--data { overflow:hidden; }
 .site-system-page .site-card--chart { min-width:0; }
 .site-system-page .site-card-heading { margin:0 0 .8rem; color:var(--site-ink); font-size:clamp(1rem,1.55vw,1.25rem); font-weight:850; letter-spacing:-.03em; }
-.site-system-page .site-card-heading::before { display:block; width:2rem; height:.2rem; margin-bottom:.55rem; border-radius:999px; content:""; background:linear-gradient(90deg,var(--site-brand),#22d3ee); }
 .site-system-page .cards>p,.site-system-page .ops-section>p { color:#475569; font-size:.7rem; line-height:1.52; }
 
 .site-system-page .site-metric-card { position:relative; overflow:hidden; min-height:7rem; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:1rem!important; text-align:left!important; }
-.site-system-page .site-metric-card::before { position:absolute; inset:0 0 auto; height:.22rem; content:""; background:linear-gradient(90deg,var(--site-brand),#22d3ee,#34d399); }
-.site-system-page .site-metric-card:nth-child(3n+2)::before { background:linear-gradient(90deg,#06b6d4,#34d399); }
-.site-system-page .site-metric-card:nth-child(3n+3)::before { background:linear-gradient(90deg,#8b5cf6,#fb7185); }
 .site-system-page .site-metric-card p:first-child,.site-system-page .site-metric-label { width:100%; margin:0 0 .3rem; color:var(--site-muted)!important; font-size:.61rem!important; font-weight:800; letter-spacing:.055em; text-transform:uppercase; }
 .site-system-page .site-metric-card .font-bold,.site-system-page .site-metric-card strong,.site-system-page .site-metric-card p[id] { width:100%; margin:0; color:var(--site-ink); font-weight:850!important; letter-spacing:-.045em; line-height:1.05; }
 
@@ -93,7 +88,6 @@
 .theme-professional.site-system-page { background:#fff; }
 .theme-professional.site-system-page .page-header,.theme-professional.site-system-page .cards,.theme-professional.site-system-page .ops-section,.theme-professional.site-system-page .ops-table-block,.theme-professional.site-system-page .ops-chart-block,.theme-professional.site-system-page .site-card { border-color:#e2e8f0; border-radius:.62rem; background:#fff; box-shadow:0 1px 3px rgba(15,23,42,.07); backdrop-filter:none; -webkit-backdrop-filter:none; }
 .theme-professional.site-system-page .site-button--primary,.theme-professional.site-system-page .ops-btn-primary { background:var(--site-brand)!important; box-shadow:none; }
-.theme-professional.site-system-page .site-metric-card::before,.theme-professional.site-system-page .page-header::before { height:.16rem; }
 
 @media(max-width:767px){
     .site-system-page .ops-main{width:100%;margin-left:0;padding:.82rem}.site-system-page .ops-main>*+*{margin-top:1rem}.site-system-page .page-header{grid-template-columns:minmax(0,1fr) auto;padding:.72rem .72rem .72rem 3.35rem;border-radius:.9rem}.site-system-page .page-title{font-size:1.3rem!important}.site-system-page .page-subtitle{display:none}.site-system-page .cards,.site-system-page .ops-section,.site-system-page .ops-table-block,.site-system-page .ops-chart-block{border-radius:1rem}.site-system-page .site-action-cluster{align-items:stretch;flex-direction:column}.site-system-page .site-action-cluster>.site-button{width:100%}.site-system-page .site-metric-card{min-height:6rem}.site-system-page .ops-chart-canvas{min-height:19rem}.site-system-page .tabulator{font-size:.67rem}
