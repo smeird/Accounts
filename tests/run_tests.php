@@ -51,6 +51,7 @@ $db->exec('CREATE TABLE segments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEX
 $db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, segment_id INTEGER, created_at DATETIME, updated_at DATETIME);');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER);');
 $db->exec('CREATE TABLE segment_categories (segment_id INTEGER, category_id INTEGER);');
+$db->exec('CREATE TABLE pension_plans (id INTEGER PRIMARY KEY, data TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 1);');
 $db->exec('CREATE TABLE settings (name TEXT PRIMARY KEY, value TEXT);');
 $db->exec('CREATE TABLE transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, date TEXT, amount REAL, description TEXT, memo TEXT, category_id INTEGER, segment_id INTEGER, tag_id INTEGER, group_id INTEGER, transfer_id INTEGER, ofx_id TEXT, ofx_type TEXT, bank_ofx_id TEXT);');
 $db->exec('CREATE TABLE transaction_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, description TEXT, active TINYINT DEFAULT 1);');
@@ -1838,6 +1839,11 @@ foreach (array_unique($navigationMatches[1] ?? []) as $navigationPage) {
 }
 assertEqual([], $navigationPagesMissingModernHeader, 'Every active navigation page uses the modern page header');
 
+require_once __DIR__ . '/../php_backend/models/PensionPlanner.php';
+$backupPensionPlan = PensionPlanner::defaults();
+$backupPensionPlan['pots'] = [['provider'=>'Backup pension', 'value'=>12345, 'monthly'=>100, 'fee'=>0.5, 'valued_on'=>date('Y-m-d')]];
+PensionPlanner::save($backupPensionPlan, 0);
+
 // Backup/restore must round-trip current security and reporting data and must
 // leave the original database untouched when post-restore integrity fails.
 $db->exec("INSERT OR REPLACE INTO totp_secrets (username, secret) VALUES ('alice', 'TEST-TOTP-SECRET')");
@@ -1852,10 +1858,11 @@ $backupJson = $backupSignature === false ? false : gzdecode(substr($backupArchiv
 $backupPayload = json_decode($backupJson, true);
 assertEqual(null, $backupPayload['error'] ?? null, 'Backup generation completes without a database error');
 assertEqual('newaccounts-backup', $backupPayload['_meta']['format'] ?? null, 'Backup includes a format manifest');
-assertEqual(6, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
+assertEqual(7, $backupPayload['_meta']['version'] ?? null, 'Backup includes the current format version');
 assertEqual(true, array_key_exists('direction', $backupPayload['tag_aliases'][0] ?? []), 'Backup preserves direction-aware tag rules');
 assertEqual(true, array_key_exists('cutover_summary', $backupPayload['tag_migration_runs'][0] ?? []), 'Backup preserves taxonomy cutover audit fields');
 assertEqual(1, count($backupPayload['totp_secrets'] ?? []), 'Backup includes two-factor authentication state');
+assertEqual(1, count($backupPayload['pension_plans'] ?? []), 'Backup includes the pension workspace');
 assertEqual(1, count($backupPayload['passkeys'] ?? []), 'Backup includes passkey public credentials');
 assertEqual(true, count($backupPayload['saved_reports'] ?? []) >= 1, 'Backup includes saved reports');
 assertEqual(true, count($backupPayload['tag_migration_runs'] ?? []) >= 1, 'Backup includes tag rebuild safety runs');
@@ -1876,6 +1883,11 @@ $restoreMessage = ob_get_clean();
 $db = Database::getConnection();
 assertEqual('Restore complete.', $restoreMessage, 'A complete backup restores successfully');
 assertEqual('TEST-TOTP-SECRET', $db->query("SELECT secret FROM totp_secrets WHERE username='alice'")->fetchColumn(), 'Restore preserves two-factor authentication state');
+assertEqual('Backup pension', PensionPlanner::load()['plan']['pots'][0]['provider'], 'Restore preserves pension providers');
+assertEqual(12345.0, (float)PensionPlanner::load()['plan']['pots'][0]['value'], 'Restore preserves pension valuations');
+assertEqual(7, $backupPayload['_meta']['version'], 'Pension backups use a format version older restorers reject safely');
+try { PensionPlanner::save($backupPensionPlan, 1); $restorePensionConflict=false; } catch (RuntimeException $e) { $restorePensionConflict=$e->getCode()===409; }
+assertEqual(true, $restorePensionConflict, 'Restore invalidates an old browser pension revision');
 assertEqual('Test Mac', $db->query("SELECT label FROM passkeys WHERE user_id=1")->fetchColumn(), 'Restore preserves passkey credentials');
 assertEqual(1, (int)$db->query("SELECT COUNT(*) FROM saved_reports WHERE name='Backup report'")->fetchColumn(), 'Restore preserves saved reports');
 assertEqual(true, (int)$db->query('SELECT COUNT(*) FROM tag_migration_runs')->fetchColumn() >= 1, 'Restore preserves tag rebuild safety history');
@@ -2031,6 +2043,7 @@ assertEqual(0, $narrowResult['moved_aliases'], 'Narrow correction does not redir
 assertEqual($broadSource, (int)$db->query("SELECT tag_id FROM tag_aliases WHERE alias_normalized='amazon' AND direction='outgoing'")->fetchColumn(), 'Broad rule remains with its original canonical tag');
 
 require __DIR__ . '/GroupAnalysisTest.php';
+require __DIR__ . '/PensionPlannerTest.php';
 
 // Output results and set exit code
 $failed = false;

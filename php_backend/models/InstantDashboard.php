@@ -89,6 +89,7 @@ class InstantDashboard {
                 'income_change' => $incomeChange,
                 'spending_change' => $spendingChange,
             ],
+            'pensions' => self::pensionSnapshot(),
             'trend' => $trend,
             'top_categories' => $topCategories,
             'budget' => $budget,
@@ -100,6 +101,27 @@ class InstantDashboard {
                 'stale_accounts' => $staleAccounts,
             ],
         ];
+    }
+
+    private static function pensionSnapshot(): array {
+        require_once __DIR__ . '/PensionPlanner.php';
+        try {
+            $saved = PensionPlanner::load();
+        } catch (PDOException $e) {
+            // Existing installations can use the overview before creating the new table.
+            if ((string)$e->getCode() === '42P01' || str_contains($e->getMessage(), 'no such table: pension_plans')) return ['available'=>false];
+            throw $e;
+        }
+        $plan = $saved['plan'];
+        $summary = ['available'=>true, 'configured'=>$saved['revision']>0,
+            'total'=>round(array_sum(array_column($plan['pots'], 'value')), 2), 'retirement_age'=>$plan['retirement_age'], 'monthly_today'=>null];
+        if ($saved['revision']>0 && count($plan['pots'])>0) {
+            try {
+                $plan['target_monthly'] = 0;
+                $summary['monthly_today'] = PensionPlanner::forecast($plan)['scenarios']['central']['monthly_today'];
+            } catch (InvalidArgumentException $e) { /* The saved retirement age needs updating. */ }
+        }
+        return $summary;
     }
 
     private static function latestTransactionDate(PDO $db) {

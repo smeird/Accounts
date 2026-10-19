@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Pensions &amp; Retirement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="pensions.css">
+</head>
+<body class="ops-body pension-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main id="pension-main" class="ops-main flex-1 min-w-0" aria-busy="true">
+        <p id="pension-status" role="status">Loading your pension workspace…</p>
+        <p id="pension-error" role="alert" hidden></p>
+        <form id="pension-form">
+            <fieldset id="pension-fields" disabled>
+                <section class="cards cards-solid cards-tight">
+                    <div class="pension-heading"><div><h2>Your pension pots</h2><p>Enter each provider’s latest balance. Contributions are the total reaching the pot, including employer payments and tax relief.</p></div><button id="add-pot" type="button" aria-label="Add a pension pot" class="pension-button">Add pension</button></div>
+                    <div id="pension-pots" class="pension-pot-grid"></div>
+                    <p id="pension-empty">No pots yet. Add your first pension to explore your retirement income.</p>
+                </section>
+                <section class="cards cards-tight">
+                    <h2>Explore your retirement</h2>
+                    <p>Your age starts at an approximate 52. Set an accurate age and its date below; the planner advances your age as time passes.</p>
+                    <div id="pension-controls" class="pension-control-grid"></div>
+                    <details class="pension-assumptions"><summary>Growth, inflation and optional State Pension</summary>
+                        <p>Growth rates are annual nominal returns before fees. These are editable illustrations, not predictions. State Pension is excluded until you enter your own annual forecast.</p>
+                        <div id="pension-assumptions" class="pension-control-grid"></div>
+                        <p><a href="https://www.gov.uk/check-state-pension" target="_blank" rel="noopener">Get your State Pension forecast</a> · <a href="https://www.gov.uk/state-pension-age" target="_blank" rel="noopener">Check your State Pension age</a></p>
+                    </details>
+                    <div class="pension-save-row"><button id="save-plan" type="submit" class="pension-button" aria-label="Save pension pots and retirement assumptions">Save plan</button><span id="save-status" role="status">Changes are previews until saved.</span></div>
+                </section>
+            </fieldset>
+        </form>
+        <section id="pension-results" class="cards cards-tight" hidden aria-labelledby="pension-results-title">
+            <div class="pension-heading"><div><h2 id="pension-results-title">Your retirement income illustration</h2><p id="pension-context"></p></div><span class="pension-caption">Before tax · no lump sum taken</span></div>
+            <div id="pension-metrics" class="pension-metrics" aria-live="polite"></div>
+            <p id="pension-target"></p><p id="pension-notes"></p>
+            <div class="pension-table-wrap"><table class="pension-table"><caption>Compare growth scenarios — income at retirement</caption><thead><tr><th scope="col">Scenario</th><th scope="col">Pot in today’s money</th><th scope="col">Monthly today</th><th scope="col">Daily today</th><th scope="col">Monthly future</th></tr></thead><tbody id="pension-scenarios"></tbody></table></div>
+        </section>
+        <section id="pension-timeline" class="cards cards-tight" hidden>
+            <h2>How your pot could change</h2><p>Central scenario. The same purchasing power is withdrawn each month; State Pension reduces the withdrawals needed from the pot.</p>
+            <div id="pension-chart" aria-label="Projected pension pot in today’s money" style="min-height:300px"></div>
+            <details><summary>View yearly figures</summary><div class="pension-table-wrap"><table class="pension-table"><caption>Central scenario at each birthday interval; future pounds include inflation to that point</caption><thead><tr><th scope="col">Age</th><th scope="col">Pot today</th><th scope="col">Pot future</th><th scope="col">Monthly income today</th><th scope="col">Monthly income future</th></tr></thead><tbody id="pension-years"></tbody></table></div></details>
+        </section>
+        <section class="cards cards-tight pension-method">
+            <h2>What these figures mean</h2>
+            <p>This is an illustrative drawdown planner, not a guaranteed income or an annuity quote. The pot is intended to last to your chosen end age, with no inheritance reserve. Real returns vary, and losses early in retirement can materially change the outcome.</p>
+            <p>Daily income means annual income divided by 365.2425. Monthly contributions stay fixed in cash terms until retirement, arrive at month end, and stop at retirement. Annual fees apply to each pot; retirement assumes a rebalanced portfolio using its value-weighted net return. Withdrawals occur at month start. State Pension retains its purchasing power in this model; future policy is not predicted.</p>
+            <p>Valuations are treated as today’s starting balances, even when dated earlier. Refresh old values for a useful forecast. Income is before tax: income tax, tax-free lump sums, allowances, other assets and pension guarantees are not modelled.</p>
+            <p>Retirement age is distinct from pension access and State Pension ages. The default private access age is 57; change it only to match your scheme’s confirmed rules. <a href="https://www.moneyhelper.org.uk/en/pensions-and-retirement/taking-your-pension/when-can-i-take-money-from-my-pension.html" target="_blank" rel="noopener">Pension access rules</a>.</p>
+            <p>Your pots stay separate from bank balances and transaction totals. Include Pensions in Backup &amp; Restore to protect this workspace.</p>
+        </section>
+    </main>
+</div>
+<script src="js/page_header.js"></script>
+<script>renderPageHeader(document.querySelector('main'), {title:'Pensions & Retirement',breadcrumb:'Planning',subtitle:'Bring your pension pots together and explore what retirement could look like.'});</script>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+<script src="js/pensions.js"></script>
+</body>
+</html>

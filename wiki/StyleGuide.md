@@ -174,3 +174,7 @@ Before merging a new or redesigned page:
 ## Group Analysis
 
 Group Analysis in Insights uses shared cards and a compact summary followed by a Highcharts spending chart and a paginated modern tag table. Dates are optional and inclusive; blank dates retain advance deposits and later costs. Money spent and money received stay separate, with net cost defined as spending less receipts. Amount links retain group, tag, dates and inclusion scopes. The all-entries link includes transfers and IGNORE rows for ledger review.
+
+### Pension planning workspace
+
+Pensions uses the shared full-width shell, page header, cards, selected palette and typography. Provider inputs appear in responsive cards, with paired numeric inputs for sliders. Before-tax income and today/future-pound labels stay explicit. Projection tables retain horizontal navigation inside their panel on mobile. A chart failure leaves the numerical results and yearly table available. Save state is visible, and transient notifications use the shared overlay.

@@ -387,6 +387,14 @@
     function render(data) {
         currentSnapshot=data;
         renderHeadline(data);
+        const pensions=data.pensions;
+        setText('instant-pensions', pensions?.available === false
+            ? 'Visit Database Health to enable the pension workspace.'
+            : pensions?.configured
+                ? money.format(pensions.total)+' in recorded pension pots · '+(pensions.monthly_today === null
+                    ? 'Open the planner to review your retirement assumptions.'
+                    : money.format(pensions.monthly_today)+' a month before tax in today’s money, retiring at '+pensions.retirement_age+'.')
+                : 'Add your pension pots to explore retirement income separately from your bank balances.');
         renderTrend(data.trend || []);
         renderAttention(data.attention || []);
         renderCategories(data.top_categories || []);
