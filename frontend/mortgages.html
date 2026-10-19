@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Mortgage Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="mortgages.css">
+</head>
+<body class="ops-body mortgage-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main id="mortgage-main" class="ops-main flex-1 min-w-0" aria-busy="true">
+        <p id="mortgage-status" role="status">Loading your mortgage workspace…</p>
+        <p id="mortgage-error" role="alert" hidden></p>
+        <form id="mortgage-form">
+            <fieldset id="mortgage-fields" disabled>
+                <section class="cards cards-solid cards-tight">
+                    <h2>Your repayment mortgage</h2><p>Use the remaining balance and term from your latest statement. Enter your actual monthly payment, or leave it blank to calculate one.</p>
+                    <div id="mortgage-inputs" class="mortgage-grid"></div>
+                </section>
+                <section class="cards cards-tight">
+                    <h2>Explore paying it off sooner</h2><p>Compare your normal payments with extra monthly payments and a one-off overpayment applied immediately on the balance date.</p>
+                    <div id="mortgage-overpayments" class="mortgage-grid"></div>
+                    <details class="mortgage-assumptions"><summary>What if the interest rate changes?</summary>
+                        <p>Set the payment month when a new rate starts, for example when a fixed deal ends. Zero keeps the current rate throughout.</p>
+                        <div id="mortgage-rate-inputs" class="mortgage-grid"></div>
+                        <label class="mortgage-check"><input id="recalculate_on_change" type="checkbox" checked aria-label="Recalculate the monthly payment when the rate changes" data-help="Recalculate the normal payment to clear the then-current balance over the remaining contractual term. Extra monthly payments remain on top. Uncheck to hold the payment fixed and see any shortfall."> Recalculate the normal payment over the remaining term when the rate changes</label>
+                    </details>
+                    <div class="mortgage-save-row"><button id="mortgage-save" type="submit" class="mortgage-button" aria-label="Save mortgage details and assumptions">Save mortgage</button><span id="mortgage-save-status" role="status">Changes are previews until saved.</span></div>
+                </section>
+            </fieldset>
+        </form>
+        <section id="mortgage-results" class="cards cards-tight" hidden aria-labelledby="mortgage-result-title">
+            <h2 id="mortgage-result-title">Your mortgage illustration</h2><p id="mortgage-context"></p>
+            <div id="mortgage-metrics" class="mortgage-metrics" aria-live="polite"></div>
+            <p id="mortgage-warning" role="status"></p>
+            <div class="mortgage-table-wrap"><table class="mortgage-table"><caption>Normal payments compared with your overpayment scenario</caption><thead><tr><th scope="col">Illustration</th><th scope="col">Normal payments</th><th scope="col">With overpayments</th></tr></thead><tbody id="mortgage-comparison"></tbody></table></div>
+        </section>
+        <section id="mortgage-timeline" class="cards cards-tight" hidden>
+            <h2>Your path to mortgage freedom</h2><p>Compare the outstanding balance over time. Figures remain available below if the chart cannot load.</p>
+            <div id="mortgage-chart" aria-label="Outstanding mortgage balance over time"></div>
+            <details><summary>View repayment schedule</summary><label for="mortgage-schedule-mode">Schedule to show</label><select id="mortgage-schedule-mode" aria-label="Choose repayment schedule"><option value="overpay">With overpayments</option><option value="normal">Normal payments</option></select>
+                <div class="mortgage-table-wrap"><table class="mortgage-table"><caption>Annual checkpoints, contractual term end and final payment; interest and payments are cumulative</caption><thead><tr><th scope="col">Payment month</th><th scope="col">Date</th><th scope="col">Balance</th><th scope="col">Interest paid</th><th scope="col">Total paid</th></tr></thead><tbody id="mortgage-schedule"></tbody></table></div>
+            </details>
+        </section>
+        <section class="cards cards-tight mortgage-method">
+            <h2>How this illustration works</h2>
+            <p>Interest is estimated monthly using the annual interest rate divided by 12, rounded to pennies. Interest is added before each monthly payment. The first payment is one month after the balance date; month-end dates are clamped to valid calendar days. Your lender may calculate interest daily or use different payment dates, so results can differ from a statement or redemption quote.</p>
+            <p>Extra monthly payments stay fixed and aim to reduce the payoff time. A one-off overpayment reduces the opening balance before interest is charged. At a planned rate change, you choose whether the normal payment is recalculated over the remaining contractual term or kept fixed. Calculated payments have an adjusted final instalment for penny rounding.</p>
+            <p>Any balance left at the contractual term end remains owed. An illustration extending beyond that date is not permission to extend your mortgage. Repayment forecasts stop after 100 years or if the balance becomes too large to illustrate usefully.</p>
+            <p>Fees, early-repayment charges, lender overpayment limits, payment holidays, offset accounts, interest-only borrowing and future changes other than the one you enter are not included. Check your mortgage terms before making overpayments. <a href="https://www.moneyhelper.org.uk/en/homes/buying-a-home/should-you-pay-off-your-mortgage-early" target="_blank" rel="noopener">MoneyHelper’s overpayment guidance</a>.</p>
+            <p>This workspace keeps mortgage debt separate from bank balances and transaction totals. Save to update Financial Overview; include Mortgages in Backup &amp; Restore to protect your plan.</p>
+        </section>
+    </main>
+</div>
+<script src="js/page_header.js"></script>
+<script>renderPageHeader(document.querySelector('main'),{title:'Mortgage Planner',breadcrumb:'Planning',subtitle:'Understand what is left to pay and explore becoming mortgage-free sooner.'});</script>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+<script src="js/mortgages.js"></script>
+</body>
+</html>

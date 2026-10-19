@@ -39,6 +39,11 @@ class SchemaCatalog {
                 'name' => self::column('VARCHAR(100) NOT NULL', 'varchar', false, false, 100),
                 'value' => self::column('TEXT NOT NULL', 'text', false, false),
             ], ['name']),
+            'mortgage_plans' => self::table([
+                'id' => self::column('INT NOT NULL', 'int', false, false),
+                'data' => self::column('TEXT NOT NULL', 'text', false, false),
+                'revision' => self::column('INT NOT NULL DEFAULT 1', 'int', false, true),
+            ], ['id']),
             'pension_plans' => self::table([
                 'id' => self::column('INT NOT NULL', 'int', false, false),
                 'data' => self::column('TEXT NOT NULL', 'text', false, false),

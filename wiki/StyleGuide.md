@@ -178,3 +178,7 @@ Group Analysis in Insights uses shared cards and a compact summary followed by a
 ### Pension planning workspace
 
 Pensions uses the shared full-width shell, page header, cards, selected palette and typography. Provider inputs appear in responsive cards, with paired numeric inputs for sliders. Before-tax income and today/future-pound labels stay explicit. Projection tables retain horizontal navigation inside their panel on mobile. A chart failure leaves the numerical results and yearly table available. Save state is visible, and transient notifications use the shared overlay.
+
+### Mortgage planning workspace
+
+Mortgage Planner uses the shared full-width shell, page header, surfaces and readable typography. Pair sliders with labelled numeric inputs; retain direct entry for exact term, rate and overpayment values. Keep normal and overpayment scenarios side by side, term-end shortfalls explicit, and wide amortisation tables horizontally navigable within their panel on mobile. Chart failure must preserve the comparison and schedule. Use the shared notification overlay and visible save state.

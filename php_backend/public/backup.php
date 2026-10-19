@@ -15,7 +15,7 @@ require_once __DIR__ . '/../models/Log.php';
 // Include segments so they can be exported and restored
 // Allow optionally including projects in the backup
 // Settings may also be backed up and restored
-$allParts = ['categories','tags','groups','transactions','budgets','segments','projects','settings','reports','tag_migrations','pensions'];
+$allParts = ['categories','tags','groups','transactions','budgets','segments','projects','settings','reports','tag_migrations','pensions','mortgages'];
 $parts = !$cliBackup && isset($_GET['parts']) && $_GET['parts'] !== ''
     ? array_intersect($allParts, explode(',', $_GET['parts']))
     : $allParts;
@@ -39,7 +39,7 @@ try {
     $data = [];
     $data['_meta'] = [
         'format' => 'newaccounts-backup',
-        'version' => 7,
+        'version' => 8,
         'created_at' => gmdate('c'),
         'parts' => array_values($parts),
     ];
@@ -53,6 +53,13 @@ try {
         // or the migration has created the optional passkey table.
     }
     $data['accounts'] = $getAll('SELECT id, name, sort_code, account_number, ledger_balance, ledger_balance_date, closed, closed_at FROM accounts ORDER BY id');
+    if (in_array('mortgages', $parts)) {
+        try {
+            $data['mortgage_plans'] = $getAll('SELECT id, data, revision FROM mortgage_plans ORDER BY id');
+        } catch (PDOException $e) {
+            if ((string)$e->getCode() !== '42P01' && !str_contains($e->getMessage(), 'no such table: mortgage_plans')) throw $e;
+        }
+    }
     if (in_array('pensions', $parts)) {
         try {
             $data['pension_plans'] = $getAll('SELECT id, data, revision FROM pension_plans ORDER BY id');

@@ -230,3 +230,7 @@ Keep credentials and API tokens outside the repository, serve production over HT
 ### Pension planning
 
 Use **Planning → Pensions & Retirement** to enter pension pots and contributions, explore retirement ages, and compare monthly/daily before-tax income in today’s money and future pounds. Save a plan to show its headline figures on Financial Overview. Existing installations should create the new `pension_plans` table through **System → Database Health**. See [Pensions & Retirement](wiki/Pensions.md) for assumptions and backup guidance.
+
+### Mortgage planning
+
+Use **Planning → Mortgage Planner** to enter one repayment mortgage’s current balance, rate, monthly payment and remaining term. Compare monthly and one-off overpayments, model a future rate change, and inspect payoff dates, interest saved and the repayment schedule. Existing installations should create `mortgage_plans` through **System → Database Health**. See [Mortgage Planner](wiki/Mortgages.md) for assumptions and backup guidance.

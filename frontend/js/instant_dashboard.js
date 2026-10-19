@@ -387,6 +387,14 @@
     function render(data) {
         currentSnapshot=data;
         renderHeadline(data);
+        const mortgage=data.mortgage;
+        setText('instant-mortgage', mortgage?.available===false
+            ? 'Visit Database Health to enable the mortgage workspace.'
+            : mortgage?.configured
+                ? money.format(mortgage.balance)+' outstanding · '+(mortgage.payoff_date
+                    ? 'illustrated payoff '+formatDate(mortgage.payoff_date,{month:'short',year:'numeric'})+' with your saved overpayment assumptions.'
+                    : 'The saved plan does not clear the mortgage within the illustration. Review your payments.')
+                : 'Add your repayment mortgage to explore your payoff date and the effect of overpayments.');
         const pensions=data.pensions;
         setText('instant-pensions', pensions?.available === false
             ? 'Visit Database Health to enable the pension workspace.'

@@ -90,6 +90,7 @@ class InstantDashboard {
                 'spending_change' => $spendingChange,
             ],
             'pensions' => self::pensionSnapshot(),
+            'mortgage' => self::mortgageSnapshot(),
             'trend' => $trend,
             'top_categories' => $topCategories,
             'budget' => $budget,
@@ -101,6 +102,19 @@ class InstantDashboard {
                 'stale_accounts' => $staleAccounts,
             ],
         ];
+    }
+
+    private static function mortgageSnapshot(): array {
+        require_once __DIR__ . '/MortgagePlanner.php';
+        try {
+            $saved=MortgagePlanner::load();
+        } catch (PDOException $e) {
+            if ((string)$e->getCode()==='42P01' || str_contains($e->getMessage(), 'no such table: mortgage_plans')) return ['available'=>false];
+            throw $e;
+        }
+        $summary=['available'=>true,'configured'=>$saved['revision']>0,'balance'=>(float)$saved['plan']['balance'],'payoff_date'=>null];
+        if ($saved['revision']>0) $summary['payoff_date']=MortgagePlanner::forecast($saved['plan'])['overpay']['payoff_date'];
+        return $summary;
     }
 
     private static function pensionSnapshot(): array {

@@ -101,7 +101,7 @@ try {
     }
     if (isset($data['_meta'])) {
         if (($data['_meta']['format'] ?? '') !== 'newaccounts-backup'
-            || (int)($data['_meta']['version'] ?? 0) > 7) {
+            || (int)($data['_meta']['version'] ?? 0) > 8) {
             throw new InvalidArgumentException('Unsupported backup format or version.');
         }
         foreach (($data['_meta']['counts'] ?? []) as $section => $expected) {
@@ -131,6 +131,11 @@ try {
     if (isset($data['categories'])) $db->exec('DELETE FROM categories');
     if (isset($data['segments'])) $db->exec('DELETE FROM segments');
     if (isset($data['groups'])) $db->exec('DELETE FROM transaction_groups');
+    $mortgageRevisionBeforeRestore = 0;
+    if (isset($data['mortgage_plans'])) {
+        $mortgageRevisionBeforeRestore = (int)$db->query('SELECT revision FROM mortgage_plans WHERE id=1')->fetchColumn();
+        $db->exec('DELETE FROM mortgage_plans');
+    }
     $pensionRevisionBeforeRestore = 0;
     if (isset($data['pension_plans'])) {
         $pensionRevisionBeforeRestore = (int)$db->query('SELECT revision FROM pension_plans WHERE id=1')->fetchColumn();
@@ -205,6 +210,18 @@ try {
         $stmtSet = $db->prepare('INSERT INTO settings (name, value) VALUES (:name, :value)');
         foreach ($data['settings'] as $row) {
             $stmtSet->execute(['name' => $row['name'], 'value' => $row['value']]);
+        }
+    }
+
+    if (isset($data['mortgage_plans'])) {
+        require_once __DIR__ . '/../models/MortgagePlanner.php';
+        if (count($data['mortgage_plans']) > 1) throw new InvalidArgumentException('Only one mortgage workspace is supported.');
+        $stmtMortgage=$db->prepare('INSERT INTO mortgage_plans (id,data,revision) VALUES (1,:data,:revision)');
+        foreach ($data['mortgage_plans'] as $row) {
+            if ((int)($row['id'] ?? 0)!==1 || (int)($row['revision'] ?? 0)<1) throw new InvalidArgumentException('Invalid mortgage workspace.');
+            $plan=json_decode($row['data'],true,512,JSON_THROW_ON_ERROR);
+            $plan=MortgagePlanner::validate($plan);
+            $stmtMortgage->execute(['data'=>json_encode($plan,JSON_THROW_ON_ERROR),'revision'=>max(time(),(int)$row['revision']+1,$mortgageRevisionBeforeRestore+1)]);
         }
     }
 
