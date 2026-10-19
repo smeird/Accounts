@@ -252,12 +252,34 @@
         });
     }
 
+    function setupPhoneEditor() {
+        const form=byId('transaction-form');
+        const placeholder=document.createComment('Transaction editor location');
+        form.before(placeholder);
+        const dialog=document.createElement('dialog');
+        dialog.className='web-app-dialog transaction-phone-editor';
+        dialog.setAttribute('aria-label','Edit transaction classification');
+        const close=document.createElement('button');
+        close.type='button';close.className='transaction-button transaction-button--secondary';
+        close.textContent='Back to transaction';close.setAttribute('aria-label','Back to transaction, keeping unfinished edits');
+        close.addEventListener('click',()=>dialog.close());dialog.append(close);
+        const edit=document.createElement('button');
+        edit.type='button';edit.className='transaction-button transaction-button--primary transaction-phone-edit-button';
+        edit.textContent='Edit classification';edit.setAttribute('aria-label','Edit this transaction classification');
+        edit.addEventListener('click',()=>{dialog.append(form);dialog.showModal();});
+        dialog.addEventListener('close',()=>{placeholder.after(form);edit.focus({preventScroll:true});});
+        document.body.append(dialog);
+        document.querySelector('.transaction-detail-hero').append(edit);
+        matchMedia('(min-width:768px)').addEventListener('change',event=>{if(event.matches&&dialog.open)dialog.close();});
+    }
+
     async function saveTransaction(event) {
         event.preventDefault(); clearError();
+        const savedState=window.AppWeb?.capture(byId('transaction-form'));
         const save=byId('save-transaction'); save.disabled=true; save.querySelector('span').textContent='Saving…'; setText('transaction-status','Saving classification…');
         const payload={transaction_id:transaction.id,account_id:transaction.account_id,description:transaction.description,group_id:byId('group').value,category_id:byId('category').value};
         const tagId=byId('tag-select').value, tagName=byId('tag').value.trim(); if(tagId)payload.tag_id=tagId;else if(tagName)payload.tag_name=tagName;
-        try{const result=await requestJson('../php_backend/public/update_transaction.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(result.status!=='ok')throw new Error(result.error||'The transaction could not be saved.');notify('Transaction classification saved');setText('transaction-status','Changes saved');save.querySelector('i').className='fas fa-check';save.querySelector('span').textContent='Saved';save.classList.add('is-complete');try{transaction=await requestJson('../php_backend/public/transaction.php?id='+encodeURIComponent(transaction.id));renderHero(transaction);renderRecord(transaction);}catch(refreshError){}setTimeout(()=>{save.classList.remove('is-complete');save.querySelector('span').textContent='Save changes';save.disabled=false;},1200);}
+        try{const result=await requestJson('../php_backend/public/update_transaction.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(result.status!=='ok')throw new Error(result.error||'The transaction could not be saved.');window.AppWeb?.markSaved(byId('transaction-form'),savedState);notify('Transaction classification saved');setText('transaction-status','Changes saved');save.querySelector('i').className='fas fa-check';save.querySelector('span').textContent='Saved';save.classList.add('is-complete');try{transaction=await requestJson('../php_backend/public/transaction.php?id='+encodeURIComponent(transaction.id));renderHero(transaction);renderRecord(transaction);}catch(refreshError){}setTimeout(()=>{save.classList.remove('is-complete');save.querySelector('span').textContent='Save changes';save.disabled=false;},1200);}
         catch(error){showError(error.message||'The transaction could not be saved.');setText('transaction-status','Save failed');save.disabled=false;save.querySelector('span').textContent='Save changes';}
     }
 
@@ -270,7 +292,7 @@
                 requestJson('../php_backend/public/groups.php'),
                 requestJson('../php_backend/public/categories.php')
             ]);
-            transaction=results[0]; renderHero(transaction); renderRecord(transaction); populateEditor(transaction,results[1],results[2]); configureActions(transaction); byId('transaction-form').addEventListener('submit',saveTransaction); byId('transaction-loading').hidden=true; byId('transaction-workspace').hidden=false;
+            transaction=results[0]; renderHero(transaction); renderRecord(transaction); populateEditor(transaction,results[1],results[2]); configureActions(transaction); setupPhoneEditor(); byId('transaction-form').addEventListener('submit',saveTransaction); byId('transaction-loading').hidden=true; byId('transaction-workspace').hidden=false;
         }catch(error){byId('transaction-loading').hidden=true;showError(error.message||'The transaction could not be loaded.');setText('transaction-hero-description','Transaction detail unavailable. Please return to Search and try again.');}
     }
 

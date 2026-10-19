@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Signed in · Accounts</title>
+<link rel="stylesheet" href="vendor/tailwind/tailwind.min.css">
+</head><body class="bg-slate-50 p-6 text-slate-900">
+<main><h1 class="text-2xl mb-4">Checking your sign-in…</h1>
+<p id="status" role="status">Keep your original app window open.</p>
+<p class="mt-4"><a href="instant.html" class="underline" aria-label="Open Financial Overview">Open Financial Overview</a></p>
+<p class="mt-4"><button type="button" class="border rounded px-4 py-2" aria-label="About this sign-in screen" onclick="document.getElementById('sign-in-help').showModal()">About this screen</button></p>
+<dialog id="sign-in-help" class="p-6 rounded" aria-labelledby="sign-in-help-title"><h2 id="sign-in-help-title">Sign-in confirmation</h2><p>This screen confirms authentication to the same-origin app window. No credentials or financial information are sent in its confirmation message.</p><button type="button" class="border rounded px-4 py-2 mt-4" aria-label="Close sign-in help" onclick="this.closest('dialog').close()">Close</button></dialog></main>
+<script>
+fetch('../php_backend/public/current_user.php', {cache:'no-store',credentials:'same-origin'}).then(response => {
+    if (!response.ok) throw new Error('Sign-in could not be confirmed. Return to the original panel and try again.');
+    document.querySelector('h1').textContent = 'Signed in';
+    document.getElementById('status').textContent = 'Your app can now continue. No changes have been submitted again.';
+    if (parent !== window) parent.postMessage({type:'accounts:authenticated'}, location.origin);
+}).catch(error => { document.getElementById('status').textContent = error.message; });
+</script></body></html>

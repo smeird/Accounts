@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#312e81">
+<title>Connection needed · Finance Manager</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:max(1.5rem,env(safe-area-inset-top)) max(1.5rem,env(safe-area-inset-right)) max(1.5rem,env(safe-area-inset-bottom)) max(1.5rem,env(safe-area-inset-left));background:#f8fafc;color:#172033}main{max-width:30rem}h1{font-size:2rem}p{line-height:1.6}button{min-height:48px;padding:.75rem 1.25rem;background:#312e81;color:white;border:0;border-radius:.5rem;font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #6366f1;outline-offset:3px}.help{color:#475569;font-size:.9rem}
+</style></head><body><main>
+<h1>You’re offline</h1>
+<p>Reconnect to load your accounts. Financial data and unfinished edits are not stored for offline access.</p>
+<p>If an edit is still open in another window, return to it when your connection is restored. Check a recent payment or import before submitting it again.</p>
+<button type="button" aria-label="Retry this page" onclick="location.reload()">Try again</button>
+<p><button type="button" aria-label="About this connection screen" onclick="document.getElementById('offline-help').showModal()">About this screen</button></p>
+<dialog id="offline-help" aria-labelledby="offline-help-title"><h2 id="offline-help-title">Connection help</h2><p class="help">This public connection screen contains no account data. The app needs a secure connection to your server to read or save financial information.</p><button type="button" aria-label="Close connection help" onclick="this.closest('dialog').close()">Close</button></dialog>
+</main></body></html>

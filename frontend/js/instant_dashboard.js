@@ -403,7 +403,7 @@
                     ? 'Open the planner to review your retirement assumptions.'
                     : money.format(pensions.monthly_today)+' a month before tax in today’s money, retiring at '+pensions.retirement_age+'.')
                 : 'Add your pension pots to explore retirement income separately from your bank balances.');
-        renderTrend(data.trend || []);
+        window.AppCharts.whenVisible(byId('instant-cashflow-chart'), () => renderTrend(data.trend || []));
         renderAttention(data.attention || []);
         renderCategories(data.top_categories || []);
         renderBudgets(data.budget || { total: 0, spent: 0, used: null, items: [] });

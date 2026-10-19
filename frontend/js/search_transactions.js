@@ -135,20 +135,12 @@
         return { label:group.charAt(0).toUpperCase()+group.slice(1), categories:labels, values:keys.map(key=>Number(totals[key].toFixed(2))) };
     }
     function destroyChart() {
+        window.AppCharts?.cancel(byId('results-chart'));
         const chart = window.Highcharts?.charts.find(item => item && item.renderTo.id === 'results-chart');
         if (chart) chart.destroy();
     }
     function renderChart(rows) {
-        // The chart is secondary: unavailable CDN assets must never hide valid evidence.
-        if (!window.Highcharts) {
-            byId('results-chart').replaceChildren(emptyState('Chart unavailable', 'Your matching transactions and totals are still available. Reload to retry the chart.', 'fa-chart-column'));
-            return;
-        }
-        try {
-            renderSpendingChart(rows);
-        } catch (failure) {
-            byId('results-chart').replaceChildren(emptyState('Chart unavailable', 'Your matching transactions and totals remain available.', 'fa-chart-column'));
-        }
+        window.AppCharts.whenVisible(byId('results-chart'), () => renderSpendingChart(rows));
     }
     function renderSpendingChart(rows) {
         const grouped=groupSpending(rows); setText('search-bucket-label', grouped.label);

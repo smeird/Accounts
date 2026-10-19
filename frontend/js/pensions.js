@@ -108,7 +108,7 @@
     $('pension-form').addEventListener('submit',async event=>{
         event.preventDefault();if(!loaded||!$('pension-form').reportValidity())return;
         $('save-plan').disabled=true;const plan=collect();const serialised=JSON.stringify(plan);
-        try {const result=await send('PUT',{plan,revision});revision=result.revision;dirty=JSON.stringify(collect())!==serialised;$('save-status').textContent=dirty?'Newer changes remain unsaved.':'Saved · Financial Overview now uses this plan.';window.showMessage('Pension plan saved.','success');preview();}
+        try {const result=await send('PUT',{plan,revision});revision=result.revision;dirty=JSON.stringify(collect())!==serialised;$('save-status').textContent=dirty?'Newer changes remain unsaved.':'Saved · Financial Overview now uses this plan.';if(!dirty)window.AppWeb?.markSaved($('pension-form'));window.showMessage('Pension plan saved.','success');preview();}
         catch(error){$('pension-error').textContent=error.message;$('pension-error').hidden=false;window.showMessage(error.message,'error');}
         finally{$('save-plan').disabled=false;}
     });

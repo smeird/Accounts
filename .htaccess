@@ -1,0 +1,6 @@
+# Revalidate the root-scoped web-app worker after every deployment.
+<IfModule mod_headers.c>
+  <Files "sw.js">
+    Header always set Cache-Control "no-cache, must-revalidate, max-age=0"
+  </Files>
+</IfModule>

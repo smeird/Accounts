@@ -3,16 +3,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/app-180.png">
+    <meta name="theme-color" content="#312e81">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/web-app.css">
+    <script src="js/web_app.js"></script>
     <title>Find Transactions</title>
-    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="vendor/tailwind/tailwind.min.css">
     <link rel="stylesheet" href="operational_ui.css?v=20261005-full-width">
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
     <link rel="stylesheet" href="transactions_workspace.css">
 </head>
-<body class="ops-body transaction-page">
+<body data-resume-refresh class="ops-body transaction-page">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main transaction-main flex-1 min-w-0 overflow-x-hidden">
@@ -94,8 +101,8 @@
 <script src="js/input_help.js"></script>
 <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script>
 <script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="js/chart_loader.js"></script>
+
 <script src="js/color_map.js?v=20260814-lazy-charts"></script>
 <script src="js/search_transactions.js"></script>
 <script src="js/overlay.js"></script>

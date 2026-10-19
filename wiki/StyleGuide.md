@@ -182,3 +182,12 @@ Pensions uses the shared full-width shell, page header, cards, selected palette 
 ### Mortgage planning workspace
 
 Mortgage Planner uses the shared full-width shell, page header, surfaces and readable typography. Pair sliders with labelled numeric inputs; retain direct entry for exact term, rate and overpayment values. Keep normal and overpayment scenarios side by side, term-end shortfalls explicit, and wide amortisation tables horizontally navigable within their panel on mobile. Chart failure must preserve the comparison and schedule. Use the shared notification overlay and visible save state.
+
+
+### iPhone and installed web-app shell
+
+`frontend/js/web_app.js` and `frontend/css/web-app.css` own install help, connection state, session recovery, safe areas and phone navigation. Full documents declare the manifest, touch icon, theme colour and `viewport-fit=cover` before loading this script. Keep `.app-shell-main` as the sole page scroller. The fixed phone tabs provide Overview, Transactions, Planning and More; More opens the existing six-group menu without focusing the search field or opening the keyboard. The drawer contains keyboard focus while open. Desktop navigation stays unchanged.
+
+Reserve space for the top controls, bottom tabs, live connection banner and home indicator. Inputs use at least 16px text and 44px touch height on phones. Transaction classification opens in a full-screen native dialog; closing it retains unfinished changes. Use the shared notification overlay for transient messages; persistent connectivity/session state belongs in the web-app layer. Preserve boolean `hidden` states even when a component uses flex/grid layout.
+
+Editable forms may opt into in-memory navigation protection with `data-preserve-edits`; report a successful save through `AppWeb.markSaved(form)`, optionally supplying the captured submitted state if controls can change during a request. Never persist financial drafts on the device. Only read-only pages should opt into `data-resume-refresh`. Optional chart assets load after primary data, with numerical evidence remaining usable on failure. Rebuild the committed local Tailwind stylesheet after changing utility classes.

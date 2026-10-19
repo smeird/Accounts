@@ -68,7 +68,8 @@ const init = () => {
 
   const btn = document.createElement('button');
   btn.innerHTML = '<i class="fas fa-question w-6 h-6"></i>';
-  btn.className = 'fixed bottom-4 right-4 bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg';
+  btn.setAttribute('aria-label', 'Help for this page');
+  btn.className = 'page-help-button fixed bottom-4 right-4 bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg';
 
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4';
@@ -79,6 +80,7 @@ const init = () => {
   text.textContent = helpText;
   const close = document.createElement('button');
   close.textContent = 'Close';
+  close.setAttribute('aria-label', 'Close page help');
   close.className = 'mt-4 bg-indigo-600 text-white px-4 py-2 rounded';
   close.addEventListener('click', () => overlay.classList.add('hidden'));
 

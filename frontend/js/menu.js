@@ -37,7 +37,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const sidebarLink = document.createElement('link');
     sidebarLink.id = 'sidebar-css';
     sidebarLink.rel = 'stylesheet';
-    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20261005-full-width-shell');
+    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20261019-iphone-web-app');
     document.head.appendChild(sidebarLink);
   }
 
@@ -325,8 +325,11 @@ const attachSidebarSearchHandler = (root = document) => {
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Navigation open' : 'Open navigation');
     menuBackdrop.hidden = !open;
+    document.querySelector('.app-shell-main')?.toggleAttribute('inert', open);
+    document.querySelector('.web-app-tabs')?.toggleAttribute('inert', open);
+    document.querySelector('.web-app-back')?.toggleAttribute('inert', open);
     if (open) {
-      window.setTimeout(() => menu.querySelector('#sidebar-search')?.focus(), 180);
+      window.setTimeout(() => menu.querySelector('.site-menu-close')?.focus({ preventScroll: true }), 180);
     } else if (returnFocus) {
       toggle.focus();
     }
@@ -335,6 +338,12 @@ const attachSidebarSearchHandler = (root = document) => {
   toggle.addEventListener('click', () => setMobileMenuOpen(!menu?.classList.contains('is-open')));
   menuBackdrop.addEventListener('click', () => setMobileMenuOpen(false, true));
   document.addEventListener('keydown', event => {
+    if (event.key === 'Tab' && menu?.classList.contains('is-open')) {
+      const focusable = Array.from(menu.querySelectorAll('a[href],button,input')).filter(el => !el.disabled && el.getClientRects().length);
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
     if (event.key === 'Escape' && menu?.classList.contains('is-open')) {
       setMobileMenuOpen(false, true);
     }

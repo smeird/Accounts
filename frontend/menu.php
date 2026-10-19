@@ -1,4 +1,3 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <!-- Shared navigation: labels describe user goals; URLs remain stable for bookmarks. -->
 <div class="flex items-center space-x-2 mb-4">
   <img src="/favicon.png" alt="Finance Manager logo" class="h-8 w-8 rounded shadow">

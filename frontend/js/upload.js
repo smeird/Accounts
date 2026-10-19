@@ -216,6 +216,8 @@ function initUpload() {
         });
     }
 
+    window.addEventListener('beforeunload', event => { if (isBusy) { event.preventDefault(); event.returnValue = ''; } });
+
     input.addEventListener('change', () => renderSelection(input.files));
     clearButton.addEventListener('click', () => clearSelection());
     anotherButton.addEventListener('click', () => {
@@ -243,6 +245,10 @@ function initUpload() {
 
     form.addEventListener('submit', event => {
         event.preventDefault();
+        if (window.AppWeb?.isLocked()) {
+            window.AppWeb.sessionExpired();
+            return;
+        }
         if (isBusy || !selectedFiles.length) {
             setValidation('Choose at least one OFX or QFX statement first.');
             return;
@@ -274,6 +280,7 @@ function initUpload() {
         });
         xhr.addEventListener('load', () => {
             progress.classList.remove('is-processing');
+            if (xhr.status === 401 || (xhr.status === 403 && /Session expired/.test(xhr.responseText))) window.AppWeb?.sessionExpired();
             const payload = normaliseUploadPayload(xhr.responseText, xhr.status);
             updateProgress(100, payload.status === 'error' ? 'Import stopped' : 'Import complete', payload.message);
             renderResult(payload);

@@ -2,10 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/app-180.png">
+    <meta name="theme-color" content="#312e81">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/web-app.css">
+    <script src="js/web_app.js"></script>
     <title>Pensions &amp; Retirement</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="vendor/tailwind/tailwind.min.css">
     <link rel="stylesheet" href="operational_ui.css">
     <link rel="stylesheet" href="pensions.css">
 </head>
@@ -15,7 +23,7 @@
     <main id="pension-main" class="ops-main flex-1 min-w-0" aria-busy="true">
         <p id="pension-status" role="status">Loading your pension workspace…</p>
         <p id="pension-error" role="alert" hidden></p>
-        <form id="pension-form">
+        <form data-preserve-edits id="pension-form">
             <fieldset id="pension-fields" disabled>
                 <section class="cards cards-solid cards-tight">
                     <div class="pension-heading"><div><h2>Your pension pots</h2><p>Enter each provider’s latest balance. Contributions are the total reaching the pot, including employer payments and tax relief.</p></div><button id="add-pot" type="button" aria-label="Add a pension pot" class="pension-button">Add pension</button></div>

@@ -8,7 +8,7 @@ require_once __DIR__ . '/php_backend/models/Log.php';
 require_once __DIR__ . '/php_backend/models/Setting.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: index.php');
+    header('Location: index.php?return=users.php');
     exit;
 }
 
@@ -22,7 +22,7 @@ if ($timeoutSetting > 0) {
             session_unset();
             session_destroy();
         }
-        header('Location: logout.php?timeout=1');
+        header('Location: index.php?return=users.php');
         exit;
     }
 }
@@ -71,14 +71,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="frontend/manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="frontend/icons/app-180.png">
+    <meta name="theme-color" content="#312e81">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="frontend/css/web-app.css">
+    <script src="frontend/js/web_app.js"></script>
     <title>User Management</title>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {};
-    </script>
-
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="frontend/vendor/tailwind/tailwind.min.css">
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css?v=20261005-full-width">
     <link rel="stylesheet" href="frontend/utility_refresh.css?v=20261005-full-width">

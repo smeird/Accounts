@@ -102,7 +102,7 @@
 
     document.getElementById('budget-form').addEventListener('submit', async event => {
         event.preventDefault(); const button = event.submitter; button.disabled = true;
-        try { const { year, month } = periodParts(); await request('../php_backend/public/budgets.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category_id: Number(categorySelect.value), amount: Number(amountInput.value), month, year }) }); amountInput.value = ''; await loadBudgets(); announce('Budget saved'); }
+        try { const { year, month } = periodParts(); await request('../php_backend/public/budgets.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category_id: Number(categorySelect.value), amount: Number(amountInput.value), month, year }) }); amountInput.value = ''; await loadBudgets(); window.AppWeb?.markSaved(document.getElementById('budget-form')); announce('Budget saved'); }
         catch (error) { announce('Budget could not be saved', 'error'); }
         finally { button.disabled = false; }
     });

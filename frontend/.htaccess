@@ -26,3 +26,7 @@
 </IfModule>
 
 FileETag MTime Size
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>

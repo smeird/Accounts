@@ -29,6 +29,8 @@ const assert = require('node:assert/strict');
         assert.equal(await page.locator('#search-error').isHidden(), true);
         assert.equal(await page.locator('#results-grid .tabulator-row').count(), 1);
         assert.equal(await page.locator('#search-hero-value').innerText(), '-£25.00');
+        await page.locator('#results-chart').scrollIntoViewIfNeeded();
+        await page.waitForFunction(() => /Chart unavailable/.test(document.getElementById('results-chart').textContent));
         assert.match(await page.locator('#results-chart').innerText(), /Chart unavailable/);
         for (const [key, value] of Object.entries(expected)) assert.equal(requests[0].get(key), value);
         await page.fill('#term', 'taxi');

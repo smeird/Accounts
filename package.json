@@ -1,0 +1,16 @@
+{
+  "name": "accounts-frontend-assets",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.cjs -i frontend/css/tailwind-input.css -o frontend/vendor/tailwind/tailwind.min.css --minify",
+    "build:assets": "node scripts/build-web-assets.cjs && npm run build:css",
+    "test:web-app": "node frontend/js/web_app.test.js && php tests/login_destination_test.php"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "6.5.1",
+    "file-saver": "2.0.5",
+    "papaparse": "5.7.0",
+    "sharp": "0.35.5",
+    "tailwindcss": "3.4.19"
+  }
+}

@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/php_backend/auth.php';
+require_once __DIR__ . '/php_backend/LoginDestination.php';
+if (isset($_GET['return'])) {
+    $returnTo = LoginDestination::validate($_GET['return']);
+    if ($returnTo !== null) $_SESSION['login_return'] = $returnTo;
+}
 require_once __DIR__ . '/php_backend/models/User.php';
 require_once __DIR__ . '/php_backend/models/Log.php';
 require_once __DIR__ . '/php_backend/Totp.php';
@@ -32,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['last_activity'] = time();
             unset($_SESSION['pending_user_id'], $_SESSION['pending_username']);
             Log::write("User '$username' passed 2FA");
-            header('Location: frontend/index.html');
+            header('Location: ' . LoginDestination::consume());
             exit;
         }
         $error = 'Invalid code';
@@ -54,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['username'] = $username;
                 $_SESSION['last_activity'] = time();
                 Log::write("User '$username' logged in");
-                header('Location: frontend/index.html');
+                header('Location: ' . LoginDestination::consume());
                 exit;
             }
         } else {
@@ -70,15 +75,21 @@ $needsToken = isset($_SESSION['pending_user_id']);
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <link rel="manifest" href="frontend/manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="frontend/icons/app-180.png">
+    <meta name="theme-color" content="#312e81">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <link rel="stylesheet" href="frontend/css/web-app.css">
+    <script src="frontend/js/web_app.js"></script>
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title><?= htmlspecialchars($siteName) ?> Login</title>
-    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="frontend/vendor/tailwind/tailwind.min.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="frontend/login.css?v=20260815-login-refresh">
     <style>
         :root {
@@ -98,7 +109,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
         }
     </style>
 </head>
-<body class="login-page">
+<body class="login-page<?= ($_GET['embedded'] ?? '') === '1' ? ' login-embedded' : '' ?>">
     <div class="login-stage">
         <div class="login-orb login-orb--one" aria-hidden="true"></div>
         <div class="login-orb login-orb--two" aria-hidden="true"></div>

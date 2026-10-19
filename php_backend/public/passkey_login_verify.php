@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../auth.php';
+require_once __DIR__ . '/../LoginDestination.php';
 require_once __DIR__ . '/../WebAuthn.php';
 require_once __DIR__ . '/../models/Passkey.php';
 require_once __DIR__ . '/../models/Log.php';
@@ -33,7 +34,7 @@ try {
     $_SESSION['last_activity'] = time();
     unset($_SESSION['pending_user_id'], $_SESSION['pending_username'], $_SESSION['passkey_registration']);
     Log::write("User '" . $credential['username'] . "' logged in with a passkey");
-    echo json_encode(['authenticated' => true, 'redirect' => 'frontend/index.html']);
+    echo json_encode(['authenticated' => true, 'redirect' => LoginDestination::consume()]);
 } catch (Exception $e) {
     Log::write('Passkey login failed: ' . $e->getMessage(), 'ERROR');
     if (http_response_code() < 400) http_response_code(401);

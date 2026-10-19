@@ -2,11 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/app-180.png">
+    <meta name="theme-color" content="#312e81">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/web-app.css">
+    <script src="js/web_app.js"></script>
     <title>Export Data</title>
-    <script>window.tailwind = window.tailwind || {}; window.tailwind.config = {};</script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="vendor/tailwind/tailwind.min.css">
     <link rel="stylesheet" href="operational_ui.css?v=20261005-full-width">
     <link rel="stylesheet" href="site_system.css">
     <link rel="stylesheet" href="utility_refresh.css?v=20261005-full-width">
@@ -70,8 +77,8 @@
 <script src="js/page_header.js"></script>
 <script>window.renderPageHeader(document.querySelector('main.ops-main'), { title: 'Export Data', breadcrumb: 'System', subtitle: 'Download a portable extract or create a complete Excel financial workbook.' });</script>
 <script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="vendor/papaparse/papaparse.min.js"></script>
+<script src="vendor/file-saver/FileSaver.min.js"></script>
 <script src="js/export.js?v=20260824-financial-workbook"></script>
 </body>
 </html>

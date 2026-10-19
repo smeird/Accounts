@@ -49,6 +49,14 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - Dashboard heroes use a compact financial-brief layout, keeping headline context and supporting metrics while using horizontal space before page height.
 - Explicit no-store/revalidation rules prevent stale HTML, CSS and JavaScript after deployments.
 
+## Use on iPhone
+
+Open your installation’s HTTPS address in Safari, then choose **Share → Add to Home Screen** (under **More** if needed). Keep **Open as Web App** enabled if offered. Launch the Accounts icon and sign in using a passkey or your password. The navigation menu also includes an installation guide.
+
+The phone layout provides Overview, Transactions, Planning and More tabs, a Back action, and a full-screen transaction classification editor. The server must remain reachable. An offline screen and connection status explain when information cannot be refreshed; financial records and unfinished edits are never cached for offline use. An expired session keeps the open form while you sign in again inside the app. Keep that original window open until you have saved.
+
+See [iPhone setup and verification](wiki/Setup.md#iphone-web-app) for device checks and troubleshooting.
+
 ## Financial rules
 
 - Positive amounts are income; negative amounts are expenditure.
@@ -81,7 +89,7 @@ Frontend pages live in `frontend/`. Authenticated JSON endpoints live in `php_ba
 - Highcharts for interactive charts
 - Self-hosted Tabulator 6.5.0 for large or interactive grids
 - Native semantic responsive tables for statement and account views
-- Tailwind utilities, shared application CSS and Font Awesome
+- Locally compiled Tailwind utilities, shared application CSS and self-hosted Font Awesome
 - OpenAI Responses API for optional AI workflows
 
 ## Installation
@@ -198,6 +206,17 @@ New pages must follow the shared system rather than introducing a standalone vis
 
 The complete rules and examples are in the [Style Guide](wiki/StyleGuide.md).
 
+### Build frontend assets
+
+Compiled CSS, icons and file-export helpers are committed, so production needs no Node.js build step. After changing Tailwind classes or upgrading frontend dependencies, use:
+
+```bash
+npm ci
+npm run build:assets
+```
+
+The pinned Tailwind 3 build preserves the existing interface. Its safelist derives runtime palette variants from the classes actually used. Keep generated assets and their vendored licences together. Highcharts and optional selected Google Fonts still need their external providers; chart failures must leave numerical evidence usable. Build dependencies are development-only and process trusted repository sources, not uploaded statements.
+
 ## Testing
 
 The primary suite uses an in-memory SQLite database and requires no production-data access:
@@ -206,7 +225,7 @@ The primary suite uses an in-memory SQLite database and requires no production-d
 php tests/run_tests.php
 ```
 
-Run frontend regressions with:
+Run the web-app policy and safe-login-return checks with `npm run test:web-app`. Run frontend regressions with:
 
 ```bash
 for test_file in frontend/js/*.test.js; do node "$test_file"; done
@@ -218,6 +237,8 @@ Validate the Raspberry Pi installer with:
 bash tests/deploy_installer_test.sh
 shellcheck deploy.sh
 ```
+
+With Playwright available and a local server running, run `tests/web_app_browser.cjs` and `tests/web_app_files_browser.cjs`; set `ACCOUNTS_TEST_URL` to the server URL and `ACCOUNTS_TEST_BROWSER=webkit` for Safari engine checks. These tests mock APIs and do not change ledger data.
 
 Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff --check`, and browser verification at desktop and mobile widths.
 

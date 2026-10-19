@@ -196,3 +196,33 @@ shellcheck deploy.sh
 ```
 
 UI changes also require browser verification at desktop and mobile widths. Confirm loading, populated, empty and error states; filters; chart rendering; scrolling; and absence of horizontal document overflow.
+
+
+## iPhone web app
+
+Use the installation’s existing HTTPS hostname, with a trusted certificate. The iPhone must be able to reach that server through your network or VPN. In Safari choose **Share → Add to Home Screen** (possibly under **More**), leave **Open as Web App** enabled if offered, then launch the Accounts icon. Installation does not move the database onto the phone. Sign in using a registered passkey or the password/TOTP fallback; manage passkeys in **System → Users**.
+
+The public manifest is `frontend/manifest.webmanifest`. Its relative paths support root and subdirectory installations. `sw.js` lives at the installation root so its scope includes login and frontend pages. Apache must serve it as JavaScript and the manifest as `application/manifest+json`. Both must be same-origin and reachable without authentication. Existing API authentication remains enforced by PHP.
+
+The service worker stores only `frontend/offline.html`, which contains no account data. All application navigations remain network-first with `no-store`; APIs, uploads, downloads and non-GET requests bypass the worker. No financial records, session tokens or form drafts are written to Cache API, IndexedDB or browser storage. If you lose connection during a write, inspect its current server state before retrying. Requests are never queued or automatically replayed.
+
+On session expiry, keep the original app window open. Choose **Sign in here** and complete authentication in the recovery panel. Its same-origin sign-in frame shares the installed app’s cookie store; a separate Safari window may not, because [WebKit isolates installed web-app storage](https://webkit.org/blog/14787/webkit-features-in-safari-17-2/). The app checks the restored session before returning to your edit. **Continue after signing in** also lets you check an already restored session. **Start again at sign-in** leaves the current page and may discard unfinished edits. The original form is retained in memory, and recovery requires the same account. iOS may discard a suspended app at any time, so this is not a durable draft backup. Save before closing the app. Existing passkey and one-time-code semantics are unchanged.
+
+Overview, Accounts, Monthly Activity and Find Transactions refresh after a background absence exceeding 30 seconds when connected and free of tracked edits. Other pages show an explicit refresh action. Transaction, Budget, Pension and Mortgage forms protect unfinished edits; use `data-preserve-edits` for additional editable forms and call `AppWeb.markSaved(form)` only after a successful save. The shared inactivity timer locks on its original deadline when iOS resumes a suspended window.
+
+App updates are offered explicitly when a new worker is ready; save unfinished edits before choosing **Update**. Increment the worker’s public-cache version when changing the offline screen. This refreshes the browser experience only; the existing guarded Application Updates page remains the deployment authority. To remove a broken worker during development, use Safari’s Web Inspector service worker controls or clear website data, then reopen the site online.
+
+### Physical iPhone verification
+
+Automated Chromium and WebKit checks cover phone layouts, navigation, the classification sheet, session recovery, selected OFX files, CSV/Excel downloads and transaction evidence. Chromium also exercises actual offline navigation; Playwright’s WebKit offline emulation can fail before dispatching to the service worker, so verify that path on the device.
+
+Before production rollout, check on your iPhone:
+
+1. Install from Safari, confirm the icon and standalone window, then relaunch from the Home Screen.
+2. Sign in using Face ID/passkeys, and separately test password plus six-digit verification-code AutoFill.
+3. Check top/bottom safe areas, text enlargement, keyboard dismissal, portrait/landscape and VoiceOver navigation.
+4. Edit a transaction, background the app past the configured session timeout, sign in again and confirm the edit is still present. Verify a different user cannot continue it.
+5. Select an OFX/QFX file from Files, import it once, and inspect the result. Check CSV, Excel and timestamped PDF downloads in Files or the share/open interface offered by iOS.
+6. Follow a dashboard amount into its exact transaction evidence, then use Back.
+7. Disable connectivity, attempt navigation and confirm the public offline screen. Reconnect and retry; verify no write or import is repeated automatically.
+8. Deploy an update, save edits, and accept the update offer. Check Glass and Paper on both phone and desktop.
