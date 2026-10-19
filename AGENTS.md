@@ -170,3 +170,5 @@
 - Settings appearance previews reflect the actual Glass/Paper surface hierarchy, selected palette, corners, density, title scale and typography without changing saved preferences. Phone page headers align beneath the separate navigation bar; keep financial heroes compact while retaining every metric and touch target.
 
 - Standalone and embedded sign-in honour the device’s Professional surface override, falling back to the installation setting when none is saved or browser storage is unavailable. Appearance preview Default typography must clear the sample override; Default body type resolves from the application’s root font rather than inheriting the saved body choice.
+
+- Daily Burn headline metrics size to their content rather than stretching to the hero. On desktop, captions share a row with their icon and financial values use the full card width; the four-column hero/metric layout starts at 1200px so narrower workspaces retain readable figures.

@@ -79,7 +79,7 @@
                 const range=TransactionDrilldown.monthRange(...month.key.split('-').map(Number));
                 return {y:item?Number(item.daily_burn):0,drilldown:segmentSearchLink(segment,{period:range})};
             })
-        })).filter(item => item.data.some(value => value > 0));
+        })).filter(item => item.data.some(point => point.y > 0));
         const options = commonOptions();
         Highcharts.chart('burn-segment-chart', {
             ...options,

@@ -62,7 +62,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const heroDensityLink = document.createElement('link');
     heroDensityLink.id = 'hero-density-css';
     heroDensityLink.rel = 'stylesheet';
-    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20261019-visual-consistency');
+    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20261019-daily-burn');
     document.head.appendChild(heroDensityLink);
   }
 
