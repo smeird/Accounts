@@ -11,6 +11,6 @@ assert.match(typography, /--type-table-secondary-weight:\s*400/, 'secondary tabl
 assert.match(typography, /\.statement-date small,[\s\S]*\.statement-memo,[\s\S]*\.account-type,/, 'native reference tables should share the metadata treatment');
 assert.match(typography, /\.modern-table\.tabulator \.tabulator-cell small/, 'Tabulator cell metadata should share the metadata treatment');
 assert.doesNotMatch(typography, /\.statement-description,[\s\S]{0,180}font-weight:\s*var\(--type-table-secondary-weight\)/, 'primary statement descriptions must stay prominent');
-assert.match(menu, /typography\.css\?v=20260824-table-hierarchy/, 'the shared stylesheet cache key should change with the typography update');
+assert.match(menu, /typography\.css\?v=20261019-visual-consistency/, 'the shared stylesheet cache key should change with the typography update');
 
 console.log('typography CSS tests passed');

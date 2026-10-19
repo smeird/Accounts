@@ -216,7 +216,7 @@ $colorHex = $selectedPalette['primary'];
     <link rel="stylesheet" href="frontend/cards.css">
     <link rel="stylesheet" href="frontend/operational_ui.css?v=20261005-full-width">
     <link rel="stylesheet" href="frontend/utility_refresh.css?v=20261005-full-width">
-    <link rel="stylesheet" href="frontend/settings.css?v=20261005-full-width">
+    <link rel="stylesheet" href="frontend/settings.css?v=20261019-visual-consistency">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
 </head>
 <body class="ops-body admin-refresh-page settings-page" data-api-base="php_backend/public">
@@ -387,12 +387,18 @@ $colorHex = $selectedPalette['primary'];
         appearancePreview.classList.toggle('is-header-extra-large', pageHeader === 'extra-large');
         appearancePreview.style.setProperty('--site-brand', accent);
         appearancePreview.style.setProperty('--site-brand-secondary', accentDark);
-        previewCanvas.style.background = `linear-gradient(145deg,rgba(${rgb},${alpha}),rgba(${darkRgb},${alpha * .55}),rgba(255,255,255,.98) 76%)`;
+        previewCanvas.style.background = surface === 'paper' ? '#fafaf8' : `linear-gradient(145deg,rgba(${rgb},${alpha}),rgba(${darkRgb},${alpha * .55}),rgba(255,255,255,.98) 76%)`;
+        for (const [field, variable] of [['font_heading','--preview-heading-font'],['font_body','--preview-body-font'],['font_table','--preview-table-font']]) {
+          const family = document.getElementById(field)?.value;
+          if (family) appearancePreview.style.setProperty(variable, family);
+          else appearancePreview.style.removeProperty(variable);
+        }
+        appearancePreview.style.setProperty('--preview-weight', document.getElementById('accent-font-weight')?.value || '700');
         const previewTitle = appearancePreview.querySelector('.settings-preview__header strong');
         if (previewTitle) previewTitle.textContent = siteNameInput?.value.trim() || 'Financial overview';
       };
 
-      document.querySelectorAll('#appearance input,#appearance select').forEach(control => {
+      document.querySelectorAll('#appearance input,#appearance select,#typography select').forEach(control => {
         control.addEventListener('input', updateAppearancePreview);
         control.addEventListener('change', updateAppearancePreview);
       });

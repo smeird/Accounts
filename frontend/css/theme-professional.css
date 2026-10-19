@@ -818,8 +818,8 @@ body.theme-professional .ops-main :is(.budget-primary-button,.category-primary-b
   color:#fff!important;
 }
 body.theme-professional .ops-main :is(.budget-primary-button,.category-primary-button,.segment-primary-button,.group-primary-button,.process-primary-action,.export-primary-action,.tagging-primary):hover { background:var(--brand-color-700,#4338ca)!important; }
-body.theme-professional .ops-main :is(.budget-pulse,.project-pulse,.landing-live) { color:#16704b!important; }
-body.theme-professional .ops-main :is(.budget-hero__topline,.project-hero__topline,.budget-used-block>span) { color:var(--paper-muted)!important; }
+body.theme-professional .ops-main :is(.budget-pulse,.project-pulse,.transaction-pulse,.landing-live) { color:#16704b!important; }
+body.theme-professional .ops-main :is(.budget-hero__topline,.project-hero__topline,.transaction-hero__topline,.budget-used-block>span) { color:var(--paper-muted)!important; }
 body.theme-professional .ops-main :is(.instant-card,.transaction-card,.budget-card,.project-card,.project-tile,.account-summary-card):hover { transform:none; }
 body.theme-professional .ops-main :is(.instant-score__ring,.instant-score__centre) {
   background:transparent!important;
@@ -935,3 +935,74 @@ body.theme-professional .ops-main .page-primary-accent:not(.page-header)::before
 body.theme-professional {
   --ui-accent-fill:var(--brand-color-600,#4f46e5);
 }
+
+/* Catalogue workspaces form one document, with a single rail divider. */
+body.theme-professional .ops-main :is(.category-workspace,.segment-workspace,.group-workspace) {
+  border:0;
+  border-top:1px solid var(--paper-rule,#d8dce2);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+}
+body.theme-professional .ops-main :is(.category-rail,.segment-rail,.group-rail) {
+  border-color:var(--paper-rule,#d8dce2);
+  border-radius:0;
+  background:transparent;
+}
+/* The outer section owns its rule; nested panels do not repeat it. */
+body.theme-professional .ops-main :is(.cards,.site-card,.ops-section,.utility-panel,.settings-section,.pivot-panel,.process-panel) :is(.cards,.site-card,.ops-section,.utility-panel,[class$="-card"],[class$="-panel"]) {
+  border-top:0!important;
+}
+body.theme-professional .site-system-page .site-intro,
+body.theme-professional.site-system-page .site-intro {
+  padding:.5rem 0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+body.theme-professional .site-intro::before { display:none; }
+
+/* Paper previews use the same continuous canvas and editorial hierarchy. */
+.settings-preview.is-paper .settings-preview__canvas { background:#fafaf8; }
+.settings-preview.is-paper .settings-preview__canvas::before { background:var(--site-brand,#4f46e5); }
+.settings-preview.is-paper :where(.settings-preview__header,.settings-preview__metrics article,.settings-preview__table) {
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.settings-preview.is-paper .settings-preview__header { padding-inline:0; border-bottom:2px solid #172033; }
+.settings-preview.is-paper .settings-preview__header > span { display:none; }
+.settings-preview.is-paper .settings-preview__metrics article { padding-inline:0; }
+.settings-preview.is-paper .settings-preview__metrics strong { font-weight:var(--preview-weight,400); }
+.settings-preview.is-paper .settings-preview__table { border-top:1px solid #d8dce2; }
+.settings-preview.is-paper .settings-preview__table > div { padding-inline:0; border-color:#d8dce2; }
+
+@media(max-width:767px) {
+  body.theme-professional.has-mobile-navigation .ops-main .page-header { padding-left:0!important; padding-right:0!important; }
+  body.theme-professional .ops-main :is(.category-rail,.segment-rail,.group-rail) { border-right:0; border-bottom:1px solid var(--paper-rule,#d8dce2); }
+}
+
+/* Sign-in shares Paper's document treatment without the authenticated shell. */
+body.theme-professional.login-page,
+body.theme-professional.login-page .login-stage { background:#fafaf8; }
+body.theme-professional.login-page .login-orb { display:none; }
+body.theme-professional.login-page :is(.login-shell,.login-story,.login-panel,.login-benefit,.login-welcome,.login-logo) {
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.theme-professional.login-page .login-shell { border:0; }
+body.theme-professional.login-page .login-shell::before { background:var(--login-brand,#4f46e5); }
+body.theme-professional.login-page .login-benefit { border:0; border-top:1px solid #d8dce2; padding-inline:0; }
+body.theme-professional.login-page .login-story h1 { font-weight:var(--accent-font-weight,700); }
+body.theme-professional.login-page :is(.login-submit,.login-passkey-button,.login-input-wrap input) { border-radius:.18rem; box-shadow:none; }
+body.theme-professional.login-page .login-submit { background:var(--login-brand,#4f46e5); }
+
+body.theme-professional.login-page { --brand-color-600:var(--login-brand,#4f46e5); --brand-color-700:var(--login-brand-dark,#4338ca); }
+body.theme-professional.login-page .login-passkey--primary .login-passkey-button { background:var(--login-brand,#4f46e5); }
+body.theme-professional.login-page :is(.login-submit,.login-passkey-button):hover { transform:none; }
+body.theme-professional.login-page :is(.login-submit,.login-passkey--primary .login-passkey-button):hover { background:var(--login-brand-dark,#4338ca); }

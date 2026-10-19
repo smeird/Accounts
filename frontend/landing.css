@@ -59,7 +59,7 @@
     gap: 0.55rem;
     margin: 0 0 1.15rem;
     color: var(--landing-brand-dark);
-    font-size: 0.72rem;
+    font-size: .75rem;
     font-weight: 800;
     letter-spacing: 0.13em;
     text-transform: uppercase;
@@ -190,7 +190,7 @@
 .landing-snapshot__kicker {
     margin: 0 0 0.2rem;
     color: var(--landing-muted);
-    font-size: 0.67rem;
+    font-size: .75rem;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -211,7 +211,7 @@
     border-radius: 999px;
     color: #047857;
     background: #ecfdf5;
-    font-size: 0.68rem;
+    font-size: .75rem;
     font-weight: 800;
     text-transform: uppercase;
 }
@@ -385,7 +385,7 @@
 .landing-journey__number {
     align-self: flex-end;
     color: #94a3b8;
-    font-size: 0.68rem;
+    font-size: .75rem;
     font-weight: 800;
     letter-spacing: 0.1em;
 }
@@ -562,7 +562,7 @@
     top: 0.55rem;
     right: 0.65rem;
     color: #94a3b8;
-    font-size: 0.6rem;
+    font-size: .75rem;
     font-weight: 800;
 }
 
@@ -580,14 +580,14 @@
 .landing-flow__step small {
     margin-top: 0.3rem;
     color: var(--landing-muted);
-    font-size: 0.65rem;
+    font-size: .75rem;
 }
 
 .landing-flow__arrow {
     flex: 0 0 auto;
     margin-inline: 0.45rem;
     color: #94a3b8;
-    font-size: 0.65rem;
+    font-size: .75rem;
 }
 
 .landing-footer {
@@ -596,7 +596,7 @@
     gap: 1rem;
     padding: 0.25rem 0.25rem 0.75rem;
     color: #64748b;
-    font-size: 0.72rem;
+    font-size: .75rem;
 }
 
 .landing-footer p {
@@ -732,7 +732,7 @@
     }
 
     .landing-stat__label {
-        font-size: 0.64rem;
+        font-size: .75rem;
     }
 
     .landing-section {

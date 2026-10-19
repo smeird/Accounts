@@ -68,7 +68,7 @@
 .group-eyebrow {
     margin: 0 0 0.2rem;
     color: var(--group-blue);
-    font-size: 0.64rem;
+    font-size: .75rem;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -84,7 +84,7 @@
     background: var(--group-blue-soft);
     color: var(--group-blue-dark);
     padding: 0.25rem 0.55rem;
-    font-size: 0.68rem;
+    font-size: .75rem;
     font-weight: 760;
 }
 
@@ -165,7 +165,7 @@
     overflow: hidden;
     margin-top: 0.15rem;
     color: var(--group-muted);
-    font-size: 0.64rem;
+    font-size: .75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -180,7 +180,7 @@
 .group-list-total,
 .group-list-status {
     color: var(--group-muted);
-    font-size: 0.64rem;
+    font-size: .75rem;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -190,7 +190,7 @@
     background: rgba(113, 130, 76, 0.13);
     color: #526136;
     padding: 0.12rem 0.35rem;
-    font-size: 0.58rem;
+    font-size: .75rem;
     font-weight: 720;
 }
 
@@ -220,7 +220,7 @@
     display: block;
     margin-bottom: 0.35rem;
     color: var(--group-muted);
-    font-size: 0.68rem;
+    font-size: .75rem;
     font-weight: 740;
 }
 
@@ -244,7 +244,7 @@
 .group-status-button {
     border: 1px solid transparent;
     border-radius: 0.68rem;
-    font-size: 0.72rem;
+    font-size: .75rem;
     font-weight: 760;
     white-space: nowrap;
 }
@@ -336,8 +336,8 @@
 .group-active-toggle input { width: 1rem; height: 1rem; margin-top: 0.1rem; accent-color: var(--group-blue); }
 .group-active-toggle strong,
 .group-active-toggle small { display: block; }
-.group-active-toggle strong { color: var(--group-ink); font-size: 0.72rem; }
-.group-active-toggle small { margin-top: 0.15rem; color: var(--group-muted); font-size: 0.65rem; line-height: 1.4; }
+.group-active-toggle strong { color: var(--group-ink); font-size: .75rem; }
+.group-active-toggle small { margin-top: 0.15rem; color: var(--group-muted); font-size: .75rem; line-height: 1.4; }
 
 .group-summary {
     display: grid;
@@ -352,8 +352,8 @@
 
 .group-summary > div { min-width: 5.5rem; border-right: 1px solid rgba(100, 116, 139, 0.16); }
 .group-summary span { display: block; color: var(--group-ink); font-size: 1.05rem; font-weight: 780; }
-.group-summary small { color: var(--group-muted); font-size: 0.64rem; }
-.group-summary p { margin: 0; color: var(--group-muted); font-size: 0.7rem; line-height: 1.45; }
+.group-summary small { color: var(--group-muted); font-size: .75rem; }
+.group-summary p { margin: 0; color: var(--group-muted); font-size: .75rem; line-height: 1.45; }
 
 .group-next-actions { flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
 .group-next-actions a { display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -369,7 +369,7 @@
 }
 
 .group-guidance i { margin-top: 0.1rem; color: var(--group-gold); }
-.group-guidance p { margin: 0; font-size: 0.72rem; line-height: 1.5; }
+.group-guidance p { margin: 0; font-size: .75rem; line-height: 1.5; }
 
 @media (max-width: 900px) {
     .group-workspace { grid-template-columns: minmax(13rem, 0.8fr) minmax(25rem, 2fr); }

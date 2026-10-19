@@ -58,3 +58,8 @@
 .login-embedded .login-main{width:100%;max-width:32rem;margin:auto}
 .login-embedded .login-shell{display:block}
 @media(max-width:767px){.web-app-reauth{margin:0;width:100%;height:100dvh;max-height:100dvh;border-radius:0}.web-app-reauth iframe{min-height:36rem}}
+
+@media(max-width:767px) {
+  /* The phone navigation owns the menu button; page titles align to the gutter. */
+  body.has-mobile-navigation .ops-main .page-header { padding-left:.75rem!important; padding-right:.75rem!important; }
+}

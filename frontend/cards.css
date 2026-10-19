@@ -16,7 +16,7 @@
 
 }
 
-.cards:hover {
+.cards:is(a,button,[role="button"]):hover {
   box-shadow:
 
     0 0 0 1px rgba(255, 255, 255, 0.45),
@@ -238,4 +238,15 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* A readable primary surface; embedded evidence inherits its elevation. */
+body:not(.theme-professional) .cards:not(.cards-solid) {
+  background-color:rgba(255,255,255,.72);
+}
+body:not(.theme-professional) :is(.cards,.site-card) :is(.glass-surface,.glass-chart) {
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  background-color:rgba(255,255,255,.35);
 }

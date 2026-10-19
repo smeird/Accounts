@@ -2,7 +2,7 @@
  * Never put page shells, API responses, exports or financial data in Cache API.
  * Update this version when changing offline.html. */
 'use strict';
-const CACHE = 'accounts-public-offline-v2';
+const CACHE = 'accounts-public-offline-v3';
 const OFFLINE = new URL('frontend/offline.html', self.registration.scope).href;
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request(OFFLINE, { cache: 'reload' }))));

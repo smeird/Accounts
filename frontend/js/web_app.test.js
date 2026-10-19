@@ -10,7 +10,7 @@ async function run() {
         self: { registration: { scope: 'https://accounts.example/install/' }, clients: { claim: async () => {} }, skipWaiting: () => {}, addEventListener: (name, handler) => { handlers[name] = handler; } },
         caches: {
             open: async () => ({ add: async request => stored.set(request.url, new Response('Public offline screen')) }),
-            keys: async () => ['unrelated-cache', 'accounts-public-offline-v0', 'accounts-public-offline-v2'],
+            keys: async () => ['unrelated-cache', 'accounts-public-offline-v0', 'accounts-public-offline-v2', 'accounts-public-offline-v3'],
             delete: async name => deleted.push(name),
             match: async url => stored.get(url)?.clone()
         },
@@ -21,7 +21,7 @@ async function run() {
     handlers.install({ waitUntil: promise => { done = promise; } }); await done;
     assert.deepEqual([...stored.keys()], ['https://accounts.example/install/frontend/offline.html']);
     handlers.activate({ waitUntil: promise => { done = promise; } }); await done;
-    assert.deepEqual(deleted, ['accounts-public-offline-v0']);
+    assert.deepEqual(deleted, ['accounts-public-offline-v0', 'accounts-public-offline-v2']);
     async function request(path, method = 'GET', mode = 'navigate') {
         let response;
         handlers.fetch({ request: { url: `https://accounts.example${path}`, method, mode }, respondWith: promise => { response = promise; } });

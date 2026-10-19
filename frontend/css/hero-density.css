@@ -81,7 +81,7 @@
   :where(.instant-score__ring,.yearly-rate__ring) { width:5.5rem; height:5.5rem; }
   :where(.instant-score__centre,.yearly-rate__centre) { width:4.35rem; height:4.35rem; }
   :where(.instant-score__centre > span,.yearly-rate__centre strong) { font-size:1.25rem; }
-  :where(.instant-score > p,.yearly-rate small) { margin-top:.28rem; font-size:.58rem; }
+  :where(.instant-score > p,.yearly-rate small) { margin-top:.28rem; font-size:.75rem; }
 
   :where(.instant-metric,.transaction-hero__metrics article,.budget-summary-grid article,.project-hero__metrics article,.yearly-metrics article) {
     min-height:4.25rem!important;
@@ -182,4 +182,22 @@
   .yearly-metrics article { min-height:5rem!important; }
   :where(.recurring-hero,.pivot-hero,.process-hero) { gap:.7rem; }
   :where(.recurring-method,.pivot-guide) { padding:.65rem; }
+}
+
+@media(max-width:640px) {
+  /* Keep the headline and its secondary signal on one compact phone row. */
+  .transaction-hero .transaction-hero__body,.project-hero .project-hero__body {
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+  }
+  .project-hero .project-hero__signal { min-width:0; max-width:7rem; text-align:right; }
+  .project-hero .project-hero__signal strong { display:block; font-size:1.5rem; }
+  .project-hero .project-hero__signal span { display:block; margin:.2rem 0 0; font-size:.75rem; }
+  .transaction-hero .transaction-hero__value,.project-hero .project-hero__value { font-size:clamp(2rem,9vw,2.6rem)!important; }
+  .transaction-hero .transaction-hero__metrics article,.project-hero .project-hero__metrics article { min-height:3.75rem!important; }
+}
+@media(max-width:640px) {
+  .transaction-hero .transaction-hero__signal { min-width:0; max-width:7rem; text-align:right; }
+  .transaction-hero .transaction-hero__signal strong { display:block; font-size:1.5rem; }
+  .transaction-hero .transaction-hero__signal span { display:block; margin:.2rem 0 0; }
 }

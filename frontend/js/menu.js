@@ -46,7 +46,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const themeLink = document.createElement('link');
     themeLink.id = 'theme-professional-css';
     themeLink.rel = 'stylesheet';
-    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20261019-paper-controls');
+    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20261019-visual-consistency');
     document.head.appendChild(themeLink);
   }
 
@@ -62,7 +62,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const heroDensityLink = document.createElement('link');
     heroDensityLink.id = 'hero-density-css';
     heroDensityLink.rel = 'stylesheet';
-    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20260829-financial-briefs');
+    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20261019-visual-consistency');
     document.head.appendChild(heroDensityLink);
   }
 
@@ -101,7 +101,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const typographyLink = document.createElement('link');
     typographyLink.id = 'site-typography-css';
     typographyLink.rel = 'stylesheet';
-    typographyLink.href = resolveFrontendAsset('typography.css?v=20260824-table-hierarchy');
+    typographyLink.href = resolveFrontendAsset('typography.css?v=20261019-visual-consistency');
     document.head.appendChild(typographyLink);
   }
 

@@ -43,7 +43,7 @@
 .statement-filter--attention.is-active { border-color:#fecdd3; color:#9f1239; background:#fff1f2; }
 .statement-classification-key { padding:.58rem 1.15rem; border-bottom:1px solid rgba(226,232,240,.82); background:rgba(248,250,252,.7); }
 .classification-key { display:flex; align-items:center; flex-wrap:wrap; gap:.35rem .55rem; color:#64748b; font-size:.56rem; font-weight:760; }
-.classification-key-title { color:#94a3b8; font-size:.5rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.classification-key-title { color:#64748b; font-size:.75rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 .classification-key-item { display:inline-flex; align-items:center; gap:.28rem; white-space:nowrap; }
 .classification-key-swatch { width:.48rem; height:.48rem; border:1px solid currentColor; border-radius:50%; }
 .classification-key-swatch--segment { color:#d97706; background:#fef3c7; }

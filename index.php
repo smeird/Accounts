@@ -90,7 +90,8 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link rel="stylesheet" href="frontend/vendor/tailwind/tailwind.min.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
-    <link rel="stylesheet" href="frontend/login.css?v=20260815-login-refresh">
+    <link rel="stylesheet" href="frontend/login.css?v=20261019-visual-consistency">
+    <link rel="stylesheet" href="frontend/css/theme-professional.css?v=20261019-visual-consistency">
     <style>
         :root {
             --login-brand: <?= htmlspecialchars($buttonColors['600']) ?>;
@@ -109,7 +110,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
         }
     </style>
 </head>
-<body class="login-page<?= ($_GET['embedded'] ?? '') === '1' ? ' login-embedded' : '' ?>">
+<body class="login-page<?= ($brand['surface_style'] ?? 'glass') === 'paper' ? ' theme-professional' : '' ?><?= ($_GET['embedded'] ?? '') === '1' ? ' login-embedded' : '' ?>">
     <div class="login-stage">
         <div class="login-orb login-orb--one" aria-hidden="true"></div>
         <div class="login-orb login-orb--two" aria-hidden="true"></div>

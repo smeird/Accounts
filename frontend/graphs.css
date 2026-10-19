@@ -31,7 +31,7 @@
 .graphs-card-kicker {
     margin: 0 0 0.25rem;
     color: var(--graphs-blue);
-    font-size: 0.67rem;
+    font-size: .75rem;
     font-weight: 800;
     letter-spacing: 0.13em;
     text-transform: uppercase;
@@ -55,7 +55,7 @@
     gap: 0.35rem;
     min-width: 11rem;
     color: var(--graphs-muted);
-    font-size: 0.72rem;
+    font-size: .75rem;
     font-weight: 750;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -127,7 +127,7 @@
 .graphs-metric-label {
     margin: 0;
     color: var(--graphs-muted);
-    font-size: 0.71rem;
+    font-size: .75rem;
     font-weight: 760;
     letter-spacing: 0.065em;
     text-transform: uppercase;
@@ -146,7 +146,7 @@
 .graphs-metric-context {
     margin: 0.48rem 0 0;
     color: var(--graphs-muted);
-    font-size: 0.74rem;
+    font-size: .75rem;
     line-height: 1.35;
 }
 
@@ -195,7 +195,7 @@
 .graphs-insight-detail {
     margin: 0.16rem 0 0;
     color: var(--graphs-muted);
-    font-size: 0.71rem;
+    font-size: .75rem;
     line-height: 1.38;
 }
 
@@ -247,7 +247,7 @@
     justify-content: flex-end;
     gap: 0.7rem;
     color: var(--graphs-muted);
-    font-size: 0.68rem;
+    font-size: .75rem;
     font-weight: 720;
     white-space: nowrap;
 }
@@ -293,7 +293,7 @@
     min-width: 0;
     overflow: hidden;
     color: var(--graphs-ink);
-    font-size: 0.74rem;
+    font-size: .75rem;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -324,7 +324,7 @@ a.graphs-bar-label:hover { color: var(--graphs-blue); text-decoration: underline
 .graphs-bar-value {
     min-width: 4.8rem;
     color: var(--graphs-ink);
-    font-size: 0.7rem;
+    font-size: .75rem;
     font-variant-numeric: tabular-nums;
     font-weight: 750;
     text-align: right;
@@ -389,7 +389,7 @@ a.graphs-bar-label:hover { color: var(--graphs-blue); text-decoration: underline
     gap: 0.45rem;
     align-items: center;
     color: var(--graphs-muted);
-    font-size: 0.72rem;
+    font-size: .75rem;
 }
 
 .graphs-composition-dot { width: 0.6rem; height: 0.6rem; border-radius: 0.18rem; }
@@ -403,9 +403,9 @@ a.graphs-bar-label:hover { color: var(--graphs-blue); text-decoration: underline
 
 .graphs-heatmap-wrap { overflow-x: auto; padding-bottom: 0.2rem; }
 .graphs-heatmap { display: grid; grid-template-columns: minmax(8.5rem, 1.4fr) repeat(12, minmax(2.4rem, 1fr)); gap: 0.25rem; min-width: 48rem; align-items: center; }
-.graphs-heatmap-heading { color: var(--graphs-muted); font-size: 0.63rem; font-weight: 760; text-align: center; text-transform: uppercase; }
-.graphs-heatmap-label { overflow: hidden; color: var(--graphs-ink); font-size: 0.71rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.graphs-heatmap-cell { display: grid; min-height: 2rem; place-items: center; border: 1px solid rgba(52, 89, 199, 0.08); border-radius: 0.42rem; background: rgba(52, 89, 199, var(--cell-alpha, 0.05)); color: var(--graphs-ink); font-size: 0.6rem; font-variant-numeric: tabular-nums; }
+.graphs-heatmap-heading { color: var(--graphs-muted); font-size: .75rem; font-weight: 760; text-align: center; text-transform: uppercase; }
+.graphs-heatmap-label { overflow: hidden; color: var(--graphs-ink); font-size: .75rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.graphs-heatmap-cell { display: grid; min-height: 2rem; place-items: center; border: 1px solid rgba(52, 89, 199, 0.08); border-radius: 0.42rem; background: rgba(52, 89, 199, var(--cell-alpha, 0.05)); color: var(--graphs-ink); font-size: .75rem; font-variant-numeric: tabular-nums; }
 .graphs-heatmap-cell.is-empty { background: rgba(148, 163, 184, 0.06); color: #98a2b3; }
 
 .graphs-tag-grid {
@@ -428,7 +428,7 @@ a.graphs-bar-label:hover { color: var(--graphs-blue); text-decoration: underline
 a.graphs-tag:hover { border-color: rgba(52, 89, 199, 0.35); transform: translateY(-1px); }
 .graphs-tag.is-summary { background: rgba(148, 163, 184, 0.08); }
 .graphs-tag-name { overflow: hidden; color: var(--graphs-ink); font-size: 0.76rem; font-weight: 740; text-overflow: ellipsis; white-space: nowrap; }
-.graphs-tag-meta { display: flex; justify-content: space-between; gap: 0.7rem; color: var(--graphs-muted); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+.graphs-tag-meta { display: flex; justify-content: space-between; gap: 0.7rem; color: var(--graphs-muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
 
 .graphs-empty {
     display: grid;

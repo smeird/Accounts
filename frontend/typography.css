@@ -449,3 +449,18 @@
         font-size: var(--type-caption);
     }
 }
+
+/* Specialist workspaces follow the same reading hierarchy as dashboards. */
+body .ops-main :is(.forecast-message,.pivot-guide p,.pivot-controls p,.process-card p,.utility-panel p,.settings-section__header p,.settings-field > p,.upload-guidance,.workbook-chapter p) {
+    font-size:var(--type-body)!important;
+    line-height:1.55;
+}
+.ops-main :is(.forecast-button,.pivot-button,.process-card__action,.process-primary-action,.settings-save,.settings-secondary-button) {
+    font-size:var(--type-control);
+}
+.ops-main :is([class$="-eyebrow"],[class$="-kicker"],[class$="-section-label"],.pivot-control label,.settings-field > span) {
+    font-size:var(--type-caption);
+    letter-spacing:.055em;
+    font-weight:var(--accent-font-weight,600);
+}
+body:not(.theme-professional) .ops-main .page-title { font-weight:var(--accent-font-weight,700); }

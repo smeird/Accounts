@@ -191,3 +191,13 @@ Mortgage Planner uses the shared full-width shell, page header, surfaces and rea
 Reserve space for the top controls, bottom tabs, live connection banner and home indicator. Inputs use at least 16px text and 44px touch height on phones. Transaction classification opens in a full-screen native dialog; closing it retains unfinished changes. Use the shared notification overlay for transient messages; persistent connectivity/session state belongs in the web-app layer. Preserve boolean `hidden` states even when a component uses flex/grid layout.
 
 Editable forms may opt into in-memory navigation protection with `data-preserve-edits`; report a successful save through `AppWeb.markSaved(form)`, optionally supplying the captured submitted state if controls can change during a request. Never persist financial drafts on the device. Only read-only pages should opt into `data-resume-refresh`. Optional chart assets load after primary data, with numerical evidence remaining usable on failure. Rebuild the committed local Tailwind stylesheet after changing utility classes.
+
+### Cross-page refinements
+
+Specialist workspaces use the same readable hierarchy as dashboards: 14px for explanatory copy and operational controls, 12px for captions, and 11px only for secondary table metadata. Eyebrows use restrained tracking and the selected accent weight. Preserve large financial figures and the distinct Paper editorial hierarchy.
+
+Glass has frosted headers, readable primary cards and flatter inset evidence. Static surfaces keep their elevation on hover; interactive cards may elevate. Paper catalogue workspaces and their rails share the continuous canvas, with one section rule and a neutral rail divider. Nested panels do not repeat the outer rule. Informational introductions remain quiet; genuine warnings retain semantic treatment.
+
+Primary actions and focus treatments use the saved palette, including the independent pension and mortgage planners. Scope planner link treatments to their main workspace so navigation retains its shared appearance. On phones, page titles align below the separate navigation bar and compact heroes retain all their metrics.
+
+The Settings sample previews Glass and Paper as distinct systems. It reflects unsaved palette, density, corner, title-size and typography selections without changing the live installation. Paper uses a warm canvas, solid accent, editorial title, unboxed figures and ruled ledger rows. Public offline and sign-in confirmation screens remain account-free, use a simple document layout, and preserve 44px minimum actions; changing the offline screen requires a new public service-worker cache version.
