@@ -168,3 +168,5 @@
 
 - Specialist workspace captions use the shared 12px floor; explanations and operational controls use 14px. Reserve 11px for secondary table metadata. Static Glass surfaces keep stable elevation, embedded charts/tables inherit their parent surface, and only explicitly interactive cards elevate on hover. Paper catalogue rails share a continuous document canvas and nested panels do not repeat outer section rules.
 - Settings appearance previews reflect the actual Glass/Paper surface hierarchy, selected palette, corners, density, title scale and typography without changing saved preferences. Phone page headers align beneath the separate navigation bar; keep financial heroes compact while retaining every metric and touch target.
+
+- Standalone and embedded sign-in honour the device’s Professional surface override, falling back to the installation setting when none is saved or browser storage is unavailable. Appearance preview Default typography must clear the sample override; Default body type resolves from the application’s root font rather than inheriting the saved body choice.

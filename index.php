@@ -90,7 +90,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link rel="stylesheet" href="frontend/vendor/tailwind/tailwind.min.css">
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
-    <link rel="stylesheet" href="frontend/login.css?v=20261019-visual-consistency">
+    <link rel="stylesheet" href="frontend/login.css?v=20261019-appearance-defaults">
     <link rel="stylesheet" href="frontend/css/theme-professional.css?v=20261019-visual-consistency">
     <style>
         :root {
@@ -111,6 +111,17 @@ $needsToken = isset($_SESSION['pending_user_id']);
     </style>
 </head>
 <body class="login-page<?= ($brand['surface_style'] ?? 'glass') === 'paper' ? ' theme-professional' : '' ?><?= ($_GET['embedded'] ?? '') === '1' ? ' login-embedded' : '' ?>">
+    <script>
+      // Match this device's workspace surface, including embedded sign-in.
+      try {
+        const savedSurface = localStorage.getItem('professionalThemeEnabled');
+        if (savedSurface === 'true' || savedSurface === 'false') {
+          document.body.classList.toggle('theme-professional', savedSurface === 'true');
+        }
+      } catch (error) {
+        // The installation default remains available when storage is disabled.
+      }
+    </script>
     <div class="login-stage">
         <div class="login-orb login-orb--one" aria-hidden="true"></div>
         <div class="login-orb login-orb--two" aria-hidden="true"></div>

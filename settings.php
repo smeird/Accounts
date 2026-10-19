@@ -391,9 +391,12 @@ $colorHex = $selectedPalette['primary'];
         for (const [field, variable] of [['font_heading','--preview-heading-font'],['font_body','--preview-body-font'],['font_table','--preview-table-font']]) {
           const family = document.getElementById(field)?.value;
           if (family) appearancePreview.style.setProperty(variable, family);
+          else if (field === 'font_body') appearancePreview.style.setProperty(variable, getComputedStyle(document.documentElement).fontFamily);
           else appearancePreview.style.removeProperty(variable);
         }
-        appearancePreview.style.setProperty('--preview-weight', document.getElementById('accent-font-weight')?.value || '700');
+        const previewWeight = document.getElementById('accent-font-weight')?.value;
+        if (previewWeight) appearancePreview.style.setProperty('--preview-weight', previewWeight);
+        else appearancePreview.style.removeProperty('--preview-weight');
         const previewTitle = appearancePreview.querySelector('.settings-preview__header strong');
         if (previewTitle) previewTitle.textContent = siteNameInput?.value.trim() || 'Financial overview';
       };
