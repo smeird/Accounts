@@ -814,3 +814,26 @@ body.theme-professional .site-menu-group-toggle {
   body.theme-professional .ops-main .page-header { padding-block:.9rem!important; }
   body.theme-professional .ops-main :is(.instant-balance,.transaction-hero__value,.budget-remaining,.yearly-cashflow,.forecast-position) { font-size:2.2rem!important; }
 }
+
+/* Inline notices read as part of the document, with a quiet semantic ink rule. */
+body.theme-professional .site-notification {
+  border: 0;
+  border-bottom: 1px solid var(--paper-rule,#d9dee7);
+  border-radius: 0;
+  background: var(--paper-sheet,#fffefb);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+body.theme-professional .site-notification::before {
+  inset: .65rem auto .65rem 0;
+  width: 2px;
+  border-radius: 0;
+}
+body.theme-professional .site-notification__icon {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+body.theme-professional .site-notification__title { color: var(--paper-ink,#172033); }
+body.theme-professional .site-notification__message { color: var(--paper-muted,#5f6b7c); }

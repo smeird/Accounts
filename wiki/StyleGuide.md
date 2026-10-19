@@ -98,7 +98,7 @@ Use uppercase, tracked captions sparingly for section labels. Within a table row
 - Keep global filters few and consequential.
 - Every form control has a visible label; use `data-help` for extra explanation.
 - Icon-only controls require a specific `aria-label`.
-- Use `frontend/js/overlay.js` and `window.showMessage()` for notifications; do not create page-specific toast systems.
+- Use `frontend/js/overlay.js` and `window.showMessage()` for notifications; do not create page-specific toast systems. Notices expand into a reserved shell row above the workspace, preserving the main scroll position and never covering its controls. Glass uses frosted translucent panels; Professional uses flat paper notices with semantic ink accents and horizontal rules. Keep 44px dismiss targets, live announcements, phone navigation clearance and reduced-motion support.
 - Provide immediate visible feedback for save, run, update, loading and failure actions.
 - Destructive or assignment-clearing actions are isolated and explicitly confirmed.
 

@@ -43,7 +43,7 @@
         const link = document.createElement('link');
         link.id = 'site-notification-css';
         link.rel = 'stylesheet';
-        link.href = 'notification.css?v=20260816-modern-toasts';
+        link.href = 'notification.css?v=20261019-inline-notices';
         document.head.appendChild(link);
     }
 
@@ -55,7 +55,11 @@
         stack.id = 'notification-stack';
         stack.className = 'notification-stack';
         stack.setAttribute('aria-label', 'Notifications');
-        document.body.appendChild(stack);
+        // A sibling of main reserves real space, even when the workspace is scrolled.
+        // Pages without the application shell use the same notices in document flow.
+        const main = document.querySelector('main');
+        if (main) main.before(stack);
+        else document.body.prepend(stack);
         return stack;
     }
 
@@ -64,8 +68,16 @@
         toast.dataset.closing = 'true';
         toast.classList.add('is-leaving');
 
-        const finish = () => toast.remove();
-        toast.addEventListener('animationend', finish, { once: true });
+        const slot = toast.parentElement?.parentElement;
+        if (!slot?.classList.contains('notification-slot')) {
+            toast.remove();
+            return;
+        }
+        slot.classList.remove('is-open');
+        const finish = () => slot.remove();
+        slot.addEventListener('transitionend', event => {
+            if (event.target === slot && event.propertyName === 'grid-template-rows') finish();
+        });
         root.setTimeout(finish, 350);
     }
 
@@ -85,13 +97,16 @@
         const tone = inferTone(message, type, typeWasProvided);
         const details = toneDetails[tone];
         const stack = notificationStack();
+        const slot = document.createElement('div');
+        const inner = document.createElement('div');
+        slot.className = 'notification-slot';
+        inner.className = 'notification-slot__inner';
         const toast = document.createElement('section');
         const copy = document.createElement('div');
         const title = document.createElement('strong');
         const body = document.createElement('p');
         const close = document.createElement('button');
         const closeIcon = document.createElement('i');
-        const timer = document.createElement('span');
         const duration = durationForTone(tone);
 
         notificationSequence += 1;
@@ -116,13 +131,13 @@
         close.appendChild(closeIcon);
         close.addEventListener('click', () => removeToast(toast));
 
-        timer.className = 'site-notification__timer';
-        timer.setAttribute('aria-hidden', 'true');
-        if (duration > 0) timer.style.setProperty('--notification-duration', `${duration}ms`);
-        else timer.hidden = true;
-
-        toast.append(iconNode(details.icon), copy, close, timer);
-        stack.appendChild(toast);
+        toast.append(iconNode(details.icon), copy, close);
+        inner.appendChild(toast);
+        slot.appendChild(inner);
+        stack.appendChild(slot);
+        // Establish the collapsed size before opening so following content moves smoothly.
+        void slot.offsetHeight;
+        slot.classList.add('is-open');
 
         while (stack.children.length > 3) stack.firstElementChild.remove();
         if (duration > 0) root.setTimeout(() => removeToast(toast), duration);
