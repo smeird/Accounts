@@ -6,6 +6,7 @@ class PensionPlanner {
     public static function defaults(?string $today = null): array {
         return ['age' => 52, 'age_as_of' => $today ?? date('Y-m-d'), 'retirement_age' => 67,
             'end_age' => 95, 'access_age' => 57, 'growth' => 5, 'retirement_growth' => 3,
+            'spending_profile' => 'level', 'slow_go_percent' => 80, 'no_go_percent' => 60,
             'inflation' => 2.5, 'state_annual' => 0, 'state_age' => 67, 'target_monthly' => 0, 'pots' => []];
     }
 
@@ -16,6 +17,11 @@ class PensionPlanner {
             'state_annual'=>[0,100000], 'state_age'=>[60,80], 'target_monthly'=>[0,1000000]] as $key=>$range) {
             $out[$key] = self::number($input[$key] ?? null, $range[0], $range[1], $key);
         }
+        $out['spending_profile'] = $input['spending_profile'] ?? 'level';
+        if (!in_array($out['spending_profile'], ['level','three_phase'], true)) throw new InvalidArgumentException('Choose a valid spending profile.');
+        $out['slow_go_percent'] = self::number($input['slow_go_percent'] ?? 80, 1, 100, 'Slow-Go percentage');
+        $out['no_go_percent'] = self::number($input['no_go_percent'] ?? 60, 1, 100, 'No-Go percentage');
+        if ($out['no_go_percent'] > $out['slow_go_percent']) throw new InvalidArgumentException('No-Go spending cannot exceed Slow-Go spending.');
         $out['age_as_of'] = self::date($input['age_as_of'] ?? null);
         $age = self::currentAge($out);
         if (($checkCurrentAge && $age > 90) || $out['retirement_age'] < max($checkCurrentAge ? $age : $out['age'], $out['access_age']) || $out['end_age'] <= $out['retirement_age']) {
@@ -76,6 +82,7 @@ class PensionPlanner {
     }
 
     public static function forecast(array $plan, ?DateTimeImmutable $now = null): array {
+        $plan = array_replace(self::defaults(), $plan);
         $age = self::currentAge($plan,$now);
         if ($plan['retirement_age'] < max($age,$plan['access_age']) || $plan['end_age'] <= $plan['retirement_age']) {
             throw new InvalidArgumentException('Update the retirement and end ages before forecasting.');
@@ -114,11 +121,15 @@ class PensionPlanner {
         if ($total>0) { $rate=0; foreach($pots as $i=>$balance) $rate += $balance/$total*$rates[$i]; }
         $state=$p['state_annual']/12;
         $stateMonth=max(0,(int)ceil(($p['state_age']-$p['retirement_age'])*12));
-        $canFund=function(float $income) use($total,$rate,$duration,$state,$stateMonth): bool {
+        $phased = ($p['spending_profile'] ?? 'level') === 'three_phase';
+        $weights = $phased ? [1, $p['slow_go_percent']/100, $p['no_go_percent']/100] : [1,1,1];
+        // Equal age spans; a monthly withdrawal uses the phase at its start.
+        $phaseAt = fn(int $m): int => min(2, (int)floor($m * 3 / (($p['end_age']-$p['retirement_age'])*12)));
+        $canFund=function(float $income) use($total,$rate,$duration,$state,$stateMonth,$weights,$phaseAt): bool {
             $balance=$total;
             for($m=0;$m<$duration;$m++) {
                 // Withdraw at the start of each month; never borrow against a later State Pension.
-                $balance-=max(0,$income-($m >= $stateMonth ? $state : 0));
+                $balance-=max(0,$income*$weights[$phaseAt($m)]-($m >= $stateMonth ? $state : 0));
                 if($balance < -0.000001) return false;
                 $balance*=$rate;
             }
@@ -130,15 +141,23 @@ class PensionPlanner {
         if ($withRows) {
             $rows[]=['age'=>$p['retirement_age'],'pot_today'=>$total,'pot_future'=>$total*$factor,'monthly_today'=>max($income,$stateMonth===0?$state:0),'monthly_future'=>max($income,$stateMonth===0?$state:0)*$factor];
             for($m=0;$m<$duration;$m++) {
-                $balance=max(0,$balance-max(0,$income-($m >= $stateMonth?$state:0)))*$rate;
-                if(($m+1)%12===0 || $m+1===$duration) {
+                $balance=max(0,$balance-max(0,$income*$weights[$phaseAt($m)]-($m >= $stateMonth?$state:0)))*$rate;
+                if(($m+1)%12===0 || $m+1===$duration || ($phased && $phaseAt($m)!==$phaseAt($m+1))) {
                     $factorAt=pow($inflation,$months+$m+1);
-                    $actual=max($income,($m+1 >= $stateMonth ? $state:0));
+                    $actual=max($income*$weights[$phaseAt(min($m+1,$duration-1))],($m+1 >= $stateMonth ? $state:0));
                     $rows[]=['age'=>round($p['retirement_age']+($m+1)/12,2),'pot_today'=>$balance,'pot_future'=>$balance*$factorAt,'monthly_today'=>$actual,'monthly_future'=>$actual*$factorAt];
                 }
             }
         }
-        return ['pot_today'=>$total,'pot_future'=>$total*$factor,'monthly_today'=>$income,'monthly_future'=>$income*$factor,
+        $phases = [];
+        if ($phased) foreach (['Go-Go','Slow-Go','No-Go'] as $i=>$name) {
+            $start = $p['retirement_age'] + ($p['end_age']-$p['retirement_age'])*$i/3;
+            $end = $p['retirement_age'] + ($p['end_age']-$p['retirement_age'])*($i+1)/3;
+            $availableState = $start >= $p['state_age'] ? $state : 0;
+            $phases[] = ['name'=>$name,'start_age'=>$start,'end_age'=>$end,'percent'=>$weights[$i]*100,
+                'monthly_target_today'=>$income*$weights[$i], 'monthly_today'=>max($income*$weights[$i],$availableState)];
+        }
+        return ['phases'=>$phases,'pot_today'=>$total,'pot_future'=>$total*$factor,'monthly_today'=>$income,'monthly_future'=>$income*$factor,
             'daily_today'=>$income*12/365.2425,'daily_future'=>$income*$factor*12/365.2425,
             'monthly_after_state_today'=>max($income,$state),'rows'=>$rows];
     }

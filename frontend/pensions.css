@@ -4,3 +4,5 @@
 #pension-plan-state { color:var(--type-table-secondary-color,#64748b); font-size:14px; margin:.5rem 0; }
 
 .pension-metric { border:0; background:transparent; }
+
+.pension-field select{width:100%;border:1px solid #94a3b8;border-radius:.4rem;padding:.6rem;background:transparent;color:inherit;min-height:44px;font:inherit}

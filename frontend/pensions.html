@@ -29,6 +29,7 @@
             <div class="pension-heading"><div><h2 id="pension-results-title">Your retirement income illustration</h2><p id="pension-context"></p></div><span class="pension-caption">Before tax · no lump sum taken</span></div>
             <div id="pension-metrics" class="pension-metrics" aria-live="polite"></div>
             <p id="pension-target"></p><p id="pension-notes"></p>
+            <div id="pension-phase-results" hidden><h3>Three-phase spending</h3><p>Monthly targets in today’s money, before tax. State Pension may provide more than a later target; any surplus is not reinvested.</p><div class="pension-table-wrap"><table class="pension-table"><caption>Central scenario · equal thirds of retirement</caption><thead><tr><th scope="col">Phase</th><th scope="col">Ages</th><th scope="col">Spending level</th><th scope="col">Monthly target today</th></tr></thead><tbody id="pension-phases"></tbody></table></div></div>
             <div class="pension-table-wrap"><table class="pension-table"><caption>Compare growth scenarios — income at retirement</caption><thead><tr><th scope="col">Scenario</th><th scope="col">Pot in today’s money</th><th scope="col">Monthly today</th><th scope="col">Daily today</th><th scope="col">Monthly future</th></tr></thead><tbody id="pension-scenarios"></tbody></table></div>
         </section>
         <details id="pension-editor" open>
@@ -44,6 +45,8 @@
                     <h2>Explore your retirement</h2>
                     <p>Your age starts at an approximate 52. Set an accurate age and its date below; the planner advances your age as time passes.</p>
                     <div id="pension-controls" class="pension-control-grid"></div>
+                    <div class="pension-field"><label for="spending_profile">Retirement spending profile</label><select id="spending_profile" aria-label="Retirement spending profile" data-help="Three equal age spans from retirement to your selected end age. Lower later spending brings sustainable income forward."><option value="level">Level income</option><option value="three_phase">Go-Go / Slow-Go / No-Go</option></select></div>
+                    <div id="pension-phase-controls" class="pension-control-grid" hidden></div><p id="pension-phase-help" hidden>Go-Go is 100%. Set later phases as percentages of Go-Go purchasing power. These are editable assumptions, not predictions of your needs; later care costs may rise. The optional monthly target tests Go-Go income.</p>
                     <details class="pension-assumptions"><summary>Growth, inflation and optional State Pension</summary>
                         <p>Growth rates are annual nominal returns before fees. These are editable illustrations, not predictions. State Pension is excluded until you enter your own annual forecast.</p>
                         <div id="pension-assumptions" class="pension-control-grid"></div>
@@ -55,9 +58,9 @@
         </form>
         </details>
         <section id="pension-timeline" class="cards cards-tight" hidden>
-            <h2>How your pot could change</h2><p>Central scenario. The same purchasing power is withdrawn each month; State Pension reduces the withdrawals needed from the pot.</p>
+            <h2>How your pot could change</h2><p id="pension-timeline-description">Central scenario. The same purchasing power is withdrawn each month; State Pension reduces the withdrawals needed from the pot.</p>
             <div id="pension-chart" aria-label="Projected pension pot in today’s money" style="min-height:300px"></div>
-            <details><summary>View yearly figures</summary><div class="pension-table-wrap"><table class="pension-table"><caption>Central scenario at each birthday interval; future pounds include inflation to that point</caption><thead><tr><th scope="col">Age</th><th scope="col">Pot today</th><th scope="col">Pot future</th><th scope="col">Monthly income today</th><th scope="col">Monthly income future</th></tr></thead><tbody id="pension-years"></tbody></table></div></details>
+            <details><summary>View yearly figures</summary><div class="pension-table-wrap"><table class="pension-table"><caption>Central scenario at yearly intervals and phase changes; future pounds include inflation to that point</caption><thead><tr><th scope="col">Age</th><th scope="col">Pot today</th><th scope="col">Pot future</th><th scope="col">Monthly income today</th><th scope="col">Monthly income future</th></tr></thead><tbody id="pension-years"></tbody></table></div></details>
         </section>
         <section class="cards cards-tight pension-method">
             <h2>What these figures mean</h2>

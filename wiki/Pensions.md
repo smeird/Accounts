@@ -13,6 +13,12 @@ Open **Planning → Pensions & Retirement**. This workspace models investment pe
 
 Changes are previews until saved. Another browser cannot silently overwrite a newer saved revision. Plan and provider details are shared by signed-in users of the installation, like the account ledger.
 
+## Three-phase spending
+
+In **Edit assumptions**, choose **Go-Go / Slow-Go / No-Go** to split retirement into three equal age spans ending at the selected forecast end age. Go-Go is the reference (100%); editable Slow-Go and No-Go levels default to 80% and 60% of its purchasing power. These are starting assumptions, not recommended spending levels. No-Go cannot exceed Slow-Go. Later care costs may increase rather than fall.
+
+The model solves for the Go-Go monthly income that can fund the entire profile, allowing more spending earlier in exchange for lower later targets. The phase table shows exact age boundaries and central monthly targets; yearly figures also include monthly phase transitions. Withdrawals use the phase at each month’s start, so a fractional-month boundary takes effect at the next withdrawal. State Pension remains a floor on available income; surplus over a phase target is not reinvested. The optional retirement-age target tests Go-Go income. Saved profiles feed Financial Overview and travel with pension backups; older plans retain level income.
+
 ## Calculation
 
 The deterministic model compounds monthly. Before retirement, each pot earns its own fee-adjusted nominal return and receives fixed nominal contributions at month end. At retirement, the projected total is converted into today’s purchasing power. Retirement uses the value-weighted monthly return of the projected pots, assuming a rebalanced portfolio, net of fees and inflation.

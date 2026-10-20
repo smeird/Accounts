@@ -48,3 +48,25 @@ assertEqual(true,$stalePension,'Concurrent pension saves cannot overwrite a newe
 $overviewWithPension=InstantDashboard::getSnapshot();
 assertEqual(360000.0,$overviewWithPension['pensions']['total'],'Financial Overview includes pension totals separately');
 assertEqual(1000.0,round($overviewWithPension['pensions']['monthly_today'],2),'Financial Overview uses the saved forecast');
+
+$phased=$pensionPlan;
+$phased['spending_profile']='three_phase';
+$phasedResult=PensionPlanner::forecast(PensionPlanner::validate($phased))['scenarios']['central'];
+assertEqual(1250.0,round($phasedResult['monthly_today'],2),'Phased income brings spending forward from the same £360k pot');
+assertEqual([1250.0,1000.0,750.0],array_map(fn($p)=>round($p['monthly_target_today'],2),$phasedResult['phases']),'Three phases use 100/80/60 purchasing-power targets');
+assertEqual([60.0,70.0,80.0],array_column($phasedResult['phases'],'start_age'),'Retirement phases divide the horizon equally');
+assertEqual(0.0,round(array_slice($phasedResult['rows'],-1)[0]['pot_today'],2),'Phased drawdown exhausts the pot only at the end');
+$equalPhases=$phased;$equalPhases['slow_go_percent']=100;$equalPhases['no_go_percent']=100;
+assertEqual(1000.0,round(PensionPlanner::forecast($equalPhases)['scenarios']['central']['monthly_today'],2),'Equal phase percentages reproduce level income');
+$oldPlan=$pensionPlan;unset($oldPlan['spending_profile'],$oldPlan['slow_go_percent'],$oldPlan['no_go_percent']);
+assertEqual('level',PensionPlanner::validate($oldPlan)['spending_profile'],'Old plans and backups default to level spending');
+foreach (['bad profile'=>['spending_profile'=>'unknown'],'zero later spending'=>['no_go_percent'=>0],'increasing spending'=>['slow_go_percent'=>50,'no_go_percent'=>60],'string percentage'=>['slow_go_percent'=>'80']] as $case=>$change) {
+    try {PensionPlanner::validate(array_replace($phased,$change));$rejected=false;}catch(InvalidArgumentException $e){$rejected=true;}
+    assertEqual(true,$rejected,'Phased validation rejects '.$case);
+}
+$phasedState=$phased;$phasedState['state_annual']=12000;$phasedState['state_age']=80;
+$phasedStateResult=PensionPlanner::forecast($phasedState)['scenarios']['central'];
+assertEqual(true,min(array_column($phasedStateResult['rows'],'pot_today'))>=0,'Phased State Pension cannot fund earlier withdrawals by borrowing');
+$phaseRevision=PensionPlanner::load()['revision'];PensionPlanner::save($phased,$phaseRevision);
+assertEqual('three_phase',PensionPlanner::load()['plan']['spending_profile'],'Spending profile persists with the saved plan');
+assertEqual(60.0,(float)PensionPlanner::load()['plan']['no_go_percent'],'Later phase percentage survives reload');

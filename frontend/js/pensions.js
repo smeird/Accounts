@@ -38,6 +38,15 @@
         parent.append(wrap);return input;
     }
     fields.forEach((f,i)=>field($(i<5?'pension-controls':'pension-assumptions'),...f,['retirement_age','end_age','growth','retirement_growth','inflation'].includes(f[0])));
+    const phaseFields = [
+        ['slow_go_percent','Slow-Go spending (% of Go-Go)',1,100,1,80,'The middle third’s monthly spending in today’s money, relative to Go-Go.'],
+        ['no_go_percent','No-Go spending (% of Go-Go)',1,100,1,60,'The final third’s spending; must not exceed Slow-Go.']
+    ];
+    phaseFields.forEach(f=>field($('pension-phase-controls'),...f));
+    function syncPhases() {
+        const phased=$('spending_profile').value==='three_phase';
+        $('pension-phase-controls').hidden=!phased;$('pension-phase-help').hidden=!phased;
+    }
     let sequence=0;
     function addPot(pot={provider:'',value:0,monthly:0,fee:.5,valued_on:today}) {
         const card=document.createElement('article');card.className='pension-pot';const n=++sequence;
@@ -55,6 +64,8 @@
     }
     function collect() {
         const plan={};fields.forEach(([key])=>{plan[key]=key==='age_as_of'?$(key).value:Number($(key).value);});
+        plan.spending_profile=$('spending_profile').value;
+        phaseFields.forEach(([key])=>{plan[key]=Number($(key).value);});
         plan.pots=[...document.querySelectorAll('.pension-pot')].map(card=>{
             const pot={};card.querySelectorAll('[data-pot-key]').forEach(input=>{pot[input.dataset.potKey]=['provider','valued_on'].includes(input.dataset.potKey)?input.value:Number(input.value);});return pot;
         });return plan;
@@ -68,6 +79,7 @@
     }
     function changed() {
         if(!loaded)return;
+        syncPhases();
         dirty=true;$('pension-plan-state').textContent='Unsaved preview · the dashboard still uses your saved plan.';request++;controller?.abort();invalidate();$('save-status').textContent='Unsaved changes · dashboard still uses your saved plan.';
         $('pension-empty').hidden=document.querySelectorAll('.pension-pot').length>0;
         clearTimeout(timer);timer=setTimeout(preview,180);
@@ -88,11 +100,15 @@
         $('pension-results').hidden=false;$('pension-timeline').hidden=false;$('pension-error').hidden=true;
         $('pension-status').textContent=`${plan.pots.length} pension${plan.pots.length===1?'':'s'} · current age approximately ${data.age_now.toFixed(1)} · ${money(data.contributions)} contributed each month.`;
         $('pension-context').textContent=`Retire at ${plan.retirement_age}; draw down through to age ${plan.end_age}. Future amounts below are in pounds at retirement.`;
-        const metrics=[['Recorded pots',money(data.recorded_total),'Kept separate from your bank balances'],['Projected retirement pot',money(c.pot_today),money(c.pot_future)+' in future pounds'],['Monthly income today',money(c.monthly_today),money(c.monthly_future)+' in future pounds'],['Daily income today',daily(c.daily_today),daily(c.daily_future)+' in future pounds']];
+        const phased=plan.spending_profile==='three_phase';
+        $('pension-phase-results').hidden=!phased;
+        cells($('pension-phases'),(c.phases||[]).map(p=>[p.name,`${Number(p.start_age.toFixed(2))}–${Number(p.end_age.toFixed(2))}`,`${p.percent}%`,money(p.monthly_target_today)]));
+        $('pension-timeline-description').textContent=phased?'Central scenario. Spending changes across three equal age spans. Monthly withdrawals use the phase at month start; State Pension reduces the amount needed from the pot.':'Central scenario. The same purchasing power is withdrawn each month; State Pension reduces the withdrawals needed from the pot.';
+        const metrics=[['Recorded pots',money(data.recorded_total),'Kept separate from your bank balances'],['Projected retirement pot',money(c.pot_today),money(c.pot_future)+' in future pounds'],[phased?'Go-Go monthly income today':'Monthly income today',money(c.monthly_today),money(c.monthly_future)+' in future pounds'],[phased?'Go-Go daily income today':'Daily income today',daily(c.daily_today),daily(c.daily_future)+' in future pounds']];
         $('pension-metrics').replaceChildren();metrics.forEach(([label,value,note])=>{const div=document.createElement('div');div.className='pension-metric';for(const [tag,text] of [['span',label],['strong',value],['small',note]]){const e=document.createElement(tag);e.textContent=text;div.append(e);}$('pension-metrics').append(div);});
-        $('pension-target').textContent=plan.target_monthly>0?(data.earliest_target_age!==null?`The central scenario first meets your ${money(plan.target_monthly)} monthly target at age ${data.earliest_target_age} (whole-year ages tested). This is an illustration, not a guaranteed retirement date.`:`Your ${money(plan.target_monthly)} monthly target is not met at any tested retirement age up to ${Math.min(90,plan.end_age-1)}.`):'No spending target set. Explore the income above, or add an optional monthly target to test a retirement age.';
+        $('pension-target').textContent=plan.target_monthly>0?(data.earliest_target_age!==null?`The central scenario first meets your ${money(plan.target_monthly)} ${phased?'Go-Go monthly':'monthly'} target at age ${data.earliest_target_age} (whole-year ages tested). This is an illustration, not a guaranteed retirement date.`:`Your ${money(plan.target_monthly)} ${phased?'Go-Go monthly':'monthly'} target is not met at any tested retirement age up to ${Math.min(90,plan.end_age-1)}.`):'No spending target set. Explore the income above, or add an optional monthly target to test a retirement age.';
         const stale=plan.pots.filter(p=>(new Date(today+'T12:00:00')-new Date(p.valued_on+'T12:00:00'))/86400000>90).length;
-        $('pension-notes').textContent=(stale?`${stale} valuation(s) are over 90 days old; refresh them for a useful forecast. `:'')+(plan.state_annual>0?`Includes ${money(plan.state_annual)} yearly State Pension from age ${plan.state_age}. Monthly income once State Pension starts is at least ${money(c.monthly_after_state_today)} in today’s money; any State Pension above the illustrated income is not reinvested.`:'State Pension is excluded. Enter your own forecast under assumptions to include it.');
+        $('pension-notes').textContent=(stale?`${stale} valuation(s) are over 90 days old; refresh them for a useful forecast. `:'')+(plan.state_annual>0?`Includes ${money(plan.state_annual)} yearly State Pension from age ${plan.state_age}. ${phased?'Phase targets include State Pension once it starts. Any State Pension above a phase target remains available and is not reinvested.':`Monthly income once State Pension starts is at least ${money(c.monthly_after_state_today)} in today’s money; any State Pension above the illustrated income is not reinvested.`}`:'State Pension is excluded. Enter your own forecast under assumptions to include it.');
         cells($('pension-scenarios'),Object.entries(data.scenarios).map(([name,s])=>[name[0].toUpperCase()+name.slice(1)+(name==='central'?' (your rates)':name==='lower'?' (growth −2 points)':' (growth +2 points)'),money(s.pot_today),money(s.monthly_today),daily(s.daily_today),money(s.monthly_future)]));
         cells($('pension-years'),c.rows.map(r=>[r.age,money(r.pot_today),money(r.pot_future),money(r.monthly_today),money(r.monthly_future)]));drawChart();
     }
@@ -115,7 +131,7 @@
     });
     window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
     async function load() {
-        try {const result=await send('GET');revision=result.revision;$('pension-editor').open=revision===0;$('pension-editor').querySelector('summary').textContent=revision===0?'Set up your plan':'Edit assumptions';$('pension-plan-state').textContent=revision>0?'Saved plan · results use your saved assumptions.':'Start by entering your details, then save your plan.';fields.forEach(([key])=>{$(key).value=result.plan[key];if($(key)._slider)$(key)._slider.value=result.plan[key];});result.plan.pots.forEach(addPot);loaded=true;$('pension-fields').disabled=false;$('pension-main').setAttribute('aria-busy','false');preview();}
+        try {const result=await send('GET');revision=result.revision;$('pension-editor').open=revision===0;$('pension-editor').querySelector('summary').textContent=revision===0?'Set up your plan':'Edit assumptions';$('pension-plan-state').textContent=revision>0?'Saved plan · results use your saved assumptions.':'Start by entering your details, then save your plan.';fields.forEach(([key])=>{$(key).value=result.plan[key];if($(key)._slider)$(key)._slider.value=result.plan[key];});$('spending_profile').value=result.plan.spending_profile||'level';phaseFields.forEach(([key,,,,,fallback])=>{$(key).value=result.plan[key]??fallback;});syncPhases();result.plan.pots.forEach(addPot);loaded=true;$('pension-fields').disabled=false;$('pension-main').setAttribute('aria-busy','false');preview();}
         catch(error){$('pension-status').textContent='Pensions could not load. Check Database Health, then reload this page.';$('pension-error').textContent=error.message;$('pension-error').hidden=false;$('pension-main').setAttribute('aria-busy','false');}
     }
     const script=document.createElement('script');script.src='https://code.highcharts.com/highcharts.js';script.async=true;script.onload=()=>{drawChart();const accessibility=document.createElement('script');accessibility.src='https://code.highcharts.com/modules/accessibility.js';accessibility.onload=drawChart;document.head.append(accessibility);};document.head.append(script);
