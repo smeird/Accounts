@@ -22,9 +22,10 @@ assert.match(script, /review_required/, 'AI results surface unfamiliar suggestio
 assert.match(script, /action:\s*'start_fresh'/, 'fresh-start UI calls the guarded workspace action');
 assert.match(script, /Ready for a clean AI pass/, 'fresh-start completion leads back to smart tagging');
 assert.doesNotMatch(aiEndpoint, /Tag::create\(\$tagName/, 'AI tagging cannot silently create canonical tags');
-assert.match(aiEndpoint, /AS direction, ROUND\(AVG\(amount\),2\)/, 'AI tagging groups identical merchant wording by direction');
-assert.match(aiEndpoint, /\$directionExpression \. ' = :direction'/, 'AI tagging updates only the reviewed transaction direction');
-assert.match(aiEndpoint, /AI tag alias conflict held for review/, 'AI tagging holds conflicting deterministic rules for review');
+assert.match(aiEndpoint, /AiTransactionTagger/, 'AI tagging uses the behavioural-tested decision service');
+assert.doesNotMatch(aiEndpoint, /learnTransactionAlias/, 'AI endpoint cannot immediately teach broad merchant rules');
+assert.match(page, /id="ai-rule-evidence"/, 'rule approval has a separate evidence preview');
+assert.match(script, /action.*approve_rule|aiAction\('approve_rule'/, 'rule activation requires an explicit review action');
 assert.match(menu, /href="tagging\.html"/, 'sidebar exposes one permanent Tagging destination');
 assert.doesNotMatch(menu, /href="tag_(?:migration|taxonomy_discovery|taxonomy_cutover)\.html"/, 'completed rebuild phases are absent from everyday navigation');
 

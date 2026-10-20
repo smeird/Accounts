@@ -104,3 +104,19 @@
 #stop-ai-categories[hidden], #category-ai-debug[hidden]{display:none!important}
 
 :is(.tagging-primary,.tagging-danger) i { color:inherit!important; }
+
+.tagging-ai-reviews { margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--tag-line); }
+.tagging-ai-reviews h3 { font-weight:700; }
+.tagging-ai-reviews > p,.tagging-review-item p,#catalogue-consolidation p { font-size:14px; overflow-wrap:anywhere; }
+.tagging-review-item { align-items:flex-start; flex-wrap:wrap; }
+.tagging-review-item > div:first-child { flex:1 1 260px; min-width:0; }
+.tagging-review-item .tagging-heading-actions { flex-wrap:wrap; }
+#catalogue-consolidation { margin-block:1rem; }
+#catalogue-consolidation summary { padding-block:.5rem; font-size:14px; }
+#stop-ai-tagging[hidden],#tagging-ai-debug[hidden],#more-ai-reviews[hidden],#ai-rule-overlap-label[hidden],#tag-create-purpose[hidden] { display:none!important; }
+#ai-rule-evidence { max-height:320px; overflow-y:auto; }
+@media (max-width:767px) {
+    .tagging-ai-reviews button,.tagging-dialog button { min-height:44px; }
+    .tagging-dialog input:not([type="checkbox"]),.tagging-dialog textarea,.tagging-dialog select { font-size:16px; }
+}
+:is(#ai-rule-form,#ai-review-form) :is(p,label,button) { font-size:14px; }

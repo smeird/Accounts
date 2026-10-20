@@ -7,6 +7,7 @@ require_once __DIR__ . '/../models/CategoryTag.php';
 require_once __DIR__ . '/../models/Segment.php';
 require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/TaggingFreshStartService.php';
+require_once __DIR__ . '/../TagCatalogueSuggestions.php';
 
 class TaggingWorkspaceService {
     private PDO $db;
@@ -32,7 +33,7 @@ class TaggingWorkspaceService {
         ];
     }
 
-    public function createTag(string $name, ?string $description, ?int $categoryId): array {
+    public function createTag(string $name, ?string $description, ?int $categoryId, string $reportingReason = '', bool $confirmSimilar = false): array {
         $name = trim($name);
         if ($name === '' || mb_strlen($name) > 100) {
             throw new InvalidArgumentException('Enter a canonical tag name of 100 characters or fewer.');
@@ -41,6 +42,12 @@ class TaggingWorkspaceService {
         if ($activeId !== null) {
             throw new InvalidArgumentException('That canonical tag already exists. Use the existing tag instead.');
         }
+        if (mb_strlen(trim($reportingReason)) < 10 || mb_strlen($reportingReason) > 500) {
+            throw new InvalidArgumentException('Explain the distinct reporting or budgeting need for this new tag (10–500 characters).');
+        }
+        $similar = $this->similarTags($name);
+        if ($similar && !$confirmSimilar) return ['requires_confirmation' => true, 'similar_tags' => $similar];
+        $description = trim((string)$description) . "\nReporting purpose: " . trim($reportingReason);
 
         $this->db->beginTransaction();
         try {
@@ -54,6 +61,19 @@ class TaggingWorkspaceService {
             if ($this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
+    }
+
+    public function similarTags(string $name): array {
+        if (mb_strlen(trim($name)) < 2) return [];
+        $tags = $this->db->query("SELECT id, name, description FROM tags WHERE status = 'active' AND origin <> 'system' AND LOWER(TRIM(name)) <> 'ignore' ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+        return TagCatalogueSuggestions::nearest($name, $tags);
+    }
+
+    public function approveForAi(int $id): array {
+        $stmt = $this->db->prepare("UPDATE tags SET origin = 'manual' WHERE id = ? AND status = 'active' AND origin = 'legacy' AND LOWER(TRIM(name)) <> 'ignore'");
+        $stmt->execute([$id]);
+        if (!$stmt->rowCount()) throw new InvalidArgumentException('Choose an active ordinary legacy tag to approve.');
+        return ['id' => $id];
     }
 
     public function updateTag(int $id, string $name, ?string $description, ?int $categoryId): array {

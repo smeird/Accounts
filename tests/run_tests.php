@@ -2098,6 +2098,7 @@ require __DIR__ . '/PhoneClassificationTest.php';
 require __DIR__ . '/GroupAnalysisTest.php';
 require __DIR__ . '/PensionPlannerTest.php';
 require __DIR__ . '/MortgagePlannerTest.php';
+require __DIR__ . '/AiTransactionTaggerTest.php';
 
 // Output results and set exit code
 $failed = false;

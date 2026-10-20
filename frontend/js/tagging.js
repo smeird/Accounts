@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const state = { snapshot: null, activeTab: 'inbox', currentInbox: null, rulesTable: null };
+    const state = { snapshot: null, activeTab: 'inbox', currentInbox: null, rulesTable: null, aiReviews: [], reviewLimit: 20, currentReview: null, debug: false };
     const panels = Array.from(document.querySelectorAll('[data-tagging-panel]'));
     const tabButtons = Array.from(document.querySelectorAll('[data-tagging-tab]'));
 
@@ -44,7 +44,7 @@
 
     tabButtons.forEach(button => button.addEventListener('click', () => activateTab(button.dataset.taggingTab)));
 
-    function createTagPicker(prefix) {
+    function createTagPicker(prefix, aiOnly) {
         const input = document.getElementById(`${prefix}-tag-search`);
         const idInput = document.getElementById(`${prefix}-tag-id`);
         const results = document.getElementById(`${prefix}-tag-results`);
@@ -53,6 +53,7 @@
         let timer = null;
         let controller = null;
         let activeIndex = -1;
+        let searchSequence = 0;
 
         function close() {
             results.hidden = true;
@@ -60,6 +61,9 @@
             activeIndex = -1;
         }
         function clear(clearText) {
+            searchSequence++;
+            if (controller) controller.abort();
+            window.clearTimeout(timer);
             selected = null;
             idInput.value = '';
             if (clearText) input.value = '';
@@ -68,6 +72,9 @@
             status.textContent = 'Search and choose an existing canonical tag.';
         }
         function choose(tag) {
+            searchSequence++;
+            if (controller) controller.abort();
+            window.clearTimeout(timer);
             selected = { id: Number(tag.id), name: String(tag.name) };
             idInput.value = String(selected.id);
             input.value = selected.name;
@@ -92,18 +99,27 @@
             status.textContent = tags.length ? `${tags.length} canonical tags shown.${data.has_more ? ' Keep typing to narrow the list.' : ''}` : 'No canonical tags match.';
         }
         async function search() {
+            const sequence = ++searchSequence;
             if (controller) controller.abort();
             controller = new AbortController();
             const params = new URLSearchParams({ options: '1', q: input.value.trim(), limit: '20' });
+            if (aiOnly) params.set('ai_only', '1');
             status.textContent = 'Searching canonical tags…';
-            try { render(await requestJson(`../php_backend/public/tags.php?${params.toString()}`, { signal: controller.signal })); }
+            try {
+                const data = await requestJson(`../php_backend/public/tags.php?${params.toString()}`, { signal: controller.signal });
+                if (sequence === searchSequence) render(data);
+            }
             catch (error) { if (error.name !== 'AbortError') status.textContent = error.message; }
         }
         input.addEventListener('input', () => {
+            searchSequence++;
             selected = null; idInput.value = ''; window.clearTimeout(timer);
             timer = window.setTimeout(search, 150);
         });
-        input.addEventListener('focus', () => { if (results.children.length) results.hidden = false; else search(); });
+        input.addEventListener('focus', () => {
+            if (selected && input.value === selected.name) return;
+            if (results.children.length) results.hidden = false; else search();
+        });
         input.addEventListener('keydown', event => {
             const options = Array.from(results.querySelectorAll('[role="option"]'));
             if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length) {
@@ -122,6 +138,7 @@
     const inboxPicker = createTagPicker('inbox');
     const mergePicker = createTagPicker('merge');
     const rulePicker = createTagPicker('rule');
+    const aiReviewPicker = createTagPicker('ai-review', true);
 
     function renderMetrics(metrics) {
         document.getElementById('tagging-coverage').textContent = `${Number(metrics.coverage || 0).toFixed(1)}%`;
@@ -234,8 +251,36 @@
                 const merge = element('button', '', 'Merge'); merge.type = 'button'; merge.addEventListener('click', () => openMerge(tag));
                 const retire = element('button', 'is-danger', 'Retire'); retire.type = 'button'; retire.addEventListener('click', () => retireTag(tag));
                 group.append(edit, merge, retire);
+                const approval = element('span', 'tagging-meta', tag.origin === 'legacy' ? 'Legacy — excluded from AI' : 'AI selectable');
+                identity.appendChild(approval);
+                if (tag.origin === 'legacy') {
+                    const approve = element('button', '', 'Approve for AI'); approve.type = 'button';
+                    approve.setAttribute('aria-label', `Approve ${tag.name} as a reusable AI tag`);
+                    approve.addEventListener('click', async () => {
+                        if (!window.confirm(`Approve ${tag.name} as a broad reusable tag for AI? Check its definition first. Historical classifications will stay unchanged.`)) return;
+                        approve.disabled = true;
+                        try { await requestJson('../php_backend/public/tagging_workspace.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approve_for_ai', id: tag.id }) }); await loadSnapshot(false); }
+                        catch (error) { announce(error.message, 'error'); approve.disabled = false; }
+                    });
+                    group.appendChild(approve);
+                }
             } else group.appendChild(element('span', 'tagging-protected', 'Protected'));
             actions.appendChild(group); row.append(identity, home, transactions, rules, actions); body.appendChild(row);
+        });
+        renderConsolidation();
+    }
+
+    function renderConsolidation() {
+        const host = document.getElementById('catalogue-suggestions'); host.replaceChildren();
+        const suggestions = TagCatalogueSuggestions.pairs(state.snapshot.tags || []);
+        if (!suggestions.length) host.append(element('p', '', 'No close name overlaps found. Different wording may still describe the same purpose.'));
+        suggestions.forEach(({ source, target }) => {
+            const row = element('div', 'tagging-review-item');
+            const copy = element('div'); copy.append(element('strong', '', `${source.name} / ${target.name}`), element('p', '', 'Similar names only. Compare definitions and reporting homes before choosing a destination.'));
+            const button = element('button', 'tagging-secondary', 'Review merge'); button.type = 'button';
+            button.setAttribute('aria-label', `Review merging ${source.name} with ${target.name}`);
+            button.addEventListener('click', () => { openMerge(source); mergePicker.choose(target); });
+            row.append(copy, button); host.appendChild(row);
         });
     }
 
@@ -243,11 +288,17 @@
     document.getElementById('new-tag').addEventListener('click', () => openTag(null));
 
     function openTag(tag, proposedName) {
+        similarVersion++;
         document.getElementById('tag-dialog-title').textContent = tag ? 'Edit canonical tag' : 'New canonical tag';
         document.getElementById('tag-edit-id').value = tag ? String(tag.id) : '';
         document.getElementById('tag-edit-name').value = tag ? tag.name : (proposedName || '');
         document.getElementById('tag-edit-description').value = tag ? (tag.description || '') : '';
         categoryOptions(tag ? tag.category_id : null);
+        document.getElementById('tag-create-purpose').hidden = Boolean(tag);
+        document.getElementById('tag-reporting-reason').required = !tag;
+        document.getElementById('tag-reporting-reason').value = '';
+        document.getElementById('tag-similar').replaceChildren();
+        if (!tag && proposedName) findSimilarTags();
         document.getElementById('tag-dialog').showModal();
         document.getElementById('tag-edit-name').focus();
     }
@@ -256,16 +307,52 @@
         if (event.submitter && event.submitter.value === 'cancel') return;
         event.preventDefault();
         const id = Number(document.getElementById('tag-edit-id').value || 0);
-        const payload = { action: id ? 'update_tag' : 'create_tag', id, name: document.getElementById('tag-edit-name').value.trim(), description: document.getElementById('tag-edit-description').value.trim(), category_id: document.getElementById('tag-edit-category').value };
+        const payload = { action: id ? 'update_tag' : 'create_tag', id, name: document.getElementById('tag-edit-name').value.trim(), description: document.getElementById('tag-edit-description').value.trim(), category_id: document.getElementById('tag-edit-category').value, reporting_reason: document.getElementById('tag-reporting-reason').value.trim() };
         const button = document.getElementById('tag-submit'); button.disabled = true;
         try {
-            const response = await requestJson('../php_backend/public/tagging_workspace.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            let response = await requestJson('../php_backend/public/tagging_workspace.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (response.result.requires_confirmation) {
+                renderSimilarTags(response.result.similar_tags);
+                if (!window.confirm(`Similar tags already exist: ${response.result.similar_tags.map(tag => tag.name).join(', ')}. Create a separate reporting purpose anyway?`)) return;
+                payload.confirm_similar = true;
+                response = await requestJson('../php_backend/public/tagging_workspace.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            }
             document.getElementById('tag-dialog').close();
             announce(response.result.reactivated ? 'Canonical tag restored.' : id ? 'Canonical tag updated.' : 'Canonical tag created.');
             await loadSnapshot();
         } catch (error) { announce(error.message, 'error'); }
         finally { button.disabled = false; }
     });
+
+    let similarTimer;
+    let similarVersion = 0;
+    document.getElementById('tag-edit-name').addEventListener('input', () => {
+        window.clearTimeout(similarTimer);
+        similarVersion++;
+        if (!document.getElementById('tag-edit-id').value) similarTimer = window.setTimeout(findSimilarTags, 200);
+    });
+    async function findSimilarTags() {
+        const version = ++similarVersion;
+        const query = document.getElementById('tag-edit-name').value.trim();
+        try {
+            const data = await requestJson(`../php_backend/public/tagging_workspace.php?similar=1&q=${encodeURIComponent(query)}`);
+            if (version === similarVersion) renderSimilarTags(data.tags || []);
+        } catch (error) { if (version === similarVersion) document.getElementById('tag-similar').textContent = error.message; }
+    }
+    function renderSimilarTags(tags) {
+        const host = document.getElementById('tag-similar'); host.replaceChildren();
+        if (!tags.length) return;
+        host.append(element('p', '', 'Consider reusing an existing tag:'));
+        tags.forEach(tag => {
+            const button = element('button', 'tagging-secondary', `Use ${tag.name}`); button.type = 'button';
+            button.setAttribute('aria-label', `Reuse existing tag ${tag.name}`);
+            button.addEventListener('click', () => {
+                document.getElementById('tag-dialog').close();
+                activateTab('catalogue'); document.getElementById('catalogue-search').value = tag.name; renderCatalogue();
+            });
+            host.appendChild(button);
+        });
+    }
 
     async function retireTag(tag) {
         if (!window.confirm(`Retire ${tag.name}? Its ${number(tag.transaction_count)} historical transaction assignments will remain, while its rules are disabled.`)) return;
@@ -373,30 +460,141 @@
         } catch (error) { announce(error.message, 'error'); }
     }
 
-    function showAutomationResult(title, copy, reviews) {
+    function showAutomationResult(title, copy) {
         const host = document.getElementById('automation-result'); host.replaceChildren(); host.hidden = false;
         host.append(element('strong', '', title), element('p', '', copy));
-        if (Array.isArray(reviews) && reviews.length) {
-            const list = element('div', 'tagging-review-list');
-            reviews.forEach(review => {
-                const item = element('div', 'tagging-review-item');
-                const copyNode = element('div'); copyNode.append(element('strong', '', review.suggested_tag), element('small', '', `${number(review.transactions)} transactions held for review`));
-                const button = element('button', 'tagging-secondary', 'Review as new tag'); button.type = 'button';
-                button.addEventListener('click', () => { activateTab('catalogue'); openTag(null, review.suggested_tag === 'Unresolved pattern' ? '' : review.suggested_tag); });
-                item.append(copyNode, button); list.appendChild(item);
-            });
-            host.appendChild(list);
-        }
     }
 
-    document.getElementById('run-ai-tagging').addEventListener('click', async event => {
-        const button = event.currentTarget; button.disabled = true; showAutomationResult('Smart tagging is running…', 'Saved rules are applied first; AI can only choose from the canonical catalogue.');
+    async function aiAction(action, values) {
+        return requestJson('../php_backend/public/ai_tags.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ action }, values || {})) });
+    }
+
+    function renderAiReviews(reviews) {
+        state.aiReviews = reviews;
+        const host = document.getElementById('ai-review-list'); host.replaceChildren();
+        if (!reviews.length) host.append(element('p', '', 'No pending suggestions in this session.'));
+        reviews.slice(0, state.reviewLimit).forEach(review => {
+            const row = element('article', 'tagging-review-item');
+            const copy = element('div');
+            copy.append(element('strong', '', review.kind === 'rule' ? `Proposed rule: ${review.alias} → ${review.tag_name}` : `${review.description} → ${review.tag_name || 'Choose an existing tag'}`));
+            copy.append(element('p', '', `${review.direction} · ${number(review.transactions)} examined transactions${review.confidence === null ? '' : ` · ${Math.round(review.confidence * 100)}% estimated confidence`}`));
+            copy.append(element('p', '', `${review.memo || ''} ${review.reason}`));
+            if (review.suggested_tag) copy.append(element('p', '', `AI wording: ${review.suggested_tag}. Look for an existing reporting purpose first.`));
+            const actions = element('div', 'tagging-heading-actions');
+            const open = element('button', 'tagging-secondary', review.kind === 'rule' ? 'Preview rule' : 'Review tag'); open.type = 'button';
+            open.setAttribute('aria-label', `Review ${review.kind === 'rule' ? 'rule for' : 'classification of'} ${review.description}`);
+            open.addEventListener('click', () => openAiReview(review));
+            const dismiss = element('button', 'tagging-secondary', 'Dismiss'); dismiss.type = 'button';
+            dismiss.setAttribute('aria-label', `Dismiss suggestion for ${review.description}`);
+            dismiss.addEventListener('click', async () => {
+                dismiss.disabled = true;
+                try { const data = await aiAction('dismiss', { token: review.token }); renderAiReviews(data.reviews); }
+                catch (error) { announce(error.message, 'error'); dismiss.disabled = false; }
+            });
+            actions.append(open, dismiss); row.append(copy, actions); host.appendChild(row);
+        });
+        document.getElementById('more-ai-reviews').hidden = reviews.length <= state.reviewLimit;
+    }
+    document.getElementById('more-ai-reviews').addEventListener('click', () => { state.reviewLimit += 20; renderAiReviews(state.aiReviews); });
+
+    function openAiReview(review) {
+        state.currentReview = review;
+        if (review.kind === 'classification') {
+            aiReviewPicker.clear(true);
+            if (review.tag_id) aiReviewPicker.choose({ id: review.tag_id, name: review.tag_name });
+            document.getElementById('ai-review-copy').textContent = `${review.description} · ${review.memo || ''} · ${review.direction} · ${review.transactions} examined transactions. ${review.reason}`;
+            document.getElementById('ai-review-dialog').showModal();
+        } else {
+            document.getElementById('ai-rule-copy').textContent = `${review.tag_name} · ${review.direction}. Edit the proposed phrase if needed, then inspect its matches.`;
+            document.getElementById('ai-rule-alias').value = review.alias;
+            clearRulePreview();
+            document.getElementById('ai-rule-dialog').showModal();
+        }
+    }
+    function clearRulePreview() {
+        if (state.currentReview) state.currentReview.previewToken = null;
+        document.getElementById('ai-rule-evidence').replaceChildren();
+        document.getElementById('ai-rule-submit').disabled = true;
+        document.getElementById('ai-rule-overlap-label').hidden = true;
+        document.getElementById('ai-rule-overlap').checked = false;
+    }
+    document.getElementById('ai-rule-alias').addEventListener('input', clearRulePreview);
+    document.getElementById('ai-rule-preview').addEventListener('click', async event => {
+        const button = event.currentTarget; button.disabled = true;
+        const alias = document.getElementById('ai-rule-alias').value;
+        const token = state.currentReview.token;
         try {
-            const data = await requestJson('../php_backend/public/ai_tags.php', { method: 'POST' });
-            showAutomationResult('Smart tagging complete', `${number(data.processed)} transactions tagged. ${number(data.review_required_count)} unfamiliar suggestions were held back safely.`, data.review_required);
-            announce('Smart tagging complete.'); await loadSnapshot(false);
-        } catch (error) { showAutomationResult('Smart tagging could not finish', error.message); announce(error.message, 'error'); }
+            const data = await aiAction('preview_rule', { token, alias });
+            if (!state.currentReview || state.currentReview.token !== token || document.getElementById('ai-rule-alias').value !== alias) return;
+            const result = data.result;
+            state.currentReview.previewToken = result.preview_token;
+            const host = document.getElementById('ai-rule-evidence'); host.replaceChildren();
+            host.append(element('p', '', `${number(result.matching)} ledger matches; ${number(result.untagged)} untagged; ${number(result.apply_now)} to tag now; ${number(result.other_tag_count)} already have a different tag and will stay unchanged.`));
+            result.samples.forEach(sample => host.append(element('p', '', `${sample.date} · ${sample.description} · ${sample.memo || ''} · ${money(sample.amount)}${sample.already_tagged ? ' · already tagged' : ''}`)));
+            result.overlaps.forEach(overlap => host.append(element('p', '', `Overlapping rule: ${overlap.alias} → ${overlap.tag_name}`)));
+            if (result.existing_rule) host.append(element('p', '', 'This phrase already has a rule. Use the Rules editor to review its existing settings.'));
+            document.getElementById('ai-rule-overlap-label').hidden = !result.overlaps.length && !result.other_tag_count;
+            document.getElementById('ai-rule-submit').disabled = Boolean(result.existing_rule);
+        } catch (error) { announce(error.message, 'error'); }
         finally { button.disabled = false; }
+    });
+    document.getElementById('ai-review-form').addEventListener('submit', async event => {
+        if (event.submitter && event.submitter.value === 'cancel') return;
+        event.preventDefault();
+        const tag = aiReviewPicker.selected();
+        if (!tag) { announce('Choose an approved canonical tag.', 'error'); return; }
+        const button = document.getElementById('ai-review-submit'); button.disabled = true;
+        try {
+            const data = await aiAction('approve_classification', { token: state.currentReview.token, tag_id: tag.id });
+            document.getElementById('ai-review-dialog').close(); renderAiReviews(data.reviews);
+            announce(`${number(data.result.processed)} reviewed transactions tagged. Reusable rules remain a separate approval.`); await loadSnapshot(false);
+        } catch (error) { announce(error.message, 'error'); }
+        finally { button.disabled = false; }
+    });
+    document.getElementById('ai-rule-form').addEventListener('submit', async event => {
+        if (event.submitter && event.submitter.value === 'cancel') return;
+        event.preventDefault();
+        if (document.getElementById('ai-rule-submit').disabled) return;
+        const button = document.getElementById('ai-rule-submit'); button.disabled = true;
+        try {
+            const data = await aiAction('approve_rule', { token: state.currentReview.token, preview_token: state.currentReview.previewToken, confirm_overlap: document.getElementById('ai-rule-overlap').checked });
+            document.getElementById('ai-rule-dialog').close(); renderAiReviews(data.reviews);
+            announce(`Rule approved; ${number(data.result.processed)} previewed transactions tagged.`); await loadSnapshot(false);
+        } catch (error) { clearRulePreview(); announce(error.message, 'error'); }
+        finally { button.disabled = !state.currentReview.previewToken; }
+    });
+
+    let taggingRunActive = false;
+    let stopTagging = false;
+    let taggingRunToken = null;
+    document.getElementById('stop-ai-tagging').addEventListener('click', () => { stopTagging = true; });
+    document.getElementById('run-ai-tagging').addEventListener('click', async event => {
+        if (taggingRunActive) return;
+        taggingRunActive = true; stopTagging = false;
+        const button = event.currentTarget; button.disabled = true;
+        document.getElementById('stop-ai-tagging').hidden = false;
+        const totals = { processed: 0, reviewed: 0, tokens: 0 };
+        showAutomationResult('Smart tagging is running…', 'Checking stable batches. New imports wait for the next run; unclear patterns do not block later rows.');
+        try {
+            let more;
+            do {
+                const data = await aiAction('run', { run_token: taggingRunToken });
+                taggingRunToken = data.run_token; more = data.has_more;
+                totals.processed += Number(data.processed || 0); totals.reviewed += Number(data.reviewed || 0); totals.tokens += Number(data.tokens || 0);
+                renderAiReviews(data.reviews || data.review_required || []);
+                document.getElementById('tagging-ai-debug').hidden = !(state.debug && data.debug);
+                if (state.debug && data.debug) {
+                    document.getElementById('tagging-debug-prompt').textContent = data.debug.prompt || '';
+                    document.getElementById('tagging-debug-response').textContent = data.debug.response || '';
+                }
+                showAutomationResult('Smart tagging is running…', `${number(totals.processed)} tagged; ${number(totals.reviewed)} transactions examined by AI; ${number(state.aiReviews.length)} pending suggestions.`);
+            } while (more && !stopTagging);
+            if (!more) taggingRunToken = null;
+            button.textContent = more ? 'Continue smart tagging' : 'Run smart tagging';
+            showAutomationResult(stopTagging ? 'Smart tagging stopped after the current batch' : 'Smart tagging complete', `${number(totals.processed)} transactions tagged using ${number(totals.tokens)} tokens. Review uncertain choices and proposed rules below. No tags or rules were created automatically.`);
+            await loadSnapshot(false);
+        } catch (error) { showAutomationResult('Smart tagging paused', error.message); announce(error.message, 'error'); }
+        finally { taggingRunActive = false; button.disabled = false; document.getElementById('stop-ai-tagging').hidden = true; }
     });
 
     let categoryRunActive = false;
@@ -547,7 +745,7 @@
         renderInbox(); renderCatalogue(); renderHistory(state.snapshot.rebuild_history);
         renderFreshStartPreview(state.snapshot.fresh_start || {});
         const configured = state.snapshot.automation && state.snapshot.automation.configured;
-        document.getElementById('run-ai-tagging').disabled = !configured;
+        document.getElementById('run-ai-tagging').disabled = !configured || taggingRunActive;
         document.getElementById('run-ai-categories').disabled = !configured || categoryRunActive;
         if (!configured) showAutomationResult('AI is not configured', 'Add an OpenAI API token in Settings before running smart tagging.');
         if (renderAll !== false && state.activeTab === 'rules') await loadRules();
@@ -555,5 +753,7 @@
 
     const initialTab = String(location.hash || '').replace('#', '') || 'inbox';
     activateTab(initialTab, false);
+    requestJson('../php_backend/public/ai_debug.php').then(data => { state.debug = Boolean(data.debug); }).catch(() => {});
+    requestJson('../php_backend/public/ai_tags.php').then(data => renderAiReviews(data.reviews || [])).catch(error => announce(error.message, 'error'));
     loadSnapshot().catch(error => { announce(error.message, 'error'); document.getElementById('tagging-inbox').appendChild(element('div', 'tagging-empty', 'The tagging workspace could not be loaded.')); });
 })();

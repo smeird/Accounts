@@ -9,6 +9,10 @@ $service = new TaggingWorkspaceService();
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        if (isset($_GET['similar'])) {
+            echo json_encode(['tags' => $service->similarTags(mb_substr((string)($_GET['q'] ?? ''), 0, 100))]);
+            exit;
+        }
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
         echo json_encode($service->snapshot($limit));
         exit;
@@ -25,7 +29,9 @@ try {
         $result = $service->createTag(
             (string)($data['name'] ?? ''),
             isset($data['description']) ? (string)$data['description'] : null,
-            isset($data['category_id']) && $data['category_id'] !== '' ? (int)$data['category_id'] : null
+            isset($data['category_id']) && $data['category_id'] !== '' ? (int)$data['category_id'] : null,
+            (string)($data['reporting_reason'] ?? ''),
+            !empty($data['confirm_similar'])
         );
     } elseif ($action === 'update_tag') {
         $result = $service->updateTag(
@@ -34,6 +40,8 @@ try {
             isset($data['description']) ? (string)$data['description'] : null,
             isset($data['category_id']) && $data['category_id'] !== '' ? (int)$data['category_id'] : null
         );
+    } elseif ($action === 'approve_for_ai') {
+        $result = $service->approveForAi((int)($data['id'] ?? 0));
     } elseif ($action === 'retire_tag') {
         $result = $service->retireTag((int)($data['id'] ?? 0));
     } elseif ($action === 'merge_tag') {

@@ -69,6 +69,8 @@
                     <button id="new-tag" class="tagging-primary" type="button"><i class="fas fa-plus" aria-hidden="true"></i>New canonical tag</button>
                 </div>
             </header>
+            <p class="tagging-dialog-note">Tags describe reporting purposes; merchants belong in rules. Legacy tags need explicit approval before AI can select them. Definitions can include examples and “Excludes…” guidance.</p>
+            <details id="catalogue-consolidation"><summary>Possible duplicate tags — review before merging</summary><div id="catalogue-suggestions" class="tagging-review-list"></div></details>
             <div class="tagging-table-wrap"><table class="tagging-table"><thead><tr><th>Canonical tag</th><th>Reporting home</th><th>Transactions</th><th>Rules</th><th>Actions</th></tr></thead><tbody id="catalogue-body"></tbody></table></div>
         </section>
 
@@ -91,12 +93,14 @@
                 <a class="tagging-secondary" href="../settings.php"><i class="fas fa-sliders" aria-hidden="true"></i>AI settings</a>
             </header>
             <div class="tagging-automation-grid">
-                <article><span class="tagging-automation-icon"><i class="fas fa-robot" aria-hidden="true"></i></span><h3>Tag unmatched transactions</h3><p>Apply saved rules first, then ask AI to choose only from your current canonical tags.</p><button id="run-ai-tagging" class="tagging-primary" type="button">Run smart tagging</button></article>
+                <article><span class="tagging-automation-icon"><i class="fas fa-robot" aria-hidden="true"></i></span><h3>Tag unmatched transactions</h3><p>Saved rules run first. AI applies clear matches at 90% estimated confidence or higher to the examined rows only. Uncertain choices and reusable rules require review; AI never creates tags or category links.</p><button id="run-ai-tagging" class="tagging-primary" type="button" aria-label="Run conservative AI tagging in stable batches">Run smart tagging</button><button id="stop-ai-tagging" class="tagging-secondary" type="button" aria-label="Stop smart tagging after the current batch" hidden>Stop after current batch</button></article>
                 <article><span class="tagging-automation-icon"><i class="fas fa-folder-tree" aria-hidden="true"></i></span><h3>Connect tags to categories</h3><p>Check every unassigned tag in batches and automatically link clear matches to existing categories. Transaction examples help the AI decide; unknown tags stay unassigned. Existing links are preserved.</p><button id="run-ai-categories" aria-label="Automatically assign clear category matches to unassigned tags" class="tagging-primary" type="button">Auto-assign clear categories</button><button id="stop-ai-categories" class="tagging-secondary" type="button" aria-label="Stop category assignment after the current batch" hidden>Stop after current batch</button></article>
                 <article><span class="tagging-automation-icon"><i class="fas fa-arrows-rotate" aria-hidden="true"></i></span><h3>Apply saved structure</h3><p>Imports already do this automatically. Use the maintenance centre only after changing many rules.</p><a class="tagging-secondary" href="processes.html">Open maintenance centre</a></article>
                 <article class="tagging-reset-card"><span class="tagging-automation-icon"><i class="fas fa-rotate-left" aria-hidden="true"></i></span><div><span class="tagging-eyebrow">Guarded reset</span><h3>Start tagging again</h3><p>Take a safety snapshot, clear ordinary tag/category/segment assignments, and remove old matching rules. Canonical names, transfers and IGNORE remain protected.</p></div><button id="open-fresh-start" class="tagging-danger" type="button">Start fresh…</button></article>
             </div>
             <div id="automation-result" class="tagging-result" aria-live="polite" hidden></div>
+            <section class="tagging-ai-reviews" aria-labelledby="ai-review-heading"><h3 id="ai-review-heading">Review AI decisions and proposed rules</h3><p>Suggestions stay in this sign-in session for two hours and survive page refreshes. Expired or dismissed suggestions never apply automatically. Review the wording and evidence; confidence is an AI estimate.</p><div id="ai-review-list" class="tagging-review-list" aria-live="polite"></div><button id="more-ai-reviews" type="button" class="tagging-secondary" aria-label="Show more pending AI suggestions" hidden>Show more</button></section>
+            <article id="tagging-ai-debug" class="cards cards-tight" hidden><h3>AI Debug — latest tagging batch</h3><h4>Submitted prompt</h4><pre id="tagging-debug-prompt" class="whitespace-pre-wrap max-h-64 overflow-auto"></pre><h4>AI response</h4><pre id="tagging-debug-response" class="whitespace-pre-wrap max-h-64 overflow-auto"></pre></article>
             <article id="category-ai-debug" class="cards cards-tight" hidden><h3>AI Debug — latest category batch</h3><h4>Submitted prompt</h4><pre id="category-debug-prompt" class="whitespace-pre-wrap max-h-64 overflow-auto"></pre><h4>AI response</h4><pre id="category-debug-response" class="whitespace-pre-wrap max-h-64 overflow-auto"></pre></article>
         </section>
 
@@ -111,7 +115,7 @@
     <form method="dialog" id="inbox-form">
         <span class="tagging-eyebrow">Resolve pattern</span><h2>Choose the reusable tag</h2><p id="inbox-dialog-copy"></p>
         <div id="inbox-tag-picker" class="tagging-picker"><label for="inbox-tag-search">Canonical tag</label><input id="inbox-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="inbox-tag-results"><input id="inbox-tag-id" type="hidden"><div id="inbox-tag-status" class="tagging-picker-status" role="status"></div><div id="inbox-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
-        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="inbox-submit" value="default" class="tagging-primary">Save rule &amp; apply</button></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="inbox-submit" value="default" class="tagging-primary">Save rule &amp; apply</button></div>
     </form>
 </dialog>
 
@@ -123,7 +127,7 @@
         <div id="fresh-start-summary" class="tagging-reset-summary" aria-live="polite"></div>
         <div class="tagging-reset-protection"><i class="fas fa-shield-halved" aria-hidden="true"></i><span>Confirmed transfers and IGNORE transactions keep their current state.</span></div>
         <label for="fresh-start-confirmation">Type <strong>START FRESH</strong> to confirm<input id="fresh-start-confirmation" maxlength="20" autocomplete="off" data-help="This exact phrase prevents an accidental reset." required></label>
-        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="fresh-start-submit" value="default" class="tagging-danger" disabled>Take snapshot &amp; reset</button></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="fresh-start-submit" value="default" class="tagging-danger" disabled>Take snapshot &amp; reset</button></div>
     </form>
 </dialog>
 
@@ -131,10 +135,33 @@
     <form method="dialog" id="tag-form">
         <span class="tagging-eyebrow">Canonical catalogue</span><h2 id="tag-dialog-title">New canonical tag</h2>
         <input id="tag-edit-id" type="hidden"><label for="tag-edit-name">Name</label><input id="tag-edit-name" maxlength="100" required>
-        <label for="tag-edit-description">Description</label><textarea id="tag-edit-description" rows="3" maxlength="500"></textarea>
+        <label for="tag-edit-description">Definition, examples and exclusions</label><textarea id="tag-edit-description" rows="3" maxlength="1200" data-help="Explain what belongs here and what should use a different tag. These definitions guide AI tagging."></textarea>
+        <div id="tag-create-purpose"><label for="tag-reporting-reason">Why does this need a separate budget or report?</label><textarea id="tag-reporting-reason" rows="2" minlength="10" maxlength="500" data-help="Merchants and changing references usually need a rule for an existing tag, rather than another tag."></textarea></div>
+        <div id="tag-similar" class="tagging-review-list" aria-live="polite"></div>
         <label for="tag-edit-category">Category</label><select id="tag-edit-category"><option value="">Unassigned</option></select>
         <p class="tagging-dialog-note">Keep names broad and reusable, such as Groceries or Mortgage—not a merchant or individual transaction.</p>
-        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="tag-submit" value="default" class="tagging-primary">Save tag</button></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="tag-submit" value="default" class="tagging-primary">Save tag</button></div>
+    </form>
+</dialog>
+
+<dialog id="ai-review-dialog" class="tagging-dialog">
+    <form method="dialog" id="ai-review-form">
+        <span class="tagging-eyebrow">Reviewed classification</span><h2>Choose an existing tag</h2><p id="ai-review-copy"></p>
+        <div class="tagging-picker"><label for="ai-review-tag-search">Approved canonical tag</label><input id="ai-review-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="ai-review-tag-results"><input id="ai-review-tag-id" type="hidden"><div id="ai-review-tag-status" class="tagging-picker-status" role="status"></div><div id="ai-review-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
+        <p>Applies only to the examined, unchanged transactions. A reusable rule is a separate approval.</p>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="ai-review-submit" value="default" class="tagging-primary" aria-label="Apply selected tag to the reviewed transactions">Apply to these transactions</button></div>
+    </form>
+</dialog>
+
+<dialog id="ai-rule-dialog" class="tagging-dialog">
+    <form method="dialog" id="ai-rule-form">
+        <span class="tagging-eyebrow">Approve a reusable rule</span><h2 id="ai-rule-title">Preview merchant wording</h2><p id="ai-rule-copy"></p>
+        <label for="ai-rule-alias">Whole-word merchant phrase</label><input id="ai-rule-alias" maxlength="150" required data-help="Keep enough words to distinguish the merchant or service. The preview checks existing matches and conflicting rules.">
+        <button id="ai-rule-preview" class="tagging-secondary" type="button" aria-label="Preview transactions and conflicts for this proposed rule">Preview matches</button>
+        <div id="ai-rule-evidence" class="tagging-review-list" aria-live="polite"></div>
+        <label id="ai-rule-overlap-label" class="tagging-check" hidden><input id="ai-rule-overlap" type="checkbox">I reviewed the overlapping rules and differently tagged matches.</label>
+        <p>Existing classifications, transfers and IGNORE remain unchanged. Approving activates this phrase for future matching; at most 250 previewed untagged rows are classified now.</p>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="ai-rule-submit" value="default" class="tagging-primary" aria-label="Approve the previewed matching rule" disabled>Approve rule</button></div>
     </form>
 </dialog>
 
@@ -143,7 +170,7 @@
         <span class="tagging-eyebrow">Safe consolidation</span><h2>Merge <span id="merge-source-name"></span></h2><p>Transactions and rules move to the destination tag. The source remains in history as merged.</p>
         <input id="merge-source-id" type="hidden">
         <div id="merge-tag-picker" class="tagging-picker"><label for="merge-tag-search">Destination canonical tag</label><input id="merge-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="merge-tag-results"><input id="merge-tag-id" type="hidden"><div id="merge-tag-status" class="tagging-picker-status" role="status"></div><div id="merge-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
-        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="merge-submit" value="default" class="tagging-primary is-warning">Merge tags</button></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="merge-submit" value="default" class="tagging-primary is-warning">Merge tags</button></div>
     </form>
 </dialog>
 
@@ -154,7 +181,7 @@
         <div id="rule-tag-picker" class="tagging-picker"><label for="rule-tag-search">Canonical tag</label><input id="rule-tag-search" type="search" autocomplete="off" role="combobox" aria-controls="rule-tag-results"><input id="rule-tag-id" type="hidden"><div id="rule-tag-status" class="tagging-picker-status" role="status"></div><div id="rule-tag-results" class="tagging-picker-results" role="listbox" hidden></div></div>
         <div class="tagging-form-grid"><label for="rule-match-type">Match type<select id="rule-match-type"><option value="contains">Contains whole wording</option><option value="exact">Exact transaction text</option></select></label><label for="rule-direction">Direction<select id="rule-direction"><option value="any">Either direction</option><option value="outgoing">Money leaving</option><option value="incoming">Money arriving</option></select></label></div>
         <label class="tagging-check"><input id="rule-active" type="checkbox" checked>Active</label>
-        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary">Cancel</button><button id="rule-submit" value="default" class="tagging-primary">Save rule</button></div>
+        <div class="tagging-dialog-actions"><button value="cancel" class="tagging-secondary" formnovalidate aria-label="Cancel without saving">Cancel</button><button id="rule-submit" value="default" class="tagging-primary">Save rule</button></div>
     </form>
 </dialog>
 
@@ -163,6 +190,7 @@
 <script src="js/menu.js"></script><script src="js/input_help.js"></script><script src="js/overlay.js"></script>
 <script src="vendor/tabulator/6.5.0/tabulator.min.js"></script><script src="js/tabulator-tailwind.js?v=20260815-pill-key"></script>
 <script src="js/transaction_drilldown.js"></script>
-<script src="js/tagging.js?v=20261005-category-batches"></script>
+<script src="js/tag_catalogue_suggestions.js"></script>
+<script src="js/tagging.js?v=20261020-reviewed-ai"></script>
 </body>
 </html>

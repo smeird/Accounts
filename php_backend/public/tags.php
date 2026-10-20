@@ -64,7 +64,7 @@ if ($method === 'POST') {
             $requestedLimit = is_scalar($limitValue) ? (int)$limitValue : 20;
             $limit = max(1, min(50, $requestedLimit));
             $includeClassification = isset($_GET['classification']) && $_GET['classification'] === '1';
-            $matches = Tag::searchOptions($query, $limit + 1, $includeClassification, ($_GET['phone'] ?? '') === '1');
+            $matches = Tag::searchOptions($query, $limit + 1, $includeClassification, ($_GET['phone'] ?? '') === '1', ($_GET['ai_only'] ?? '') === '1');
             echo json_encode([
                 'tags' => array_slice($matches, 0, $limit),
                 'has_more' => count($matches) > $limit,
