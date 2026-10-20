@@ -441,7 +441,7 @@ class Transaction {
     public static function get(int $id): ?array {
         $db = Database::getConnection();
         $sql = 'SELECT t."id", t."account_id", t."date", t."amount", t."description", t."memo", '
-             . 't."category_id", t."tag_id", t."group_id", t."transfer_id", t."ofx_type", '
+             . 't."category_id", t."segment_id", t."tag_id", t."group_id", t."transfer_id", t."ofx_type", '
              . 't."ofx_id", t."bank_ofx_id", '
              . 'a."name" AS account_name, a."sort_code", a."account_number", '
              . 'c."name" AS category_name, s."name" AS segment_name, tg."name" AS tag_name, g."name" AS group_name '
@@ -937,8 +937,44 @@ class Transaction {
         ?int $limit = null,
         bool $classificationGaps = false
     ): array {
+        [$sql, $params] = self::buildSearchQuery(
+            $value, $minAmount, $maxAmount, $start, $end, $dimension, $dimensionId,
+            $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope,
+            $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo,
+            $includeUnclassified, $groupId, $classificationGaps
+        );
         $db = Database::getConnection();
+        $sql .= ' ORDER BY t."date" DESC, t."id" DESC';
+        if ($limit !== null) $sql .= ' LIMIT ' . max(1, min(1000, $limit));
 
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private static function buildSearchQuery(
+        ?string $value,
+        ?float $minAmount = null,
+        ?float $maxAmount = null,
+        ?string $start = null,
+        ?string $end = null,
+        ?string $dimension = null,
+        ?int $dimensionId = null,
+        bool $unclassified = false,
+        bool $spendingOnly = false,
+        ?string $direction = null,
+        string $transferScope = 'include',
+        string $ignoredScope = 'exclude',
+        ?int $accountId = null,
+        array $dimensionIds = [],
+        array $transactionIds = [],
+        ?string $exactDescription = null,
+        ?string $exactMemo = null,
+        bool $includeUnclassified = false,
+        ?int $groupId = null,
+        bool $classificationGaps = false
+    ): array {
         foreach (['start' => $start, 'end' => $end] as $label => $date) {
             if ($date === null || $date === '') continue;
             $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
@@ -1117,13 +1153,39 @@ class Transaction {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
 
-        $sql .= ' ORDER BY t."date" DESC, t."id" DESC';
-        if ($limit !== null) $sql .= ' LIMIT ' . max(1, min(1000, $limit));
+        return [$sql, $params];
+    }
 
-        $stmt = $db->prepare($sql);
+    /** Bounded rows with totals calculated over the complete matching ledger. */
+    public static function searchPage(array $filters, int $page = 1, int $pageSize = 50): array {
+        if ($page < 1 || $page > 100000 || $pageSize < 1 || $pageSize > 100) throw new InvalidArgumentException('Invalid transaction page.');
+        [$sql, $params] = self::buildSearchQuery(...$filters);
+        $db = Database::getConnection();
+        $from = substr($sql, strpos($sql, ' FROM "transactions" t'));
+        $summaryParams = $params;
+        $summaryParams['summary_ignore'] = Tag::getIgnoreId();
+        $eligible = 't."transfer_id" IS NULL AND (t."tag_id" IS NULL OR t."tag_id" != :summary_ignore)';
+        $summarySql = 'SELECT COUNT(*) AS count, COALESCE(SUM(t."amount"),0) AS signed_total, '
+            . 'COALESCE(SUM(CASE WHEN t."transfer_id" IS NULL THEN t."amount" ELSE 0 END),0) AS non_transfer_total, '
+            . 'COALESCE(SUM(CASE WHEN ' . $eligible . ' AND t."amount" > 0 THEN t."amount" ELSE 0 END),0) AS income, '
+            . 'COALESCE(SUM(CASE WHEN ' . $eligible . ' AND t."amount" < 0 THEN -t."amount" ELSE 0 END),0) AS spending'
+            . $from;
+        $summaryQuery = $db->prepare($summarySql);
+        $summaryQuery->execute($summaryParams);
+        $summary = $summaryQuery->fetch(PDO::FETCH_ASSOC);
+        $total = (int)$summary['count'];
+        $pages = max(1, (int)ceil($total / $pageSize));
+        $page = min($page, $pages);
+        $stmt = $db->prepare($sql . ' ORDER BY t."date" DESC, t."id" DESC LIMIT ' . $pageSize . ' OFFSET ' . (($page-1)*$pageSize));
         $stmt->execute($params);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return ['rows'=>$stmt->fetchAll(PDO::FETCH_ASSOC), 'pagination'=>[
+            'page'=>$page,'page_size'=>$pageSize,'pages'=>$pages,'total'=>$total
+        ], 'summary'=>[
+            'signed_total'=>round((float)$summary['signed_total'],2),
+            'non_transfer_total'=>round((float)$summary['non_transfer_total'],2),
+            'income'=>round((float)$summary['income'],2),'spending'=>round((float)$summary['spending'],2),
+            'cashflow'=>round((float)$summary['income']-(float)$summary['spending'],2)
+        ]];
     }
 
     /**

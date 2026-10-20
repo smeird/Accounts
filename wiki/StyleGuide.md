@@ -221,3 +221,7 @@ After importing, offer exact imported transactions and classification-gap review
 The Planning landing opens the existing four planning workspaces. Saved pension and mortgage plans display their results before a collapsed Edit assumptions disclosure, with explicit saved/unsaved-preview wording. New plans open setup. Keep before-tax, illustrative and contractual-shortfall limitations beside the results.
 
 Account names wrap and take precedence over identifiers; reveal the full identifier deliberately. Last transaction is activity, while Bank balance dated is the actual imported balance date. Glass supporting figures and embedded tables are flat within their containing surface. Paper keeps its continuous document canvas. Shared metadata uses a readable slate colour; internal transaction-evidence anchors use a quiet chevron and palette-based focus rather than an external-link glyph.
+
+## Dedicated phone product
+
+`phone.html` is a separate compact product, documented in [Phone Interface](PhoneInterface.md). It uses its own neutral light/dark palette, scrolling title, three labelled bottom tabs and native transaction lists. Do not load desktop theme/header/card/table systems into it. Preserve 44px controls, 16px inputs, safe areas, larger-text support and the shared secure session lifecycle. Classification remains a narrow, explicit single-entry edit.

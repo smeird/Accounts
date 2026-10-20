@@ -225,7 +225,7 @@ class Tag {
      * matches. The bounded response avoids sending every tag to controls that
      * only need a short list of relevant choices.
      */
-    public static function searchOptions(string $query = '', int $limit = 20, bool $includeClassification = false): array {
+    public static function searchOptions(string $query = '', int $limit = 20, bool $includeClassification = false, bool $ordinaryOnly = false): array {
         $db = Database::getConnection();
         $query = trim($query);
         $limit = max(1, min(100, $limit));
@@ -241,7 +241,9 @@ class Tag {
                 . 'LEFT JOIN "segments" s ON s."id" = c."segment_id" '
             : '';
         $sql = 'SELECT ' . $select . 'FROM "tags" t ' . $joins
-             . "WHERE t.\"status\" = 'active' AND (:query_empty = 1 OR t.\"name\" LIKE :contains ESCAPE '!') "
+             . "WHERE t.\"status\" = 'active' "
+             . ($ordinaryOnly ? "AND t.\"origin\" <> 'system' AND LOWER(t.\"name\") <> 'ignore' " : '')
+             . "AND (:query_empty = 1 OR LOWER(t.\"name\") LIKE LOWER(:contains) ESCAPE '!') "
              . 'ORDER BY CASE WHEN :prefix_empty = 0 AND t."name" LIKE :prefix ESCAPE \'!\' THEN 0 ELSE 1 END, '
              . 't."name" ASC, t."id" ASC LIMIT :result_limit';
         $stmt = $db->prepare($sql);

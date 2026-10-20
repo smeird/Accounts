@@ -997,6 +997,11 @@ assertEqual(0.0, (float)$closedSummaries[1]['balance'], 'Account summaries expos
 Account::setClosed(2, false, '2026-08-10');
 assertEqual('updated', Account::updateLedgerBalance(2, 7500, '2026-08-10', 1), 'A reopened account accepts a fresh bank balance');
 
+$phoneCurrent=InstantDashboard::getSnapshot(new DateTimeImmutable('2026-09-10T12:00:00+01:00'),false);
+assertEqual('2026-09-01',$phoneCurrent['period']['start'],'Phone overview keeps the real calendar month when empty');
+assertEqual(0.0,$phoneCurrent['metrics']['spending'],'An empty current phone month does not display historical spending');
+assertEqual('2026-08-01',InstantDashboard::getSnapshot(new DateTimeImmutable('2026-09-10T12:00:00+01:00'))['period']['start'],'Desktop overview retains its established latest-recorded-month fallback');
+
 // --- Yearly dashboard snapshot and portable monthly budgets ---
 $db->exec("INSERT INTO transactions (account_id, date, amount, description, category_id, tag_id) VALUES
     (1, '2025-07-25', 2800, 'Prior July salary', 1, 1),
@@ -1071,6 +1076,23 @@ $allRecentEvidence = Transaction::search(null);
 assertEqual($allRecentEvidence[0]['id'], $recentEvidence[0]['id'], 'Recent activity returns the newest deterministic row');
 $gapEvidence = Transaction::search(null, classificationGaps:true);
 assertEqual(true, count(array_filter($gapEvidence, static fn($row) => !$row['tag_id'] || !$row['category_id'])) === count($gapEvidence), 'Classification gap searches contain only missing tags or categories');
+// Phone pagination shares the exact desktop filters and aggregates the full match.
+$phoneFilters=['value'=>null,'start'=>'2026-07-01','end'=>'2026-08-10','groupId'=>20,'direction'=>'spending','transferScope'=>'exclude'];
+$phoneFirst=Transaction::searchPage($phoneFilters,1,1);
+$phoneSecond=Transaction::searchPage($phoneFilters,2,1);
+assertEqual(1,count($phoneFirst['rows']),'Phone ledger bounds returned rows');
+assertEqual(2,$phoneFirst['pagination']['total'],'Phone ledger counts all matching pages');
+assertEqual(false,$phoneFirst['rows'][0]['id']===$phoneSecond['rows'][0]['id'],'Phone ledger pages do not repeat rows');
+assertEqual(round(-array_sum(array_column($structuredGroup,'amount')),2),$phoneFirst['summary']['spending'],'Phone spending totals cover every page');
+assertEqual($phoneFirst['summary'],$phoneSecond['summary'],'Phone totals stay stable across pages');
+$phoneAll=Transaction::searchPage(['value'=>null,'ignoredScope'=>'include'],1,1);
+$phoneAllRows=Transaction::search(null,ignoredScope:'include');
+assertEqual(round(array_sum(array_column($phoneAllRows,'amount')),2),$phoneAll['summary']['signed_total'],'Phone matching total includes the full signed ledger');
+$phoneEligible=array_filter($phoneAllRows,static fn($row)=>$row['transfer_id']===null&&(int)$row['tag_id']!==Tag::getIgnoreId());
+assertEqual(round(array_sum(array_map(static fn($row)=>max(0,-(float)$row['amount']),$phoneEligible)),2),$phoneAll['summary']['spending'],'Phone spending excludes transfers and ignored entries even when listed');
+assertEqual($phoneFirst['pagination']['pages'],Transaction::searchPage($phoneFilters,999,1)['pagination']['page'],'Out-of-range phone pages clamp to the final valid page');
+$badPhonePage=false;try{Transaction::searchPage($phoneFilters,0);}catch(InvalidArgumentException $e){$badPhonePage=true;}
+assertEqual(true,$badPhonePage,'Phone pagination rejects invalid page numbers');
 $structuredDescription = Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], [], 'August home costs');
 assertEqual(1, count($structuredDescription), 'Structured drill-down supports an exact description');
 $db->exec("INSERT INTO transactions (account_id, date, amount, description, memo) VALUES (1, '2026-08-09', -1, 'Memo evidence test', 'Exact drill-down memo')");
@@ -1840,13 +1862,13 @@ assertEqual(true, strpos($applicationUpdateInstaller, 'visudo -cf') !== false, '
 preg_match_all('/href="([a-z0-9_\-]+\.html)"/i', $navigationMarkup, $navigationMatches);
 $navigationPagesMissingModernHeader = [];
 foreach (array_unique($navigationMatches[1] ?? []) as $navigationPage) {
-    if ($navigationPage === 'index.html') continue; // The landing page has its own hero system.
+    if (in_array($navigationPage, ['index.html','phone.html'], true)) continue; // Landing and the dedicated phone product own their header systems.
     $pageMarkup = (string)file_get_contents(__DIR__ . '/../frontend/' . $navigationPage);
     if (strpos($pageMarkup, 'renderPageHeader') === false) {
         $navigationPagesMissingModernHeader[] = $navigationPage;
     }
 }
-assertEqual([], $navigationPagesMissingModernHeader, 'Every active navigation page uses the modern page header');
+assertEqual([], $navigationPagesMissingModernHeader, 'Every desktop navigation page uses the modern page header');
 
 require_once __DIR__ . '/../php_backend/models/PensionPlanner.php';
 $backupPensionPlan = PensionPlanner::defaults();
@@ -2059,6 +2081,7 @@ $narrowResult = $correctionService->applyPlan($narrowPlan, false);
 assertEqual(0, $narrowResult['moved_aliases'], 'Narrow correction does not redirect a broader future rule');
 assertEqual($broadSource, (int)$db->query("SELECT tag_id FROM tag_aliases WHERE alias_normalized='amazon' AND direction='outgoing'")->fetchColumn(), 'Broad rule remains with its original canonical tag');
 
+require __DIR__ . '/PhoneClassificationTest.php';
 require __DIR__ . '/GroupAnalysisTest.php';
 require __DIR__ . '/PensionPlannerTest.php';
 require __DIR__ . '/MortgagePlannerTest.php';

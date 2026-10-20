@@ -79,4 +79,5 @@
     </ul>
   </div>
 </div>
+<a href="phone.html" id="phone-interface-link" class="flex items-center py-2 text-sm" aria-label="Open the dedicated phone interface"><i class="fas fa-mobile-screen-button mr-2" aria-hidden="true"></i> Phone interface</a>
 <div id="user-info" class="flex items-center mt-auto pt-4 border-t border-slate-200 text-sm text-slate-600"><i id="user-icon" class="fas fa-user w-4 text-center text-slate-400 mr-2"></i><span id="current-user">&nbsp;</span></div>

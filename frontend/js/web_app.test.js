@@ -41,7 +41,8 @@ async function run() {
     assert.equal(fetches.at(-1).cache, 'no-store');
     offline = true;
     assert.match(await (await navigate('/install/frontend/transaction.html?id=17')).text(), /Public offline/);
-    for (const path of ['/install/php_backend/public/transactions.php', '/install/php_backend/public/export.php', '/install/logout.php', '/other/frontend/index.html', '/install/favicon.png']) {
+    assert.match(await (await navigate('/install/frontend/phone.html?view=month')).text(), /Public offline/);
+    for (const path of ['/install/php_backend/public/phone_overview.php', '/install/php_backend/public/transactions.php', '/install/php_backend/public/export.php', '/install/logout.php', '/other/frontend/index.html', '/install/favicon.png']) {
         assert.equal(await navigate(path), null, `${path} must bypass the worker`);
     }
     assert.equal(await request('/install/frontend/transaction.html', 'POST'), null);

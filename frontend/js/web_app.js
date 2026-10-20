@@ -117,7 +117,7 @@
         return true;
     }
     async function resume() {
-        if (resumePromise || !document.getElementById('menu') || navigator.onLine === false) return;
+        if (resumePromise || (!document.getElementById('menu') && !document.body.hasAttribute('data-phone-app')) || navigator.onLine === false) return;
         resumePromise = (async () => {
             try {
                 if (!await checkSession()) return;
@@ -127,7 +127,8 @@
                 }
                 // Refresh only when the page opts in; editing/operations pages
                 // never reload automatically or repeat their actions.
-                if (document.body.hasAttribute('data-resume-refresh')) location.reload();
+                if (document.body.hasAttribute('data-phone-app')) document.dispatchEvent(new CustomEvent('app:resume'));
+                else if (document.body.hasAttribute('data-resume-refresh')) location.reload();
                 else showConnection('Connected — refresh to check for updated information.');
             } catch (_) { showConnection('Unable to reach the server. Your open edits have been kept. Try again when connected.'); }
         })();
@@ -187,7 +188,7 @@
         connection.setAttribute('role', 'status'); connection.setAttribute('aria-live', 'polite');
         connection.innerHTML = '<span></span>';
         connection.append(button('Retry', async () => {
-            if (document.getElementById('menu')) await resume();
+            if (document.getElementById('menu') || document.body.hasAttribute('data-phone-app')) await resume();
             else location.reload();
         }), button('Refresh', () => { if (!hasEdits() || confirm('Discard your unfinished edits and refresh?')) location.reload(); }));
         document.body.append(connection);
@@ -199,6 +200,7 @@
         sessionDialog = document.createElement('dialog');
         sessionDialog.className = 'web-app-dialog web-app-session'; sessionDialog.setAttribute('aria-labelledby', 'web-app-session-title');
         sessionDialog.innerHTML = '<h2 id="web-app-session-title">Sign in again</h2><p>Your session has ended. Your unfinished edits remain in this window; they have not been saved.</p><p>Sign in here to keep your edits in this app. Keep this window open until you have saved.</p><p data-session-status role="status"></p>';
+        if(document.body.hasAttribute('data-phone-app')) sessionDialog.innerHTML='<h2 id="web-app-session-title">Sign in to Accounts</h2><p>Your open view has been kept. Sign in with the same account to continue.</p><p data-session-status role="status"></p>';
         sessionDialog.addEventListener('cancel', event => event.preventDefault());
         const login = document.createElement('a'); login.href = loginUrl(); login.textContent = 'Start again at sign-in'; login.setAttribute('aria-label', 'Leave this page and start again at sign-in');
         const continueSession = async () => {
@@ -233,7 +235,9 @@
                 if (footer && !menu.contains(guideButton)) footer.before(guideButton);
             });
             observer.observe(menu, { childList: true });
-        } else document.querySelector('main')?.append(guideButton);
+        } else if(document.body.hasAttribute('data-phone-app')){
+            document.getElementById('phone-install-slot')?.append(guideButton);
+        }else document.querySelector('main')?.append(guideButton);
         navigation();
         const trackEdit = event => {
             const form = event.target.closest?.('form[data-preserve-edits]');

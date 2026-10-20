@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="theme-color" content="#f5f7f8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <meta name="color-scheme" content="light dark">
+    <link rel="manifest" href="phone.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/app-180.png">
+    <link rel="stylesheet" href="vendor/tailwind/tailwind.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/phone.css?v=20261020-phone">
+    <script src="js/web_app.js"></script>
+    <title>Accounts · Phone</title>
+</head>
+<body data-phone-app>
+    <a href="#phone-main" class="phone-skip">Skip to financial information</a>
+    <main id="phone-main" class="phone-main app-shell-main" tabindex="-1">
+        <header class="phone-heading">
+            <h1 id="phone-title">Overview</h1>
+            <button id="phone-options-button" class="phone-icon-button" type="button" aria-label="Options and help"><i class="fas fa-ellipsis" aria-hidden="true"></i></button>
+        </header>
+        <div id="phone-error" class="phone-error" role="alert" hidden><p id="phone-error-copy"></p><button id="phone-retry" type="button">Try again</button></div>
+        <section id="phone-overview" aria-label="Overall financial picture">
+            <p class="phone-loading" role="status">Loading your financial picture…</p>
+        </section>
+        <section id="phone-month" aria-label="Current month activity" hidden></section>
+        <section id="phone-search" aria-label="Find transactions" hidden>
+            <form id="phone-search-form" class="phone-search-form" role="search">
+                <label class="phone-search-field"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span class="phone-sr-only">Search transactions</span><input id="phone-query" name="value" type="search" placeholder="Merchant, note, category or amount" autocomplete="off" enterkeyhint="search" data-help="Search descriptions, notes, classifications and signed amounts."></label>
+                <button class="phone-icon-button phone-filter-button" type="button" id="phone-filter-button" aria-label="Filter transactions"><i class="fas fa-sliders" aria-hidden="true"></i><span id="phone-filter-dot" class="phone-filter-dot" hidden></span></button>
+                <button class="phone-search-submit" type="submit" aria-label="Search transactions">Search</button>
+            </form>
+            <div id="phone-search-scope" class="phone-scope" hidden></div>
+            <div id="phone-search-results"></div>
+        </section>
+        <noscript><p>This interface needs JavaScript to load your finances. <a href="instant.html">Open the full website</a>.</p></noscript>
+    </main>
+    <nav class="phone-tabs" aria-label="Phone navigation">
+        <a href="phone.html?view=overview" data-phone-tab="overview" aria-label="Overview" aria-current="page"><i class="fas fa-wallet" aria-hidden="true"></i><span>Overview</span></a>
+        <a href="phone.html?view=month" data-phone-tab="month" aria-label="Current month"><i class="fas fa-calendar-days" aria-hidden="true"></i><span>This month</span></a>
+        <a href="phone.html?view=search" data-phone-tab="search" aria-label="Search transactions"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span>Search</span></a>
+    </nav>
+    <dialog id="phone-filters" class="phone-sheet" aria-labelledby="phone-filter-title">
+        <form id="phone-filter-form">
+            <header class="phone-sheet-heading"><h2 id="phone-filter-title">Filter transactions</h2><button class="phone-icon-button" type="button" data-close-dialog aria-label="Close transaction filters"><i class="fas fa-xmark" aria-hidden="true"></i></button></header>
+            <div class="phone-fields">
+                <label>Account<select id="phone-account" name="account_id" data-help="Search one account or all accounts."><option value="">All accounts</option></select></label>
+                <label>Direction<select name="direction"><option value="">Money in and out</option><option value="spending">Money out</option><option value="income">Money in</option></select></label>
+                <label>From date<input type="date" name="start" data-help="First included transaction date."></label>
+                <label>To date<input type="date" name="end" data-help="Last included transaction date."></label>
+                <label>Minimum amount (£)<input type="number" step="0.01" inputmode="text" name="min_amount" placeholder="e.g. −100.00"></label>
+                <label>Maximum amount (£)<input type="number" step="0.01" inputmode="text" name="max_amount" placeholder="e.g. −10.00"></label>
+                <label>Transfers<select name="transfer_scope"><option value="include">Include</option><option value="exclude">Exclude</option><option value="only">Transfers only</option></select></label>
+                <label>Ignored entries<select name="ignored_scope"><option value="exclude">Exclude</option><option value="include">Include</option><option value="only">Ignored only</option></select></label>
+            </div>
+            <p class="phone-note">Amounts are signed: money out is negative. Income and spending totals exclude transfers and ignored entries.</p>
+            <p id="phone-filter-error" class="phone-inline-error" role="alert" hidden></p>
+            <footer class="phone-sheet-actions"><button id="phone-filter-reset" type="button" class="phone-quiet-button">Reset all filters</button><button type="submit" class="phone-primary-button">Show transactions</button></footer>
+        </form>
+    </dialog>
+    <dialog id="phone-detail" class="phone-sheet phone-detail" aria-labelledby="phone-detail-title"><div id="phone-detail-content"></div></dialog>
+    <dialog id="phone-options" class="phone-sheet" aria-labelledby="phone-options-title">
+        <header class="phone-sheet-heading"><h2 id="phone-options-title">Options</h2><button class="phone-icon-button" type="button" data-close-dialog aria-label="Close options"><i class="fas fa-xmark" aria-hidden="true"></i></button></header>
+        <div class="phone-option-list">
+            <button type="button" id="phone-refresh"><i class="fas fa-rotate" aria-hidden="true"></i> Refresh figures</button>
+            <label class="phone-text-toggle"><span>Larger text</span><input type="checkbox" id="phone-larger-text" aria-label="Use larger text in the phone interface"></label>
+            <button type="button" id="phone-help-button"><i class="fas fa-circle-question" aria-hidden="true"></i> Help with this view</button>
+            <div id="phone-install-slot"></div>
+            <a href="instant.html" id="phone-desktop"><i class="fas fa-display" aria-hidden="true"></i> Full website</a>
+            <a href="../logout.php"><i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i> Sign out</a>
+        </div>
+        <p class="phone-note">Phone essentials: balances, spending, search and transaction classification. Imports, tag management and planning stay on the full website.</p>
+    </dialog>
+    <dialog id="phone-help" class="phone-sheet" aria-labelledby="phone-help-title">
+        <header class="phone-sheet-heading"><h2 id="phone-help-title">About this view</h2><button class="phone-icon-button" type="button" data-close-dialog aria-label="Close help"><i class="fas fa-xmark" aria-hidden="true"></i></button></header>
+        <p id="phone-help-copy"></p><p class="phone-note">Figures require a connection. Nothing financial is cached for offline use. Use the Full website option for editing or administration.</p>
+    </dialog>
+    <script src="js/phone.js?v=20261020-phone"></script>
+</body>
+</html>

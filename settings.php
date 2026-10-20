@@ -208,6 +208,7 @@ $colorHex = $selectedPalette['primary'];
     <meta name="apple-mobile-web-app-title" content="Accounts">
     <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="frontend/css/web-app.css">
+    <script src="frontend/js/phone_entry.js"></script>
     <script src="frontend/js/web_app.js"></script>
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">

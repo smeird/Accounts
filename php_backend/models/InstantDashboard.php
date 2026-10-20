@@ -7,14 +7,14 @@ class InstantDashboard {
      * Return the latest useful financial snapshot. If the current month has no
      * transactions, the most recent recorded month becomes the reporting period.
      */
-    public static function getSnapshot($now = null): array {
+    public static function getSnapshot($now = null, bool $useLatestMonth = true): array {
         $db = Database::getConnection();
         $now = $now ?: new DateTimeImmutable('now');
         $latestDate = self::latestTransactionDate($db);
         $currentMonthStart = $now->modify('first day of this month')->setTime(0, 0);
         $anchor = $now;
 
-        if ($latestDate !== null && $latestDate < $currentMonthStart) {
+        if ($useLatestMonth && $latestDate !== null && $latestDate < $currentMonthStart) {
             $anchor = $latestDate;
         }
 
@@ -112,7 +112,7 @@ class InstantDashboard {
             if ((string)$e->getCode()==='42P01' || str_contains($e->getMessage(), 'no such table: mortgage_plans')) return ['available'=>false];
             throw $e;
         }
-        $summary=['available'=>true,'configured'=>$saved['revision']>0,'balance'=>(float)$saved['plan']['balance'],'payoff_date'=>null];
+        $summary=['available'=>true,'configured'=>$saved['revision']>0,'balance'=>(float)$saved['plan']['balance'],'balance_date'=>$saved['plan']['balance_date'],'payoff_date'=>null];
         if ($saved['revision']>0) $summary['payoff_date']=MortgagePlanner::forecast($saved['plan'])['overpay']['payoff_date'];
         return $summary;
     }
@@ -128,7 +128,7 @@ class InstantDashboard {
         }
         $plan = $saved['plan'];
         $summary = ['available'=>true, 'configured'=>$saved['revision']>0,
-            'total'=>round(array_sum(array_column($plan['pots'], 'value')), 2), 'retirement_age'=>$plan['retirement_age'], 'monthly_today'=>null];
+            'total'=>round(array_sum(array_column($plan['pots'], 'value')), 2), 'valued_from'=>$plan['pots'] ? min(array_column($plan['pots'],'valued_on')) : null, 'retirement_age'=>$plan['retirement_age'], 'monthly_today'=>null];
         if ($saved['revision']>0 && count($plan['pots'])>0) {
             try {
                 $plan['target_monthly'] = 0;

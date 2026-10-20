@@ -11,6 +11,8 @@ require_once __DIR__ . '/../services/TransactionEvidence.php';
 $recent = ($_GET['recent'] ?? '') === '1';
 $classificationGaps = ($_GET['gaps'] ?? '') === '1';
 $evidence = null;
+$page = array_key_exists('page', $_GET) ? filter_var($_GET['page'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1,'max_range'=>100000]]) : null;
+if ($page === false) { http_response_code(400); echo json_encode(['error'=>'A valid transaction page is required']); exit; }
 
 $value = $_GET['value'] ?? '';
 $amount = isset($_GET['amount']) ? $_GET['amount'] : null;
@@ -18,6 +20,8 @@ $min = isset($_GET['min_amount']) ? $_GET['min_amount'] : null;
 $max = isset($_GET['max_amount']) ? $_GET['max_amount'] : null;
 $start = isset($_GET['start']) && $_GET['start'] !== '' ? (string)$_GET['start'] : null;
 $end = isset($_GET['end']) && $_GET['end'] !== '' ? (string)$_GET['end'] : null;
+$calendarMonth = ($_GET['calendar_month'] ?? '') === '1';
+if ($calendarMonth) { $monthNow=new DateTimeImmutable('now'); $start=$monthNow->format('Y-m-01'); $end=$monthNow->format('Y-m-t'); }
 $dimension = isset($_GET['dimension']) && $_GET['dimension'] !== '' ? (string)$_GET['dimension'] : null;
 $dimensionId = isset($_GET['dimension_id']) && $_GET['dimension_id'] !== '' ? (int)$_GET['dimension_id'] : null;
 $unclassified = isset($_GET['unclassified']) && $_GET['unclassified'] === '1';
@@ -38,6 +42,9 @@ $exactMemo = array_key_exists('memo_exact', $_GET) ? (string)$_GET['memo_exact']
 $compareStart = isset($_GET['compare_start']) && $_GET['compare_start'] !== '' ? (string)$_GET['compare_start'] : null;
 $compareEnd = isset($_GET['compare_end']) && $_GET['compare_end'] !== '' ? (string)$_GET['compare_end'] : null;
 $all = isset($_GET['all']) && $_GET['all'] === '1';
+if ($page !== null && ($recent || $compareStart !== null || $compareEnd !== null)) {
+    http_response_code(400); echo json_encode(['error'=>'Recent-only and comparison searches use the full website. Remove those modes for paginated history.']); exit;
+}
 
 if ($amount !== null) {
     $min = $max = $amount;
@@ -114,42 +121,34 @@ try {
         $evidence = TransactionEvidence::page((string)$_GET['evidence'], (int)($_GET['evidence_page'] ?? 1));
         $transactionIds = $evidence['ids'];
     }
-    $search = static function ($rangeStart, $rangeEnd) use ($value, $min, $max, $dimension, $dimensionId, $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope, $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo, $includeUnclassified, $groupId, $recent, $classificationGaps) {
-        return Transaction::search(
-        $value,
-        $min !== null ? (float)$min : null,
-        $max !== null ? (float)$max : null,
-        $rangeStart,
-        $rangeEnd,
-        $dimension,
-        $dimensionId,
-        $unclassified,
-        $spendingOnly,
-        $direction,
-        $transferScope,
-        $ignoredScope,
-        $accountId,
-        $dimensionIds,
-        $transactionIds,
-        $exactDescription,
-        $exactMemo,
-        $includeUnclassified,
-        $groupId,
-        $recent ? 100 : null,
-        $classificationGaps
-        );
+    $search = static function ($rangeStart, $rangeEnd) use ($value, $min, $max, $dimension, $dimensionId, $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope, $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo, $includeUnclassified, $groupId, $recent, $classificationGaps, $page) {
+        $filters = [
+            'value'=>$value,'minAmount'=>$min !== null ? (float)$min : null,
+            'maxAmount'=>$max !== null ? (float)$max : null,'start'=>$rangeStart,'end'=>$rangeEnd,
+            'dimension'=>$dimension,'dimensionId'=>$dimensionId,'unclassified'=>$unclassified,
+            'spendingOnly'=>$spendingOnly,'direction'=>$direction,'transferScope'=>$transferScope,
+            'ignoredScope'=>$ignoredScope,'accountId'=>$accountId,'dimensionIds'=>$dimensionIds,
+            'transactionIds'=>$transactionIds,'exactDescription'=>$exactDescription,'exactMemo'=>$exactMemo,
+            'includeUnclassified'=>$includeUnclassified,'groupId'=>$groupId,'classificationGaps'=>$classificationGaps
+        ];
+        if ($page !== null) return Transaction::searchPage($filters, $page);
+        return Transaction::search(...array_merge($filters, ['limit'=>$recent ? 100 : null]));
     };
-    $results = $search($start, $end);
+    $matched = $search($start, $end);
+    $results = $page !== null ? $matched['rows'] : $matched;
     $total = 0.0;
     foreach ($results as $row) {
         if ($row['transfer_id'] === null) {
             $total += (float)$row['amount'];
         }
     }
-    $payload = ['results' => $results, 'total' => $total, 'recent' => $recent];
+    $payload = ['results' => $results, 'total' => $page !== null ? $matched['summary']['non_transfer_total'] : $total, 'recent' => $recent];
+    if ($calendarMonth) $payload['period']=['start'=>$start,'end'=>$end,'label'=>$monthNow->format('F Y')];
+    if ($page !== null) { $payload['pagination']=$matched['pagination']; $payload['summary']=$matched['summary']; }
     if ($evidence) $payload['evidence'] = array_diff_key($evidence, ['ids'=>true]);
     if ($compareStart !== null) {
-        $comparison = $search($compareStart, $compareEnd);
+        $comparisonMatch = $search($compareStart, $compareEnd);
+        $comparison = $page !== null ? $comparisonMatch['rows'] : $comparisonMatch;
         $comparisonTotal = 0.0;
         foreach ($comparison as $row) if ($row['transfer_id'] === null) $comparisonTotal += (float)$row['amount'];
         $payload['comparison_results'] = $comparison;
