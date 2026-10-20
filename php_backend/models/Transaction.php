@@ -1157,7 +1157,7 @@ class Transaction {
     }
 
     /** Bounded rows with totals calculated over the complete matching ledger. */
-    public static function searchPage(array $filters, int $page = 1, int $pageSize = 50): array {
+    public static function searchPage(array $filters, int $page = 1, int $pageSize = 50, bool $includeCategories = false): array {
         if ($page < 1 || $page > 100000 || $pageSize < 1 || $pageSize > 100) throw new InvalidArgumentException('Invalid transaction page.');
         [$sql, $params] = self::buildSearchQuery(...$filters);
         $db = Database::getConnection();
@@ -1173,19 +1173,30 @@ class Transaction {
         $summaryQuery = $db->prepare($summarySql);
         $summaryQuery->execute($summaryParams);
         $summary = $summaryQuery->fetch(PDO::FETCH_ASSOC);
+        $categories = [];
+        if ($includeCategories) {
+            $categoryQuery = $db->prepare('SELECT t."category_id" AS id, c."name", SUM(-t."amount") AS amount'
+                . $from . (str_contains($from, ' WHERE ') ? ' AND ' : ' WHERE ') . $eligible . ' AND t."amount" < 0'
+                . ' GROUP BY t."category_id", c."name" ORDER BY amount DESC, t."category_id"');
+            $categoryQuery->execute($summaryParams);
+            foreach ($categoryQuery->fetchAll(PDO::FETCH_ASSOC) as $category) {
+                $categories[] = ['id'=>$category['id'] === null ? null : (int)$category['id'],
+                    'name'=>$category['name'] ?? 'Uncategorised', 'amount'=>round((float)$category['amount'], 2)];
+            }
+        }
         $total = (int)$summary['count'];
         $pages = max(1, (int)ceil($total / $pageSize));
         $page = min($page, $pages);
         $stmt = $db->prepare($sql . ' ORDER BY t."date" DESC, t."id" DESC LIMIT ' . $pageSize . ' OFFSET ' . (($page-1)*$pageSize));
         $stmt->execute($params);
-        return ['rows'=>$stmt->fetchAll(PDO::FETCH_ASSOC), 'pagination'=>[
+        return array_merge($includeCategories ? ['categories'=>$categories] : [], ['rows'=>$stmt->fetchAll(PDO::FETCH_ASSOC), 'pagination'=>[
             'page'=>$page,'page_size'=>$pageSize,'pages'=>$pages,'total'=>$total
         ], 'summary'=>[
             'signed_total'=>round((float)$summary['signed_total'],2),
             'non_transfer_total'=>round((float)$summary['non_transfer_total'],2),
             'income'=>round((float)$summary['income'],2),'spending'=>round((float)$summary['spending'],2),
             'cashflow'=>round((float)$summary['income']-(float)$summary['spending'],2)
-        ]];
+        ]]);
     }
 
     /**

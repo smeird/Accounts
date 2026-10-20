@@ -1085,6 +1085,19 @@ assertEqual(2,$phoneFirst['pagination']['total'],'Phone ledger counts all matchi
 assertEqual(false,$phoneFirst['rows'][0]['id']===$phoneSecond['rows'][0]['id'],'Phone ledger pages do not repeat rows');
 assertEqual(round(-array_sum(array_column($structuredGroup,'amount')),2),$phoneFirst['summary']['spending'],'Phone spending totals cover every page');
 assertEqual($phoneFirst['summary'],$phoneSecond['summary'],'Phone totals stay stable across pages');
+$phoneCategoryPage=Transaction::searchPage($phoneFilters,2,1,true);
+assertEqual($phoneFirst['summary']['spending'],round(array_sum(array_column($phoneCategoryPage['categories'],'amount')),2),'Phone category composition covers all matching pages');
+assertEqual(Transaction::searchPage($phoneFilters,1,1,true)['categories'],$phoneCategoryPage['categories'],'Phone category composition stays stable across ledger pages');
+$phoneCategoryAll=Transaction::searchPage(['value'=>null,'ignoredScope'=>'include'],1,1,true);
+assertEqual($phoneCategoryAll['summary']['spending'],round(array_sum(array_column($phoneCategoryAll['categories'],'amount')),2),'Phone category composition excludes income, transfers and ignored entries');
+$phoneExpectedCategories=[];
+foreach (Transaction::search(null,ignoredScope:'include') as $categoryRow) {
+    if ($categoryRow['transfer_id']!==null || (int)$categoryRow['tag_id']===Tag::getIgnoreId() || (float)$categoryRow['amount']>=0) continue;
+    $categoryKey=$categoryRow['category_id'] ?? 'missing';
+    $phoneExpectedCategories[$categoryKey]=($phoneExpectedCategories[$categoryKey] ?? 0)-(float)$categoryRow['amount'];
+}
+foreach ($phoneCategoryAll['categories'] as $categoryRow) assertEqual(round($phoneExpectedCategories[$categoryRow['id'] ?? 'missing'],2),$categoryRow['amount'],'Phone category amount matches its eligible ledger evidence');
+assertEqual([],Transaction::searchPage(['value'=>null,'start'=>'2099-01-01'],1,50,true)['categories'],'Empty phone periods return no category spending');
 $phoneAll=Transaction::searchPage(['value'=>null,'ignoredScope'=>'include'],1,1);
 $phoneAllRows=Transaction::search(null,ignoredScope:'include');
 assertEqual(round(array_sum(array_column($phoneAllRows,'amount')),2),$phoneAll['summary']['signed_total'],'Phone matching total includes the full signed ledger');

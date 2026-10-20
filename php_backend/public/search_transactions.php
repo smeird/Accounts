@@ -131,7 +131,7 @@ try {
             'transactionIds'=>$transactionIds,'exactDescription'=>$exactDescription,'exactMemo'=>$exactMemo,
             'includeUnclassified'=>$includeUnclassified,'groupId'=>$groupId,'classificationGaps'=>$classificationGaps
         ];
-        if ($page !== null) return Transaction::searchPage($filters, $page);
+        if ($page !== null) return Transaction::searchPage($filters, $page, 50, ($_GET['include_categories'] ?? '') === '1');
         return Transaction::search(...array_merge($filters, ['limit'=>$recent ? 100 : null]));
     };
     $matched = $search($start, $end);
@@ -145,6 +145,7 @@ try {
     $payload = ['results' => $results, 'total' => $page !== null ? $matched['summary']['non_transfer_total'] : $total, 'recent' => $recent];
     if ($calendarMonth) $payload['period']=['start'=>$start,'end'=>$end,'label'=>$monthNow->format('F Y')];
     if ($page !== null) { $payload['pagination']=$matched['pagination']; $payload['summary']=$matched['summary']; }
+    if (isset($matched['categories'])) $payload['categories']=$matched['categories'];
     if ($evidence) $payload['evidence'] = array_diff_key($evidence, ['ids'=>true]);
     if ($compareStart !== null) {
         $comparisonMatch = $search($compareStart, $compareEnd);

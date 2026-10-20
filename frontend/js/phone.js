@@ -17,9 +17,10 @@
     const main=$('phone-main');
     const state={view:'overview',overview:null,accounts:null,overviewSequence:0,scroll:{overview:0,month:0,search:0},search:{params:new URLSearchParams(),page:1,data:null,key:null,sequence:0,controller:null},month:{filter:'all',page:1,data:null,base:null,key:null,sequence:0,controller:null},detailId:null};
     let booted=false,searchTimer,detailSequence=0,accountsPromise=null,detailOpener=null,filterOpener=null,detailRow=null,detailDirty=false,detailSaving=false,tagSequence=0,tagTimer;
+    let monthChart=null,monthChartsReady=null;
     const help={
         overview:'Your account position is the combined bank and credit-card balance, excluding closed accounts. Balances retain their bank-reported dates; loading this screen does not update those balances. Recorded pensions and mortgage debt are separate saved-plan values, not live valuations or a complete net-worth estimate. This month always means the current calendar month. Tap an account, a spending category or a transaction to see its activity.',
-        month:'This is the current calendar month, including dates with no activity. Income, spending and net movement exclude transfers and ignored entries. The activity list includes transfers and labels them; ignored entries are hidden. The three headline values cover the whole month even when you select a list filter. Fifty transactions load per page; totals cover all matching rows. Tap a row for the original statement detail.',
+        month:'This is the current calendar month, including dates with no activity. Income, spending and net movement exclude transfers and ignored entries. The activity list includes transfers and labels them; ignored entries are hidden. The three headline values and compact spending chart cover the whole month even when you select a list filter. Tap a category for its transactions; expand Other for smaller categories. Fifty transactions load per page; totals cover all matching rows. Tap a row for the original statement detail.',
         search:'Search merchants, notes, categories, tags, groups or signed amounts. Results cover your complete history, with fifty rows per page. Use Filters for dates, accounts, direction and amount limits. The matching total adds every included signed row, including transfers or ignored entries when selected. Linked evidence filters remain active until Reset all filters. Tap a transaction to choose an existing tag and save its linked category and segment. Classification changes only that entry; use the full website to manage tags or rules.'
     };
     function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
@@ -123,7 +124,52 @@
         const recent=section('Recent transactions',button('Search all',()=>navigate('search')));recent.append(ledger(data.recent||[]));host.append(recent);
         host.append(note('Loaded '+new Date(data.period.generated_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · Bank balances retain their reported dates. Transfers and ignored entries are excluded from income and spending.'));
     }
-    function monthParams(filter,page){const params=new URLSearchParams({all:'1',calendar_month:'1',page:String(page),ignored_scope:'exclude',transfer_scope:'include'});if(filter==='transfers')params.set('transfer_scope','only');else if(filter!=='all'){params.set('direction',filter);params.set('transfer_scope','exclude');}return params;}
+    function monthParams(filter,page){const params=new URLSearchParams({all:'1',calendar_month:'1',page:String(page),ignored_scope:'exclude',transfer_scope:'include'});if(filter==='all')params.set('include_categories','1');if(filter==='transfers')params.set('transfer_scope','only');else if(filter!=='all'){params.set('direction',filter);params.set('transfer_scope','exclude');}return params;}
+    function renderMonthSpending(base){
+        const root=el('section','phone-spending');root.setAttribute('aria-label','Spending by category for the full month');
+        root.append(el('h2','','Where the money went'));
+        const categories=base.categories||[];
+        if(!categories.length){root.append(note('No spending recorded this month.'));return root;}
+        const colors=['#168575','#487fbb','#b07832','#9372bc','#7a898f'];
+        const top=categories.slice(0,4),rest=categories.slice(4);
+        const items=top.map((category,index)=>({...category,color:colors[index]}));
+        if(rest.length)items.push({name:'Other',amount:rest.reduce((sum,category)=>sum+Number(category.amount),0),color:colors[4],other:true});
+        const chart=el('div','phone-spending-chart');chart.setAttribute('aria-hidden','true');root.append(chart);
+        const legend=el('div','phone-spending-key');
+        function categoryButton(category,color){
+            const query=new URLSearchParams({start:base.period.start,end:base.period.end,direction:'spending',transfer_scope:'exclude',ignored_scope:'exclude',dimension:'category',label:category.name+' · '+base.period.label});
+            if(category.id)query.set('dimension_id',category.id);else query.set('unclassified','1');
+            const share=Number(base.summary.spending)>0?Math.round(Number(category.amount)/Number(base.summary.spending)*100):0;
+            const item=button('',()=>navigate('search',query,1),'phone-spending-item',`View ${category.name}: ${money.format(category.amount)}, ${share}% of monthly spending`);
+            const swatch=el('span','phone-spending-swatch');swatch.style.backgroundColor=color;swatch.setAttribute('aria-hidden','true');
+            item.append(swatch,el('span','phone-spending-name',category.name),el('span','phone-spending-amount',money.format(category.amount)+' · '+share+'%'));return item;
+        }
+        top.forEach((category,index)=>legend.append(categoryButton(category,colors[index])));
+        root.append(legend);
+        if(rest.length){
+            const details=el('details','phone-spending-more');
+            const summary=el('summary','',`Other · ${money.format(items[4].amount)} · ${rest.length} more ${rest.length===1?'category':'categories'}`);
+            const remaining=el('div','phone-spending-key');rest.forEach(category=>remaining.append(categoryButton(category,colors[4])));
+            details.append(summary,remaining);root.append(details);
+        }
+        // The labels and ledger work immediately, even if the optional chart cannot load.
+        if(!monthChartsReady)monthChartsReady=window.Highcharts?Promise.resolve(window.Highcharts):new Promise(resolve=>{
+            const script=document.createElement('script');script.src='https://code.highcharts.com/highcharts.js';script.onload=()=>resolve(window.Highcharts);script.onerror=()=>resolve(null);document.head.append(script);
+        });
+        monthChartsReady.then(Highcharts=>{
+            if(!chart.isConnected)return;
+            if(!Highcharts){chart.hidden=true;return;}
+            monthChart=Highcharts.chart(chart,{
+                chart:{type:'bar',height:28,backgroundColor:'transparent',margin:0,spacing:[0,0,0,0],animation:false,style:{fontFamily:'inherit'}},
+                title:{text:null},credits:{enabled:false},legend:{enabled:false},accessibility:{enabled:false},
+                xAxis:{visible:false,categories:['Spending']},yAxis:{visible:false,min:0,max:Number(base.summary.spending),endOnTick:false},
+                tooltip:{enabled:false},
+                plotOptions:{series:{stacking:'normal',animation:false,borderWidth:0,pointWidth:16,enableMouseTracking:false,states:{inactive:{opacity:1}}}},
+                series:items.slice().reverse().map(category=>({name:category.name,color:category.color,data:[Number(category.amount)]}))
+            });
+        });
+        return root;
+    }
     async function loadMonth(force=false){
         const month=state.month,key=month.filter+':'+month.page;const host=$('phone-month');
         const sequence=++month.sequence;month.controller?.abort();
@@ -141,9 +187,11 @@
     }
     function renderMonth(pending=false){
         const {data,base,filter}=state.month;const host=$('phone-month');
+        if(monthChart){monthChart.destroy();monthChart=null;}
         if(!base){host.replaceChildren(note('Month activity is unavailable.'));return;}
         host.replaceChildren();host.setAttribute('aria-busy',String(pending));
         host.append(el('p','phone-caption',(data||base).period?.label||'Current calendar month'),renderMetrics(base.summary));
+        host.append(renderMonthSpending(base));
         const segments=el('div','phone-segments');segments.setAttribute('aria-label','Filter month activity');
         [['all','All'],['spending','Money out'],['income','Money in'],['transfers','Transfers']].forEach(([value,label])=>{const item=button(label,()=>{state.month.filter=value;state.month.page=1;navigate('month');},'');item.setAttribute('aria-pressed',String(filter===value));segments.append(item);});host.append(segments);
         const info=el('div','phone-result-summary');info.setAttribute('role','status');info.append(el('span','',pending?'Updating activity…':data?integer.format(data.pagination.total)+(data.pagination.total===1?' transaction':' transactions'):'Activity unavailable'),el('small','','Headline values cover the full month · ignored entries hidden'));host.append(info);
