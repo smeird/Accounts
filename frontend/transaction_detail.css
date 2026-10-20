@@ -92,3 +92,22 @@
     .transaction-technical summary { display:none; }
     .transaction-detail-list--technical { display:block; }
 }
+
+.transaction-detail-hero .transaction-hero__metrics article>div { min-width:0; }
+.transaction-detail-hero .transaction-hero__metrics strong { white-space:normal; overflow-wrap:anywhere; font-size:clamp(1rem,1.3vw,1.4rem); line-height:1.4; }
+.transaction-detail-hero .transaction-hero__metrics small { overflow-wrap:anywhere; }
+.transaction-secondary-actions { margin-bottom:1rem; }
+.transaction-secondary-actions summary,#transaction-new-tag summary { cursor:pointer; padding:.7rem 0; font-size:14px; }
+#transaction-review-progress { padding:.75rem 0; font-size:14px; }
+@media(max-width:767px) {
+ .transaction-context-back { display:none; }
+ .transaction-detail-hero .transaction-hero__metrics { grid-template-columns:1fr; }
+ .transaction-detail-hero .transaction-hero__metrics article { padding:.6rem 0; }
+ .transaction-detail-hero .transaction-summary-icon { display:none; }
+ .transaction-detail-hero .transaction-hero__metrics article>div { width:100%; }
+ .transaction-detail-hero .transaction-hero__metrics article p { display:inline; margin-right:.5rem; }
+ .transaction-detail-hero .transaction-hero__metrics article strong { display:inline; }
+ .transaction-detail-hero .transaction-hero__metrics article small { display:block; }
+ .transaction-phone-editor .transaction-editor__actions { display:flex; flex-wrap:wrap; padding:.65rem 0; }
+ .transaction-phone-editor .transaction-editor__actions button { width:100%; }
+}

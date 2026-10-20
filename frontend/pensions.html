@@ -23,6 +23,15 @@
     <main id="pension-main" class="ops-main flex-1 min-w-0" aria-busy="true">
         <p id="pension-status" role="status">Loading your pension workspace…</p>
         <p id="pension-error" role="alert" hidden></p>
+        <p id="pension-plan-state" role="status">Loading saved plan…</p>
+        <section id="pension-results" class="cards cards-tight" hidden aria-labelledby="pension-results-title">
+            <div class="pension-heading"><div><h2 id="pension-results-title">Your retirement income illustration</h2><p id="pension-context"></p></div><span class="pension-caption">Before tax · no lump sum taken</span></div>
+            <div id="pension-metrics" class="pension-metrics" aria-live="polite"></div>
+            <p id="pension-target"></p><p id="pension-notes"></p>
+            <div class="pension-table-wrap"><table class="pension-table"><caption>Compare growth scenarios — income at retirement</caption><thead><tr><th scope="col">Scenario</th><th scope="col">Pot in today’s money</th><th scope="col">Monthly today</th><th scope="col">Daily today</th><th scope="col">Monthly future</th></tr></thead><tbody id="pension-scenarios"></tbody></table></div>
+        </section>
+        <details id="pension-editor" open>
+            <summary>Edit assumptions</summary>
         <form data-preserve-edits id="pension-form">
             <fieldset id="pension-fields" disabled>
                 <section class="cards cards-solid cards-tight">
@@ -43,12 +52,7 @@
                 </section>
             </fieldset>
         </form>
-        <section id="pension-results" class="cards cards-tight" hidden aria-labelledby="pension-results-title">
-            <div class="pension-heading"><div><h2 id="pension-results-title">Your retirement income illustration</h2><p id="pension-context"></p></div><span class="pension-caption">Before tax · no lump sum taken</span></div>
-            <div id="pension-metrics" class="pension-metrics" aria-live="polite"></div>
-            <p id="pension-target"></p><p id="pension-notes"></p>
-            <div class="pension-table-wrap"><table class="pension-table"><caption>Compare growth scenarios — income at retirement</caption><thead><tr><th scope="col">Scenario</th><th scope="col">Pot in today’s money</th><th scope="col">Monthly today</th><th scope="col">Daily today</th><th scope="col">Monthly future</th></tr></thead><tbody id="pension-scenarios"></tbody></table></div>
-        </section>
+        </details>
         <section id="pension-timeline" class="cards cards-tight" hidden>
             <h2>How your pot could change</h2><p>Central scenario. The same purchasing power is withdrawn each month; State Pension reduces the withdrawals needed from the pot.</p>
             <div id="pension-chart" aria-label="Projected pension pot in today’s money" style="min-height:300px"></div>

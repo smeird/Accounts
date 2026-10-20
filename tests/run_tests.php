@@ -1065,6 +1065,12 @@ $structuredGroup = Transaction::search(null, null, null, '2026-07-01', '2026-08-
 assertEqual(2, count($structuredGroup), 'Project-group spending reconciles through the shared structured search');
 $structuredIds = Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], [(int)$structuredSpending[0]['id']]);
 assertEqual(1, count($structuredIds), 'Structured drill-down supports bounded exact transaction evidence');
+$recentEvidence = Transaction::search(null, limit:1);
+assertEqual(1, count($recentEvidence), 'Recent activity is bounded by its requested limit');
+$allRecentEvidence = Transaction::search(null);
+assertEqual($allRecentEvidence[0]['id'], $recentEvidence[0]['id'], 'Recent activity returns the newest deterministic row');
+$gapEvidence = Transaction::search(null, classificationGaps:true);
+assertEqual(true, count(array_filter($gapEvidence, static fn($row) => !$row['tag_id'] || !$row['category_id'])) === count($gapEvidence), 'Classification gap searches contain only missing tags or categories');
 $structuredDescription = Transaction::search(null, null, null, null, null, null, null, false, false, 'all', 'include', 'include', null, [], [], 'August home costs');
 assertEqual(1, count($structuredDescription), 'Structured drill-down supports an exact description');
 $db->exec("INSERT INTO transactions (account_id, date, amount, description, memo) VALUES (1, '2026-08-09', -1, 'Memo evidence test', 'Exact drill-down memo')");
@@ -1159,6 +1165,7 @@ $importService = new OfxImportService($db);
 $firstImport = $importService->importContent('current.ofx', $serviceOfx);
 assertEqual('success', $firstImport['status'] ?? null, 'Structured importer reports a successful file');
 assertEqual(1, (int)($firstImport['totals']['inserted'] ?? 0), 'Structured importer reports inserted transactions');
+assertEqual([(int)$db->query('SELECT id FROM transactions')->fetchColumn()], $firstImport['inserted_ids'], 'Import evidence contains only committed new transaction IDs');
 assertEqual(1, (int)($firstImport['totals']['tagged'] ?? 0), 'Structured importer reports newly tagged transactions');
 assertEqual(1, (int)($firstImport['totals']['categorised'] ?? 0), 'Structured importer reports newly categorised transactions');
 assertEqual('Complete merchant statement memo', $db->query('SELECT memo FROM transactions')->fetchColumn(), 'Imported transaction retains its complete memo');
@@ -1193,6 +1200,7 @@ assertEqual(1500.0, (float)$db->query("SELECT ledger_balance FROM accounts WHERE
 assertEqual('2026-08-16', $db->query("SELECT ledger_balance_date FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'Balance recovery retains the later reconciled date');
 $repeatImport = $importService->importContent('current.ofx', $serviceOfx);
 assertEqual(1, (int)($repeatImport['totals']['duplicates'] ?? 0), 'Repeat import reports the bank-ID duplicate');
+assertEqual([], $repeatImport['inserted_ids'], 'Duplicates do not enter imported transaction review');
 assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Repeat import does not add a duplicate row');
 
 $fullCardId = Account::create('Existing card', null, '5522131234568609');
@@ -1788,7 +1796,7 @@ assertEqual(true, strpos($paperStyles, '--paper-title-size') !== false, 'Paper t
 assertEqual(true, strpos($paperStyles, 'font-weight:var(--accent-font-weight,400)') !== false, 'Paper financial values use a lighter hierarchy while honouring chosen weights');
 assertEqual(true, strpos($paperStyles, 'p:is(#recurring-ratio,#avg-transaction)') !== false, 'Paper retains a readable separate scale for multiline statement values');
 assertEqual(true, strpos($paperStyles, 'lining-nums tabular-nums') !== false, 'Paper display amounts use aligned numerals');
-assertEqual(true, strpos($heroDensityScript, '20261020-finish') !== false, 'Updated Paper styles have a fresh asset version');
+assertEqual(true, strpos($heroDensityScript, '20261020-usability') !== false, 'Updated Paper styles have a fresh asset version');
 $trendStyles = (string)file_get_contents(__DIR__ . '/../frontend/financial_trends.css');
 assertEqual(false, strpos($trendStyles, '.trends-controls::before') !== false, 'Trends filters leave the primary accent to the financial brief');
 

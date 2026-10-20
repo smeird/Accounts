@@ -68,7 +68,7 @@
     }
     function changed() {
         if(!loaded)return;
-        dirty=true;request++;controller?.abort();invalidate();$('save-status').textContent='Unsaved changes · dashboard still uses your saved plan.';
+        dirty=true;$('pension-plan-state').textContent='Unsaved preview · the dashboard still uses your saved plan.';request++;controller?.abort();invalidate();$('save-status').textContent='Unsaved changes · dashboard still uses your saved plan.';
         $('pension-empty').hidden=document.querySelectorAll('.pension-pot').length>0;
         clearTimeout(timer);timer=setTimeout(preview,180);
     }
@@ -98,6 +98,7 @@
     }
     async function preview() {
         if(!loaded)return;
+        if(revision===0&&!document.querySelector('.pension-pot')){invalidate('Add your first pension pot to see an illustration.');return;}
         if(!$('pension-form').checkValidity()){invalidate();return;}
         const token=++request;controller?.abort();controller=new AbortController();
         try {const plan=collect();const data=await send('POST',{plan},controller.signal);if(token===request)render(data,plan);}
@@ -108,13 +109,13 @@
     $('pension-form').addEventListener('submit',async event=>{
         event.preventDefault();if(!loaded||!$('pension-form').reportValidity())return;
         $('save-plan').disabled=true;const plan=collect();const serialised=JSON.stringify(plan);
-        try {const result=await send('PUT',{plan,revision});revision=result.revision;dirty=JSON.stringify(collect())!==serialised;$('save-status').textContent=dirty?'Newer changes remain unsaved.':'Saved · Financial Overview now uses this plan.';if(!dirty)window.AppWeb?.markSaved($('pension-form'));window.showMessage('Pension plan saved.','success');preview();}
+        try {const result=await send('PUT',{plan,revision});revision=result.revision;dirty=JSON.stringify(collect())!==serialised;$('save-status').textContent=dirty?'Newer changes remain unsaved.':'Saved · Financial Overview now uses this plan.';$('pension-plan-state').textContent=dirty?'Unsaved preview · newer edits are not saved.':'Saved plan · results use your saved assumptions.';if(!dirty)window.AppWeb?.markSaved($('pension-form'));window.showMessage('Pension plan saved.','success');preview();}
         catch(error){$('pension-error').textContent=error.message;$('pension-error').hidden=false;window.showMessage(error.message,'error');}
         finally{$('save-plan').disabled=false;}
     });
     window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
     async function load() {
-        try {const result=await send('GET');revision=result.revision;fields.forEach(([key])=>{$(key).value=result.plan[key];if($(key)._slider)$(key)._slider.value=result.plan[key];});result.plan.pots.forEach(addPot);loaded=true;$('pension-fields').disabled=false;$('pension-main').setAttribute('aria-busy','false');preview();}
+        try {const result=await send('GET');revision=result.revision;$('pension-editor').open=revision===0;$('pension-editor').querySelector('summary').textContent=revision===0?'Set up your plan':'Edit assumptions';$('pension-plan-state').textContent=revision>0?'Saved plan · results use your saved assumptions.':'Start by entering your details, then save your plan.';fields.forEach(([key])=>{$(key).value=result.plan[key];if($(key)._slider)$(key)._slider.value=result.plan[key];});result.plan.pots.forEach(addPot);loaded=true;$('pension-fields').disabled=false;$('pension-main').setAttribute('aria-busy','false');preview();}
         catch(error){$('pension-status').textContent='Pensions could not load. Check Database Health, then reload this page.';$('pension-error').textContent=error.message;$('pension-error').hidden=false;$('pension-main').setAttribute('aria-busy','false');}
     }
     const script=document.createElement('script');script.src='https://code.highcharts.com/highcharts.js';script.async=true;script.onload=()=>{drawChart();const accessibility=document.createElement('script');accessibility.src='https://code.highcharts.com/modules/accessibility.js';accessibility.onload=drawChart;document.head.append(accessibility);};document.head.append(script);

@@ -46,7 +46,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const themeLink = document.createElement('link');
     themeLink.id = 'theme-professional-css';
     themeLink.rel = 'stylesheet';
-    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20261020-finish');
+    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20261020-usability');
     document.head.appendChild(themeLink);
   }
 
@@ -101,7 +101,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const typographyLink = document.createElement('link');
     typographyLink.id = 'site-typography-css';
     typographyLink.rel = 'stylesheet';
-    typographyLink.href = resolveFrontendAsset('typography.css?v=20261019-visual-consistency');
+    typographyLink.href = resolveFrontendAsset('typography.css?v=20261020-usability');
     document.head.appendChild(typographyLink);
   }
 
@@ -588,11 +588,11 @@ const attachSidebarSearchHandler = (root = document) => {
   // Glass gives the main financial brief the accent; ordinary workspaces use
   // their header. Paper always uses its document header through theme CSS.
   // Health/update status strips are semantic indicators, not decorative heroes.
-  const primaryAccent = main?.querySelector([
+  const primaryAccent = (document.body.classList.contains('transaction-search-page') ? null : main?.querySelector([
     '.landing-hero', '.instant-hero', '.transaction-hero', '.budget-hero',
     '.project-hero', '.yearly-hero', '.forecast-hero', '.recurring-hero',
     '.process-hero', '.pivot-hero', '.trends-primary-card', '.burn-hero'
-  ].join(',')) || main?.querySelector('.page-header');
+  ].join(','))) || main?.querySelector('.page-header');
   primaryAccent?.classList.add('page-primary-accent');
 
   const content = main?.parentElement;

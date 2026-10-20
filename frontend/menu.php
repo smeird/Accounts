@@ -44,6 +44,7 @@
   <div class="group">
     <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3 cursor-pointer">Planning</h3>
     <ul class="space-y-1.5 overflow-hidden max-h-0 transition-all duration-300">
+      <li><a href="planning.html"><i class="fas fa-compass"></i> Planning overview</a></li>
       <li><a href="mortgages.html"><i class="fas fa-house-chimney"></i> Mortgage Planner</a></li>
       <li><a href="pensions.html"><i class="fas fa-seedling"></i> Pensions &amp; Retirement</a></li>
       <li><a href="budgets.html"><i class="fas fa-piggy-bank"></i> Budgets</a></li>

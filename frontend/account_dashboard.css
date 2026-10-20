@@ -183,3 +183,28 @@
     .account-summary-card.is-loading,.account-spinner { animation:none; }
     .account-table tbody tr,.account-open-link { transition:none; }
 }
+
+/* Supporting values sit on one shared surface; account identity has room to wrap. */
+.account-summary { gap:0; padding:.65rem 0; border-bottom:1px solid var(--account-line); }
+.account-summary-card { min-height:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+.account-summary-card+.account-summary-card { border-left:1px solid var(--account-line); }
+.account-name { white-space:normal; overflow-wrap:anywhere; text-overflow:clip; line-height:1.4; }
+.account-balance-date { display:block; margin-top:.35rem; color:var(--account-muted); font-size:11px; font-weight:400; }
+.account-identifier-reveal summary { cursor:pointer; }
+.account-table tbody tr { background:transparent; }
+.account-table th:first-child { width:30%; }
+.account-table th:nth-child(2) { width:13%; }
+@media(max-width:767px) {
+ .account-summary-card { padding:.5rem; }
+ .account-summary-card:nth-child(3) { order:0; }
+ .account-summary-card:nth-child(2),.account-summary-card:nth-child(4) { order:1; display:flex; align-items:center; gap:.5rem; }
+ .account-summary-card:nth-child(2) .account-summary-icon,.account-summary-card:nth-child(4) .account-summary-icon,
+ .account-summary-card:nth-child(2) .account-summary-helper,.account-summary-card:nth-child(4) .account-summary-helper { display:none; }
+ .account-summary-card:nth-child(2) .account-summary-label,.account-summary-card:nth-child(4) .account-summary-label { font-size:12px; text-transform:none; letter-spacing:0; }
+ .account-summary-card:nth-child(2) .account-summary-value,.account-summary-card:nth-child(4) .account-summary-value { font-size:14px; margin:0; }
+ .account-summary-value { margin-top:.4rem; }
+ .account-table tbody tr { border:0; border-radius:0; border-bottom:1px solid var(--account-line); box-shadow:none; background:transparent; }
+ .account-table tbody tr:hover { box-shadow:none; }
+ .account-table td::before { color:#64748b; }
+ .account-identity { align-items:flex-start; }
+}

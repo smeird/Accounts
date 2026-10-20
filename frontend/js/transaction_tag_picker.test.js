@@ -16,6 +16,6 @@ assert.match(script, /byId\('category'\)\.value=tag\.category_id===null\?'':Stri
 assert.match(script, /updateSegmentPreview\(\)/, 'choosing a tag or category should refresh the derived segment');
 assert.match(page, /Set by the category[\s\S]*id="segment-preview"/, 'the derived segment should be visible in the editor');
 assert.match(styles, /max-height:14rem;[\s\S]*overflow-y:auto/, 'tag results should remain visually bounded');
-assert.match(page, /transaction_detail\.js\?v=20260831-classification-fill/, 'the transaction script cache key should change with the classification update');
+assert.match(page, /transaction_detail\.js\?v=20261020-usability/, 'the transaction script cache key should change with the classification update');
 
 console.log('transaction tag picker tests passed');

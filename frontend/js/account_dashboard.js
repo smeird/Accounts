@@ -49,6 +49,7 @@
             transactions:numberValue(raw.transactions),
             balance:Number(raw.closed) === 1 ? 0 : numberValue(raw.balance),
             last_transaction:raw.last_transaction ? String(raw.last_transaction) : '',
+            ledger_balance_date:raw.ledger_balance_date ? String(raw.ledger_balance_date).slice(0,10) : '',
             closed:Number(raw.closed) === 1,
             closed_at:raw.closed_at ? String(raw.closed_at) : ''
         };
@@ -59,8 +60,8 @@
         const parsed = new Date(account.last_transaction + 'T00:00:00');
         if (Number.isNaN(parsed.getTime())) return { label:account.last_transaction, detail:'Activity recorded', tone:'quiet', timestamp:0 };
         const days = Math.max(0, Math.floor((Date.now() - parsed.getTime()) / 86400000));
-        if (days <= 7) return { label:date.format(parsed), detail:days === 0 ? 'Updated today' : `Updated ${days}d ago`, tone:'fresh', timestamp:parsed.getTime() };
-        if (days <= 30) return { label:date.format(parsed), detail:`Updated ${days}d ago`, tone:'steady', timestamp:parsed.getTime() };
+        if (days <= 7) return { label:date.format(parsed), detail:days === 0 ? 'Last transaction today' : `Last transaction ${days}d ago`, tone:'fresh', timestamp:parsed.getTime() };
+        if (days <= 30) return { label:date.format(parsed), detail:`Last transaction ${days}d ago`, tone:'steady', timestamp:parsed.getTime() };
         return { label:date.format(parsed), detail:`No activity for ${days}d`, tone:'stale', timestamp:parsed.getTime() };
     }
 
@@ -123,8 +124,10 @@
 
     function identifierCell(account) {
         const cell = setCellLabel(element('td', 'account-identifier'), 'Identifier');
-        const primary = account.account_number || 'Not supplied';
-        cell.appendChild(element('span', 'account-identifier-number', primary));
+        const primary = account.account_number ? 'Ending '+account.account_number.slice(-4) : 'Not supplied';
+        const reveal=element('details','account-identifier-reveal');
+        reveal.append(element('summary','account-identifier-number',primary),element('span','account-identifier-number',account.account_number));
+        cell.appendChild(reveal);
         cell.appendChild(element('span', 'account-identifier-sort', account.sort_code ? `Sort ${account.sort_code}` : 'Card account'));
         return cell;
     }
@@ -209,7 +212,7 @@
 
     function activityCell(account) {
         const details = activity(account);
-        const cell = setCellLabel(element('td', 'account-activity'), 'Last activity');
+        const cell = setCellLabel(element('td', 'account-activity'), 'Last transaction');
         const primary = element('span', 'account-activity-date', details.label);
         const secondary = element('span', `account-activity-state account-activity-state--${details.tone}`, details.detail);
         cell.append(primary, secondary);
@@ -224,6 +227,7 @@
         fill.style.width = `${Math.max(7, Math.round(Math.abs(account.balance) / maximum * 100))}%`;
         track.appendChild(fill);
         cell.append(amount, track);
+        if (account.ledger_balance_date && !account.closed) cell.append(element('small','account-balance-date','Bank balance dated '+date.format(new Date(account.ledger_balance_date+'T12:00:00'))));
         return cell;
     }
 
@@ -336,7 +340,7 @@
         headerRow.append(
             headerCell('Account', 'name'),
             element('th', '', 'Identifier'),
-            headerCell('Last activity', 'last_transaction'),
+            headerCell('Last transaction', 'last_transaction'),
             headerCell('Transactions', 'transactions', 'right'),
             headerCell('Balance', 'balance', 'right'),
             element('th', 'account-open-heading', 'Actions')

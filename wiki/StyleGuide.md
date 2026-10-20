@@ -209,3 +209,15 @@ Daily Burn summary cards keep their natural height. Desktop metric captions sit 
 Maintenance and taxonomy heroes, primary actions, links and decorative washes use the selected primary/secondary palette. Keep safety states, approvals, errors and rollback actions semantically coloured. In Professional, Daily Burn and taxonomy filters use flat ruled boundaries, maintenance heroes share the paper canvas, and nested explanatory content and cleanup metrics remain unboxed.
 
 The main Tagging workspace follows the same Paper treatment: a flat hero, unboxed financial-health metrics, neutral tab boundaries and palette-based selection. Warning actions, including merge confirmations in dialogs, remain amber; danger and rollback actions retain red.
+
+### Task-first usability (October 2026)
+
+Find Transactions starts with compact search controls and recent activity (latest 100), followed by the result ledger, financial summary and optional spending chart. Date/account/direction/inclusion and classification-gap filters live in one disclosure; active evidence remains visible and one Reset removes every filter. All history is explicit. Chart failure must leave results and totals usable.
+
+A classification review is an explicit batch of at most 250 eligible matching rows with progress and Save and next. A successful save advances only when the submitted controls are still current. Errors and newer edits stay in place. New-tag creation is secondary, and transfer/print actions belong to the transaction record outside the editor. Use one contextual Back on phones. Preserve only navigation controls/scroll in browser history state, never ledger rows or drafts.
+
+After importing, offer exact imported transactions and classification-gap review, using opaque session evidence with a two-hour lifetime and 250-row pages. Expired evidence is an actionable error, never an unfiltered ledger. Failed files and duplicate rows are absent from this evidence.
+
+The Planning landing opens the existing four planning workspaces. Saved pension and mortgage plans display their results before a collapsed Edit assumptions disclosure, with explicit saved/unsaved-preview wording. New plans open setup. Keep before-tax, illustrative and contractual-shortfall limitations beside the results.
+
+Account names wrap and take precedence over identifiers; reveal the full identifier deliberately. Last transaction is activity, while Bank balance dated is the actual imported balance date. Glass supporting figures and embedded tables are flat within their containing surface. Paper keeps its continuous document canvas. Shared metadata uses a readable slate colour; internal transaction-evidence anchors use a quiet chevron and palette-based focus rather than an external-link glyph.

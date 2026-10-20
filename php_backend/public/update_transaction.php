@@ -37,6 +37,15 @@ try {
     if (!$sourceTransaction || (int)$sourceTransaction['account_id'] !== (int)$accountId) {
         throw new InvalidArgumentException('Transaction does not belong to the supplied account');
     }
+    if (isset($data['review_token'])) {
+        require_once __DIR__ . '/../services/TransactionEvidence.php';
+        $evidence = TransactionEvidence::page((string)$data['review_token'], 1, 'review');
+        $position = filter_var($data['review_position'] ?? null, FILTER_VALIDATE_INT);
+        if ($position === false || !isset($evidence['ids'][$position]) || $evidence['ids'][$position] !== (int)$transactionId
+            || $sourceTransaction['transfer_id'] !== null || (int)$sourceTransaction['tag_id'] === Tag::getIgnoreId()) {
+            throw new InvalidArgumentException('This review has changed. Return to results to start a fresh review; your edits remain here.');
+        }
+    }
     $tagChanged = false;
     $categoryChanged = false;
 
@@ -113,6 +122,8 @@ try {
         'auto_categorised' => $categorised,
         'auto_segmented' => $segmented
     ]);
+} catch (InvalidArgumentException $e) {
+    http_response_code(400); echo json_encode(['error'=>$e->getMessage()]);
 } catch (Exception $e) {
     http_response_code(500);
     Log::write('Update transaction error: ' . $e->getMessage(), 'ERROR');

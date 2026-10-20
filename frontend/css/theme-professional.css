@@ -1067,3 +1067,8 @@ body.theme-professional .ops-main .tagging-tabs button[aria-selected="true"] {
   background:color-mix(in srgb,var(--brand-color-600,#4f46e5) 7%,transparent);
   box-shadow:none;
 }
+
+/* Planner figures belong to the document, without repeated metric accents. */
+body.theme-professional .ops-main :is(.pension-metric,.mortgage-metric) {
+ border:0!important; background:transparent!important; box-shadow:none!important;
+}

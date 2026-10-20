@@ -142,7 +142,9 @@ class OfxImportService {
             return $this->errorResult($filename, 'The file could not be imported safely. No transactions from it were saved.');
         }
 
+        $insertedIds = [];
         foreach ($accountResults as &$accountResult) {
+            array_push($insertedIds, ...$accountResult['inserted_ids']);
             unset($accountResult['inserted_ids']);
         }
         unset($accountResult);
@@ -171,6 +173,7 @@ class OfxImportService {
         $result = [
             'file' => $filename,
             'status' => 'success',
+            'inserted_ids' => $insertedIds,
             'message' => $message,
             'accounts' => $accounts,
             'totals' => [

@@ -6,6 +6,11 @@ require_once __DIR__ . '/../models/Log.php';
 require_once __DIR__ . '/../models/Transaction.php';
 
 header('Content-Type: application/json');
+header('Cache-Control: no-store');
+require_once __DIR__ . '/../services/TransactionEvidence.php';
+$recent = ($_GET['recent'] ?? '') === '1';
+$classificationGaps = ($_GET['gaps'] ?? '') === '1';
+$evidence = null;
 
 $value = $_GET['value'] ?? '';
 $amount = isset($_GET['amount']) ? $_GET['amount'] : null;
@@ -40,7 +45,7 @@ if ($amount !== null) {
 
 if ($value === '' && $min === null && $max === null && $dimension === null && $accountId === null
     && $groupId === null && !$transactionIds && $exactDescription === null && $exactMemo === null && $direction === null
-    && $start === null && $end === null && !$all) {
+    && $start === null && $end === null && !$all && !$recent && !$classificationGaps && empty($_GET['evidence'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Search value or amount range is required']);
     exit;
@@ -105,7 +110,11 @@ if (($compareStart === null) !== ($compareEnd === null) || ($compareStart !== nu
 }
 
 try {
-    $search = static function ($rangeStart, $rangeEnd) use ($value, $min, $max, $dimension, $dimensionId, $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope, $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo, $includeUnclassified, $groupId) {
+    if (!empty($_GET['evidence'])) {
+        $evidence = TransactionEvidence::page((string)$_GET['evidence'], (int)($_GET['evidence_page'] ?? 1));
+        $transactionIds = $evidence['ids'];
+    }
+    $search = static function ($rangeStart, $rangeEnd) use ($value, $min, $max, $dimension, $dimensionId, $unclassified, $spendingOnly, $direction, $transferScope, $ignoredScope, $accountId, $dimensionIds, $transactionIds, $exactDescription, $exactMemo, $includeUnclassified, $groupId, $recent, $classificationGaps) {
         return Transaction::search(
         $value,
         $min !== null ? (float)$min : null,
@@ -125,7 +134,9 @@ try {
         $exactDescription,
         $exactMemo,
         $includeUnclassified,
-        $groupId
+        $groupId,
+        $recent ? 100 : null,
+        $classificationGaps
         );
     };
     $results = $search($start, $end);
@@ -135,7 +146,8 @@ try {
             $total += (float)$row['amount'];
         }
     }
-    $payload = ['results' => $results, 'total' => $total];
+    $payload = ['results' => $results, 'total' => $total, 'recent' => $recent];
+    if ($evidence) $payload['evidence'] = array_diff_key($evidence, ['ids'=>true]);
     if ($compareStart !== null) {
         $comparison = $search($compareStart, $compareEnd);
         $comparisonTotal = 0.0;
@@ -145,6 +157,8 @@ try {
         $payload['comparison'] = ['start' => $compareStart, 'end' => $compareEnd];
     }
     echo json_encode($payload);
+} catch (InvalidArgumentException $e) {
+    http_response_code(400); echo json_encode(['error' => $e->getMessage()]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

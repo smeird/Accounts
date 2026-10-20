@@ -1,0 +1,10 @@
+.planning-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.planning-option { display:flex; align-items:center; gap:1rem; color:inherit; text-decoration:none; }
+.planning-option > i { color:var(--brand-color-600,#4f46e5); font-size:1.5rem; }
+.planning-option > div { flex:1; min-width:0; }
+.planning-option h2 { margin:0 0 .4rem; font-size:1.2rem; }
+.planning-option p,.planning-note { font-size:14px; line-height:1.6; }
+.planning-option:hover { border-color:var(--brand-color-600,#4f46e5); }
+.planning-option:focus-visible { outline:2px solid var(--brand-color-600,#4f46e5); outline-offset:4px; }
+.planning-note { margin-top:1.5rem; }
+@media(max-width:767px) { .planning-options { grid-template-columns:1fr; } }

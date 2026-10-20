@@ -22,13 +22,13 @@ class Account {
         $ignore = Tag::getIgnoreId();
         $sql = 'SELECT a."id", a."name", a."sort_code", a."account_number", COUNT(t."id") AS "transactions", '
              . 'CASE WHEN a."closed" = 1 THEN 0 ELSE COALESCE(a."ledger_balance", 0) END AS "balance", '
-             . 'a."closed", a."closed_at", '
+             . 'a."closed", a."closed_at", a."ledger_balance_date", '
              . 'MAX(t."date") AS "last_transaction", '
              . "CASE WHEN a.\"sort_code\" IS NULL OR a.\"sort_code\" = '' THEN 1 ELSE 0 END AS \"is_credit_card\" "
              . 'FROM "accounts" a '
              . 'LEFT JOIN "transactions" t ON t."account_id" = a."id" '
              . 'AND (t."tag_id" IS NULL OR t."tag_id" != :ignore) '
-             . 'GROUP BY a."id", a."name", a."sort_code", a."account_number", a."ledger_balance", a."closed", a."closed_at" '
+             . 'GROUP BY a."id", a."name", a."sort_code", a."account_number", a."ledger_balance", a."ledger_balance_date", a."closed", a."closed_at" '
              . 'ORDER BY a."closed" ASC, a."name"';
         $stmt = $db->prepare($sql);
         $stmt->execute(['ignore' => $ignore]);

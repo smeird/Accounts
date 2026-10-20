@@ -933,7 +933,9 @@ class Transaction {
         ?string $exactDescription = null,
         ?string $exactMemo = null,
         bool $includeUnclassified = false,
-        ?int $groupId = null
+        ?int $groupId = null,
+        ?int $limit = null,
+        bool $classificationGaps = false
     ): array {
         $db = Database::getConnection();
 
@@ -975,7 +977,7 @@ class Transaction {
         $validateIds($transactionIds, 250, 'transaction');
 
         $sql = 'SELECT t."id", t."account_id", a."name" AS account_name, t."date", t."amount", t."description", t."memo", t."transfer_id", '
-             . 'c."name" AS category_name, s."name" AS segment_name, tg."name" AS tag_name, g."name" AS group_name '
+             . 't."tag_id", t."category_id", c."name" AS category_name, s."name" AS segment_name, tg."name" AS tag_name, g."name" AS group_name '
              . 'FROM "transactions" t '
              . 'LEFT JOIN "accounts" a ON t."account_id" = a."id" '
              . 'LEFT JOIN "categories" c ON t."category_id" = c."id" '
@@ -1110,9 +1112,13 @@ class Transaction {
             $conditions[] = 't."tag_id" = :ignore';
             $params['ignore'] = $ignore;
         }
+        if ($classificationGaps) $conditions[] = '(t."tag_id" IS NULL OR t."category_id" IS NULL)';
         if ($conditions) {
             $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
+
+        $sql .= ' ORDER BY t."date" DESC, t."id" DESC';
+        if ($limit !== null) $sql .= ' LIMIT ' . max(1, min(1000, $limit));
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);

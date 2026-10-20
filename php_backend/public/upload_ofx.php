@@ -72,7 +72,15 @@ foreach ($names as $index => $rawName) {
     $results[] = $service->importContent($filename, $contents);
 }
 
+require_once __DIR__ . '/../services/TransactionEvidence.php';
+$insertedIds = [];
+foreach ($results as &$fileResult) {
+    array_push($insertedIds, ...($fileResult['inserted_ids'] ?? []));
+    unset($fileResult['inserted_ids']);
+}
+unset($fileResult);
 $response = OfxImportService::summarise($results);
+$response['review_token'] = TransactionEvidence::create($insertedIds);
 if ($response['status'] === 'error') {
     http_response_code(422);
 }

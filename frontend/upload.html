@@ -28,9 +28,9 @@
                     <h2 id="upload-workspace-title">Bring in your latest bank activity</h2>
                     <p>Select one or more OFX or QFX statements. Existing bank transaction IDs are skipped safely; distinct transactions are preserved even when their merchant and amount match.</p>
                     <div class="upload-assurances" aria-label="Import safeguards">
-                        <span><i class="fas fa-fingerprint" aria-hidden="true"></i> Bank-ID deduplication</span>
+                        <span><i class="fas fa-fingerprint" aria-hidden="true"></i> No duplicate imports</span>
                         <span><i class="fas fa-layer-group" aria-hidden="true"></i> Multiple files</span>
-                        <span><i class="fas fa-rotate-left" aria-hidden="true"></i> Atomic per file</span>
+                        <span><i class="fas fa-rotate-left" aria-hidden="true"></i> Each file imports completely or is left unchanged</span>
                     </div>
                 </div>
 
@@ -107,9 +107,10 @@
                     <aside class="upload-next-steps">
                         <span class="upload-next-steps__eyebrow">Next step</span>
                         <h3>Review what changed</h3>
-                        <p>Open your statement to check the new transactions and fill any remaining classification gaps.</p>
-                        <a href="monthly_statement.html"><i class="fas fa-table-list" aria-hidden="true"></i> Review monthly statement</a>
-                        <a href="search.html" class="upload-next-steps__secondary"><i class="fas fa-magnifying-glass" aria-hidden="true"></i> Search transactions</a>
+                        <p id="upload-review-note">Review new transactions and any classification gaps.</p>
+                        <a id="upload-review-transactions" href="search.html" hidden><i class="fas fa-table-list" aria-hidden="true"></i> Review imported transactions</a>
+                        <a id="upload-review-gaps" href="search.html" class="upload-next-steps__secondary" hidden><i class="fas fa-tags" aria-hidden="true"></i> Review classification gaps</a>
+                        <a href="search.html" class="upload-next-steps__secondary">Find transactions</a>
                         <button id="upload-another" type="button"><i class="fas fa-rotate" aria-hidden="true"></i> Import another statement</button>
                     </aside>
                 </div>

@@ -23,12 +23,13 @@
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main transaction-main transaction-detail-main flex-1 min-w-0 overflow-x-hidden">
+        <p id="transaction-review-progress" role="status" hidden></p>
         <div id="transaction-error" class="transaction-error" role="alert" hidden></div>
 
         <section class="transaction-hero transaction-detail-hero" data-no-card="true" aria-labelledby="transaction-hero-amount">
             <div class="transaction-hero__glow" aria-hidden="true"></div>
             <div class="transaction-hero__topline">
-                <span class="transaction-pulse"><span aria-hidden="true"></span>Transaction signal</span>
+                <span class="transaction-pulse"><span aria-hidden="true"></span>Transaction</span>
                 <span id="transaction-hero-reference">Loading reference…</span>
             </div>
             <div class="transaction-hero__body">
@@ -58,9 +59,10 @@
         <div id="transaction-workspace" class="transaction-detail-grid" hidden>
             <section id="transaction-receipt" class="transaction-card transaction-detail-card transaction-receipt" data-no-card="true">
                 <div class="transaction-card__header">
-                    <div><p class="transaction-section-label">Movement record</p><h2>The transaction</h2><p class="transaction-card__copy">The original statement detail and identifiers behind this movement.</p></div>
+                    <div><p class="transaction-section-label">Statement</p><h2>The transaction</h2><p class="transaction-card__copy">The original statement detail and identifiers behind this movement.</p></div>
                     <span id="transaction-type-badge" class="transaction-count">—</span>
                 </div>
+                <details class="transaction-secondary-actions no-print"><summary>Transaction actions</summary><div class="transaction-actions">                    <button id="mark-transfer" type="button" class="transaction-button transaction-button--secondary" aria-label="Mark transaction as transfer"><i class="fas fa-right-left" aria-hidden="true"></i><span>Mark as transfer</span></button>                    <button id="print-transaction" type="button" class="transaction-button transaction-button--quiet" aria-label="Print transaction record"><i class="fas fa-print" aria-hidden="true"></i><span>Print record</span></button></div></details>
                 <div class="transaction-classification-key" aria-label="Classification colour key">
                     <span>Key</span><span><i class="is-tag" aria-hidden="true"></i>Tag</span><span><i class="is-category" aria-hidden="true"></i>Category</span><span><i class="is-segment" aria-hidden="true"></i>Segment</span><span><i class="is-group" aria-hidden="true"></i>Group</span>
                 </div>
@@ -76,7 +78,7 @@
             </section>
 
             <form data-preserve-edits id="transaction-form" class="transaction-card transaction-detail-card transaction-editor no-print" data-no-card="true">
-                <div class="transaction-card__header"><div><p class="transaction-section-label">Classification</p><h2>Organise this movement</h2><p class="transaction-card__copy">Refine where this transaction belongs. Changes flow into dashboards, budgets and reports.</p></div></div>
+                <div class="transaction-card__header"><div><p class="transaction-section-label">Classification</p><h2>Edit classification</h2><p class="transaction-card__copy">Refine where this transaction belongs. Changes flow into dashboards, budgets and reports.</p></div></div>
                 <div class="transaction-field-stack">
                     <div class="transaction-field">
                         <label for="tag-search"><span>Existing tag <small>Search and choose one to reuse</small></span></label>
@@ -90,7 +92,7 @@
                             <div id="tag-results" class="transaction-tag-picker__results" role="listbox" aria-label="Existing tag matches" hidden></div>
                         </div>
                     </div>
-                    <label class="transaction-field" for="tag"><span>Or create a new tag <small>Only used when no tag is selected</small></span><input type="text" id="tag" placeholder="Enter a new tag name" autocomplete="off" data-help="Only fill this in when you need to create a brand new tag"></label>
+                    <details id="transaction-new-tag"><summary>Create a new tag</summary><label class="transaction-field" for="tag"><span>Or create a new tag <small>Only used when no tag is selected</small></span><input type="text" id="tag" placeholder="Enter a new tag name" autocomplete="off" data-help="Only fill this in when you need to create a brand new tag"></label></details>
                     <label class="transaction-field" for="category"><span>Category <small>Grouped by segment</small></span><select id="category" data-help="Assign a category"><option value="">No category</option></select></label>
                     <div class="transaction-field"><span>Segment <small>Set by the category</small></span><div id="segment-preview" class="transaction-derived-value" role="status" aria-live="polite">No segment</div></div>
                     <label class="transaction-field" for="group"><span>Group <small>Optional reporting group</small></span><select id="group" data-help="Assign a group"><option value="">No group</option></select></label>
@@ -98,8 +100,6 @@
                 <div class="transaction-editor__note"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>Choosing an existing tag fills its linked category and segment. Saving may also improve matching for similar transactions on this account.</span></div>
                 <div class="transaction-actions transaction-editor__actions">
                     <button id="save-transaction" type="submit" class="transaction-button transaction-button--primary" aria-label="Save transaction classification"><i class="fas fa-check" aria-hidden="true"></i><span>Save changes</span></button>
-                    <button id="mark-transfer" type="button" class="transaction-button transaction-button--secondary" aria-label="Mark transaction as transfer"><i class="fas fa-right-left" aria-hidden="true"></i><span>Mark as transfer</span></button>
-                    <button id="print-transaction" type="button" class="transaction-button transaction-button--quiet" aria-label="Print transaction record"><i class="fas fa-print" aria-hidden="true"></i><span>Print record</span></button>
                     <span id="transaction-status" class="transaction-status" aria-live="polite"></span>
                 </div>
             </form>
@@ -110,11 +110,12 @@
 <script src="js/page_header.js"></script>
 <script>
     const transactionDetailMain = document.querySelector('main.ops-main');
-    window.renderPageHeader(transactionDetailMain, { title:'Transaction Details', breadcrumb:'Transactions / Detail', subtitle:'Understand one movement, verify its source, and refine where it belongs.', actions:null });
+    window.renderPageHeader(transactionDetailMain, { title:'Transaction Details', breadcrumb:'Transactions / Detail', subtitle:'Check the statement details and update the classification.', actions:null });
 </script>
 <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
-<script src="js/transaction_detail.js?v=20260831-classification-fill"></script>
+<script src="js/transaction_navigation.js"></script>
+<script src="js/transaction_detail.js?v=20261020-usability"></script>
 <script src="js/overlay.js"></script>
 </body>
 </html>

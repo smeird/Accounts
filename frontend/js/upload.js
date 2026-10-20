@@ -36,7 +36,8 @@ function normaliseUploadPayload(text, httpStatus = 200) {
             ? 'The upload failed.'
             : 'The server returned an incomplete upload result. No success has been assumed.')),
         totals: payload.totals && typeof payload.totals === 'object' ? payload.totals : {},
-        files: Array.isArray(payload.files) ? payload.files : []
+        files: Array.isArray(payload.files) ? payload.files : [],
+        review_token:typeof payload.review_token==='string'?payload.review_token:null
     };
 }
 
@@ -202,6 +203,16 @@ function initUpload() {
         document.getElementById('upload-total-warnings').textContent = Number(totals.warnings) || 0;
         document.getElementById('upload-total-failed').textContent = Number(totals.failed_files) || (status === 'error' ? Math.max(1, payload.files.length) : 0);
         renderFileResults(payload.files);
+        const token=payload.review_token;
+        const links=[document.getElementById('upload-review-transactions'),document.getElementById('upload-review-gaps')];
+        links.forEach(link=>{link.hidden=!token;});
+        if(token){
+            const query=new URLSearchParams({evidence:token,label:'Imported transactions',ignored_scope:'include'});
+            links[0].href='search.html?'+query;
+            query.set('gaps','1');query.set('transfer_scope','exclude');query.set('ignored_scope','exclude');
+            links[1].href='search.html?'+query;
+        }
+        document.getElementById('upload-review-note').textContent=token?'Review the exact new transactions from this import. Review links last up to two hours in this session; newer reviews can replace older links.':'No scoped review is available. Use Find Transactions to check your ledger.';
         result.hidden = false;
         document.getElementById('upload-result-title').focus({ preventScroll: true });
         result.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });

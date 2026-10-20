@@ -7,6 +7,8 @@
     const params = new URLSearchParams(window.location.search);
     const transactionId = params.get('id');
     let transaction = null;
+    let review = null;
+    let pendingSave = false;
     let selectedTag = null;
     let tagSearchTimer = null;
     let tagSearchController = null;
@@ -29,11 +31,9 @@
 
     function headerActions() {
         const wrap=document.createElement('div'); wrap.className='transaction-header-actions';
-        let backTarget='search.html';
-        if(document.referrer){try{const referrer=new URL(document.referrer);if(referrer.origin===location.origin&&referrer.pathname!==location.pathname)backTarget=referrer.href;}catch(error){backTarget='search.html';}}
-        const back=document.createElement('a'); back.href=backTarget; back.className='transaction-header-link';
+        const back=document.createElement('a');back.href=window.TransactionNavigation.returnTarget();back.className='transaction-header-link transaction-context-back';back.addEventListener('click',window.TransactionNavigation.back);
         const backIcon=document.createElement('i'); backIcon.className='fas fa-arrow-left'; backIcon.setAttribute('aria-hidden','true');
-        const backLabel=document.createElement('span'); backLabel.textContent='Back'; back.append(backIcon,backLabel);
+        const backLabel=document.createElement('span'); backLabel.textContent=params.has('review')?'Back to results':'Back'; back.append(backIcon,backLabel);
         const search=document.createElement('a'); search.href='search.html'; search.className='transaction-header-link transaction-header-link--primary';
         const searchIcon=document.createElement('i'); searchIcon.className='fas fa-magnifying-glass'; searchIcon.setAttribute('aria-hidden','true');
         const searchLabel=document.createElement('span'); searchLabel.textContent='Search'; search.append(searchIcon,searchLabel);
@@ -135,6 +135,7 @@
         byId('tag-select').value=String(selectedTag.id);
         byId('tag-search').value=selectedTag.name;
         byId('tag').value='';
+        byId('transaction-new-tag').open=false;
         byId('tag-results').replaceChildren();
         setTagPickerOpen(false);
         const hasClassification=Object.prototype.hasOwnProperty.call(tag,'category_id');
@@ -216,6 +217,7 @@
             else if(event.key==='Escape')setTagPickerOpen(false);
         });
         document.addEventListener('pointerdown',event=>{if(!picker.contains(event.target))setTagPickerOpen(false);});
+        byId('transaction-new-tag').addEventListener('toggle',()=>{if(!byId('transaction-new-tag').open)tagInput.value='';});
         tagInput.addEventListener('input',()=>{if(tagInput.value.trim())clearExistingTagSelection(true);});
     }
 
@@ -246,6 +248,7 @@
         const transfer=byId('mark-transfer');
         if(tx.transfer_id){transfer.disabled=true;transfer.classList.add('is-complete');transfer.querySelector('i').className='fas fa-check';transfer.querySelector('span').textContent='Already a transfer';return;}
         transfer.addEventListener('click',async function(){
+            if(!window.confirm('Mark this transaction as a transfer? It will be excluded from income and spending totals.'))return;
             clearError(); transfer.disabled=true; transfer.querySelector('span').textContent='Marking…'; setText('transaction-status','Updating transfer status…');
             try{const result=await requestJson('../php_backend/public/mark_transaction_transfer.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:tx.id})});if(result.status!=='ok')throw new Error(result.error||'The transaction could not be marked as a transfer.');notify('Transaction marked as transfer');setText('transaction-transfer','Transfer');setText('transaction-transfer-note','Excluded from reporting totals');transfer.classList.add('is-complete');transfer.querySelector('i').className='fas fa-check';transfer.querySelector('span').textContent='Marked as transfer';setText('transaction-status','Transfer status updated');}
             catch(error){showError(error.message||'The transaction could not be marked as a transfer.');transfer.disabled=false;transfer.querySelector('span').textContent='Mark as transfer';setText('transaction-status','Transfer update failed');}
@@ -275,18 +278,49 @@
 
     async function saveTransaction(event) {
         event.preventDefault(); clearError();
-        const savedState=window.AppWeb?.capture(byId('transaction-form'));
-        const save=byId('save-transaction'); save.disabled=true; save.querySelector('span').textContent='Saving…'; setText('transaction-status','Saving classification…');
+        if(pendingSave)return;
+        const form=byId('transaction-form'),save=byId('save-transaction');
+        const tagId=byId('tag-select').value,tagName=byId('tag').value.trim();
+        if(byId('tag-search').value.trim()&&!tagId&&!tagName){
+            setText('transaction-status','Choose a tag from the matching results before saving.');byId('tag-search').focus();return;
+        }
+        const controls=()=>JSON.stringify([...form.querySelectorAll('input,select')].map(input=>[input.id,input.value]));
+        const savedControls=controls(),savedState=window.AppWeb?.capture(form);
+        pendingSave=true;save.disabled=true;save.querySelector('span').textContent='Saving…';
+        setText('transaction-status','Saving classification…');
         const payload={transaction_id:transaction.id,account_id:transaction.account_id,description:transaction.description,group_id:byId('group').value,category_id:byId('category').value};
-        const tagId=byId('tag-select').value, tagName=byId('tag').value.trim(); if(tagId)payload.tag_id=tagId;else if(tagName)payload.tag_name=tagName;
-        try{const result=await requestJson('../php_backend/public/update_transaction.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(result.status!=='ok')throw new Error(result.error||'The transaction could not be saved.');window.AppWeb?.markSaved(byId('transaction-form'),savedState);notify('Transaction classification saved');setText('transaction-status','Changes saved');save.querySelector('i').className='fas fa-check';save.querySelector('span').textContent='Saved';save.classList.add('is-complete');try{transaction=await requestJson('../php_backend/public/transaction.php?id='+encodeURIComponent(transaction.id));renderHero(transaction);renderRecord(transaction);}catch(refreshError){}setTimeout(()=>{save.classList.remove('is-complete');save.querySelector('span').textContent='Save changes';save.disabled=false;},1200);}
-        catch(error){showError(error.message||'The transaction could not be saved.');setText('transaction-status','Save failed');save.disabled=false;save.querySelector('span').textContent='Save changes';}
+        if(tagId)payload.tag_id=tagId;else if(tagName)payload.tag_name=tagName;
+        if(review){payload.review_token=params.get('review');payload.review_position=review.position;}
+        try {
+            const result=await requestJson('../php_backend/public/update_transaction.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+            if(result.status!=='ok')throw new Error(result.error||'The transaction could not be saved.');
+            window.AppWeb?.markSaved(form,savedState);
+            const unchanged=controls()===savedControls;
+            if(review&&unchanged){
+                if(review.next_id){
+                    const next=new URL(location.href);next.searchParams.set('id',review.next_id);next.searchParams.set('position',review.position+1);
+                    history.replaceState(history.state,'',next.href);location.reload();return;
+                }
+                review=null;setText('transaction-review-progress','Review complete · all transactions in this batch have been saved. Return to results to review another batch.');
+            }
+            const message=unchanged?'Classification saved.':'Previous values saved. Newer edits remain unsaved; save again to continue.';
+            setText('transaction-status',message);notify(message,unchanged?'success':'info');
+            try {transaction=await requestJson('../php_backend/public/transaction.php?id='+encodeURIComponent(transaction.id));renderHero(transaction);renderRecord(transaction);} catch (_) {}
+        } catch(error) {
+            showError(error.message||'The transaction could not be saved.');
+            setText('transaction-status',error.message||'Save failed. Your edits are still here.');
+        } finally {
+            pendingSave=false;save.disabled=false;
+            save.querySelector('span').textContent=review?'Save and next':'Save changes';
+            save.setAttribute('aria-label',review?'Save classification and open the next transaction':'Save transaction classification');
+        }
     }
 
     async function loadTransaction() {
         window.updatePageHeader(transactionDetailMain,{actions:headerActions()});
         if(!transactionId){byId('transaction-loading').hidden=true;showError('No transaction reference was provided. Open a transaction from Search or Reports and try again.');return;}
         try{
+            if(params.has('review')){review=await requestJson('../php_backend/public/transaction_review.php?'+new URLSearchParams({token:params.get('review'),position:params.get('position')||'0'}));if(String(review.id)!==String(transactionId))throw new Error('This transaction does not match the review position. Return to your results.');byId('transaction-review-progress').hidden=false;setText('transaction-review-progress',`Review ${review.position+1} of ${review.count} · up to 250 per batch · saves apply only when you choose Save and next.`);byId('save-transaction').querySelector('span').textContent='Save and next';byId('save-transaction').setAttribute('aria-label','Save classification and open the next transaction');}
             const results=await Promise.all([
                 requestJson('../php_backend/public/transaction.php?id='+encodeURIComponent(transactionId)),
                 requestJson('../php_backend/public/groups.php'),

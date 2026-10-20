@@ -19,18 +19,54 @@
     <link rel="stylesheet" href="vendor/tabulator/6.5.0/tabulator_simple.min.css">
     <link rel="stylesheet" href="transactions_workspace.css">
 </head>
-<body data-resume-refresh class="ops-body transaction-page">
+<body data-resume-refresh class="ops-body transaction-page transaction-search-page">
 <div class="flex min-h-screen">
     <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
     <main class="ops-main transaction-main flex-1 min-w-0 overflow-x-hidden">
         <div id="search-error" class="transaction-error" role="alert" hidden></div>
         <div id="search-filter-context" class="transaction-filter-context" aria-label="Active transaction evidence filters" hidden></div>
 
+            <section class="transaction-card search-controls" data-no-card="true" aria-label="Find transactions">
+                <form id="search-form" class="transaction-search-form">
+                    <div class="transaction-field-grid">
+                        <label class="transaction-field transaction-field--wide" for="term"><span>Search term <small>Optional</small></span><input type="search" id="term" aria-label="Search transactions" placeholder="Try a merchant, memo, category, tag or group" autocomplete="off" data-help="Value to search across transactions"></label>
+
+
+                    </div>
+                    <details class="search-more-filters"><summary>Date, account and other filters</summary>
+                        <div class="transaction-field-grid">
+                        <label class="transaction-field" for="min-amount"><span>Minimum amount</span><input type="number" step="0.01" id="min-amount" placeholder="£0.00" data-help="Minimum amount to match"></label>
+                        <label class="transaction-field" for="max-amount"><span>Maximum amount</span><input type="number" step="0.01" id="max-amount" placeholder="£0.00" data-help="Maximum amount to match"></label>
+                            <label class="transaction-field" for="filter-start"><span>From date</span><input id="filter-start" type="date" data-help="First included transaction date"></label>
+                            <label class="transaction-field" for="filter-end"><span>To date</span><input id="filter-end" type="date" data-help="Last included transaction date"></label>
+                            <label class="transaction-field" for="filter-account"><span>Account</span><select id="filter-account" data-help="Limit results to an account"><option value="">All accounts</option></select></label>
+                            <label class="transaction-field" for="filter-direction"><span>Direction</span><select id="filter-direction" data-help="Money entering or leaving"><option value="">Money in and out</option><option value="spending">Money out</option><option value="income">Money in</option></select></label>
+                            <label class="transaction-field" for="filter-transfers"><span>Transfers</span><select id="filter-transfers" data-help="Include, exclude or show only transfers"><option value="include">Include</option><option value="exclude">Exclude</option><option value="only">Transfers only</option></select></label>
+                            <label class="transaction-field" for="filter-ignored"><span>Ignored transactions</span><select id="filter-ignored" data-help="Choose whether ignored entries appear"><option value="exclude">Exclude</option><option value="include">Include</option><option value="only">Ignored only</option></select></label>
+                            <label class="transaction-field" for="filter-gaps"><span>Classification gaps</span><select id="filter-gaps" data-help="Find transactions missing a tag or category"><option value="">Any classification</option><option value="gaps">Missing tag or category</option><option value="tag">Missing tag</option><option value="category">Missing category</option></select></label>
+                        </div>
+                    </details>
+                    <div class="transaction-actions">
+                        <button id="search-submit" type="submit" class="transaction-button transaction-button--primary"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span>Search</span></button>
+                        <button id="search-clear" type="button" class="transaction-button transaction-button--quiet"><i class="fas fa-rotate-left" aria-hidden="true"></i><span>Reset</span></button>
+                        <a href="search.html?all=1" class="transaction-button transaction-button--quiet">All history</a>
+                        <span id="search-status" class="transaction-status" aria-live="polite"></span>
+                    </div>
+                </form>
+            </section>
+
+        <section class="transaction-card transaction-results-card" data-no-card="true">
+            <div class="transaction-card__header"><div><p class="transaction-section-label">Evidence</p><h2>Matching transactions</h2><p id="search-results-copy" class="transaction-card__copy">Your result set will appear here, ready to sort and inspect.</p></div><button id="search-review" type="button" class="transaction-button transaction-button--secondary" aria-label="Review classification gaps in the matching results" hidden>Review gaps</button><span id="search-result-count" class="transaction-count">0</span></div>
+            <nav id="search-evidence-pages" aria-label="Imported transaction pages" hidden></nav>
+            <div id="results-grid" class="transaction-table" aria-live="polite"></div>
+            <div id="search-table-total" class="search-table-total" role="status" aria-live="polite" hidden><span>Total matching transactions</span><strong id="search-table-total-value">£0.00</strong></div>
+            <p class="transaction-card__copy">The table total includes all matching rows across pages and follows the table search. It adds the signed amounts shown, including any transfers or ignored entries in the results.</p>
+        </section>
         <section class="transaction-hero" data-no-card="true" aria-labelledby="search-hero-value">
             <div class="transaction-hero__glow" aria-hidden="true"></div>
             <div class="transaction-hero__topline">
-                <span class="transaction-pulse"><span aria-hidden="true"></span>Transaction signal</span>
-                <span id="search-hero-context">Ready to investigate</span>
+                <span class="transaction-pulse"><span aria-hidden="true"></span>Results summary</span>
+                <span id="search-hero-context">Recent activity</span>
             </div>
             <div class="transaction-hero__body">
                 <div>
@@ -61,41 +97,21 @@
         </section>
 
         <div class="transaction-grid transaction-grid--search">
-            <section class="transaction-card" data-no-card="true">
-                <div class="transaction-card__header"><div><p class="transaction-section-label">Investigation</p><h2>Find the movement</h2><p class="transaction-card__copy">Search every transaction field, then narrow the result by amount if needed.</p></div></div>
-                <form id="search-form" class="transaction-search-form">
-                    <div class="transaction-field-grid">
-                        <label class="transaction-field transaction-field--wide" for="term"><span>Search term <small>Optional with an amount</small></span><input type="search" id="term" placeholder="Try a merchant, memo, category, tag or group" autocomplete="off" data-help="Value to search across transactions"></label>
-                        <label class="transaction-field" for="min-amount"><span>Minimum amount</span><input type="number" step="0.01" id="min-amount" placeholder="£0.00" data-help="Minimum amount to match"></label>
-                        <label class="transaction-field" for="max-amount"><span>Maximum amount</span><input type="number" step="0.01" id="max-amount" placeholder="£0.00" data-help="Maximum amount to match"></label>
-                    </div>
-                    <div class="transaction-actions">
-                        <button id="search-submit" type="submit" class="transaction-button transaction-button--primary"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span>Search transactions</span></button>
-                        <button id="search-clear" type="button" class="transaction-button transaction-button--quiet"><i class="fas fa-rotate-left" aria-hidden="true"></i><span>Clear</span></button>
-                        <span id="search-status" class="transaction-status" aria-live="polite"></span>
-                    </div>
-                </form>
-            </section>
 
-            <section class="transaction-card" data-no-card="true">
+            <section id="search-chart-panel" class="transaction-card" data-no-card="true" hidden>
                 <div class="transaction-card__header"><div><p class="transaction-section-label">Pattern</p><h2>Matched spending over time</h2><p class="transaction-card__copy">Outgoings are grouped automatically so long and short searches stay readable.</p></div><span id="search-bucket-label" class="transaction-count">—</span></div>
                 <div id="results-chart" class="transaction-chart" data-chart-desc="Chart showing matched spending grouped across time."></div>
             </section>
         </div>
 
-        <section class="transaction-card transaction-results-card" data-no-card="true">
-            <div class="transaction-card__header"><div><p class="transaction-section-label">Evidence</p><h2>Matching transactions</h2><p id="search-results-copy" class="transaction-card__copy">Your result set will appear here, ready to sort and inspect.</p></div><span id="search-result-count" class="transaction-count">0</span></div>
-            <div id="results-grid" class="transaction-table" aria-live="polite"></div>
-            <div id="search-table-total" class="search-table-total" role="status" aria-live="polite" hidden><span>Total matching transactions</span><strong id="search-table-total-value">£0.00</strong></div>
-            <p class="transaction-card__copy">The table total includes all matching rows across pages and follows the table search. It adds the signed amounts shown, including any transfers or ignored entries in the results.</p>
-        </section>
+
     </main>
 </div>
 
 <script src="js/page_header.js"></script>
 <script>
     const transactionSearchMain = document.querySelector('main.ops-main');
-    window.renderPageHeader(transactionSearchMain, { title:'Find Transactions', breadcrumb:'Transactions', subtitle:'Investigate any slice of activity and understand its shape at a glance.', actions:null });
+    window.renderPageHeader(transactionSearchMain, { title:'Find Transactions', breadcrumb:'Transactions', subtitle:'Browse recent activity, find transactions and review classifications.', actions:null });
 </script>
 <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
@@ -104,6 +120,7 @@
 <script src="js/chart_loader.js"></script>
 
 <script src="js/color_map.js?v=20260814-lazy-charts"></script>
+<script src="js/transaction_navigation.js"></script>
 <script src="js/search_transactions.js"></script>
 <script src="js/overlay.js"></script>
 </body>

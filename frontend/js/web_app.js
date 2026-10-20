@@ -148,13 +148,13 @@
         document.body.classList.add('has-mobile-navigation');
         const nav = document.createElement('nav');
         nav.className = 'web-app-tabs'; nav.setAttribute('aria-label', 'Quick navigation');
-        const tabs = [['instant.html', 'Overview', 'fa-house'], ['search.html', 'Transactions', 'fa-magnifying-glass'], ['budgets.html', 'Planning', 'fa-compass']];
+        const tabs = [['instant.html', 'Overview', 'fa-house'], ['search.html', 'Transactions', 'fa-magnifying-glass'], ['planning.html', 'Planning', 'fa-compass']];
         const current = location.pathname.split('/').pop();
         let activeTab = false;
         const sections = {
             'instant.html': /^(?:index|instant|account_dashboard|monthly_statement|account)\.html$/,
             'search.html': /^(?:search|transaction|upload|report|transfers|ignored)\.html$/,
-            'budgets.html': /^(?:budgets|pensions|mortgages|projects|projects_board|project_add|projects_archived)\.html$/
+            'planning.html': /^(?:planning|budgets|pensions|mortgages|projects|projects_board|project_add|projects_archived)\.html$/
         };
         tabs.forEach(([page, label, icon]) => {
             const a = document.createElement('a'); a.href = new URL(page, frontend).href;
@@ -172,12 +172,13 @@
         nav.append(more); document.body.append(nav);
 
         const back = button('Back', () => {
+            if(window.TransactionNavigation && current==='transaction.html'){window.TransactionNavigation.back();return;}
             const previous = document.referrer && new URL(document.referrer);
             if (history.length > 1 && previous && previous.origin === location.origin) history.back();
             else location.assign(new URL('instant.html', frontend));
         });
         back.className = 'web-app-back';
-        back.setAttribute('aria-label', 'Back to previous page or financial overview');
+        back.setAttribute('aria-label', current==='transaction.html'?'Back to transaction results':'Back to previous page or financial overview');
         document.body.append(back);
     }
     function initialise() {

@@ -132,3 +132,54 @@
 .search-table-total { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:.5rem 1rem; padding:1rem 0; border-top:1px solid #e2e8f0; }
 .search-table-total[hidden] { display:none; }
 .search-table-total strong { min-width:0; max-width:100%; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+
+/* Task-first search: optional controls precede the ledger; summaries follow results. */
+.transaction-search-page .search-more-filters summary { cursor:pointer; padding:.65rem 0; font-size:14px; }
+.transaction-search-page .search-more-filters .transaction-field-grid { margin-top:.75rem; }
+.transaction-search-page .transaction-grid--search { display:block; }
+#search-evidence-pages { display:flex; align-items:center; gap:.65rem; flex-wrap:wrap; margin:.75rem 0; font-size:14px; }
+#search-evidence-pages[hidden] { display:none; }
+@media(max-width:767px) {
+ .transaction-search-page .transaction-card__header .transaction-section-label,.transaction-search-page #search-form .transaction-field small { display:none; }
+ .transaction-search-page .transaction-card:has(#search-form) .transaction-card__copy { display:none; }
+ .transaction-search-page .transaction-card:has(#search-form) { padding:.8rem; }
+ .transaction-search-page .transaction-card:has(#search-form) .transaction-card__header { margin-bottom:.6rem; }
+ .transaction-search-page .transaction-actions { gap:.5rem; }
+}
+
+.transaction-search-page .search-controls { padding:1rem 1.2rem; }
+.transaction-search-page #search-form > .transaction-field-grid { gap:0; }
+.transaction-search-page .search-more-filters:not([open]) { display:inline-block; }
+.transaction-search-page .transaction-filter-context { padding:0; border:0; border-radius:0; background:transparent; }
+.transaction-search-page .transaction-filter-context span { color:var(--brand-color-700,#4338ca); background:color-mix(in srgb,var(--brand-color-600,#4f46e5) 8%,white); }
+.transaction-search-page #search-form .transaction-actions { margin-top:.5rem; flex-direction:row; align-items:center; flex-wrap:wrap; }
+.transaction-search-page #search-form .transaction-actions .transaction-button { width:auto; }
+@media(min-width:1024px) {
+ .transaction-search-page #search-form { display:grid; grid-template-columns:minmax(16rem,1fr) auto; gap:.5rem 1rem; align-items:end; }
+ .transaction-search-page #search-form > .transaction-field-grid { grid-column:1; grid-row:1; }
+ .transaction-search-page #search-form > .transaction-actions { grid-column:2; grid-row:1; margin-top:0; }
+ .transaction-search-page #search-form > details { grid-column:1/-1; }
+}
+
+@media(max-width:767px) {
+ .transaction-search-page #search-form { gap:.25rem; }
+ .transaction-search-page #search-form .search-more-filters summary { min-height:44px; display:flex; align-items:center; padding:0; }
+ .transaction-search-page #search-status { font-size:12px; }
+ .transaction-search-page .transaction-results-card > .transaction-card__header { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem; }
+ .transaction-search-page .transaction-results-card > .transaction-card__header > div { grid-column:1/-1; }
+ .transaction-search-page .modern-table-toolbar .classification-key { display:none; }
+}
+
+@media(max-width:767px) {
+ .transaction-search-page #search-form { grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+ .transaction-search-page #search-form > .transaction-field-grid { grid-column:1; grid-row:1; }
+ .transaction-search-page #search-form > .transaction-field-grid .transaction-field > span { display:none; }
+ .transaction-search-page #search-form > .transaction-actions { display:contents; }
+ .transaction-search-page #search-submit { grid-column:2; grid-row:1; }
+ .transaction-search-page .search-more-filters { grid-column:1/-1; grid-row:2; }
+ .transaction-search-page #search-clear { grid-column:1; grid-row:3; justify-self:start; }
+ .transaction-search-page #search-form .transaction-actions > a { grid-column:2; grid-row:3; }
+ .transaction-search-page #search-status { grid-column:1/-1; }
+ .transaction-search-page #search-form .search-more-filters summary::before { content:'▸'; margin-right:.4rem; }
+ .transaction-search-page #search-form .search-more-filters[open] summary::before { content:'▾'; }
+}

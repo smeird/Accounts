@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/app-180.png">
+    <meta name="theme-color" content="#312e81">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Accounts">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/web-app.css">
+    <script src="js/web_app.js"></script>
+    <title>Planning</title>
+    <link rel="stylesheet" href="vendor/tailwind/tailwind.min.css">
+    <link rel="stylesheet" href="operational_ui.css">
+    <link rel="stylesheet" href="planning.css">
+</head>
+<body class="ops-body planning-page">
+<div class="flex min-h-screen">
+    <nav id="menu" class="hidden md:flex md:flex-col w-64 flex-shrink-0 bg-transparent p-6 overflow-y-auto"></nav>
+    <main class="ops-main flex-1 min-w-0 planning-main">
+        <section class="planning-options" aria-label="Choose a planning task">
+            <a class="cards cards-tight planning-option" href="budgets.html"><i class="fas fa-piggy-bank" aria-hidden="true"></i><div><h2>Set spending budgets</h2><p>Set category limits and check how this month compares.</p></div><span aria-hidden="true">→</span></a>
+            <a class="cards cards-tight planning-option" href="projects.html"><i class="fas fa-compass-drafting" aria-hidden="true"></i><div><h2>Plan your projects</h2><p>Compare priorities, track costs and decide what comes next.</p></div><span aria-hidden="true">→</span></a>
+            <a class="cards cards-tight planning-option" href="pensions.html"><i class="fas fa-seedling" aria-hidden="true"></i><div><h2>Explore retirement income</h2><p>Review your saved pension plan or explore different assumptions.</p></div><span aria-hidden="true">→</span></a>
+            <a class="cards cards-tight planning-option" href="mortgages.html"><i class="fas fa-house-chimney" aria-hidden="true"></i><div><h2>Plan mortgage repayments</h2><p>Compare normal payments with monthly and one-off overpayments.</p></div><span aria-hidden="true">→</span></a>
+        </section>
+        <p class="planning-note">Pension and mortgage illustrations stay separate from bank balances and transaction totals. Save changes in each planner to update Financial Overview.</p>
+    </main>
+</div>
+<script src="js/page_header.js"></script>
+<script>renderPageHeader(document.querySelector('main'), {title:'Planning',breadcrumb:'Planning',subtitle:'Choose what you want to plan.'});</script>
+<script src="js/menu.js"></script>
+<script src="js/input_help.js"></script>
+<script src="js/overlay.js"></script>
+
+</body>
+</html>

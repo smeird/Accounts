@@ -23,6 +23,15 @@
     <main id="mortgage-main" class="ops-main flex-1 min-w-0" aria-busy="true">
         <p id="mortgage-status" role="status">Loading your mortgage workspace…</p>
         <p id="mortgage-error" role="alert" hidden></p>
+        <p id="mortgage-plan-state" role="status">Loading saved plan…</p>
+        <section id="mortgage-results" class="cards cards-tight" hidden aria-labelledby="mortgage-result-title">
+            <h2 id="mortgage-result-title">Your mortgage illustration</h2><p id="mortgage-context"></p>
+            <div id="mortgage-metrics" class="mortgage-metrics" aria-live="polite"></div>
+            <p id="mortgage-warning" role="status"></p>
+            <div class="mortgage-table-wrap"><table class="mortgage-table"><caption>Normal payments compared with your overpayment scenario</caption><thead><tr><th scope="col">Illustration</th><th scope="col">Normal payments</th><th scope="col">With overpayments</th></tr></thead><tbody id="mortgage-comparison"></tbody></table></div>
+        </section>
+        <details id="mortgage-editor" open>
+            <summary>Edit assumptions</summary>
         <form data-preserve-edits id="mortgage-form">
             <fieldset id="mortgage-fields" disabled>
                 <section class="cards cards-solid cards-tight">
@@ -41,12 +50,7 @@
                 </section>
             </fieldset>
         </form>
-        <section id="mortgage-results" class="cards cards-tight" hidden aria-labelledby="mortgage-result-title">
-            <h2 id="mortgage-result-title">Your mortgage illustration</h2><p id="mortgage-context"></p>
-            <div id="mortgage-metrics" class="mortgage-metrics" aria-live="polite"></div>
-            <p id="mortgage-warning" role="status"></p>
-            <div class="mortgage-table-wrap"><table class="mortgage-table"><caption>Normal payments compared with your overpayment scenario</caption><thead><tr><th scope="col">Illustration</th><th scope="col">Normal payments</th><th scope="col">With overpayments</th></tr></thead><tbody id="mortgage-comparison"></tbody></table></div>
-        </section>
+        </details>
         <section id="mortgage-timeline" class="cards cards-tight" hidden>
             <h2>Your path to mortgage freedom</h2><p>Compare the outstanding balance over time. Figures remain available below if the chart cannot load.</p>
             <div id="mortgage-chart" aria-label="Outstanding mortgage balance over time"></div>
