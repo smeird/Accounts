@@ -186,3 +186,5 @@
 - Phone classification is one explicit, atomic transaction edit through `PhoneClassification`: choose an existing active non-system tag, preview its linked category/segment, validate optimistic transaction and mapping evidence, and update only that entry's classification. Protect transfers, IGNORE and system tags; never create tags, edit taxonomy, learn rules, replay a write or alter financial fields. Preserve the draft through session expiry and require explicit Save after recovery.
 
 - Nginx deployments must mirror the frontend cache policy explicitly because they do not read `.htaccess`. `scripts/nginx-frontend-cache.conf` is the root-hosted counterpart: include it after dot-file denial, retain the PHP handler, verify configuration before reload and verify live response headers after deployment.
+
+- Preserve component-owned CSS classes when changing loading states on live table containers. Toggle only the page's loading class; Find Transactions reuses its Tabulator instance across searches, so replacing the root `className` removes the structural table styles and causes overlapping headers/rows.

@@ -197,7 +197,8 @@
         history.replaceState(history.state,'',location.pathname+'?'+params.toString());
         renderFilterContext(params);
         const submit=byId('search-submit'); submit.disabled=true; submit.querySelector('span').textContent='Searching…'; setText('search-status','Looking across every transaction field…');
-        byId('results-grid').className='transaction-table transaction-loading';
+        // Keep Tabulator and shared table classes when reusing the existing table.
+        byId('results-grid').classList.add('transaction-loading');
         try {
             const response=await fetch('../php_backend/public/search_transactions.php?'+params.toString());
             const payload=await response.json().catch(()=>({})); if(!response.ok) throw new Error(payload.error||'Search could not be completed.');
@@ -208,12 +209,12 @@
             setText('search-results-copy',payload.recent?'Recent activity (up to 100). Filters search all history.':'Transactions matching your filters.');
             const comparison=Array.isArray(payload.comparison_results)?payload.comparison_results:null;
             const tableRows=renderComparison(rows,comparison,params);
-            byId('results-grid').className='transaction-table'; renderSummary(rows,linkLabel||queryLabel(term,min,max)||(payload.recent?'Recent activity':'Matching transactions')); renderTable(tableRows); renderChart(rows); setText('search-results-copy',payload.recent?'Recent activity (up to 100). Filters search all history.':'Transactions matching your filters.'); setText('search-status',tableRows.length+' result'+(tableRows.length===1?'':'s')+' found');
+            byId('results-grid').classList.remove('transaction-loading'); renderSummary(rows,linkLabel||queryLabel(term,min,max)||(payload.recent?'Recent activity':'Matching transactions')); renderTable(tableRows); renderChart(rows); setText('search-results-copy',payload.recent?'Recent activity (up to 100). Filters search all history.':'Transactions matching your filters.'); setText('search-status',tableRows.length+' result'+(tableRows.length===1?'':'s')+' found');
         } catch (failure) {
             if(sequence!==searchSequence)return;
             byId('search-review').hidden=true;byId('search-chart-panel').hidden=true;
             if(resultTable){resultTable.destroy();resultTable=null;} resultTableHasComparison=false;
-            updateTableTotal();resetSummary();byId('search-comparison').hidden=true;byId('search-evidence-pages').hidden=true;byId('results-grid').className='transaction-table'; error.textContent=failure.message||'Search could not be completed.'; error.hidden=false; setText('search-status','Search failed');
+            updateTableTotal();resetSummary();byId('search-comparison').hidden=true;byId('search-evidence-pages').hidden=true;byId('results-grid').classList.remove('transaction-loading'); error.textContent=failure.message||'Search could not be completed.'; error.hidden=false; setText('search-status','Search failed');
             byId('results-grid').replaceChildren(emptyState('Search unavailable', 'Please try again in a moment.', 'fa-triangle-exclamation'));
         } finally { if(sequence===searchSequence){submit.disabled=false; submit.querySelector('span').textContent='Search';} }
     }
