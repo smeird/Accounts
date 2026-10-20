@@ -153,6 +153,8 @@ This removes the legacy uniqueness rule that could reject legitimate matching sa
 
 Production Apache must allow `frontend/.htaccess`. Page shells use `no-store`; local CSS, JavaScript and JSON are revalidated. Avoid compensating for deployment problems with permanent query-string proliferation—update the shared cache policy when asset behaviour changes.
 
+For a root-hosted Nginx installation, copy `scripts/nginx-frontend-cache.conf` to `/etc/nginx/snippets/accounts-frontend-cache.conf` and include it inside each Accounts server block **after** its dot-file deny location. Keep the existing PHP/FastCGI handler. Adapt `/frontend/` and `/sw.js` only when hosting under a path prefix. Back up the site configuration, run `nginx -t`, then reload Nginx. Verify that frontend HTML responses contain `Cache-Control: no-store` and local CSS/JavaScript/manifest/service-worker responses require revalidation. Nginx does not read `.htaccess`; HTML meta tags alone do not provide the equivalent HTTP policy.
+
 ### In-application updates for a private repository
 
 The web server should not receive a developer or deployment SSH private key. On an existing installation, first confirm that the checkout is clean and that its normal deployment user can fetch the matching branch. Then install the supplied root-owned command allowlist once:
