@@ -11,7 +11,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     try {
-        echo json_encode(Category::allWithTags());
+        echo json_encode(isset($_GET['assignment_tags']) ? Category::assignmentTags() : Category::allWithTags());
     } catch (Exception $e) {
         http_response_code(500);
         Log::write('Category error: ' . $e->getMessage(), 'ERROR');

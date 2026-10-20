@@ -117,6 +117,15 @@
                                 <span class="sr-only">Search tags</span>
                                 <input id="tag-search" type="search" placeholder="Search tags or keywords…" autocomplete="off" data-help="Find a tag by name, keyword, or its current category">
                             </label>
+                            <label class="category-tag-sort" for="tag-sort">Sort tags
+                                <select id="tag-sort" data-help="Prioritise tags by transaction count or total absolute ledger value across all history.">
+                                    <option value="count-desc">Most transactions</option>
+                                    <option value="count-asc">Fewest transactions</option>
+                                    <option value="value-desc">Highest value</option>
+                                    <option value="value-asc">Lowest value</option>
+                                    <option value="name">Name A–Z</option>
+                                </select>
+                            </label>
                             <div class="category-filters" role="group" aria-label="Filter tags">
                                 <button type="button" data-tag-filter="unassigned">Unassigned <span id="filter-unassigned-count">0</span></button>
                                 <button type="button" data-tag-filter="all">All <span id="filter-all-count">0</span></button>
@@ -124,6 +133,7 @@
                             </div>
                         </div>
 
+                        <p class="category-usage-note">All history, including transfers. Total value adds outgoing and incoming amounts without netting them off.</p>
                         <div id="tag-results-summary" class="category-results-summary" aria-live="polite"></div>
                         <div class="category-bulk-bar" aria-label="Bulk tag assignment">
                             <label for="select-visible-tags">

@@ -3,6 +3,26 @@
 require_once __DIR__ . '/../Database.php';
 
 class Category {
+    /** All-history ledger usage for prioritising category assignments (including transfers). */
+    public static function assignmentTags(): array {
+        $db = Database::getConnection();
+        return $db->query("SELECT t.id, t.name, t.keyword, t.description,
+                COALESCE(u.transaction_count, 0) AS transaction_count,
+                COALESCE(u.outgoing, 0) AS outgoing,
+                COALESCE(u.incoming, 0) AS incoming,
+                COALESCE(u.total_value, 0) AS total_value
+            FROM tags t
+            LEFT JOIN (
+                SELECT tag_id, COUNT(*) AS transaction_count,
+                    SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END) AS outgoing,
+                    SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) AS incoming,
+                    SUM(ABS(amount)) AS total_value
+                FROM transactions GROUP BY tag_id
+            ) u ON u.tag_id = t.id
+            WHERE t.status = 'active' AND LOWER(t.name) <> 'ignore'
+            ORDER BY t.name, t.id")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
      * Insert a new category and return its ID.
      */

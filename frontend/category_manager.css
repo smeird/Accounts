@@ -302,6 +302,12 @@
 .category-bulk-actions button { padding:.5rem .65rem; }
 .category-bulk-actions button:disabled { cursor:not-allowed; opacity:.48; }
 .category-tag-list { display: grid; gap: 0.45rem; }
+.category-tag-tools { flex-wrap: wrap; }
+.category-tag-sort { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .875rem; }
+.category-tag-sort select { max-width: 100%; padding: .5rem; }
+.category-usage-note { margin: .75rem 0; color: var(--category-muted); font-size: .875rem; }
+.category-tag-usage { display: flex; flex-wrap: wrap; gap: .25rem .8rem; margin-top: .35rem; font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.category-tag-usage > span:last-child { color: var(--category-muted); }
 
 .category-tag-row {
     display: grid;

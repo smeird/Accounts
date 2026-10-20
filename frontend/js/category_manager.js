@@ -6,6 +6,8 @@
     const categoryForm = document.getElementById('category-form');
     const categoryNameInput = document.getElementById('category-name');
     const tagSearch = document.getElementById('tag-search');
+    const tagSort = document.getElementById('tag-sort');
+    const money = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' });
     const tagList = document.getElementById('tag-list');
     const filterButtons = Array.from(document.querySelectorAll('[data-tag-filter]'));
     const loadingState = document.getElementById('category-loading');
@@ -203,6 +205,14 @@
         }
         meta.appendChild(element('span', locationClass, locationText));
         copy.appendChild(meta);
+        const usage = element('div', 'category-tag-usage');
+        const count = Number(item.tag.transaction_count || 0);
+        usage.append(
+            element('span', '', `${count.toLocaleString('en-GB')} transaction${count === 1 ? '' : 's'}`),
+            element('strong', '', `${money.format(Number(item.tag.total_value || 0))} total value`),
+            element('span', '', `${money.format(Number(item.tag.outgoing || 0))} outgoing · ${money.format(Number(item.tag.incoming || 0))} incoming`)
+        );
+        copy.appendChild(usage);
         main.append(icon, copy);
 
         const action = actionForAssignment(item, category);
@@ -254,6 +264,13 @@
             const haystack = normalise(`${item.tag.name} ${item.tag.keyword || ''} ${item.tag.description || ''} ${item.category ? item.category.name : 'unassigned'}`);
             return !query || haystack.includes(query);
         });
+        filtered.sort((a, b) => {
+            const sort = tagSort.value;
+            const field = sort.startsWith('value-') ? 'total_value' : 'transaction_count';
+            const difference = sort === 'name' ? 0 : Number(a.tag[field] || 0) - Number(b.tag[field] || 0);
+            return (sort.endsWith('-desc') ? -difference : difference)
+                || a.tag.name.localeCompare(b.tag.name, 'en-GB') || Number(a.tag.id) - Number(b.tag.id);
+        });
         state.visibleTagIds = filtered.map(item => Number(item.tag.id));
 
         document.getElementById('tag-results-summary').textContent = `${filtered.length.toLocaleString('en-GB')} of ${assignments.length.toLocaleString('en-GB')} tags shown`;
@@ -289,7 +306,7 @@
         }
         const responses = await Promise.all([
             requestJson('../php_backend/public/categories.php'),
-            requestJson('../php_backend/public/tags.php')
+            requestJson('../php_backend/public/categories.php?assignment_tags=1')
         ]);
         state.categories = Array.isArray(responses[0]) ? responses[0] : [];
         state.tags = Array.isArray(responses[1])
@@ -312,6 +329,7 @@
         state.tagQuery = event.target.value;
         renderTagList();
     });
+    tagSort.addEventListener('change', renderTagList);
 
     filterButtons.forEach(button => button.addEventListener('click', () => {
         state.filter = button.dataset.tagFilter;
