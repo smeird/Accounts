@@ -1006,3 +1006,64 @@ body.theme-professional.login-page { --brand-color-600:var(--login-brand,#4f46e5
 body.theme-professional.login-page .login-passkey--primary .login-passkey-button { background:var(--login-brand,#4f46e5); }
 body.theme-professional.login-page :is(.login-submit,.login-passkey-button):hover { transform:none; }
 body.theme-professional.login-page :is(.login-submit,.login-passkey--primary .login-passkey-button):hover { background:var(--login-brand-dark,#4338ca); }
+
+/* Remaining specialist filters and maintenance heroes use the Paper canvas. */
+body.theme-professional .ops-main :is(
+  .burn-controls,.taxonomy-controls,.cutover-controls,
+  .migration-hero,.taxonomy-hero,.cutover-hero,.tagging-hero
+) {
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+body.theme-professional .ops-main :is(
+  .migration-definition,.migration-safety-strip > div,
+  .cutover-cleanup-card,.cutover-cleanup-metrics div,
+  .utility-status:not(.is-error):not(.is-success)
+) {
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body.theme-professional .ops-main :is(.migration-hero,.taxonomy-hero,.cutover-hero):not(.has-error):not(.is-ready) :is(.migration-hero__icon,.taxonomy-hero__icon,.cutover-hero__icon) {
+  color:var(--brand-color-600,#4f46e5);
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+}
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) :is(.taxonomy-button--primary,.cutover-button--apply,.cutover-button--cleanup) {
+  color:#fff;
+  background:var(--brand-color-600,#4f46e5);
+}
+
+body.theme-professional .ops-main .tagging-hero { padding:1rem 0; color:var(--paper-ink); }
+body.theme-professional .ops-main .tagging-hero h2 { color:var(--paper-ink); font-size:1.25rem; }
+body.theme-professional .ops-main .tagging-hero :is(p,.tagging-eyebrow,.tagging-coverage span) { color:var(--paper-muted); }
+body.theme-professional .ops-main .tagging-coverage div { background:var(--paper-rule); }
+body.theme-professional .ops-main .tagging-coverage i { background:var(--brand-color-600,#4f46e5); }
+body.theme-professional :is(.ops-main,dialog,[role="dialog"]) .tagging-primary.is-warning { color:#fff!important; background:#b45309!important; }
+
+body.theme-professional .ops-main .tagging-metrics article {
+  border:0!important;
+  border-bottom:1px solid var(--paper-rule)!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  padding:.85rem .35rem;
+}
+body.theme-professional .ops-main .tagging-metrics strong { font-weight:var(--accent-font-weight,400); }
+body.theme-professional .ops-main .tagging-tabs {
+  border-radius:0;
+  border-bottom:1px solid var(--paper-rule);
+  background:transparent;
+  padding-inline:0;
+}
+body.theme-professional .ops-main .tagging-tabs button[aria-selected="true"] {
+  color:var(--brand-color-700,#4338ca);
+  background:color-mix(in srgb,var(--brand-color-600,#4f46e5) 7%,transparent);
+  box-shadow:none;
+}

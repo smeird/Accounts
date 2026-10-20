@@ -91,7 +91,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png">
     <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="frontend/login.css?v=20261019-appearance-defaults">
-    <link rel="stylesheet" href="frontend/css/theme-professional.css?v=20261019-visual-consistency">
+    <link rel="stylesheet" href="frontend/css/theme-professional.css?v=20261020-finish">
     <style>
         :root {
             --login-brand: <?= htmlspecialchars($buttonColors['600']) ?>;

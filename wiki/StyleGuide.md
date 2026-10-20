@@ -205,3 +205,7 @@ The Settings sample previews Glass and Paper as distinct systems. It reflects un
 Sign-in, including the embedded session-recovery form, honours the same per-device Professional override as the workspace. Default choices in the appearance preview clear the selected sample weight/family; Default body type uses the root application font so it does not inherit a previously saved body font.
 
 Daily Burn summary cards keep their natural height. Desktop metric captions sit beside the icon, while amounts and explanatory text use the full card width. The hero and three metrics share a row only from 1200px; tablet workspaces put the three metrics below the hero, and phones retain stacked cards.
+
+Maintenance and taxonomy heroes, primary actions, links and decorative washes use the selected primary/secondary palette. Keep safety states, approvals, errors and rollback actions semantically coloured. In Professional, Daily Burn and taxonomy filters use flat ruled boundaries, maintenance heroes share the paper canvas, and nested explanatory content and cleanup metrics remain unboxed.
+
+The main Tagging workspace follows the same Paper treatment: a flat hero, unboxed financial-health metrics, neutral tab boundaries and palette-based selection. Warning actions, including merge confirmations in dialogs, remain amber; danger and rollback actions retain red.

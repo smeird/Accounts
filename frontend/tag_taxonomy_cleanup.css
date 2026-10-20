@@ -1,12 +1,12 @@
 .cutover-button--cleanup {
     border: 0;
-    background: linear-gradient(135deg, #7c3aed, #0284c7);
+    background:linear-gradient(135deg,var(--site-brand,var(--brand-color-600,#4f46e5)),var(--site-brand-secondary,var(--brand-color-700,#4338ca)));
     color: #fff;
 }
 
 .cutover-cleanup-card {
     padding: 1rem !important;
-    background: linear-gradient(120deg, rgba(245, 243, 255, .92), rgba(255, 255, 255, .96) 48%, rgba(240, 249, 255, .9)) !important;
+    background:linear-gradient(125deg,color-mix(in srgb,var(--site-brand,var(--brand-color-600,#4f46e5)) 9%,white),rgba(255,255,255,.94) 53%,color-mix(in srgb,var(--site-brand-secondary,var(--brand-color-700,#4338ca)) 7%,white)) !important;
 }
 
 .cutover-cleanup-card .cutover-section-heading p {
@@ -63,7 +63,7 @@
 
 .cutover-cleanup-note i {
     margin-top: .1rem;
-    color: #7c3aed;
+    color:var(--site-brand,var(--brand-color-600,#4f46e5));
 }
 
 @media (max-width: 950px) {

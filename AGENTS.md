@@ -172,3 +172,5 @@
 - Standalone and embedded sign-in honour the device’s Professional surface override, falling back to the installation setting when none is saved or browser storage is unavailable. Appearance preview Default typography must clear the sample override; Default body type resolves from the application’s root font rather than inheriting the saved body choice.
 
 - Daily Burn headline metrics size to their content rather than stretching to the hero. On desktop, captions share a row with their icon and financial values use the full card width; the four-column hero/metric layout starts at 1200px so narrower workspaces retain readable figures.
+
+- Maintenance and taxonomy hero icons, primary actions and decorative washes follow the installation palette. Preserve distinct success/error/approval/rollback colours; icons inside these heroes and actions inherit their container foreground so the shared brand-icon hook cannot hide them against coloured backgrounds. Professional filter panels and maintenance heroes use flat ruled surfaces, including Daily Burn; nested explanatory areas and cleanup metrics remain unboxed.
