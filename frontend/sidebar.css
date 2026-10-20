@@ -254,3 +254,9 @@
 @media(prefers-reduced-motion:reduce) {
     .site-menu,.site-menu-list,.site-menu-group-toggle i,.site-menu .site-menu-link { transition:none; }
 }
+
+/* Keep the first workspace surface close to the window edge in both themes. */
+@media (min-width:768px) {
+    body.app-shell-body main.app-shell-main { padding-top:.75rem!important; }
+}
+.app-shell-main > .page-header:first-child { margin-top:0!important; }

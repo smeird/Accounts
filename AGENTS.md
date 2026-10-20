@@ -189,3 +189,8 @@
 - Nginx deployments must mirror the frontend cache policy explicitly because they do not read `.htaccess`. `scripts/nginx-frontend-cache.conf` is the root-hosted counterpart: include it after dot-file denial, retain the PHP handler, verify configuration before reload and verify live response headers after deployment.
 
 - Preserve component-owned CSS classes when changing loading states on live table containers. Toggle only the page's loading class; Find Transactions reuses its Tabulator instance across searches, so replacing the root `className` removes the structural table styles and causes overlapping headers/rows.
+
+
+- Workspace top gutters belong to `.app-shell-main` (12px on desktop in both themes); do not add body padding above the viewport shell. Dashboard metric icons use consistent, centred icon boxes, and side-by-side Trends/Daily Burn metrics fill their summary row.
+- Workspace links use colour, chevrons and visible keyboard focus without text underlining. Choices search inputs own their inner geometry and are excluded from shared standalone-input decoration.
+- Find Transactions tracks its main scroller offset with a passive scroll listener for return navigation and Safari wheel-scroll synchronisation; retain the bottom-to-up browser regression check.

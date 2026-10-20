@@ -49,7 +49,9 @@ const assert = require('node:assert/strict');
         assert.equal(new URL(page.url()).searchParams.get('recent'), '1');
         assert.equal(new URL(page.url()).searchParams.has('group_id'), false);
         assert.equal(await page.locator('#search-filter-context').isHidden(), true);
-        assert.match(await page.locator('#results-grid').innerText(), /Start with a search/);
+        await page.waitForFunction(() => document.getElementById('search-status').textContent === '1 result found');
+        assert.equal(requests.at(-1).get('recent'), '1');
+        assert.equal(await page.locator('#results-grid .tabulator-row').count(), 1, 'Clear restores the recent ledger');
         assert.deepEqual(errors, []);
         console.log('PASS: Group Analysis evidence filters, unavailable chart fallback, refinement, API retry and Clear');
     } finally {

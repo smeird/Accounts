@@ -1072,3 +1072,10 @@ body.theme-professional .ops-main .tagging-tabs button[aria-selected="true"] {
 body.theme-professional .ops-main :is(.pension-metric,.mortgage-metric) {
  border:0!important; background:transparent!important; box-shadow:none!important;
 }
+
+/* Overview headline icons keep the same size and alignment in Paper. */
+body.theme-professional .ops-main .instant-metric__icon {
+  width:2.75rem!important;
+  height:2.75rem!important;
+  flex-basis:2.75rem;
+}

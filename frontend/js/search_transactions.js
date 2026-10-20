@@ -12,6 +12,12 @@
     let searchSequence=0;
     let latestRows=[];
     let navigationState=history.state?.transactionList || null;
+    const mainScroller=document.querySelector('main');
+    let listScroll=mainScroller.scrollTop;
+    // Track the actual offset as it changes. Besides preserving return position,
+    // this keeps Safari's async scroller synchronised when reversing at the end
+    // of the ledger/chart workspace (otherwise wheel scrolling can stick there).
+    mainScroller.addEventListener('scroll',()=>{listScroll=mainScroller.scrollTop;},{passive:true});
 
     function byId(id) { return document.getElementById(id); }
     function setText(id, value) { const element = byId(id); if (element) element.textContent = value; }
@@ -242,7 +248,7 @@
         [['Previous',evidence.page-1],['Next',evidence.page+1]].forEach(([text,page])=>{if(page<1||page>evidence.pages)return;const link=document.createElement('a');const query=new URLSearchParams(params);query.set('evidence_page',page);link.href='search.html?'+query;link.textContent=text;link.className='transaction-button transaction-button--quiet';nav.append(link);});
     }
     // History state contains only list controls and scroll position, never financial rows.
-    window.addEventListener('pagehide',()=>history.replaceState({...history.state,transactionList:{scroll:document.querySelector('main').scrollTop,query:document.querySelector('.modern-table-search-input')?.value||'',page:resultTable?.getPage()||1,sort:resultTable?.getSorters().map(sort=>({column:sort.field,dir:sort.dir}))||[]}},'',location.href));
+    window.addEventListener('pagehide',()=>history.replaceState({...history.state,transactionList:{scroll:listScroll,query:document.querySelector('.modern-table-search-input')?.value||'',page:resultTable?.getPage()||1,sort:resultTable?.getSorters().map(sort=>({column:sort.field,dir:sort.dir}))||[]}},'',location.href));
 
 
     window.updatePageHeader(transactionSearchMain,{actions:headerActions()});

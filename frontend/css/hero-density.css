@@ -88,7 +88,7 @@
     padding:.55rem .75rem!important;
   }
 
-  :where(.instant-metric__icon,.transaction-summary-icon,.budget-summary-icon,.project-summary-icon,.yearly-metric-icon) {
+  :where(.transaction-summary-icon,.budget-summary-icon,.project-summary-icon,.yearly-metric-icon) {
     width:2.05rem;
     height:2.05rem;
   }
@@ -129,7 +129,11 @@
   .trends-primary-card { padding:1rem 1.1rem; }
   .trends-primary-card > strong { font-size:clamp(2.35rem,3.5vw,3.4rem); }
   .trends-metric-grid { display:contents; }
-  .trends-metric-card { align-items:flex-start; padding:.8rem; }
+  .trends-metric-card { display:grid; grid-template-columns:2.5rem minmax(0,1fr); align-content:center; align-items:center; gap:.65rem; padding:1rem; }
+  .trends-metric-card > div { display:contents; }
+  .trends-metric-card p { grid-column:2; }
+  .trends-metric-card :is(strong,small) { grid-column:1/-1; }
+  .trends-metric-card strong { font-size:clamp(1.8rem,2.5vw,2.5rem); }
 }
 
 @media (max-width:920px) {
@@ -193,7 +197,7 @@
 
 /* Burn figures need a full card width, independent of the caption icon. */
 @media(min-width:761px) {
-  .burn-metrics article { display:grid; grid-template-columns:1.8rem minmax(0,1fr); align-self:start; align-items:center; gap:.5rem .65rem; }
+  .burn-metrics article { display:grid; grid-template-columns:1.8rem minmax(0,1fr); align-self:stretch; align-content:center; align-items:center; gap:.5rem .65rem; }
   .burn-metrics article > div { display:contents; }
   .burn-metrics .burn-metric-icon { width:1.8rem; height:1.8rem; }
   .burn-metrics article p { grid-column:2; }
@@ -210,4 +214,8 @@
   .burn-chip { margin-top:.65rem; }
   .burn-metrics { display:contents; }
   .burn-metrics article { padding:.8rem; }
+}
+
+@media(min-width:1200px) {
+  .burn-metrics strong { font-size:clamp(1.8rem,2.5vw,2.5rem); margin:.35rem 0; }
 }

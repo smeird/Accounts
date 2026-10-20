@@ -54,6 +54,7 @@ The default view must answer the page’s main question before the user interact
 - Use `cards cards-solid` for dense filters or controls needing stronger contrast.
 - Use `cards cards-tight` for compact forms, tables and comparable chart panels.
 - Specialist pages may use a semantic page-specific card class, but should retain the same border opacity, rounded geometry and soft shadow family.
+- Keep the desktop top gutter at 12px in both themes, owned by `.app-shell-main`; never pad the body above its viewport-height shell.
 - Use one principal scroll container (`main.ops-main`); avoid nested full-page scrolling and document-level horizontal overflow.
 - Prefer consistent 12–18px internal gaps and 16–22px card padding. Reduce, do not remove, spacing on mobile.
 
@@ -102,6 +103,8 @@ Use uppercase, tracked captions sparingly for section labels. Within a table row
 - Provide immediate visible feedback for save, run, update, loading and failure actions.
 - Destructive or assignment-clearing actions are isolated and explicitly confirmed.
 
+Workspace links use colour, chevrons and visible keyboard focus without text underlining. Composite Choices search fields own their inner spacing; shared standalone-input decoration must not pad their text-sized input.
+
 ## 7. Tables
 
 Choose the table mechanism based on the task:
@@ -131,6 +134,8 @@ Paper's typographic hierarchy is editorial: a strong document title above an ink
 - Cards, charts and exact-value tables must reconcile or visibly explain why their definitions differ.
 
 For Daily Burn specifically, never merge actual transaction-day spending with the calendar-normalised rate. One explains spikes; the other explains underlying daily cost.
+
+Keep summary icon boxes consistently sized and centred. Side-by-side Trends and Daily Burn metrics stretch to the summary row height with larger, vertically balanced values; stacked layouts remain sized to their content.
 
 ## 9. Responsive behaviour
 

@@ -183,3 +183,18 @@
  .transaction-search-page #search-form .search-more-filters summary::before { content:'▸'; margin-right:.4rem; }
  .transaction-search-page #search-form .search-more-filters[open] summary::before { content:'▾'; }
 }
+
+/* Choices sizes its placeholder to the text width; inner inputs cannot carry
+   standalone control padding or the short “All” placeholder is clipped. */
+.transaction-page .choices input.choices__input--cloned {
+    min-width:4ch;
+    min-height:1.5rem;
+    height:auto;
+    padding:0!important;
+    margin:.15rem 0;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    line-height:1.5;
+}

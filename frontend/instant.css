@@ -262,7 +262,7 @@
 .instant-metric {
     display: flex;
     gap: 0.8rem;
-    align-items: center;
+    align-items: flex-start;
     min-height: 5.65rem;
     padding: 0.82rem;
 }
@@ -271,11 +271,13 @@
     border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.instant-metric__icon {
+.instant-metric .instant-metric__icon {
     display: inline-flex;
+    margin: 0;
+    font-size: 1.2rem;
     flex: 0 0 auto;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
     align-items: center;
     justify-content: center;
     border-radius: 0.8rem;
@@ -293,7 +295,7 @@
 
 .instant-metric p,
 .instant-metric strong,
-.instant-metric span {
+.instant-metric > div > span {
     display: block;
 }
 
@@ -313,7 +315,7 @@
 .instant-metric strong.instant-tone--positive { color: #6ee7b7; }
 .instant-metric strong.instant-tone--negative { color: #fda4af; }
 
-.instant-metric span {
+.instant-metric > div > span {
     margin-top: 0.25rem;
     color: #94a3b8;
     font-size: .75rem;
@@ -323,19 +325,7 @@
 .instant-metric span.instant-tone--positive { color: #6ee7b7; }
 .instant-metric span.instant-tone--negative { color: #fda4af; }
 
-.instant-metric--progress {
-    display: block;
-}
-
-.instant-metric__progress-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.instant-metric__progress-heading i {
-    color: #7dd3fc !important;
-}
+.instant-metric--progress > div { min-width: 0; flex: 1; }
 
 .instant-progress {
     position: relative;
@@ -1044,7 +1034,7 @@
         font-size: 1.05rem;
     }
 
-    .instant-metric span {
+    .instant-metric > div > span {
         font-size: .75rem;
     }
 

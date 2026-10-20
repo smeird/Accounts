@@ -385,7 +385,7 @@ a.graphs-bar-label:hover { color: var(--graphs-blue); text-decoration: underline
 
 .graphs-composition-item {
     display: grid;
-    grid-template-columns: 0.65rem minmax(0, 1fr) auto;
+    min-width: 0;
     gap: 0.45rem;
     align-items: center;
     color: var(--graphs-muted);
@@ -471,3 +471,12 @@ a.graphs-tag:hover { border-color: rgba(52, 89, 199, 0.35); transform: translate
     .graphs-layout { display: block; }
     .graphs-card { margin-bottom: 1rem; }
 }
+
+.graphs-composition-item > .transaction-drilldown-link {
+    display:grid;
+    grid-template-columns:.65rem minmax(0,1fr) auto auto;
+    gap:.45rem;
+    min-width:0;
+    width:100%;
+}
+.graphs-composition-name { white-space:normal; overflow-wrap:anywhere; }

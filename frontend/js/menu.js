@@ -37,7 +37,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const sidebarLink = document.createElement('link');
     sidebarLink.id = 'sidebar-css';
     sidebarLink.rel = 'stylesheet';
-    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20261019-iphone-web-app');
+    sidebarLink.href = resolveFrontendAsset('sidebar.css?v=20261020-workspace-polish');
     document.head.appendChild(sidebarLink);
   }
 
@@ -46,7 +46,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const themeLink = document.createElement('link');
     themeLink.id = 'theme-professional-css';
     themeLink.rel = 'stylesheet';
-    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20261020-usability');
+    themeLink.href = resolveFrontendAsset('css/theme-professional.css?v=20261020-workspace-polish');
     document.head.appendChild(themeLink);
   }
 
@@ -62,7 +62,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const heroDensityLink = document.createElement('link');
     heroDensityLink.id = 'hero-density-css';
     heroDensityLink.rel = 'stylesheet';
-    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20261019-daily-burn');
+    heroDensityLink.href = resolveFrontendAsset('css/hero-density.css?v=20261020-workspace-polish');
     document.head.appendChild(heroDensityLink);
   }
 
@@ -70,7 +70,7 @@ const attachSidebarSearchHandler = (root = document) => {
     const drilldownLink = document.createElement('link');
     drilldownLink.id = 'transaction-drilldowns-css';
     drilldownLink.rel = 'stylesheet';
-    drilldownLink.href = resolveFrontendAsset('drilldowns.css?v=20260831');
+    drilldownLink.href = resolveFrontendAsset('drilldowns.css?v=20261020-workspace-polish');
     document.head.appendChild(drilldownLink);
   }
 
@@ -152,7 +152,8 @@ const attachSidebarSearchHandler = (root = document) => {
   };
   window.applyAppearancePreferences = applyAppearancePreferences;
 
-  document.body.classList.add('pt-4');
+  // Workspace gutters belong to the main scroller, not the viewport shell.
+  document.body.classList.remove('pt-4');
   let colorScheme = 'indigo';
   let brandPrimary = '#4f46e5';
   let brandSecondary = '#4338ca';
@@ -223,6 +224,7 @@ const attachSidebarSearchHandler = (root = document) => {
 
   const styleInputs = (root = document) => {
     root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not(.unstyled), select:not(.unstyled), textarea:not(.unstyled)').forEach(el => {
+      if (el.closest('.choices') || el.classList.contains('choices__input')) return;
       if (!el.classList.contains('styled-input')) {
         el.classList.add('styled-input', 'p-2', 'border', 'rounded', 'border-gray-400');
       }
