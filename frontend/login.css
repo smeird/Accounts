@@ -88,6 +88,9 @@
 .login-passkey-status { min-height:1rem; margin:0; color:#64748b; font-size:.75rem; line-height:1.4; text-align:center; }
 .login-trust { display:flex; align-items:center; justify-content:center; gap:.4rem; margin:1rem 0 0; color:#94a3b8; font-size:.75rem; font-weight:720; }
 .login-trust i { color:#10b981; font-size:.75rem; }
+.login-install-slot { display:flex; justify-content:center; margin-top:.75rem; }
+.login-install-slot:empty { display:none; }
+.login-install-slot .web-app-install { margin:0; max-width:100%; }
 
 @media(max-width:820px) {
     .login-main { align-items:flex-start; padding:1rem; }

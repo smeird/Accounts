@@ -257,7 +257,7 @@
             observer.observe(menu, { childList: true });
         } else if(document.body.hasAttribute('data-phone-app')){
             document.getElementById('phone-install-slot')?.append(guideButton);
-        }else document.querySelector('main')?.append(guideButton);
+        }else (document.getElementById('login-install-slot') || document.querySelector('main'))?.append(guideButton);
         navigation();
         const trackEdit = event => {
             const form = event.target.closest?.('form[data-preserve-edits]');

@@ -1,5 +1,7 @@
 # AGENTS Instructions
 
+- The full-website login install guide belongs in `#login-install-slot` below the sign-in controls; never append it as a sibling of the login shell in the horizontal main layout.
+
 - Record any additional project decisions or conventions in this file.
 - AI integrations use the OpenAI Responses API with JSON text via `text.format` responses.
 - Set `text.format.type` to `json_object` when requesting JSON responses.

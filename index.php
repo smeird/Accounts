@@ -211,6 +211,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         </div>
                     <?php endif; ?>
                     <p class="login-trust"><i class="fa-solid fa-lock" aria-hidden="true"></i> Secure session · Private financial workspace</p>
+                    <div id="login-install-slot" class="login-install-slot"></div>
                 </section>
             </div>
         </main>
