@@ -6,6 +6,14 @@ For imports, planning and administration, choose **Options → Full website** an
 
 The independent neutral light/dark design uses a compact financial brief and dated transaction lists, rather than desktop Glass or Professional layouts. There is no permanent top navigation/back bar. The title scrolls away, and three labelled bottom tabs remain available. Merchant identity and signed amounts lead each row, with account/classification metadata below; full descriptions remain available in transaction details. Standard row text is 14px, supporting metadata 12px, and a **Larger text** option increases both. Inputs retain 16px text, interactive controls retain 44px targets, browser zoom remains available, and safe areas and the software keyboard receive dedicated spacing.
 
+## Sign-in
+
+Phone sign-in is a full-screen neutral light/dark surface matching this interface, rather than a compact desktop Glass/Paper card. It uses the same passkey client, password form, six-digit authenticator step and validated return destinations. Passkeys remain primary; the username retains `autocomplete="username webauthn"` and the password retains `current-password`. Phone entry does not force a keyboard open, and the code step retains `one-time-code` with no autofocus.
+
+Narrow windows and touch phones in landscape follow the existing phone-entry criteria; the Full website preference keeps the desktop sign-in presentation. An embedded recovery screen follows its parent interface, so a narrow desktop recovery frame is not mistaken for the phone product. The dedicated phone recovery dialog fills the screen and gives the sign-in frame its own scroll area, while keeping original-user errors and explicit recovery controls visible. It never discards a retained draft or replays a write. Full website sign-in still honours Glass/Paper preferences.
+
+Presentation lives in `frontend/js/login_presentation.js` and `frontend/css/phone-auth.css`; authentication PHP and `passkey_login.js` are unchanged. These browser checks use synthetic credentials; physical Face ID/Password AutoFill and iOS keyboard/safe-area behaviour remain device acceptance checks.
+
 ## Financial scope
 
 Overview combines active bank and credit-card balances, retaining their bank-reported dates, and shows current-month income, spending and net movement. Saved pension valuations and mortgage debt are separate recorded values with their own dates; they are not live balances or a complete net-worth estimate. Accounts, spending categories and headline activity values open the relevant transaction evidence.

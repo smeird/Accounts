@@ -80,6 +80,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link rel="manifest" href="frontend/manifest.webmanifest">
     <link rel="apple-touch-icon" sizes="180x180" href="frontend/icons/app-180.png">
     <meta name="theme-color" content="#312e81">
+    <script src="frontend/js/login_presentation.js"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Accounts">
     <link rel="stylesheet" href="frontend/css/web-app.css">
@@ -92,6 +93,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
     <link rel="stylesheet" href="frontend/vendor/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="frontend/login.css?v=20261019-appearance-defaults">
     <link rel="stylesheet" href="frontend/css/theme-professional.css?v=20261020-finish">
+    <link rel="stylesheet" href="frontend/css/phone-auth.css">
     <style>
         :root {
             --login-brand: <?= htmlspecialchars($buttonColors['600']) ?>;
@@ -112,7 +114,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
 </head>
 <body class="login-page<?= ($brand['surface_style'] ?? 'glass') === 'paper' ? ' theme-professional' : '' ?><?= ($_GET['embedded'] ?? '') === '1' ? ' login-embedded' : '' ?>">
     <script>
-      // Match this device's workspace surface, including embedded sign-in.
+      // Retain the device's full-website surface preference. Phone presentation is independent.
       try {
         const savedSurface = localStorage.getItem('professionalThemeEnabled');
         if (savedSurface === 'true' || savedSurface === 'false') {
@@ -159,6 +161,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                             <img src="favicon.png" alt="<?= htmlspecialchars($siteName) ?> logo" />
                         </div>
                         <div>
+                            <p class="login-phone-brand"><?= htmlspecialchars($siteName) ?></p>
                             <h2 id="login-heading"><?= $needsToken ? 'Two-factor verification' : 'Welcome back' ?></h2>
                             <p>Sign in to continue to your financial workspace.</p>
                         </div>
@@ -189,7 +192,7 @@ $needsToken = isset($_SESSION['pending_user_id']);
                         <form method="post" class="login-form" id="login-form" autocomplete="on">
                             <label class="login-field" for="login-username">Username
                                 <span class="login-input-wrap"><i class="fa-solid fa-user" aria-hidden="true"></i>
-                                    <input id="login-username" type="text" name="username" autocomplete="username webauthn" autofocus required data-help="Enter your username or choose a saved passkey">
+                                    <input id="login-username" type="text" name="username" autocomplete="username webauthn" data-desktop-autofocus required data-help="Enter your username or choose a saved passkey">
                                 </span>
                             </label>
                             <label class="login-field" for="login-password">Password

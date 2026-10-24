@@ -30,7 +30,7 @@
     if(typeof module!=='undefined'&&module.exports){module.exports={destination};return;}
     let desktop=new URLSearchParams(location.search).get('interface')==='desktop';
     try { desktop=desktop||sessionStorage.getItem('accounts-desktop-interface')==='1'; } catch (_) {}
-    const touchPhone=navigator.maxTouchPoints>0&&Math.min(screen.width,screen.height)<=600;
+    const touchPhone=(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches)&&Math.min(screen.width,screen.height)<=600;
     const target=destination(location.href,matchMedia('(max-width:600px)').matches,touchPhone,desktop);
     if(target){document.documentElement.style.visibility='hidden';location.replace(target);}
 })();

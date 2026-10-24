@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {usePhone}=require('./login_presentation.js');
+const desktop={narrow:false,touchPhone:false,desktop:false,embedded:false,parentPhone:null};
+assert.equal(usePhone(desktop),false,'Wide desktop keeps the existing sign-in');
+assert.equal(usePhone({...desktop,narrow:true}),true,'Narrow entry matches the phone product');
+assert.equal(usePhone({...desktop,touchPhone:true}),true,'A touch phone keeps phone sign-in in landscape');
+assert.equal(usePhone({...desktop,narrow:true,desktop:true}),false,'Full website escape retains its desktop presentation');
+assert.equal(usePhone({...desktop,embedded:true,parentPhone:true,desktop:true}),true,'Phone recovery follows its parent even if a stored full-site preference exists');
+assert.equal(usePhone({...desktop,embedded:true,parentPhone:false,narrow:true}),false,'A narrow desktop recovery iframe does not become a phone');
+assert.equal(usePhone({...desktop,embedded:true,parentPhone:null,touchPhone:true}),true,'Unavailable parent state falls back to device geometry');
+console.log('PASS: Phone sign-in follows narrow/touch entry, Full website preference and the recovery parent');

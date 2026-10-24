@@ -4,7 +4,7 @@ if (window.pageHelpInitialised) return;
 window.pageHelpInitialised = true;
 
 const init = () => {
-  const page = location.pathname.split('/').pop();
+  const page = document.body.classList.contains('login-page') ? 'index.php' : location.pathname.split('/').pop();
   const helpTexts = {
 
     'index.php': `Use this page to sign in to the finance manager. Choose a registered passkey for Face ID, Touch ID, your device PIN or a security key, or enter your username and password. Password accounts with authenticator verification will still ask for their six-digit code. Once signed in you will be taken to the main dashboard.`,
@@ -73,10 +73,10 @@ const init = () => {
   btn.className = 'page-help-button fixed bottom-4 right-4 bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg';
 
   const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4';
+  overlay.className = 'page-help-overlay fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4';
 
   const box = document.createElement('div');
-  box.className = 'cards max-w-md text-center';
+  box.className = 'page-help-content cards max-w-md text-center';
   const text = document.createElement('p');
   text.textContent = helpText;
   const close = document.createElement('button');
@@ -91,7 +91,14 @@ const init = () => {
 
   btn.addEventListener('click', () => overlay.classList.remove('hidden'));
 
-  document.body.appendChild(btn);
+  const mountButton = () => {
+    const phoneLogin = document.body.classList.contains('login-page') && document.documentElement.classList.contains('phone-login');
+    const host = phoneLogin ? document.querySelector('.login-panel') : document.body;
+    btn.textContent = phoneLogin ? 'Help with sign-in' : '?';
+    (host || document.body).appendChild(btn);
+  };
+  mountButton();
+  document.addEventListener('login:presentation-change', mountButton);
   document.body.appendChild(overlay);
 };
 
