@@ -190,6 +190,7 @@
 
 - Preserve component-owned CSS classes when changing loading states on live table containers. Toggle only the page's loading class; Find Transactions reuses its Tabulator instance across searches, so replacing the root `className` removes the structural table styles and causes overlapping headers/rows.
 
+- Web-app resume checks session validity quietly and refreshes data only when `statement_import_revision` changes. Publish this opaque revision in the same transaction as changed statement data (including balance-only imports); failed, duplicate-only and stale unchanged imports do not advance it. Keep the comparison in memory, preserve unfinished edits, and keep software-update notices independent.
 
 - Workspace top gutters belong to `.app-shell-main` (12px on desktop in both themes); do not add body padding above the viewport shell. Dashboard metric icons use consistent, centred icon boxes, and side-by-side Trends/Daily Burn metrics fill their summary row.
 - Workspace links use colour, chevrons and visible keyboard focus without text underlining. Choices search inputs own their inner geometry and are excluded from shared standalone-input decoration.

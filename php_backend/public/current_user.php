@@ -4,6 +4,7 @@ require_once __DIR__ . '/../auth.php';
 require_api_auth();
 require_once __DIR__ . '/../Database.php';
 require_once __DIR__ . '/../models/Log.php';
+require_once __DIR__ . '/../models/Setting.php';
 
 header('Content-Type: application/json');
 
@@ -23,7 +24,7 @@ if (isset($_SESSION['username']) && $_SESSION['username'] !== '') {
         // Passkeys are optional until the current schema migration is applied.
     }
 
-    echo json_encode(['username' => $username, 'has2fa' => $has2fa, 'hasPasskey' => $hasPasskey]);
+    echo json_encode(['username' => $username, 'has2fa' => $has2fa, 'hasPasskey' => $hasPasskey, 'statement_import_revision' => Setting::get('statement_import_revision') ?? 'initial']);
 } else {
     http_response_code(500);
     Log::write('Authenticated session missing username', 'ERROR');

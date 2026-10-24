@@ -39,12 +39,13 @@ class OfxImportService {
         $accountResults = [];
         $seenIdentities = [];
 
+        $dataChanged = false;
         $transactionStarted = false;
         try {
             $this->db->beginTransaction();
             $transactionStarted = true;
             foreach ($parsed['statements'] as $statement) {
-                $accountId = $this->findOrCreateAccount($statement['account']);
+                $accountId = $this->findOrCreateAccount($statement['account'], $dataChanged);
                 $accountName = trim((string)$statement['account']->name) ?: 'Unnamed account';
 
                 if (!isset($accountResults[$accountId])) {
@@ -91,18 +92,21 @@ class OfxImportService {
                     if ($createdId === 0) {
                         $accountResults[$accountId]['duplicates']++;
                     } else {
+                        $dataChanged = true;
                         $accountResults[$accountId]['inserted']++;
                         $accountResults[$accountId]['inserted_ids'][] = $createdId;
                     }
                 }
 
                 if ($statement['ledger']) {
+                    $beforeBalance = $this->balanceSnapshot($accountId);
                     $balanceStatus = Account::updateLedgerBalance(
                         $accountId,
                         $statement['ledger']->balance,
                         $statement['ledger']->date,
                         count($statement['transactions'])
                     );
+                    if ($beforeBalance !== $this->balanceSnapshot($accountId)) $dataChanged = true;
                     $accountResults[$accountId]['balance_status'] = $balanceStatus;
                     $accountResults[$accountId]['balance_date'] = $statement['ledger']->date;
                     if ($balanceStatus === 'protected') {
@@ -133,6 +137,12 @@ class OfxImportService {
             }
             unset($accountResult);
 
+            // Publish the revision atomically with the imported data, including
+            // balance-only imports. Failed and unchanged files leave it alone.
+            if ($dataChanged) {
+                $revision = $this->db->prepare('INSERT INTO settings (name, value) VALUES (:name, :value) ON CONFLICT(name) DO UPDATE SET value = excluded.value');
+                $revision->execute(['name' => 'statement_import_revision', 'value' => bin2hex(random_bytes(16))]);
+            }
             $this->db->commit();
         } catch (Throwable $e) {
             if ($transactionStarted && $this->db->inTransaction()) {
@@ -278,7 +288,14 @@ class OfxImportService {
         return preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $contents) ?? $contents;
     }
 
-    private function findOrCreateAccount($account): int {
+    private function balanceSnapshot(int $accountId): array {
+        $stmt = $this->db->prepare('SELECT ledger_balance, ledger_balance_date FROM accounts WHERE id = :id');
+        $stmt->execute(['id' => $accountId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return [(float)$row['ledger_balance'], $row['ledger_balance_date']];
+    }
+
+    private function findOrCreateAccount($account, bool &$dataChanged): int {
         $number = (string)$account->number;
         $sortCode = $account->sortCode === null ? null : (string)$account->sortCode;
         if ($sortCode === null) {
@@ -294,7 +311,9 @@ class OfxImportService {
         }
 
         $matchedId = $this->findUniqueMaskedAccount($number, $sortCode);
-        return $matchedId ?? Account::create((string)$account->name, $sortCode, $number);
+        if ($matchedId !== null) return $matchedId;
+        $dataChanged = true;
+        return Account::create((string)$account->name, $sortCode, $number);
     }
 
     private function findUniqueMaskedAccount(string $number, ?string $sortCode): ?int {

@@ -1197,7 +1197,12 @@ $serviceOfx = <<<OFX
 </STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>
 OFX;
 $importService = new OfxImportService($db);
+$revisionBeforeImport = Setting::get('statement_import_revision');
 $firstImport = $importService->importContent('current.ofx', $serviceOfx);
+$firstImportRevision = Setting::get('statement_import_revision');
+assertEqual(true, $firstImportRevision !== null && $firstImportRevision !== $revisionBeforeImport, 'Committed statement import publishes a data revision');
+$importService->importContent('unchanged.ofx', $serviceOfx);
+assertEqual($firstImportRevision, Setting::get('statement_import_revision'), 'An unchanged duplicate statement leaves the data revision alone');
 assertEqual('success', $firstImport['status'] ?? null, 'Structured importer reports a successful file');
 assertEqual(1, (int)($firstImport['totals']['inserted'] ?? 0), 'Structured importer reports inserted transactions');
 assertEqual([(int)$db->query('SELECT id FROM transactions')->fetchColumn()], $firstImport['inserted_ids'], 'Import evidence contains only committed new transaction IDs');
@@ -1209,7 +1214,10 @@ $importAccountId = (int)$db->query("SELECT id FROM accounts WHERE account_number
 assertEqual(1234.56, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'OFX ledger balance is stored on the matched account');
 $newerBalanceOfx = str_replace(['1234.56', '20260814'], ['1500.00', '20260815'], $serviceOfx);
 $importService->importContent('newer-balance.ofx', $newerBalanceOfx);
+$balanceImportRevision = Setting::get('statement_import_revision');
+assertEqual(true, $balanceImportRevision !== $firstImportRevision, 'Balance-only changes advance the statement revision');
 $importService->importContent('older-balance.ofx', $serviceOfx);
+assertEqual($balanceImportRevision, Setting::get('statement_import_revision'), 'Stale unchanged statements leave the data revision alone');
 assertEqual(1500.0, (float)$db->query("SELECT ledger_balance FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'An older OFX statement cannot overwrite a newer ledger balance');
 assertEqual('2026-08-15', $db->query("SELECT ledger_balance_date FROM accounts WHERE id = $importAccountId")->fetchColumn(), 'The newest OFX balance date is retained');
 $emptyZeroBalanceOfx = <<<OFX
@@ -1262,7 +1270,9 @@ assertEqual('error', $brokenImport['status'] ?? null, 'Malformed statement produ
 
 $db->exec('DROP TABLE category_tags');
 $atomicOfx = str_replace(['20260814', 'LONG-BANK-IDENTIFIER-12345678901234567890'], ['20260815', 'ATOMIC-ROLLBACK-2'], $serviceOfx);
+$revisionBeforeFailure = Setting::get('statement_import_revision');
 $atomicFailure = $importService->importContent('atomic.ofx', $atomicOfx);
+assertEqual($revisionBeforeFailure, Setting::get('statement_import_revision'), 'A rolled-back import never publishes a data revision');
 assertEqual('error', $atomicFailure['status'] ?? null, 'Downstream import failure is reported');
 assertEqual(1, (int)$db->query('SELECT COUNT(*) FROM transactions')->fetchColumn(), 'Failed file rolls back transactions inserted earlier in that file');
 $db->exec('CREATE TABLE category_tags (category_id INTEGER, tag_id INTEGER)');

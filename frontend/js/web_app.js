@@ -15,6 +15,8 @@
     let hiddenAt = 0;
     let waitingWorker;
     let loginFrame;
+    let displayedImportRevision;
+    let latestImportRevision;
 
     function returnDestination() {
         return location.pathname.startsWith(root.pathname)
@@ -85,7 +87,7 @@
                 response.clone().json().then(data => { if (data.error === 'Session expired') showSession(); }).catch(() => {});
             }
             if (apiRequest && /\/current_user\.php$/.test(url.pathname) && response.ok) {
-                response.clone().json().then(data => { if (!identity) identity = data.username; }).catch(() => {});
+                response.clone().json().then(data => { if (!identity) identity = data.username; observeImportRevision(data); }).catch(() => {});
             }
             return response;
         } catch (error) {
@@ -98,6 +100,15 @@
         }
     };
 
+    function observeImportRevision(user) {
+        if (typeof user.statement_import_revision !== 'string') return;
+        latestImportRevision = user.statement_import_revision;
+        if (displayedImportRevision === undefined) displayedImportRevision = latestImportRevision;
+    }
+    function hideConnection() {
+        // Software updates remain explicit and independent of statement imports.
+        if (connection && !waitingWorker) connection.hidden = true;
+    }
     async function checkSession() {
         const response = await nativeFetch(new URL('current_user.php', api), { credentials: 'same-origin', cache: 'no-store' });
         if (response.status === 401 || response.status === 403) { showSession(); return false; }
@@ -109,6 +120,7 @@
             return false;
         }
         identity = user.username;
+        observeImportRevision(user);
         locked = false;
         sessionDialog?.close();
         loginFrame?.remove();
@@ -121,15 +133,20 @@
         resumePromise = (async () => {
             try {
                 if (!await checkSession()) return;
+                if (displayedImportRevision === latestImportRevision) { hideConnection(); return; }
                 if (hasEdits()) {
-                    showConnection('Connected — your unfinished edits are still open. Save or discard them before refreshing.');
+                    showConnection('A new statement has been imported. Save or discard your unfinished edits before refreshing.');
                     return;
                 }
                 // Refresh only when the page opts in; editing/operations pages
                 // never reload automatically or repeat their actions.
-                if (document.body.hasAttribute('data-phone-app')) document.dispatchEvent(new CustomEvent('app:resume'));
+                if (document.body.hasAttribute('data-phone-app')) {
+                    const accepted = document.dispatchEvent(new CustomEvent('app:resume', { cancelable: true }));
+                    if (accepted) { displayedImportRevision = latestImportRevision; hideConnection(); }
+                    else showConnection('A new statement has been imported. Save or discard your unfinished edits before refreshing.');
+                }
                 else if (document.body.hasAttribute('data-resume-refresh')) location.reload();
-                else showConnection('Connected — refresh to check for updated information.');
+                else showConnection('A new statement has been imported. Refresh to load the updated accounts.');
             } catch (_) { showConnection('Unable to reach the server. Your open edits have been kept. Try again when connected.'); }
         })();
         try { await resumePromise; } finally { resumePromise = null; }

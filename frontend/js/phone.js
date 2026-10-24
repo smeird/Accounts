@@ -322,8 +322,8 @@
         if(history.state?.phoneDetail){history.back();}else{const url=new URL(location.href);url.searchParams.delete('transaction');history.replaceState({phone:true},'',url.href);}
         $('phone-detail').close();if(detailOpener?.isConnected)detailOpener.focus({preventScroll:true});
     }
-    function refresh(){
-        if(detailDirty||detailSaving){const status=$('phone-classification-status');if(status)status.textContent='Your selection has been kept. Save when you are ready.';return;}
+    function refresh(event){
+        if(detailDirty||detailSaving){event?.preventDefault?.();const status=$('phone-classification-status');if(status)status.textContent='Your selection has been kept. Save when you are ready.';return;}
         if(!booted){boot();return;}
         clearError();state.month.base=null;
         if(state.view==='overview')loadOverview(true);else if(state.view==='month')loadMonth(true);else loadSearch(true);
