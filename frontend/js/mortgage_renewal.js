@@ -9,7 +9,7 @@
         ['property_value','Estimated property value (£)','number',0,'Used only for an illustrative loan-to-value ratio; the lender may use a different valuation.'],
         ['review_months','Start reviewing deals this many months before expiry','number',6,'A personal planning reminder (0–24 months), not a lender application window.']];
     const dealFields=[['name','Lender / comparison name','text','Manual comparison'],['rate','Interest rate (%)','number',4.5],['fixed_months','New fixed period (months)','number',60],['fee','Product fee (£)','number',0],['cashback','Cashback (£)','number',0],['add_fee','Add product fee to borrowing','checkbox',false]];
-    let ready=false,sources=[],currentRenewal=null,busy=false,dealSequence=0;
+    let ready=false,sources=[],currentRenewal=null,busy=false,dealSequence=0,paymentChart=null;
     function node(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
     function notifyChange(){if(ready)$('mortgage-form').dispatchEvent(new Event('input',{bubbles:true}));}
     fields.forEach(([key,label,type,value,help])=>{
@@ -36,8 +36,41 @@
         out.comparison_deals=Array.from($('renewal-deal-editor').children).map(wrap=>{const deal={};wrap.querySelectorAll('[data-deal-field]').forEach(input=>deal[input.dataset.dealField]=input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value);return deal;});return out;
     }
     function load(plan){fields.forEach(([key,,,fallback])=>$(key).value=plan[key]??fallback);$('renewal-deal-editor').replaceChildren();(plan.comparison_deals||[]).forEach(deal=>addDeal(deal,false));ready=true;}
-    function clear(){currentRenewal=null;$('mortgage-renewal').hidden=true;}
+    function clear(){paymentChart?.destroy();paymentChart=null;currentRenewal=null;$('mortgage-renewal').hidden=true;}
     function metric(label,value,note){const box=node('div',undefined,'mortgage-metric');box.append(node('span',label),node('strong',value),node('small',note));return box;}
+    function paymentChange(value){return Math.abs(value)<.005?'No change':money(Math.abs(value))+(value>0?' more':' less')+' / month';}
+    function drawPayments(){
+        paymentChart?.destroy();paymentChart=null;
+        const data=currentRenewal,container=$('renewal-payment-chart');
+        container.replaceChildren();
+        if(!data?.configured)return;
+        const deals=data.comparisons||[],hasOverpay=data.balance_with_overpayments!==data.balance;
+        $('renewal-payment-baseline').textContent='Current regular payment: '+money(data.current_payment)+' / month';
+        const changes=$('renewal-payment-changes');changes.replaceChildren();
+        deals.forEach(deal=>{
+            const item=node('div',undefined,'renewal-payment-change');
+            item.append(node('strong',deal.name),node('span','Normal: '+money(deal.normal.payment)+' · '+paymentChange(deal.normal.monthly_change)));
+            if(hasOverpay)item.append(node('span','With overpayments: '+money(deal.overpay.payment)+' · '+paymentChange(deal.overpay.monthly_change)));
+            changes.append(item);
+        });
+        if(!deals.length){container.textContent=data.remaining_months>0?'Add a comparison to see it beside your current payment.':'No remaining contractual term for a new deal.';container.style.height='auto';return;}
+        if(!window.Highcharts){container.textContent='Chart unavailable. Monthly payments and changes are shown below.';container.style.height='auto';return;}
+        container.style.height=Math.max(280,(deals.length+1)*(hasOverpay?76:54)+110)+'px';
+        const colour=getComputedStyle(document.documentElement).getPropertyValue('--brand-color-600').trim()||'#4f46e5';
+        const categories=['Current deal',...deals.map(d=>d.name)];
+        const series=[{name:'Current regular payment',color:'#64748b',data:[data.current_payment,...deals.map(()=>null)]},
+            {name:'Normal payments to renewal',color:colour,data:[null,...deals.map(d=>d.normal.payment)]}];
+        if(hasOverpay)series.push({name:'With overpayments to renewal',color:'#0f766e',data:[null,...deals.map(d=>d.overpay.payment)]});
+        try{paymentChart=Highcharts.chart(container,{
+            chart:{type:'bar',backgroundColor:'transparent',spacingLeft:4,spacingRight:20},title:{text:null},credits:{enabled:false},
+            xAxis:{categories,labels:{style:{fontSize:'12px'},useHTML:false}},
+            yAxis:{min:0,title:{text:'Monthly payment (£)'},plotLines:[{value:data.current_payment,color:'#64748b',width:2,dashStyle:'Dash',zIndex:5}]},
+            legend:{enabled:true},accessibility:{description:'Monthly payments at renewal compared with the current regular payment of '+money(data.current_payment)+'. Full values and changes follow the chart.'},
+            tooltip:{useHTML:false,formatter:function(){const value=this.y,change=value-data.current_payment;return this.series.name+': '+money(value)+'; '+paymentChange(change);}},
+            plotOptions:{series:{animation:false,groupPadding:.15,dataLabels:{enabled:true,format:'£{point.y:,.0f}',style:{textOutline:'none',fontWeight:'normal'}},borderWidth:0},bar:{borderRadius:0,centerInCategory:true}},
+            series
+        });}catch(e){container.style.height='auto';container.textContent='Chart unavailable. Monthly payments and changes are shown below.';}
+    }
     function render(data,plan){
         currentRenewal=data;
         if(!data?.configured){$('mortgage-renewal').hidden=true;renderSources();return;}
@@ -55,7 +88,7 @@
             });
         });
         if(!body.children.length){const row=node('tr'),cell=node('td',data.remaining_months>0?'Add a manual comparison or copy a lender benchmark below.':'No remaining contractual term for a new deal.');cell.colSpan=7;row.append(cell);body.append(row);}
-        renderSources();
+        drawPayments();renderSources();
     }
     function renderSources(){
         const container=$('mortgage-rate-sources');container.replaceChildren();
@@ -86,5 +119,5 @@
     }
     async function startMarkets(){try{await request();$('mortgage-rates-status').textContent='Source status loaded.';const due=sources.filter(s=>s.due).map(s=>s.id);if(due.length)await refresh(due);}catch(e){$('mortgage-rates-status').textContent=e.message;}}
     $('renewal-add-deal').addEventListener('click',()=>addDeal());$('mortgage-rates-refresh').addEventListener('click',()=>refresh(['natwest','hsbc','barclays']));
-    window.MortgageRenewalUI={collect,load,render,clear,startMarkets};
+    window.MortgageRenewalUI={collect,load,render,clear,startMarkets,drawPayments};
 })();

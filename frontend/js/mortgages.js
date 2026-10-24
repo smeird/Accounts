@@ -89,7 +89,13 @@
     });
     window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
     async function load(){try{const result=await send('GET');revision=result.revision;$('mortgage-editor').open=revision===0;$('mortgage-editor').querySelector('summary').textContent=revision===0?'Set up your plan':'Edit assumptions';$('mortgage-plan-state').textContent=revision>0?'Saved plan · results use your saved assumptions.':'Start by entering your details, then save your plan.';fields.forEach(([key])=>{const input=$(key);input.value=result.plan[key];if(input._slider){if(key==='extra_monthly')input._slider.max=Math.max(2000,Math.ceil(input.value/500)*500);input._slider.value=input.value;}});window.MortgageRenewalUI.load(result.plan);$('recalculate_on_change').checked=result.plan.recalculate_on_change;loaded=true;$('mortgage-fields').disabled=false;$('mortgage-main').setAttribute('aria-busy','false');updateNotes();preview();}catch(e){$('mortgage-status').textContent='Mortgage workspace could not load. Check Database Health, then reload this page.';$('mortgage-error').textContent=e.message;$('mortgage-error').hidden=false;$('mortgage-main').setAttribute('aria-busy','false');}}
-    const script=document.createElement('script');script.src='https://code.highcharts.com/highcharts.js';script.async=true;script.onload=()=>{drawChart();const a=document.createElement('script');a.src='https://code.highcharts.com/modules/accessibility.js';a.onload=drawChart;document.head.append(a);};document.head.append(script);
+    const redraw=()=>{drawChart();window.MortgageRenewalUI.drawPayments();};
+    function chartScript(path,onload){
+        const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/highcharts@12.4.0/'+path;script.async=true;
+        script.onload=onload;
+        document.head.append(script);
+    }
+    chartScript('highcharts.js',()=>{redraw();chartScript('modules/accessibility.js',redraw);});
     load();
     window.MortgageRenewalUI.startMarkets();
 })();

@@ -9,7 +9,7 @@ const assert=require('node:assert/strict');
         const today=new Date().toISOString().slice(0,10),year=Number(today.slice(0,4));
         let saved={revision:1,plan:{lender:'Existing fixed mortgage',balance:120000,balance_date:today,monthly_payment:1000,remaining_months:180,rate:3,extra_monthly:0,lump_sum:0,rate_change_month:0,future_rate:4.5,recalculate_on_change:true,deal_start:(year-3)+today.slice(4),deal_end:(year+2)+today.slice(4),property_value:240000,review_months:6,comparison_deals:[{name:'Manual five-year quote',rate:4.5,fixed_months:60,fee:999,cashback:0,add_fee:false}]}},conflict=false,failed=false;
         const sources=['natwest','hsbc','barclays'].map((id,i)=>({id,name:['NatWest','HSBC','Barclays'][i],url:'https://example.com/',scope:'Synthetic public benchmark',last_success:'2026-10-20T10:00:00Z',last_attempt:'2026-10-20T10:00:00Z',stale:false,due:false,error:null,products:[{id:'test',name:'Five-year fixed <script>',rate:4.25,fixed_months:60,fee:995,cashback:0,max_ltv:75,min_ltv:0,min_loan:5000,max_loan:1e6,restrictions:'Eligibility unverified',incentives:'Standard legal fees'}]}));
-        await page.route('https://code.highcharts.com/**',r=>r.abort());
+        await page.route(/https:\/\/(?:code\.highcharts\.com|cdn\.jsdelivr\.net)\//,r=>process.env.ACCOUNTS_HIGHCHARTS_PATH&&r.request().url().endsWith('/highcharts.js')?r.fulfill({path:process.env.ACCOUNTS_HIGHCHARTS_PATH,contentType:'application/javascript'}):r.abort());
         await page.route('**/php_backend/public/**',async route=>{
             const req=route.request(),path=new URL(req.url()).pathname;let json={};
             if(path.endsWith('/current_user.php'))json={username:'Preview'};
@@ -35,6 +35,21 @@ const assert=require('node:assert/strict');
         assert.match(await page.locator('#renewal-deadline').innerText(),/days until.*fixed deal ends/);
         assert.match(await page.locator('#renewal-comparisons').innerText(),/Manual five-year quote/);
         assert.equal(await page.locator('#renewal-comparisons tr').count(),1);
+        assert.match(await page.locator('#renewal-payment-baseline').innerText(),/£1,000.00/);
+        assert.match(await page.locator('#renewal-payment-changes').innerText(),/Manual five-year quote.*Normal:/s);
+        if(process.env.ACCOUNTS_HIGHCHARTS_PATH){
+            await page.waitForFunction(()=>!!document.querySelector('#renewal-payment-chart svg'));
+            const chart=await page.evaluate(()=>{const c=Highcharts.charts.find(c=>c?.renderTo.id==='renewal-payment-chart');return {values:c.series.map(s=>s.options.data),line:c.yAxis[0].options.plotLines[0].value};});
+            assert.equal(chart.values[0][0],1000);assert.equal(chart.line,1000);
+            assert.ok(chart.values[1][1]>0);
+        }else assert.match(await page.locator('#renewal-payment-chart').innerText(),/Chart unavailable/);
+        await page.locator('#extra_monthly').evaluate(el=>{el.value='200';el.dispatchEvent(new Event('input',{bubbles:true}));});
+        await page.waitForFunction(()=>document.getElementById('renewal-payment-changes').textContent.includes('With overpayments:'));
+        if(process.env.ACCOUNTS_HIGHCHARTS_PATH){
+            const amounts=await page.evaluate(()=>Highcharts.charts.find(c=>c?.renderTo.id==='renewal-payment-chart').series.map(s=>s.options.data[1]));
+            assert.ok(amounts[2]<amounts[1],'Pre-renewal overpayments reduce the illustrated renewal payment');
+        }
+        await page.screenshot({path:'/private/tmp/mortgage-payment-visual.png',fullPage:true});
         await page.locator('#mortgage-editor').evaluate(e=>e.open=true);
         await page.locator('#deal_end').fill((year+1)+today.slice(4));
         await page.locator('#deal_end').press('Tab');

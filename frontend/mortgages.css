@@ -19,3 +19,5 @@
     .renewal-comparison-table td{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.75rem;white-space:normal;text-align:right;padding:.65rem 0}
     .renewal-comparison-table td::before{content:attr(data-label);font-weight:400;color:#475569;text-align:left}
 }
+
+.renewal-visual{margin:1.5rem 0;border-top:1px solid #94a3b855;padding-top:1rem;min-width:0}.renewal-visual h3{font-size:1rem;font-weight:600}.renewal-visual #renewal-payment-baseline{font-size:1.25rem;color:inherit;font-variant-numeric:tabular-nums}.renewal-payment-changes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:1rem;margin:1rem 0}.renewal-payment-change{padding:.6rem 0;border-bottom:1px solid #94a3b855;overflow-wrap:anywhere}.renewal-payment-change strong,.renewal-payment-change span{display:block;font-size:14px}.renewal-payment-change span{margin-top:.35rem}#renewal-payment-chart{width:100%;min-width:0}

@@ -43,6 +43,8 @@ Renewal comparisons are separate from the original **What if the interest rate c
 
 ## Manual comparisons
 
+A horizontal monthly-payment chart shows your current regular payment beside each renewal deal, with a dashed current-payment reference line and explicit increases or savings. When overpayments change the projected balance, paired bars show both renewal scenarios; they exclude continuing monthly extras. Upfront fees/cashback stay in the cost table; financed fees are included in monthly payments. The payment/change summaries and full cost table remain available if charts cannot load.
+
 Save up to twelve named comparisons, each with the annual interest rate, new fixed period in months, product fee, cashback and whether to finance the fee. The illustration projects the debt to renewal and recalculates the new monthly payment over the remaining contractual term. It also shows the payment on the lower balance resulting from planned pre-renewal overpayments. Continuing overpayments after renewal are not included in those quoted normal monthly payments.
 
 Compare like fixed periods. The table shows monthly payment/change, fee treatment, cash paid during the illustrated fix, financing cost and closing debt. Cash paid includes repayments and upfront fees less cashback. Financing cost is repayments plus upfront fees plus closing debt minus the original debt and cashback, so capital repayments are not mistaken for an expense and financed fees are counted once. The period is capped at the remaining mortgage term. Only product fees and cashback are included; valuation, legal, broker, redemption and early-repayment charges remain outside the model. No comparison is an offer or an eligibility decision.
