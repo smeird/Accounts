@@ -36,6 +36,9 @@
     function hasEdits() {
         return Array.from(editForms).some(([form, original]) => form.isConnected && serialise(form) !== original);
     }
+    function beginEdit(form) {
+        if (form && !editForms.has(form)) editForms.set(form, serialise(form));
+    }
     function markSaved(form, savedState) {
         if (!form) return;
         if (savedState && serialise(form) !== savedState) editForms.set(form, savedState);
@@ -69,7 +72,7 @@
             await nativeFetch(new URL('lock_session.php', api), { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         } catch (_) { showConnection('Offline — reconnect to sign in. No changes will be sent while locked.'); }
     }
-    window.AppWeb = { hasEdits, markSaved, capture: serialise, lockSession, sessionExpired: showSession, isLocked: () => locked, loginUrl };
+    window.AppWeb = { hasEdits, beginEdit, markSaved, capture: serialise, lockSession, sessionExpired: showSession, isLocked: () => locked, loginUrl };
 
     // Observe failures without replaying writes. A failed response remains available
     // to the caller so existing page error handling continues to work.
@@ -258,7 +261,7 @@
         navigation();
         const trackEdit = event => {
             const form = event.target.closest?.('form[data-preserve-edits]');
-            if (form && !editForms.has(form)) editForms.set(form, serialise(form));
+            beginEdit(form);
         };
         document.addEventListener('focusin', trackEdit, true);
         document.addEventListener('pointerdown', trackEdit, true);

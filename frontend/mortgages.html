@@ -25,6 +25,13 @@
         <p id="mortgage-status" role="status">Loading your mortgage workspace…</p>
         <p id="mortgage-error" role="alert" hidden></p>
         <p id="mortgage-plan-state" role="status">Loading saved plan…</p>
+        <section id="mortgage-renewal" class="cards cards-tight" hidden aria-labelledby="renewal-title">
+            <h2 id="renewal-title">Your next mortgage deal</h2>
+            <p id="renewal-deadline" role="status"></p><div id="renewal-metrics" class="mortgage-metrics"></div>
+            <p id="renewal-explanation"></p>
+            <div class="mortgage-table-wrap"><table class="mortgage-table renewal-comparison-table"><caption>Renewal comparisons · normal payments until renewal; product fee treatment is shown separately</caption><thead><tr><th scope="col">Comparison</th><th scope="col">New monthly payment</th><th scope="col">Change / month</th><th scope="col">Fee</th><th scope="col">Cash paid during fix</th><th scope="col">Interest + fee − cashback</th><th scope="col">Balance after fix</th></tr></thead><tbody id="renewal-comparisons"></tbody></table></div>
+            <p>Compare the same fixed period. Cash paid includes repayments, upfront product fees and cashback; financing cost also accounts for the balance left, including financed fees. Legal, valuation, broker, exit and early-repayment charges are excluded. Today’s advertised products may be unavailable or unsuitable when your deal ends.</p>
+        </section>
         <section id="mortgage-results" class="cards cards-tight" hidden aria-labelledby="mortgage-result-title">
             <h2 id="mortgage-result-title">Your mortgage illustration</h2><p id="mortgage-context"></p>
             <div id="mortgage-metrics" class="mortgage-metrics" aria-live="polite"></div>
@@ -40,6 +47,16 @@
                     <div id="mortgage-inputs" class="mortgage-grid"></div>
                 </section>
                 <section class="cards cards-tight">
+                    <h2>Your current fixed deal</h2><p>Record the actual dates from your offer. Your review date is a planning reminder, not confirmation that a lender will accept an application then.</p>
+                    <div id="mortgage-deal-inputs" class="mortgage-grid"></div>
+                </section>
+                <section class="cards cards-tight">
+                    <h2>Compare your next deal</h2><p>Add a quote or a rate to test. These assumptions are saved with your mortgage; collecting advertised rates never changes them. Renewal comparisons keep your current rate until the fixed deal ends and are separate from the one-rate-change experiment below.</p>
+                    <div id="renewal-deal-editor"></div>
+                    <button type="button" id="renewal-add-deal" class="mortgage-button" aria-label="Add a manual renewal comparison">Add comparison</button>
+                    <p id="renewal-edit-status" role="status"></p>
+                </section>
+                <section class="cards cards-tight">
                     <h2>Explore paying it off sooner</h2><p>Compare your normal payments with extra monthly payments and a one-off overpayment applied immediately on the balance date.</p>
                     <div id="mortgage-overpayments" class="mortgage-grid"></div>
                     <details class="mortgage-assumptions"><summary>What if the interest rate changes?</summary>
@@ -52,6 +69,14 @@
             </fieldset>
         </form>
         </details>
+        <section id="mortgage-market" class="cards cards-tight" aria-labelledby="mortgage-market-title">
+            <h2 id="mortgage-market-title">Published lender rates</h2>
+            <p>Free public sources from NatWest, HSBC and Barclays. Checked automatically when this page is opened if the last attempt is over a day old. Refresh requests are limited to once per lender every 15 minutes. No mortgage details are sent to lenders.</p>
+            <button type="button" id="mortgage-rates-refresh" class="mortgage-button" aria-label="Check all three lenders for updated mortgage rates">Check lender rates</button>
+            <p id="mortgage-rates-status" role="status">Loading source status…</p>
+            <div id="mortgage-rate-sources"></div>
+            <p>These are selected public fixed-rate benchmarks, not a whole-market search or an eligibility decision. Existing-customer offers can differ. Check lender conditions and exact fixed end dates. Adding a product creates an editable comparison; fees are paid upfront by default.</p>
+        </section>
         <section id="mortgage-timeline" class="cards cards-tight" hidden>
             <h2>Your path to mortgage freedom</h2><p>Compare the outstanding balance over time. Figures remain available below if the chart cannot load.</p>
             <div id="mortgage-chart" aria-label="Outstanding mortgage balance over time"></div>
@@ -64,7 +89,7 @@
             <p>Interest is estimated monthly using the annual interest rate divided by 12, rounded to pennies. Interest is added before each monthly payment. The first payment is one month after the balance date; month-end dates are clamped to valid calendar days. Your lender may calculate interest daily or use different payment dates, so results can differ from a statement or redemption quote.</p>
             <p>Extra monthly payments stay fixed and aim to reduce the payoff time. A one-off overpayment reduces the opening balance before interest is charged. At a planned rate change, you choose whether the normal payment is recalculated over the remaining contractual term or kept fixed. Calculated payments have an adjusted final instalment for penny rounding.</p>
             <p>Any balance left at the contractual term end remains owed. An illustration extending beyond that date is not permission to extend your mortgage. Repayment forecasts stop after 100 years or if the balance becomes too large to illustrate usefully.</p>
-            <p>Fees, early-repayment charges, lender overpayment limits, payment holidays, offset accounts, interest-only borrowing and future changes other than the one you enter are not included. Check your mortgage terms before making overpayments. <a href="https://www.moneyhelper.org.uk/en/homes/buying-a-home/should-you-pay-off-your-mortgage-early" target="_blank" rel="noopener">MoneyHelper’s overpayment guidance</a>.</p>
+            <p>The overpayment illustration excludes fees. Renewal comparisons include only the product fee and cashback you enter. Other fees, early-repayment charges, lender overpayment limits, payment holidays, offset accounts, interest-only borrowing and future changes other than the one you enter are not included. Check your mortgage terms before making overpayments. <a href="https://www.moneyhelper.org.uk/en/homes/buying-a-home/should-you-pay-off-your-mortgage-early" target="_blank" rel="noopener">MoneyHelper’s overpayment guidance</a>.</p>
             <p>This workspace keeps mortgage debt separate from bank balances and transaction totals. Save to update Financial Overview; include Mortgages in Backup &amp; Restore to protect your plan.</p>
         </section>
     </main>
@@ -74,6 +99,7 @@
 <script src="js/menu.js"></script>
 <script src="js/input_help.js"></script>
 <script src="js/overlay.js"></script>
+<script src="js/mortgage_renewal.js"></script>
 <script src="js/mortgages.js"></script>
 </body>
 </html>

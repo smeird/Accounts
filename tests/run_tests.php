@@ -1900,6 +1900,9 @@ PensionPlanner::save($backupPensionPlan, 0);
 require_once __DIR__ . '/../php_backend/models/MortgagePlanner.php';
 $backupMortgagePlan=MortgagePlanner::defaults();
 $backupMortgagePlan['balance']=123456.78;
+$backupMortgagePlan['deal_end']='2031-03-31';
+$backupMortgagePlan['property_value']=250000;
+$backupMortgagePlan['comparison_deals']=[['name'=>'Saved renewal quote','rate'=>4.25,'fixed_months'=>60,'fee'=>999,'cashback'=>100,'add_fee'=>true]];
 MortgagePlanner::save($backupMortgagePlan,0);
 
 // Backup/restore must round-trip current security and reporting data and must
@@ -1943,6 +1946,8 @@ $db = Database::getConnection();
 assertEqual('Restore complete.', $restoreMessage, 'A complete backup restores successfully');
 assertEqual('TEST-TOTP-SECRET', $db->query("SELECT secret FROM totp_secrets WHERE username='alice'")->fetchColumn(), 'Restore preserves two-factor authentication state');
 assertEqual(123456.78, (float)MortgagePlanner::load()['plan']['balance'], 'Restore preserves mortgage valuations');
+assertEqual('2031-03-31',MortgagePlanner::load()['plan']['deal_end'],'Restore preserves the recorded mortgage fixed-deal deadline');
+assertEqual(4.25,MortgagePlanner::load()['plan']['comparison_deals'][0]['rate'],'Restore preserves manual mortgage renewal comparisons');
 try {MortgagePlanner::save($backupMortgagePlan,1);$restoreMortgageConflict=false;}catch(RuntimeException $e){$restoreMortgageConflict=$e->getCode()===409;}
 assertEqual(true,$restoreMortgageConflict,'Restore invalidates old mortgage browser revisions');
 assertEqual('Backup pension', PensionPlanner::load()['plan']['pots'][0]['provider'], 'Restore preserves pension providers');
@@ -2108,6 +2113,7 @@ require __DIR__ . '/PhoneClassificationTest.php';
 require __DIR__ . '/GroupAnalysisTest.php';
 require __DIR__ . '/PensionPlannerTest.php';
 require __DIR__ . '/MortgagePlannerTest.php';
+require __DIR__ . '/MortgageRenewalTest.php';
 require __DIR__ . '/AiTransactionTaggerTest.php';
 
 // Output results and set exit code

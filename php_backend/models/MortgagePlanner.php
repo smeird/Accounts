@@ -6,7 +6,8 @@ class MortgagePlanner {
     public static function defaults(): array {
         return ['lender'=>'My mortgage','balance'=>0,'balance_date'=>date('Y-m-d'),'monthly_payment'=>0,
             'remaining_months'=>240,'rate'=>4.5,'extra_monthly'=>0,'lump_sum'=>0,
-            'rate_change_month'=>0,'future_rate'=>4.5,'recalculate_on_change'=>true];
+            'rate_change_month'=>0,'future_rate'=>4.5,'recalculate_on_change'=>true,
+            'deal_start'=>'','deal_end'=>'','property_value'=>0.0,'review_months'=>6,'comparison_deals'=>[]];
     }
 
     public static function validate(array $input): array {
@@ -37,12 +38,13 @@ class MortgagePlanner {
             throw new InvalidArgumentException('Enter a valid balance date that is not in the future.');
         }
         $out['balance_date']=$date;
-        return $out;
+        require_once __DIR__ . '/../services/MortgageRenewal.php';
+        return array_merge($out,MortgageRenewal::validateFields($input));
     }
 
     public static function load(): array {
         $row=Database::getConnection()->query('SELECT data,revision FROM mortgage_plans WHERE id=1')->fetch(PDO::FETCH_ASSOC);
-        return $row?['plan'=>json_decode($row['data'],true,512,JSON_THROW_ON_ERROR),'revision'=>(int)$row['revision']]
+        return $row?['plan'=>array_replace(self::defaults(),json_decode($row['data'],true,512,JSON_THROW_ON_ERROR)),'revision'=>(int)$row['revision']]
             :['plan'=>self::defaults(),'revision'=>0];
     }
 
@@ -66,9 +68,10 @@ class MortgagePlanner {
     }
 
     public static function forecast(array $plan): array {
+        require_once __DIR__ . '/../services/MortgageRenewal.php';
         $normal=self::simulate($plan,false);$overpay=self::simulate($plan,true);
         $bothPaid=$normal['payoff_months']!==null && $overpay['payoff_months']!==null;
-        return ['normal'=>$normal,'overpay'=>$overpay,
+        return ['normal'=>$normal,'overpay'=>$overpay,'renewal'=>MortgageRenewal::forecast($plan),
             'required_payment'=>self::payment($plan['balance'],$plan['rate'],$plan['remaining_months']),
             'contract_end'=>self::monthDate($plan['balance_date'],$plan['remaining_months']),
             'months_saved'=>$bothPaid?$normal['payoff_months']-$overpay['payoff_months']:null,

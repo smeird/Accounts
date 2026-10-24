@@ -6,3 +6,16 @@
 #mortgage-plan-state { color:var(--type-table-secondary-color,#64748b); font-size:14px; margin:.5rem 0; }
 
 .mortgage-metric { border:0; background:transparent; }
+/* Renewal tools keep one workspace surface and readable, bounded controls. */
+.renewal-deal{border:1px solid #94a3b855;border-radius:var(--paper-control-radius,.5rem);padding:1rem;margin:1rem 0}.renewal-deal legend{padding:0 .3rem;font-size:14px}.renewal-deal button{min-height:44px;padding:.5rem}.renewal-deal input[type=checkbox]{width:1.2rem;min-height:1.2rem;justify-self:start;accent-color:var(--brand-color-600,#4f46e5)}.renewal-source{border-top:1px solid #94a3b855;padding:.6rem 0;margin-top:1rem}.renewal-source select{margin:.6rem 0;max-width:100%;white-space:normal}.renewal-source button{min-height:44px;padding:.6rem 1rem;border:1px solid #94a3b8;border-radius:var(--paper-control-radius,.4rem)}.mortgage-page .renewal-source-warning{color:#92400e}.mortgage-page #renewal-deadline{font-size:1.1rem;color:inherit}.mortgage-page #renewal-comparisons th{white-space:normal;min-width:14rem}.theme-professional .renewal-deal{border-width:1px 0;border-radius:0}.theme-professional .renewal-source{background:transparent}
+@media(max-width:600px){.renewal-deal{padding:.75rem}.renewal-deal input,.renewal-source select{font-size:16px}}
+@media(max-width:600px){
+    #mortgage-renewal .mortgage-table-wrap{overflow:visible}
+    .renewal-comparison-table,.renewal-comparison-table tbody{display:block;width:100%}
+    .renewal-comparison-table thead{display:none}
+    .renewal-comparison-table caption{display:block;text-align:left;white-space:normal}
+    .renewal-comparison-table tr{display:block;margin:1rem 0;border:1px solid #94a3b855;padding:.75rem}
+    .mortgage-page #renewal-comparisons th{display:block;min-width:0;white-space:normal;padding:.5rem 0;text-align:left}
+    .renewal-comparison-table td{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.75rem;white-space:normal;text-align:right;padding:.65rem 0}
+    .renewal-comparison-table td::before{content:attr(data-label);font-weight:400;color:#475569;text-align:left}
+}

@@ -92,6 +92,9 @@ This document describes the current functional baseline. New work should preserv
 - Pension illustrations support provider fees, fixed nominal contributions, inflation, optional user-supplied State Pension, selectable end age and level or Go-Go/Slow-Go/No-Go spending; never promise a retirement date or assume entitlement.
 - Mortgage illustrations compare contractual payments and monthly/lump-sum overpayments, optional rate resets and explicit term-end shortfalls; fees and lender limits remain outside the model.
 
+- Mortgage renewal planning records exact deal dates, a personal review lead time and property value; compare up to twelve manually confirmed next-deal assumptions over the projected balance/remaining term, including optional fee financing and cashback. Keep renewal separate from the existing rate-reset experiment.
+- Public lender collection uses only allowlisted NatWest/HSBC/Barclays sources, independent last-success/attempt/error state, bounded HTTPS requests, per-source cooldown/concurrency control, retained last-good data and an offline/live CLI harness. Never overwrite saved assumptions or describe today’s products as future offers; no commercial feed.
+
 ## Phone, sessions and imports
 
 - Offer a dedicated neutral light/dark phone interface with Overview, This month and Search; preserve an explicit Full website escape for imports, planning and administration.
