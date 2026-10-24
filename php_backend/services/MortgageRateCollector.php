@@ -3,6 +3,7 @@ require_once __DIR__ . '/../Database.php';
 
 // Public, read-only lender sources. No credentials, customer details or paid feed.
 class MortgageRateCollector {
+    public const REFRESH_INTERVAL=12*60*60;
     public const SOURCES=[
         'natwest'=>['name'=>'NatWest','url'=>'https://www.natwest.com/mortgages/mortgage-rates.html','fetch'=>'https://www.natwest.com/mortgages/mortgage-rates.html','scope'=>'Public residential range; confirm remortgage eligibility'],
         'hsbc'=>['name'=>'HSBC','url'=>'https://www.hsbc.co.uk/mortgages/move-your-mortgage/rates/','fetch'=>'https://www.hsbc.co.uk/mortgages/move-your-mortgage/rates/','scope'=>'Remortgage to HSBC'],
@@ -16,7 +17,7 @@ class MortgageRateCollector {
             $state=$this->read($key);$last=$state['last_success']??null;
             $sources[]=array_merge(['id'=>$key,'name'=>$source['name'],'url'=>$source['url'],'scope'=>$source['scope'],
                 'last_attempt'=>null,'last_success'=>null,'error'=>null,'products'=>[]],$state,
-                ['stale'=>!$last || time()-strtotime($last)>172800,'due'=>!isset($state['last_attempt']) || time()-strtotime($state['last_attempt'])>86400]);
+                ['stale'=>!$last || time()-strtotime($last)>172800,'due'=>!isset($state['last_attempt']) || time()-strtotime($state['last_attempt'])>=self::REFRESH_INTERVAL]);
         }
         return ['sources'=>$sources];
     }
@@ -34,7 +35,7 @@ class MortgageRateCollector {
         }
         try {
             $state=$this->read($key);
-            if (isset($state['last_attempt']) && time()-strtotime($state['last_attempt'])<900) return $this->status();
+            if (isset($state['last_attempt']) && time()-strtotime($state['last_attempt'])<self::REFRESH_INTERVAL) return $this->status();
             $state['last_attempt']=gmdate('c');
             try {
                 $body=$this->fetcher?($this->fetcher)(self::SOURCES[$key]['fetch']):self::download(self::SOURCES[$key]['fetch']);

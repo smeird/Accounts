@@ -57,3 +57,17 @@ $attempt=$status['last_attempt'];$failed->refresh('hsbc');assertEqual($attempt,$
 assertEqual(3,count($failed->status()['sources']),'All three lenders report independent status');
 try{MortgageRateCollector::download('http://127.0.0.1/admin');$blocked=false;}catch(InvalidArgumentException $e){$blocked=true;}
 assertEqual(true,$blocked,'Collector cannot request arbitrary or internal URLs');
+
+// The server throttle applies to all callers, including manual clicks and failures.
+$fetchCount=0;
+$throttled=new MortgageRateCollector($db,function($url)use(&$fetchCount,$fixtures){$fetchCount++;return file_get_contents($fixtures.'hsbc.html');});
+$status['last_attempt']=gmdate('c',time()-11*3600);
+$s->execute(['name'=>'mortgage_rates_hsbc','value'=>json_encode($status)]);
+assertEqual(false,$throttled->status()['sources'][1]['due'],'Eleven-hour-old attempts are not automatically due');
+$throttled->refresh('hsbc');
+assertEqual(0,$fetchCount,'Manual refresh cannot contact a lender within twelve hours, even after failure');
+$status['last_attempt']=gmdate('c',time()-12*3600-1);
+$s->execute(['name'=>'mortgage_rates_hsbc','value'=>json_encode($status)]);
+assertEqual(true,$throttled->status()['sources'][1]['due'],'Checks become due after twelve hours');
+$throttled->refresh('hsbc');$throttled->refresh('hsbc');
+assertEqual(1,$fetchCount,'An eligible check contacts the lender once and repeated requests reuse its cache');

@@ -82,7 +82,7 @@
         const errors=[];
         for(const id of ids){$('mortgage-rates-status').textContent='Checking '+(sources.find(s=>s.id===id)?.name||id)+'…';try{await request('POST',id);}catch(e){errors.push(e.message);}}
         busy=false;$('mortgage-rates-refresh').disabled=false;
-        $('mortgage-rates-status').textContent=errors.length?errors.join(' '):'Source status updated. Checks within 15 minutes may be reused; last success and failures are shown separately.';
+        $('mortgage-rates-status').textContent=errors.length?errors.join(' '):'Source status updated. Checks within 12 hours reuse cached results; last success and failures are shown separately.';
     }
     async function startMarkets(){try{await request();$('mortgage-rates-status').textContent='Source status loaded.';const due=sources.filter(s=>s.due).map(s=>s.id);if(due.length)await refresh(due);}catch(e){$('mortgage-rates-status').textContent=e.message;}}
     $('renewal-add-deal').addEventListener('click',()=>addDeal());$('mortgage-rates-refresh').addEventListener('click',()=>refresh(['natwest','hsbc','barclays']));
