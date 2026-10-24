@@ -1,5 +1,9 @@
 # Codebase review: proposed follow-up tasks
 
+> Historical review. Findings below describe the code at the time of review, not a current release defect list. See [Documentation and release readiness](Documentation.md) for the 24 October 2026 validation scope and [Smart tagging](SmartTagging.md) for current classification behaviour. Old file/line references and proposed fixes must be rechecked before use.
+
+As of 24 October 2026, setup uses an HTTP development server, upload selection no longer uses `isMacOS()`, and the PHP suite completes successfully. The old UA-specific upload tasks and early-exit claim below are superseded; they are preserved as review history.
+
 ## 1) Typo fix task
 **Task:** Correct the local development URL scheme in the README from `https://localhost:8000/frontend/index.html` to `http://localhost:8000/frontend/index.html`.
 

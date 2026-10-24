@@ -2,7 +2,7 @@
 
 Accounts is a self-hosted personal finance workspace built with PHP 8.5, PostgreSQL and a responsive HTML/JavaScript frontend. It imports bank activity from OFX/QFX statements, organises transactions through reusable tags and classifications, and turns the ledger into practical dashboards for balances, spending, budgets, forecasts and longer-term decisions.
 
-The interface is organised around six tasks: **Overview**, **Transactions**, **Insights**, **Planning**, **Organise** and **System**. See the [project wiki](wiki/Home.md) for development documentation and the [visual style guide](wiki/StyleGuide.md) for UI conventions.
+The interface is organised around six tasks: **Overview**, **Transactions**, **Insights**, **Planning**, **Organise** and **System**. See the [documentation index](wiki/Home.md) or the published [GitHub Wiki](https://github.com/smeird/Accounts/wiki) for development documentation and the [visual style guide](wiki/StyleGuide.md) for UI conventions.
 
 ## Product map
 
@@ -25,9 +25,12 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 - **Trends & Comparisons** — one period explorer for monthly, yearly, all-time and custom comparisons across categories, segments, groups and tags.
 - **Daily Burn** — observed expenditure converted into a daily rate and broken down by segment. Each month is divided by its actual calendar days, while a separate chart preserves real transaction-day spikes.
 - **12-Month Forecast** — expected, conservative and optimistic balance paths based on observed transaction history.
+- **Group Analysis** — tag-level outgoings, receipts and net cost for a selected transaction group, with dated transaction evidence.
 - **Year in Review**, **Financial Picture**, **Regular Income & Bills**, **Analysis Matrix** and **AI Financial Review**.
 
 ### Planning and organisation
+
+- **Planning overview** brings budgets, projects, Pensions & Retirement and Mortgage Planner together. Pension and mortgage plans are saved independently of the bank ledger; illustrative results appear on Financial Overview.
 
 - Monthly category budgets with visual runway/progress bars and optional AI suggestions.
 - Project portfolio, comparison board and archive, with fixed-weight priority tiers based on consequence of delay, urgency, asset preservation, financial impact and daily-life impact. Project spending remains linked to transaction groups.
@@ -54,7 +57,9 @@ The interface is organised around six tasks: **Overview**, **Transactions**, **I
 
 Open your installation’s HTTPS address in Safari, then choose **Share → Add to Home Screen** (under **More** if needed). Keep **Open as Web App** enabled if offered. Launch the Accounts icon and sign in using a passkey or your password. The navigation menu also includes an installation guide.
 
-The phone layout provides Overview, Transactions, Planning and More tabs, a Back action, and a full-screen transaction classification editor. The server must remain reachable. An offline screen and connection status explain when information cannot be refreshed; financial records and unfinished edits are never cached for offline use. An expired session keeps the open form while you sign in again inside the app. Keep that original window open until you have saved.
+The dedicated phone interface has **Overview**, **This month** and **Search** tabs, neutral light/dark styling and an explicit single-transaction classification editor. Choose **Options → Full website** for imports, planning, taxonomy and administration; that choice lasts for the browser session. Home Screen installation is optional: the same site works in Safari. See [Phone Interface](wiki/PhoneInterface.md). The server must remain reachable. An offline screen and connection status explain when information cannot be refreshed; financial records and unfinished edits are never cached for offline use. An expired session keeps the open form while you sign in again inside the app. Keep that original window open until you have saved.
+
+Returning after more than 30 seconds in the background checks the session quietly. Data refreshes only when an import has changed transactions or balances; unfinished edits defer that refresh. Software updates remain a separate explicit action.
 
 See [iPhone setup and verification](wiki/Setup.md#iphone-web-app) for device checks and troubleshooting.
 
@@ -150,13 +155,14 @@ For troubleshooting and a detailed description of the safety checks, see [Setup]
 
 1. Install PHP 8.5, PDO PostgreSQL and PostgreSQL. Production installs also require PHP cURL, mbstring, ZIP, XML, OpenSSL, JSON and session support.
 2. Provide `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` and optionally `DB_SSLMODE` to PHP. Apache deployments can use `SetEnv` in the virtual host.
-3. Create or update the schema:
+3. **For a new empty database only**, create the schema. This command drops existing application tables; use Database Health for upgrades:
 
    ```bash
    php php_backend/create_tables.php
    ```
 
-4. Serve the repository and sign in through `index.php`:
+4. Create the first user from the command line using the [complete manual setup guide](wiki/Setup.md#manual-installation-and-local-development). The sign-in page does not register the first user.
+5. Serve the repository and sign in through `index.php`:
 
    ```bash
    php -S localhost:8000
@@ -180,11 +186,13 @@ The original AI-assisted taxonomy rebuild used **Tag Rebuild Safety**, **Taxonom
 
 ## OFX/QFX import
 
-Use **Transactions → Import Transactions**, or call the endpoint directly:
+On a phone, choose **Options → Full website**, then **Transactions → Import Transactions**. Select up to 20 OFX/QFX statements. Lowercase and uppercase extensions are accepted. The picker deliberately has no file-type filter so iPhone Files does not disable valid OFX files; supported extensions are checked after selection and again on the server. This picker fix was confirmed on the user’s iPhone on 24 October 2026.
+
+The authenticated upload endpoint also accepts multipart requests with an existing signed-in session (the following example uses a local cookie jar):
 
 ```bash
-curl -F "ofx_files[]=@first.ofx" -F "ofx_files[]=@second.ofx" \
-  https://example.test/php_backend/public/upload_ofx.php
+curl --cookie /secure/path/accounts-session.cookies -F "ofx_files[]=@first.ofx" -F "ofx_files[]=@second.ofx" \
+  https://accounts.example.com/php_backend/public/upload_ofx.php
 ```
 
 The importer normalises encoding, preserves full memos, resolves masked account identifiers where possible, processes every file atomically and reports inserted, duplicate, tagged, categorised and balance-refresh outcomes separately. Institution profiles in `php_backend/profiles/` control bank-specific field normalisation.
@@ -239,13 +247,17 @@ bash tests/deploy_installer_test.sh
 shellcheck deploy.sh
 ```
 
+Run `node tests/web_app_refresh_browser.cjs` with Playwright available for isolated import-refresh and session checks (no local server needed).
+
 With Playwright available and a local server running, run `tests/web_app_browser.cjs` and `tests/web_app_files_browser.cjs`; set `ACCOUNTS_TEST_URL` to the server URL and `ACCOUNTS_TEST_BROWSER=webkit` for Safari engine checks. These tests mock APIs and do not change ledger data.
 
 Before merging UI work, also run PHP lint, JavaScript syntax checks, `git diff --check`, and browser verification at desktop and mobile widths.
 
+Documentation maintenance and the current verification limits are recorded in [Documentation and release readiness](wiki/Documentation.md).
+
 ## Backups and deployment safety
 
-Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and JSON extracts or a complete Excel financial workbook. The Excel export includes a period summary, pivot-style analysis and a filterable transaction ledger; internal transfers and ignored rows remain visible but are excluded from analytical totals. Full backups include passkey public credentials, tag-rebuild runs and their immutable classification snapshots. Treat these files as sensitive financial data.
+Use **System → Backup & Restore** for gzipped JSON backups and **System → Export Data** for OFX, CSV and JSON extracts or a complete Excel financial workbook. The Excel export includes a period summary, pivot-style analysis and a filterable transaction ledger; internal transfers and ignored rows remain visible but are excluded from analytical totals. Current full backups use format version 8 and include passkey public credentials, tag-rebuild runs and immutable classification snapshots, pension plans and mortgage plans. Gzip compresses these files; it does not encrypt them. Store them securely off-device and verify a restore into a disposable installation before relying on them. Treat them as sensitive financial data.
 
 Keep credentials and API tokens outside the repository, serve production over HTTPS (required by browsers for passkeys outside localhost), allow the included `.htaccess` cache policy, and deploy from `main`. `PASSKEY_ORIGIN` and `PASSKEY_RP_ID` may be set when a reverse proxy means PHP cannot infer the public HTTPS origin and hostname. Do not use `--allow-unrelated-histories` on a production checkout; preserve configuration/uploads and use a clean clone if the server directory does not share this repository’s history.
 

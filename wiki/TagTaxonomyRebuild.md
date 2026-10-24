@@ -1,6 +1,6 @@
 # Tag Taxonomy Rebuild
 
-> Status: completed. The phase pages are retained as advanced recovery tools and are no longer listed in the normal sidebar. The permanent audit summary appears under **Organise → Tagging → Rebuild history**.
+> Status: historical rebuild workflow. The original installation’s rebuild was completed; a new installation does not inherit that run or its approval evidence. The phase pages are retained as advanced recovery tools and are no longer listed in the normal sidebar. The permanent audit summary appears under **Organise → Tagging → Rebuild history**.
 
 The rebuild treats bank wording, canonical tags, categories and segments as separate layers:
 
@@ -11,7 +11,7 @@ The rebuild treats bank wording, canonical tags, categories and segments as sepa
 
 ## Phase 1: preserve the current state
 
-After deploying the Phase 1 code, open **System → Database Health** and apply the catalogue-controlled repairs. Then open **System → Tag Rebuild Safety** and create a named baseline snapshot.
+After deploying the Phase 1 code, open **System → Database Health** and apply the catalogue-controlled repairs. Then open the retained [Tag Rebuild Safety page](../frontend/tag_migration.html) directly and create a named baseline snapshot.
 
 The snapshot records every current transaction ID with its `tag_id`, `category_id` and `segment_id`. It also records whether the transaction is eligible for future retagging. Confirmed transfers and transactions carrying the `IGNORE` tag are protected. The snapshot receives a SHA-256 integrity hash and creation manifest; creating it does not update live classifications.
 
@@ -25,7 +25,7 @@ Full application backups include migration runs and classification snapshots. Ke
 
 ## Phase 2: discover and review the new taxonomy
 
-After Phase 2 is deployed, apply the new catalogue repairs in **System → Database Health**, then open **System → Taxonomy Studio** and select the protected Phase 1 baseline.
+After Phase 2 is deployed, apply the new catalogue repairs in **System → Database Health**, then open the retained [Taxonomy Studio page](../frontend/tag_taxonomy_discovery.html) directly and select the protected Phase 1 baseline.
 
 Preparation reads only eligible snapshotted transactions. It removes changing numeric bank references, keeps incoming and outgoing patterns separate, and groups repeated wording into stable candidate aliases. Transfers and `IGNORE` transactions never enter the discovery queue.
 
@@ -39,7 +39,7 @@ The taxonomy can be marked ready when every eligible pattern resolves to an appr
 
 After Phase 3 is deployed, run **System → Database Health** once more. This adds direction to live alias rules and the cutover audit field. Existing rules default to **Either direction**; reviewed patterns create distinct incoming and outgoing rules where the same wording has different meanings, such as a purchase and its refund.
 
-Open **System → Taxonomy Cutover** to review the exact plan. Apply stays disabled unless the immutable snapshot hash is valid, approved coverage is at least 95%, every analysed pattern points to one approved tag, and no direction-specific alias points to competing destinations. The preview identifies new and reused tags, category and segment mappings, direction-aware aliases, deferred transactions, newly protected transactions and imports made after the snapshot.
+Open the retained [Taxonomy Cutover page](../frontend/tag_taxonomy_cutover.html) directly to review the exact plan. Apply stays disabled unless the immutable snapshot hash is valid, approved coverage is at least 95%, every analysed pattern points to one approved tag, and no direction-specific alias points to competing destinations. The preview identifies new and reused tags, category and segment mappings, direction-aware aliases, deferred transactions, newly protected transactions and imports made after the snapshot.
 
 The confirmed cutover runs inside one database transaction. It creates or reuses the reviewed canonical tags, installs their direction-aware aliases, applies reviewed category and segment relationships, and retags only covered, eligible snapshot transactions. Transfers, `IGNORE` rows, deferred patterns and post-snapshot imports remain unchanged. During the initial cutover, old tags are deprecated only when the cutover leaves them unused.
 
@@ -55,7 +55,7 @@ Cleanup does not delete tags, aliases, category links, or transactions. It does 
 
 The action hashes every transaction classification and fingerprints the complete ledger before and after the write. It records the exact prior and resulting state of every retired tag and disabled alias inside the existing cutover audit. The ordinary **Rollback cutover** action restores the cleanup catalogue state first and reverses the original cutover while that broader rollback remains valid. If routine classification work has already made the full rollback unavailable, the page reports that separately without disabling the independent catalogue cleanup.
 
-Full backups use format version 6 and preserve passkey public credentials alongside the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
+Current full backups use format version 8 (taxonomy/passkey coverage began in version 6) and preserve passkey public credentials alongside the baseline, candidate patterns, canonical proposals, reviews, direction-aware aliases, transaction-level staging coverage and cutover audit.
 
 ## Acceptance thresholds
 
@@ -64,4 +64,4 @@ Full backups use format version 6 and preserve passkey public credentials alongs
 - 100% reconciliation of financial totals before and after cutover.
 - No unreviewed canonical tags created by automated processing.
 - Zero taxonomy growth when an unchanged dataset is processed again.
-- Alias false-positive rate below 2% in the approved evaluation sample.
+- Alias false-positive rate below 2% in the approved evaluation sample (a target requiring measured human-reviewed evidence, not an assertion of current model accuracy).

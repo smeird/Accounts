@@ -5,8 +5,11 @@
 - PHP 8.5 or later
 - PDO PostgreSQL extension
 - PostgreSQL
-- Apache for production (the PHP development server is sufficient locally)
-- Node.js for frontend syntax/regression tests
+- Apache for the automated Pi installer; manually configured Apache or Nginx for production (the PHP development server is local-only)
+- cURL, mbstring, ZIP, XML, OpenSSL, JSON, sessions and zlib in PHP; `pdo_sqlite` for the isolated tests
+- Node.js/npm only for development asset builds and JavaScript tests; committed assets need no production build
+
+Use the [README quick install](../README.md#simple-raspberry-pi-installation) for the short path. This page supplies configuration, recovery and verification details.
 
 ## Raspberry Pi production installation
 
@@ -15,7 +18,8 @@ The supported one-command production target is a fresh 64-bit Raspberry Pi OS Bo
 1. Create a public DNS record for the application hostname pointing to the internet connection used by the Pi.
 2. Forward inbound TCP ports 80 and 443 to the Pi. Keep working SSH access available.
 3. Confirm the Pi has outbound HTTPS access and at least 2 GiB free under `/var`.
-4. Do not pre-create `/var/www/accounts` or a PostgreSQL database named `accounts`.
+4. Do not pre-create `/var/www/accounts`, a PostgreSQL database named `accounts`, or its role `accounts_app`. The installer refuses these existing resources.
+5. Use a fresh host: the script runs a full OS package upgrade and configures Apache, UFW, fail2ban and unattended security updates. It installs PHP 8.5 from the Sury package repository. Package and certificate services must be reachable.
 
 Run from an interactive SSH or local terminal:
 
@@ -35,7 +39,7 @@ The temporary HTTP virtual host exposes only the Let's Encrypt challenge path. T
 - Detailed output is written to `/var/log/accounts-installer.log`; secrets are excluded.
 - The firewall permits the SSH port detected from `sshd`, plus ports 80 and 443. Check custom network policy before installing on a machine that is not new.
 
-After success, open the printed HTTPS URL, sign in, create a backup, and store it away from the Pi. To migrate an earlier installation, use **System → Backup & Restore** after this clean setup. PDF email delivery is not configured by the installer and requires a separate mail transport.
+After success, open the printed HTTPS URL, sign in with the user created by the installer, check **System → Database Health**, create a backup, and store it away from the Pi. Backups are gzip-compressed JSON, not encrypted; use secure or encrypted off-device storage. Reboot if the installer reports it is required. To migrate an earlier installation, use **System → Backup & Restore** after this clean setup. PDF email delivery is not configured by the installer and requires a separate mail transport.
 
 Useful diagnostics are:
 
@@ -57,7 +61,7 @@ Accounts reads:
 - `DB_USER`
 - `DB_PASS`
 - `DB_SSLMODE` (defaults to `prefer`)
-- optional `DB_DSN` for tests or a custom PDO connection
+- `DB_DSN=sqlite::memory:` for tests only; a PostgreSQL PDO DSN may override the production connection fields. MySQL is not a supported runtime.
 - optional `PASSKEY_ORIGIN` and `PASSKEY_RP_ID` when the public HTTPS origin cannot be inferred behind a reverse proxy
 
 For Apache, keep credentials outside the repository:
@@ -87,50 +91,69 @@ Apache `SetEnv` values exist inside web requests but are not automatically prese
 
 ## Migrating an existing MySQL installation
 
-This is a logical migration: the application reads the old MySQL records into its versioned backup format and restores them into a newly created PostgreSQL schema. Keep the MySQL database unchanged until the final verification and retain a separate copy of the backup.
+Use an application-level logical backup, never a data-directory conversion. Current `main` uses PostgreSQL-specific SQL: do not upgrade the source MySQL checkout or point current code at MySQL to produce the export.
 
-1. Before updating the old application, create a complete backup from **System → Backup & Restore** and take the site out of use so no later transactions are missed.
-2. Install PHP 8.5 with `pdo_mysql` temporarily for reading the source, `pdo_pgsql` for the destination, and PostgreSQL. Create an empty PostgreSQL database owned by the application user.
-3. With the updated code checked out, export directly from MySQL if a fresh backup is needed. Supply the real credentials without saving them in the repository:
-
-   ```bash
-   DB_DSN='mysql:host=localhost;dbname=old_accounts;charset=utf8mb4' \
-   DB_USER='old_user' DB_PASS='old_password' \
-   php8.5 php_backend/public/backup.php > /safe/path/accounts-mysql-final.json.gz
-   ```
-
-4. Point the shell at the empty PostgreSQL database, create its schema, and restore the logical backup:
+1. While the old MySQL-compatible application is still running, create a complete backup using its **Backup & Restore** page. Stop further writes and take the final export before switching over. Preserve its code, database and configuration until verification succeeds.
+2. Create a separate fresh PostgreSQL installation through the Pi installer or the manual instructions below. Do not reset or reuse the source database.
+3. Restore the application backup into the new installation through **System → Backup & Restore**. Current restore also supports a local CLI file when the destination PostgreSQL environment is configured:
 
    ```bash
-   export DB_HOST=localhost DB_PORT=5432 DB_NAME=accounts DB_USER=accounts_app
-   export DB_PASS='new_postgresql_password' DB_SSLMODE=prefer
-   unset DB_DSN
-   php8.5 php_backend/create_tables.php
-   php8.5 php_backend/public/restore.php /safe/path/accounts-mysql-final.json.gz
+   php php_backend/public/restore.php /secure/path/accounts-final.json.gz
    ```
 
-5. Put the same PostgreSQL values in the root-owned Apache environment configuration, reload Apache, then sign in. Check **Database Health**, account totals, transaction count, transfer exclusions, tags/categories/segments, projects, budgets and passkeys before retiring MySQL.
+4. Legacy JSON backups without version metadata are accepted; versioned backups must have the recognised application format and version no greater than 8. Older backups may omit newer feature sections. Validate the actual export on a disposable destination first; an arbitrary MySQL SQL dump is not an application backup.
+5. Check Database Health, users, account totals and balance dates, transaction counts and amounts, transfer/IGNORE exclusions, taxonomy, projects, budgets and any saved planners. Keep passwords available as recovery and verify passkeys separately; their original HTTPS hostname/RP identity must remain valid.
+6. Move traffic only after those checks. Keep the old installation offline but recoverable and retain the export off-device. Do not allow writes to both copies.
 
-`php_backend/create_tables.php` is deliberately destructive and is only for a new, empty destination. Never run it against a database containing the sole copy of production data.
+## Manual installation and local development
 
-## Initial installation
+Install PostgreSQL and PHP 8.5 with the modules listed above. The following database-creation commands assume a Debian-style PostgreSQL administrator named `postgres`; adapt the administrator command for your platform:
 
 ```bash
+sudo -u postgres createuser --pwprompt accounts_app
+sudo -u postgres createdb --owner=accounts_app accounts
+
 git clone https://github.com/smeird/Accounts.git
 cd Accounts
+export DB_HOST=localhost DB_PORT=5432 DB_NAME=accounts DB_USER=accounts_app DB_SSLMODE=prefer
+unset DB_DSN
+printf 'Database password: '
+IFS= read -r -s DB_PASS
+printf '\n'
+export DB_PASS
+```
+
+These shell exports are for this terminal only. For production, configure the same connection for the web server separately, outside the checkout. Confirm the destination is new and empty before running the next command: **it drops and recreates all application tables**. Use Database Health for an existing installation.
+
+```bash
 php php_backend/create_tables.php
+```
+
+Create the first user explicitly; `index.php` is a sign-in page, not a registration wizard. From the repository root, in the same terminal:
+
+```bash
+printf 'Initial username: '
+IFS= read -r ACCOUNTS_ADMIN_USER
+printf 'Initial password (use at least 12 characters): '
+IFS= read -r -s ACCOUNTS_ADMIN_PASSWORD
+printf '\n'
+export ACCOUNTS_ADMIN_USER ACCOUNTS_ADMIN_PASSWORD
+php -r 'require "php_backend/models/User.php"; User::create(getenv("ACCOUNTS_ADMIN_USER"), getenv("ACCOUNTS_ADMIN_PASSWORD"));'
+unset ACCOUNTS_ADMIN_USER ACCOUNTS_ADMIN_PASSWORD
 php -S localhost:8000
 ```
 
-Open `http://localhost:8000/` and create/sign in with the initial user flow provided by the deployment setup.
+Open `http://localhost:8000/` and sign in. Do not open frontend files directly from disk. Localhost is the development exception for passkeys; production needs trusted HTTPS. Add further users under **System → Users**. The development server is not a production deployment.
+
+For production Apache, the virtual-host fragment above illustrates environment and directory settings only: it is not a complete TLS configuration. Provision a trusted certificate, enable the required modules, set the PHP upload limits for your statements/backups, and validate the host before exposing it. The Pi installer handles this for its supported target. For Nginx retain a working PHP-FPM handler and apply the cache policy below. Both CLI and web PHP must be 8.5+.
 
 ## Upgrades
 
 1. Back up the database and any uploaded/configuration assets outside Git.
-2. Update from `main` using a normal fast-forward pull.
+2. Prefer **System → Application Updates**: check, review the offered change, then install. It fetches and rechecks before a clean fast-forward of the currently checked-out branch. Keep production on `main`. For a manual deployment, fetch `origin`, verify the checkout is clean, and merge `origin/main` with `--ff-only`; never reset over local changes.
 3. Run any release-specific migration documented in the README.
 4. Open **System → Database Health** and review the audit.
-5. Apply only the safe structural repairs you understand, including the tag migration run, snapshot, taxonomy proposal, pattern and transaction-staging tables before using **System → Tag Rebuild Safety** or **System → Taxonomy Studio**.
+5. Review and apply the catalogue-generated structural repairs required by your release. The one-off taxonomy recovery tools are direct administrative URLs, not normal sidebar tasks; see [Tag Taxonomy Rebuild](TagTaxonomyRebuild.md). Do not run the fresh-install schema reset during an upgrade.
 6. Reload Apache/PHP as required and verify the production site.
 
 ### Passkeys after migration
@@ -204,15 +227,23 @@ UI changes also require browser verification at desktop and mobile widths. Confi
 
 Use the installation’s existing HTTPS hostname, with a trusted certificate. The iPhone must be able to reach that server through your network or VPN. In Safari choose **Share → Add to Home Screen** (possibly under **More**), leave **Open as Web App** enabled if offered, then launch the Accounts icon. Installation does not move the database onto the phone. Sign in using a registered passkey or the password/TOTP fallback; manage passkeys in **System → Users**.
 
-The public manifest is `frontend/manifest.webmanifest`. Its relative paths support root and subdirectory installations. `sw.js` lives at the installation root so its scope includes login and frontend pages. Apache must serve it as JavaScript and the manifest as `application/manifest+json`. Both must be same-origin and reachable without authentication. Existing API authentication remains enforced by PHP.
+Phones route to the dedicated **Overview / This month / Search** product. Choose **Options → Full website** for imports, planners or administration; installation is optional and ordinary Safari works too. The full website retains its responsive desktop navigation. See [Phone Interface](PhoneInterface.md).
+
+The dedicated phone manifest is `frontend/phone.webmanifest`; the shared sign-in/full-site manifest is `frontend/manifest.webmanifest`. Its relative paths support root and subdirectory installations. `sw.js` lives at the installation root so its scope includes login and frontend pages. Apache must serve it as JavaScript and the manifest as `application/manifest+json`. Both must be same-origin and reachable without authentication. Existing API authentication remains enforced by PHP.
 
 The service worker stores only `frontend/offline.html`, which contains no account data. All application navigations remain network-first with `no-store`; APIs, uploads, downloads and non-GET requests bypass the worker. No financial records, session tokens or form drafts are written to Cache API, IndexedDB or browser storage. If you lose connection during a write, inspect its current server state before retrying. Requests are never queued or automatically replayed.
 
 On session expiry, keep the original app window open. Choose **Sign in here** and complete authentication in the recovery panel. Its same-origin sign-in frame shares the installed app’s cookie store; a separate Safari window may not, because [WebKit isolates installed web-app storage](https://webkit.org/blog/14787/webkit-features-in-safari-17-2/). The app checks the restored session before returning to your edit. **Continue after signing in** also lets you check an already restored session. **Start again at sign-in** leaves the current page and may discard unfinished edits. The original form is retained in memory, and recovery requires the same account. iOS may discard a suspended app at any time, so this is not a durable draft backup. Save before closing the app. Existing passkey and one-time-code semantics are unchanged.
 
-Overview, Accounts, Monthly Activity and Find Transactions refresh after a background absence exceeding 30 seconds when connected and free of tracked edits. Other pages show an explicit refresh action. Transaction, Budget, Pension and Mortgage forms protect unfinished edits; use `data-preserve-edits` for additional editable forms and call `AppWeb.markSaved(form)` only after a successful save. The shared inactivity timer locks on its original deadline when iOS resumes a suspended window.
+Returning after a background absence exceeding 30 seconds, restoring a browser history page, or reconnecting checks the session. A statement-import revision determines whether data changed: unchanged sessions stay quiet. An import that creates transactions/accounts or changes the stored balance/date advances this revision atomically; failed or unchanged imports do not. When a changed revision is detected, the dedicated phone view refreshes, and full-site pages opted into `data-resume-refresh` reload. Other pages offer an explicit refresh action. Unfinished tracked edits or a busy phone classification editor defer the refresh until it is safe. The revision is kept in memory, not device storage. Other kinds of edits are not covered by this import signal; use manual refresh for them. Transaction, Budget, Pension and Mortgage forms protect unfinished edits; use `data-preserve-edits` for additional editable forms and call `AppWeb.markSaved(form)` only after a successful save. The shared inactivity timer locks on its original deadline when iOS resumes a suspended window.
 
 App updates are offered explicitly when a new worker is ready; save unfinished edits before choosing **Update**. Increment the worker’s public-cache version when changing the offline screen. This refreshes the browser experience only; the existing guarded Application Updates page remains the deployment authority. To remove a broken worker during development, use Safari’s Web Inspector service worker controls or clear website data, then reopen the site online.
+
+### Importing a statement from iPhone Files
+
+In the dedicated phone interface, choose **Options → Full website**, then **Transactions → Import Transactions**. Browse to the downloaded `.ofx` or `.qfx` statement and submit it. Up to 20 files can be selected. Extension checks are case-insensitive; the native picker is deliberately unfiltered, because iOS type recognition can otherwise grey out valid statements. JavaScript and the server still reject unsupported extensions. The user confirmed this fix on a physical iPhone on 24 October 2026.
+
+If a file is still unavailable, make sure it is downloaded locally in Files. Copy a cloud-provider file to **On My iPhone** and retry. Refresh an already open import page after an upgrade. Do not rename a PDF/CSV to OFX; obtain the bank’s actual OFX/QFX export. After import, use the exact imported-entry links; their session-owned evidence expires after two hours and never expands to the full ledger silently.
 
 ### Physical iPhone verification
 
@@ -227,4 +258,7 @@ Before production rollout, check on your iPhone:
 5. Select an OFX/QFX file from Files, import it once, and inspect the result. Check CSV, Excel and timestamped PDF downloads in Files or the share/open interface offered by iOS.
 6. Follow a dashboard amount into its exact transaction evidence, then use Back.
 7. Disable connectivity, attempt navigation and confirm the public offline screen. Reconnect and retry; verify no write or import is repeated automatically.
-8. Deploy an update, save edits, and accept the update offer. Check Glass and Paper on both phone and desktop.
+8. Deploy an update, save edits, and accept the update offer. Check Glass/Paper on the full website and light/dark on the dedicated phone interface.
+9. Return without importing and confirm no refresh prompt. Import a changed statement in another window, return after 30 seconds and confirm the figures refresh. Repeat with an unsaved classification and confirm the draft is preserved. An unchanged duplicate import should not trigger a refresh.
+
+Installer shell syntax, validation/self-tests and static policy checks can be run locally. They do not prove a fresh Bookworm/Trixie deployment, DNS/port forwarding, package availability, HTTPS issuance or reboot recovery. Complete those target-device checks before declaring a release verified; see [Documentation and release readiness](Documentation.md).

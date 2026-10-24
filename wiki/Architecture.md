@@ -71,10 +71,10 @@ sequenceDiagram
         U->>I: Parse and validate statement
         I->>D: Begin transaction
         I->>D: Resolve account and transaction identity
-        I->>D: Insert rows, learn tags and apply classifications
+        I->>D: Insert rows and apply saved tagging rules/classifications
         I->>D: Reconcile reliable dated ledger balance
         alt Complete
-            I->>D: Commit file
+            I->>D: Publish import revision if data changed, then commit file
         else Failure
             I->>D: Roll back file
         end
@@ -101,9 +101,17 @@ Daily Burn adds a rate, not another transaction total: each month/segment total 
 
 Use native semantic tables for compact read-only content. Use the pinned Tabulator adapter for large, sortable, searchable or virtualised grids. Highcharts receives shared colours and configurable chart typography through `color_map.js`.
 
+## Phone and resume lifecycle
+
+`phone_entry.js` routes narrow/touch phones into `phone.html` before desktop presentation loads, unless Full website was selected for the browser session. The dedicated phone product has Overview, This month and Search, with bounded API paging and explicit single-entry classification. It shares financial models and `web_app.js` authentication/recovery, but owns its neutral light/dark presentation. See [Phone Interface](PhoneInterface.md).
+
+`current_user.php` exposes an opaque `statement_import_revision` alongside session identity. `OfxImportService` changes it within the file transaction only when accounts, transactions or stored ledger balances/dates change. Resume compares the revision in memory, refreshes opted-in read-only views, and preserves unfinished edits; it never queues or repeats writes. Software-update consent is independent. The service worker caches only the account-free offline screen.
+
+Pension and mortgage plans live in `pension_plans` and `mortgage_plans`, independently of ledger totals. Saves use optimistic revision checks. Current backup format 8 includes both plans; older backups without a section leave that workspace unchanged.
+
 ## Schema evolution
 
-Update `SchemaCatalog.php` whenever the managed application schema changes. Database Health may apply only catalogue-generated structural repairs. Data transformations remain explicit migrations and must not be hidden inside schema-health actions. The `passkeys` table stores public WebAuthn material and is included in backup format version 6.
+Update `SchemaCatalog.php` whenever the managed application schema changes. Database Health may apply only catalogue-generated structural repairs. Data transformations remain explicit migrations and must not be hidden inside schema-health actions. The `passkeys` table stores public WebAuthn material and has been included since backup format version 6 (the current format is 8).
 
 ### Tag-taxonomy rebuild safety boundary
 

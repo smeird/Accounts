@@ -1,5 +1,7 @@
 # Codebase Review (Repository-Wide)
 
+> Historical review. Findings below describe the code at the time of review, not a current release defect list. See [Documentation and release readiness](Documentation.md) for the 24 October 2026 validation scope and [Smart tagging](SmartTagging.md) for current classification behaviour. Old file/line references and proposed fixes must be rechecked before use.
+
 ## Scope and approach
 
 This review covers the whole repository as of the current branch head, including:

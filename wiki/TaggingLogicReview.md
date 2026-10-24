@@ -1,5 +1,7 @@
 # Tagging logic review and repair plan
 
+> Historical review. Findings below describe the code at the time of review, not a current release defect list. See [Documentation and release readiness](Documentation.md) for the 24 October 2026 validation scope and [Smart tagging](SmartTagging.md) for current classification behaviour. Old file/line references and proposed fixes must be rechecked before use.
+
 Reviewed 6 September 2026. **Eight confirmed issue groups need repair.** Existing tests pass, but do not cover these failure cases. This review changes no application behaviour or live classifications.
 
 ## Scope and validation

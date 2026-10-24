@@ -68,6 +68,7 @@ This document describes the current functional baseline. New work should preserv
 - **Financial Picture:** reconciled portfolio position, cash-flow history and category/segment/tag/account context.
 - **Regular Income & Bills:** recurring patterns, trailing totals, next-month estimates and evidence links.
 - **Analysis Matrix:** expandable segment/category/tag analysis with income, expenditure and net movement.
+- **Group Analysis:** optional inclusive dates, SQL-aggregated tag outgoings, receipts and net cost, visible untagged rows and exact transaction evidence; analytical totals exclude transfers and IGNORE.
 - **12-Month Forecast:** expected, conservative and optimistic paths with visible assumptions and coverage.
 
 ## Daily Burn definition
@@ -86,13 +87,26 @@ This document describes the current functional baseline. New work should preserv
 - Suggest budgets with AI using observed history and a savings goal.
 - Create, compare, score, archive and restore projects.
 - Associate project spending with transaction groups and exclude transfers.
+- Provide a Planning overview linking budgets, projects, pensions and mortgages.
+- Save installation-wide pension and mortgage documents separately from bank totals, with optimistic revision checks and distinct backup parts.
+- Pension illustrations support provider fees, fixed nominal contributions, inflation, optional user-supplied State Pension, selectable end age and level or Go-Go/Slow-Go/No-Go spending; never promise a retirement date or assume entitlement.
+- Mortgage illustrations compare contractual payments and monthly/lump-sum overpayments, optional rate resets and explicit term-end shortfalls; fees and lender limits remain outside the model.
+
+## Phone, sessions and imports
+
+- Offer a dedicated neutral light/dark phone interface with Overview, This month and Search; preserve an explicit Full website escape for imports, planning and administration.
+- Keep statement pickers unfiltered for iPhone Files; validate OFX/QFX extensions case-insensitively after selection and on the server.
+- Check session validity on resume; refresh only when the opaque import revision changes and there are no unfinished edits. Preserve original-user reauthentication without replaying writes.
+- Cache only the account-free offline screen, never financial pages, APIs, credentials or drafts.
+- Keep import evidence session-owned, opaque, bounded and expiring; do not silently broaden expired evidence.
 
 ## Operations, health and recovery
 
 - Run tagging, category and segment refreshes in the recommended order or individually.
 - Keep assignment clearing separate and explicitly confirmed without deleting rules.
 - Detect potential duplicates and support reviewed cleanup.
-- Back up and restore selected business-data sections and passkey public credentials.
+- Back up and restore selected business-data sections, passkey public credentials and saved pension/mortgage plans using format version 8. Backups are compressed, not encrypted.
+- Application Updates may install only a clean, fetched and rechecked fast-forward on the current branch; private-repository helpers expose no general shell/Git authority.
 - Audit schema tables, columns, indexes, keys and relationships against `SchemaCatalog.php`.
 - Permit only catalogue-generated schema repairs; never generate record-changing repair SQL.
 
@@ -103,6 +117,6 @@ This document describes the current functional baseline. New work should preserv
 - Use shared glass cards by default and solid cards for dense controls.
 - Honour configurable heading, body, table and chart fonts and accent weight.
 - Use consistent semantic colours, gradients and classification pills.
-- Prefer chart-led summaries followed by exact values or evidence.
+- Render primary ledgers and exact evidence before optional charts; dashboard briefs may lead with summary figures. Chart failure must not block transaction results.
 - Use native responsive tables for straightforward read-only views and the shared Tabulator adapter for large interactive grids.
 - Validate every new surface on desktop and mobile. See [wiki/StyleGuide.md](wiki/StyleGuide.md).
