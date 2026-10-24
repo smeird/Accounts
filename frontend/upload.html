@@ -37,7 +37,9 @@
 
                 <form id="upload-form" action="../php_backend/public/upload_ofx.php" method="POST" enctype="multipart/form-data" novalidate>
                     <label id="upload-dropzone" class="upload-dropzone" for="ofx-files" tabindex="0" role="button">
-                        <input id="ofx-files" class="upload-file-input" type="file" name="ofx_files[]" accept=".ofx,.qfx,application/x-ofx" multiple required aria-describedby="upload-guidance upload-selection-summary">
+                        <!-- Keep the native picker unfiltered: iOS may not recognise OFX/QFX types.
+                             upload.js and upload_ofx.php validate supported statements after selection. -->
+                        <input id="ofx-files" class="upload-file-input" type="file" name="ofx_files[]" multiple required aria-describedby="upload-guidance upload-selection-summary">
                         <span class="upload-dropzone__icon" aria-hidden="true"><i class="fas fa-cloud-arrow-up"></i></span>
                         <span class="upload-dropzone__copy">
                             <strong>Choose statement files</strong>

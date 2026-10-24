@@ -199,3 +199,5 @@
 - Category tag assignment shows all-history ledger transaction counts, outgoing, incoming and total absolute value (including transfers). Default to most transactions first and offer count, value and alphabetical sorting without changing assignment behaviour.
 
 - Pensions supports optional Go-Go/Slow-Go/No-Go spending across equal age thirds from retirement to the selected end age. Solve sustainable Go-Go income with editable nonincreasing later percentages (defaults 80/60), preserve level-income legacy plans, apply phases at monthly withdrawal start, and treat State Pension above a phase target as available surplus rather than reinvestment. Targets and headline income refer to Go-Go when enabled.
+
+- Statement upload pickers omit `accept` so iOS Files can select OFX/QFX files with unrecognised document types. Keep case-insensitive extension validation after selection and server-side validation.
