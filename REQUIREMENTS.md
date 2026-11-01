@@ -124,3 +124,5 @@ This document describes the current functional baseline. New work should preserv
 - Render primary ledgers and exact evidence before optional charts; dashboard briefs may lead with summary figures. Chart failure must not block transaction results.
 - Use native responsive tables for straightforward read-only views and the shared Tabulator adapter for large interactive grids.
 - Validate every new surface on desktop and mobile. See [wiki/StyleGuide.md](wiki/StyleGuide.md).
+
+- Total Assets offers opt-in retirement income-tax estimates for existing plans (enabled for new plans), verified 2026/27 UK/Scottish non-savings bands held constant in real terms, deterministic adverse-path tests and consistent side-by-side retirement-age comparisons. Clearly state full pension taxation, single-taxpayer scope, monthly annualisation and exclusions; never describe sensitivity results as probabilities.
