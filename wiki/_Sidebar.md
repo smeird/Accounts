@@ -4,6 +4,7 @@
 - [Install and upgrade](Setup.md)
 - [Phone interface](PhoneInterface.md)
 - [Smart tagging](SmartTagging.md)
+- [Total Assets & Retirement](Total-Assets.md)
 - [Pensions & Retirement](Pensions.md)
 - [Mortgage Planner](Mortgages.md)
 - [Architecture](Architecture.md)

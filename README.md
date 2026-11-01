@@ -268,3 +268,7 @@ Use **Planning → Pensions & Retirement** to enter pension pots and contributio
 ### Mortgage planning
 
 Use **Planning → Mortgage Planner** to enter one repayment mortgage’s current balance, rate, monthly payment and remaining term. Compare overpayments, model a future rate change, and inspect payoff dates, interest saved and the repayment schedule. Record your current fixed-deal dates for a renewal countdown, projected balance/LTV and saved next-deal payment comparisons. Free public NatWest, HSBC and Barclays collectors show independent last-success/failure status; manual entry remains available and no paid feed is required. Existing installations should create `mortgage_plans` through **System → Database Health**. See [Mortgage Planner](wiki/Mortgages.md) for assumptions and backup guidance.
+
+## Total Assets & Retirement
+
+Use **Planning → Total Assets & Retirement** to combine saved pensions, mortgage and account balances with downsizing and future-income scenarios. Test spending targets, pension-access bridges and retirement ages. Save the scenario separately and include Settings, Pensions and Mortgages in backups. See [Total Assets & Retirement](wiki/Total-Assets.md).

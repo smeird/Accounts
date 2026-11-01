@@ -87,7 +87,8 @@ This document describes the current functional baseline. New work should preserv
 - Suggest budgets with AI using observed history and a savings goal.
 - Create, compare, score, archive and restore projects.
 - Associate project spending with transaction groups and exclude transfers.
-- Provide a Planning overview linking budgets, projects, pensions and mortgages.
+- Provide a Planning overview linking budgets, projects, pensions, mortgages and Total Assets & Retirement.
+- Total Assets combines open-account balances, saved pensions, property equity, mortgage debt and explicitly entered additional assets/debts. Keep future contributions and income separate from owned wealth, model downsizing after replacement housing/costs, pension-access bridges and mortgage maturity repayment, and compare retirement ages against before-tax living-cost targets through the selected end age. Preserve revisioned scenarios with Settings backups without changing source planners.
 - Save installation-wide pension and mortgage documents separately from bank totals, with optimistic revision checks and distinct backup parts.
 - Pension illustrations support provider fees, fixed nominal contributions, inflation, optional user-supplied State Pension, selectable end age and level or Go-Go/Slow-Go/No-Go spending; never promise a retirement date or assume entitlement.
 - Mortgage illustrations compare contractual payments and monthly/lump-sum overpayments, optional rate resets and explicit term-end shortfalls; fees and lender limits remain outside the model.
