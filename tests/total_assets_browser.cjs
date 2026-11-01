@@ -27,13 +27,22 @@ const assert=require('node:assert/strict');
   assert.match(await page.locator('#assets-metrics').innerText(),/£575,000/);
   if(process.env.ASSETS_CHART_TEST)await page.waitForSelector('#assets-chart .highcharts-series');else assert.match(await page.locator('#assets-chart').innerText(),/Chart unavailable/);
   assert(await page.locator('#assets-years tr').count()>30);
+  assert.equal(await page.locator('#end_age').inputValue(),'90');
+  assert.match(await page.locator('#assets-metrics').innerText(),/Retirement income \/ day/);
+  await page.locator('#assets-age').fill('0');await page.locator('#assets-age').dispatchEvent('input');
+  assert.match(await page.locator('#assets-age-detail').innerText(),/Age 52/);
+  await page.locator('#assets-view').selectOption('flows');
+  if(process.env.ASSETS_CHART_TEST){assert.equal(await page.evaluate(()=>Highcharts.charts.filter(Boolean)[0].options.chart.type),'column');assert(await page.evaluate(()=>Highcharts.charts.filter(Boolean)[0].series.some(s=>s.name==='Mortgage payments')));}
+  await page.locator('#working_income').fill('3500');await page.locator('#working_spending').fill('1200');
+  await page.waitForFunction(()=>document.getElementById('assets-age-detail').textContent.includes('£3,500'));
+  await page.locator('#assets-view').selectOption('assets');
   await page.locator('#extra_pension').fill('500');
   await page.waitForFunction(()=>document.getElementById('assets-contributions').textContent.includes('£500 extra'));
   await page.locator('#replacement_home').fill('250000');await page.locator('#moving_costs').fill('10000');await page.locator('#downsize').check();
   await page.waitForFunction(()=>document.getElementById('assets-downsize').textContent.includes('£40,000 released'));
   await page.locator('#assets-save').click();await page.waitForFunction(()=>document.getElementById('assets-save-state').textContent==='Scenario saved');
   conflict=true;await page.locator('#assets-save').click();await page.waitForFunction(()=>document.getElementById('assets-error').textContent.includes('changed in another window'));
-  await page.evaluate(()=>{document.querySelectorAll('#notification-stack .notification').forEach(t=>window.dismissNotification(t));document.querySelector('.app-shell-main').scrollTop=0;});
+  await page.evaluate(()=>{document.querySelectorAll('#notification-stack .site-notification').forEach(t=>window.dismissNotification(t));document.querySelector('.app-shell-main').scrollTop=0;});
   await page.waitForTimeout(500);await page.screenshot({path:'/private/tmp/total-assets-desktop.png'});
   if(process.env.ASSETS_CHART_TEST){await page.evaluate(()=>localStorage.setItem('professionalThemeEnabled','true'));await page.reload();await page.waitForSelector('#assets-chart .highcharts-series');await page.screenshot({path:'/private/tmp/total-assets-paper.png'});}
 

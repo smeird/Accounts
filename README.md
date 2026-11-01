@@ -271,4 +271,4 @@ Use **Planning → Mortgage Planner** to enter one repayment mortgage’s curren
 
 ## Total Assets & Retirement
 
-Use **Planning → Total Assets & Retirement** to combine saved pensions, mortgage and account balances with downsizing and future-income scenarios. Test spending targets, pension-access bridges and retirement ages. Save the scenario separately and include Settings, Pensions and Mortgages in backups. See [Total Assets & Retirement](wiki/Total-Assets.md).
+Use **Planning → Total Assets & Retirement** to combine saved pensions, mortgage and account balances with downsizing and future-income scenarios. Explore annual asset bars from your current age to an editable end age, switch to monthly money in/out, and tap a year for details. Test retirement ages against monthly/daily income, spending targets, pension-access bridges and mortgage repayment age. Save the scenario separately and include Settings, Pensions and Mortgages in backups. See [Total Assets & Retirement](wiki/Total-Assets.md).
